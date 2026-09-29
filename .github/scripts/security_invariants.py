@@ -29,12 +29,65 @@ def run_config(extra: dict[str, str], remove: tuple[str, ...] = ()) -> subproces
     )
 
 
+def check_ai_zero_egress(errors: list[str]) -> None:
+    code = r'''
+import asyncio
+import sys
+
+def audit(event, args):
+    if event in {"socket.connect", "socket.getaddrinfo"}:
+        raise RuntimeError("network egress attempted while AI is disabled/offline")
+
+sys.addaudithook(audit)
+
+from app.services.ai_provider import provider_registry
+assert provider_registry.is_enabled is False
+provider = provider_registry.get("mock-provider-offline")
+assert provider is not None
+asyncio.run(provider.execute_job("voice_alignment", {"text": "offline contract"}))
+print("offline-ai-ok")
+'''
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(API)
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=API,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode != 0:
+        errors.append("AI offline/default-disabled execution attempted network access or lost its disabled contract")
+        print(result.stdout, file=sys.stderr)
+        print(result.stderr, file=sys.stderr)
+
+
+def check_presence_not_persisted(errors: list[str]) -> None:
+    forbidden = re.compile(
+        r"\b(cursor_x|cursor_y|presence_state|heartbeat|last_heartbeat|focused_field|"
+        r"selected_shot_id|cell_lock|presence_session)\b",
+        re.IGNORECASE,
+    )
+    for path in (API / "app/models").glob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        if re.search(r"__tablename__\s*=\s*['\"][^'\"]*presence", text, re.IGNORECASE):
+            errors.append(f"Presence must remain ephemeral; persistent presence table found in {path.relative_to(ROOT)}")
+        for line_no, line in enumerate(text.splitlines(), start=1):
+            if forbidden.search(line) and ("mapped_column" in line or "Column(" in line):
+                errors.append(
+                    f"Presence-like ephemeral field is persisted in {path.relative_to(ROOT)}:{line_no}: {line.strip()}"
+                )
+
+
 def main() -> int:
     errors: list[str] = []
 
     config_text = (API / "app/core/config.py").read_text(encoding="utf-8")
-    if config_text.count("AI_ENABLED: bool = False") < 2:
-        errors.append("AI must remain disabled by default in both configuration paths")
+    if config_text.count("AI_ENABLED: bool = False") != 2:
+        errors.append("AI_ENABLED must be explicitly false in both configuration implementations")
+    if config_text.count("INITIAL_ADMIN_PASSWORD: str =") != 2:
+        errors.append("INITIAL_ADMIN_PASSWORD must have exactly one declaration per configuration implementation")
 
     insecure = run_config(
         {"ENVIRONMENT": "production"},
@@ -60,11 +113,8 @@ def main() -> int:
     if guard_pos < 0 or create_pos < 0 or create_pos < guard_pos:
         errors.append("Base.metadata.create_all is not visibly guarded from production startup")
 
-    models_dir = API / "app/models"
-    for path in models_dir.glob("*.py"):
-        text = path.read_text(encoding="utf-8")
-        if re.search(r"__tablename__\s*=\s*['\"][^'\"]*presence", text, re.IGNORECASE):
-            errors.append(f"Presence must remain ephemeral; persistent presence table found in {path.relative_to(ROOT)}")
+    check_ai_zero_egress(errors)
+    check_presence_not_persisted(errors)
 
     tracked = subprocess.check_output(["git", "ls-files"], cwd=ROOT, text=True).splitlines()
     forbidden_names = {".env", ".env.production", "id_rsa", "id_ed25519"}
@@ -79,7 +129,7 @@ def main() -> int:
             print(f" - {error}", file=sys.stderr)
         return 1
 
-    print("PASS: fail-closed config, AI default-off, ephemeral Presence, and credential-file invariants")
+    print("PASS: fail-closed config, zero-egress AI, ephemeral Presence, and credential invariants")
     return 0
 
 
