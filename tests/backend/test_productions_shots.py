@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "apps" / "api"))
 from main import app
 from app.core.config import settings
 from app.core.database import Base, async_engine, AsyncSessionLocal
+from app.models.asset import Asset, ShotAssetLink
 from app.services.seed import seed_database
 
 
@@ -134,3 +135,71 @@ async def test_production_and_shot_pipeline():
         trash_after_purge = await client.get(f"/api/v1/productions/{pid}/shots/trash", headers=headers)
         assert trash_after_purge.status_code == 200
         assert trash_after_purge.json() == []
+
+
+@pytest.mark.asyncio
+async def test_production_cover_media_id_uses_first_linked_image():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        login_res = await client.post("/api/v1/auth/login", json={
+            "email": "admin@company.internal",
+            "password": settings.INITIAL_ADMIN_PASSWORD
+        })
+        headers = {"Authorization": f"Bearer {login_res.json()['access_token']}"}
+
+        production = await client.post("/api/v1/productions", headers=headers, json={
+            "name": "封面 Read Model",
+            "template_type": "film",
+            "fps_num": 24,
+            "aspect_ratio": "16:9"
+        })
+        assert production.status_code == 201
+        pid = production.json()["id"]
+        assert production.json()["cover_media_id"] is None
+
+        shot = await client.post(f"/api/v1/productions/{pid}/shots", headers=headers, json={
+            "display_number": "001",
+            "name": "封面候选镜头",
+            "duration_frames": 48
+        })
+        assert shot.status_code == 201
+        sid = shot.json()["id"]
+
+        async with AsyncSessionLocal() as session:
+            document_asset = Asset(
+                production_id=pid,
+                filename="notes.pdf",
+                display_name="Notes",
+                asset_type="document",
+                source_type="internal",
+                storage_key=f"{pid}/notes.pdf",
+                mime_type="application/pdf",
+                file_size=32,
+                hash_sha256="d" * 64,
+            )
+            image_asset = Asset(
+                production_id=pid,
+                filename="cover.webp",
+                display_name="Cover",
+                asset_type="image",
+                source_type="internal",
+                storage_key=f"{pid}/cover.webp",
+                mime_type="image/webp",
+                file_size=64,
+                hash_sha256="c" * 64,
+            )
+            session.add_all([document_asset, image_asset])
+            await session.flush()
+            session.add_all([
+                ShotAssetLink(shot_id=sid, asset_id=document_asset.id, role="reference"),
+                ShotAssetLink(shot_id=sid, asset_id=image_asset.id, role="reference"),
+            ])
+            await session.commit()
+            cover_id = image_asset.id
+
+        listed = await client.get("/api/v1/productions", headers=headers)
+        assert listed.status_code == 200
+        assert listed.json()[0]["cover_media_id"] == cover_id
+
+        detail = await client.get(f"/api/v1/productions/{pid}", headers=headers)
+        assert detail.status_code == 200
+        assert detail.json()["cover_media_id"] == cover_id
