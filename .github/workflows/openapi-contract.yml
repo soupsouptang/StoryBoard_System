@@ -1,0 +1,47 @@
+name: OpenAPI Compatibility Guard
+on:
+  push:
+    branches: [master]
+    paths: ["apps/api/**", ".github/scripts/openapi_guard.py", ".github/workflows/openapi-contract.yml"]
+  pull_request:
+    branches: [master]
+    paths: ["apps/api/**", ".github/scripts/openapi_guard.py", ".github/workflows/openapi-contract.yml"]
+  workflow_dispatch:
+  schedule:
+    - cron: "29 18 * * *"
+permissions:
+  contents: read
+jobs:
+  openapi-contract:
+    name: OpenAPI base -> head compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+      - run: python -m pip install -r apps/api/requirements.txt
+      - name: Resolve comparison base
+        id: base
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then BASE="${{ github.event.pull_request.base.sha }}"; else BASE="${{ github.event.before }}"; fi
+          if [ -z "$BASE" ] || printf '%s' "$BASE" | grep -Eq '^0+$'; then BASE="$(git rev-parse HEAD^)"; fi
+          echo "sha=$BASE" >> "$GITHUB_OUTPUT"
+      - name: Materialize base worktree
+        run: git worktree add --detach "$RUNNER_TEMP/frameforge-base" "${{ steps.base.outputs.sha }}"
+      - name: Compare generated OpenAPI snapshots
+        run: python .github/scripts/openapi_guard.py --base-worktree "$RUNNER_TEMP/frameforge-base"
+      - name: Upload OpenAPI snapshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: openapi-contract-snapshots
+          path: .artifacts/openapi/
+          if-no-files-found: ignore
+          retention-days: 14

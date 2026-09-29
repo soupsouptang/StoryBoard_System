@@ -1,0 +1,63 @@
+name: VNext Browser UI Gate
+on:
+  push:
+    branches: [master]
+    paths: ["apps/web/**","packages/ui/**","packages/types/**","packages/contracts/**",".github/playwright.config.cjs",".github/tests/ui-smoke.spec.cjs",".github/workflows/ui-browser.yml"]
+  pull_request:
+    branches: [master]
+    paths: ["apps/web/**","packages/ui/**","packages/types/**","packages/contracts/**",".github/playwright.config.cjs",".github/tests/ui-smoke.spec.cjs",".github/workflows/ui-browser.yml"]
+  workflow_dispatch:
+  schedule:
+    - cron: "7 19 * * *"
+permissions:
+  contents: read
+env:
+  CI: "true"
+  NEXT_TELEMETRY_DISABLED: "1"
+jobs:
+  browser-ui:
+    name: 1440/1024/768/375/320 browser QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - name: Install pinned Playwright without modifying manifests
+        run: npm install --no-save --no-package-lock @playwright/test@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Build VNext Web
+        run: |
+          npm run build --workspace=@frameforge/contracts
+          npm run build --workspace=@frameforge/timecode
+          npm run build --workspace=@frameforge/types
+          npm run build --workspace=@frameforge/ui
+          npm run build --workspace=@frameforge/web
+      - name: Start VNext Web
+        run: |
+          mkdir -p .artifacts/ui
+          npm run start --workspace=@frameforge/web > .artifacts/ui/next.log 2>&1 &
+          for i in {1..40}; do if curl --fail --silent http://127.0.0.1:3000/login >/dev/null; then exit 0; fi; sleep 1; done
+          cat .artifacts/ui/next.log
+          exit 1
+      - name: Run browser gate
+        run: npx playwright test -c .github/playwright.config.cjs
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - name: Install visual comparison dependency
+        run: python -m pip install "Pillow==12.0.0"
+      - name: Visual regression against approved screenshot fingerprints
+        run: python .github/scripts/visual_regression.py
+      - name: Upload rendered evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: vnext-browser-ui-evidence
+          path: .artifacts/ui/
+          if-no-files-found: ignore
+          retention-days: 14

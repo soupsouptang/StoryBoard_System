@@ -66,6 +66,18 @@ def main() -> int:
         if re.search(r"__tablename__\s*=\s*['\"][^'\"]*presence", text, re.IGNORECASE):
             errors.append(f"Presence must remain ephemeral; persistent presence table found in {path.relative_to(ROOT)}")
 
+    durable_presence_fields = (
+        "cursor_x", "cursor_y", "presence_state", "heartbeat_at",
+        "last_heartbeat", "active_viewport", "cell_lock", "typing_state",
+    )
+    for path in models_dir.glob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        for field in durable_presence_fields:
+            if re.search(rf"^\\s*{re.escape(field)}\\s*(?::[^=]+)?=", text, re.MULTILINE):
+                errors.append(
+                    f"Presence field '{field}' must not become durable model state: {path.relative_to(ROOT)}"
+                )
+
     tracked = subprocess.check_output(["git", "ls-files"], cwd=ROOT, text=True).splitlines()
     forbidden_names = {".env", ".env.production", "id_rsa", "id_ed25519"}
     for name in tracked:

@@ -22,6 +22,8 @@ on:
       - "apps/api/requirements.txt"
       - ".github/workflows/postgres-migration.yml"
   workflow_dispatch:
+  schedule:
+    - cron: "43 18 * * *"
 
 permissions:
   contents: read
@@ -51,8 +53,8 @@ jobs:
       DATABASE_SYNC_URL: "postgresql+psycopg://frameforge:frameforge_ci@127.0.0.1:5432/frameforge_ci"
       PYTHONUNBUFFERED: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.11"
           cache: pip
@@ -61,9 +63,38 @@ jobs:
         run: python -m pip install -r apps/api/requirements.txt
       - name: Compile Alembic environment
         run: python -m py_compile apps/api/alembic/env.py
+      - name: Prepare PostgreSQL diagnostics
+        run: mkdir -p .artifacts/postgres
+      - name: Require exactly one Alembic head
+        working-directory: apps/api
+        shell: bash
+        run: |
+          set -o pipefail
+          HEADS="$(python -m alembic -c alembic.ini heads 2>&1 | tee -a ../../.artifacts/postgres/alembic.log)"
+          COUNT="$(printf '%s\n' "$HEADS" | grep -c '(head)' || true)"
+          if [ "$COUNT" -ne 1 ]; then
+            echo "Expected exactly one Alembic head, found $COUNT" | tee -a ../../.artifacts/postgres/alembic.log
+            exit 1
+          fi
       - name: Upgrade fresh PostgreSQL database to head
         working-directory: apps/api
-        run: python -m alembic -c alembic.ini upgrade head
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m alembic -c alembic.ini upgrade head 2>&1 | tee -a ../../.artifacts/postgres/alembic.log
+      - name: Reject SQLAlchemy / Alembic schema drift
+        working-directory: apps/api
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m alembic -c alembic.ini check 2>&1 | tee -a ../../.artifacts/postgres/alembic.log
+      - name: Verify isolated downgrade and re-upgrade
+        working-directory: apps/api
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m alembic -c alembic.ini downgrade base 2>&1 | tee -a ../../.artifacts/postgres/alembic.log
+          python -m alembic -c alembic.ini upgrade head 2>&1 | tee -a ../../.artifacts/postgres/alembic.log
       - name: Verify canonical tables and Alembic version
         working-directory: apps/api
         run: |
@@ -84,3 +115,12 @@ jobs:
               print(f"PASS: PostgreSQL migrated to {revision}; {len(tables)} tables present")
           engine.dispose()
           PY
+
+      - name: Upload PostgreSQL migration diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: postgres-migration-diagnostics
+          path: .artifacts/postgres/
+          if-no-files-found: ignore
+          retention-days: 14
