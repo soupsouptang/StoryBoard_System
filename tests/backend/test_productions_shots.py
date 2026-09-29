@@ -1,9 +1,11 @@
 """Pytest Suite for Productions, Shots, Soft Delete, Reordering, and Revision Conflicts."""
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import select
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "apps" / "api"))
 
@@ -11,6 +13,7 @@ from main import app
 from app.core.config import settings
 from app.core.database import Base, async_engine, AsyncSessionLocal
 from app.models.asset import Asset, ShotAssetLink
+from app.models.collaboration import AuditLog
 from app.services.seed import seed_database
 
 
@@ -203,3 +206,53 @@ async def test_production_cover_media_id_uses_first_linked_image():
         detail = await client.get(f"/api/v1/productions/{pid}", headers=headers)
         assert detail.status_code == 200
         assert detail.json()["cover_media_id"] == cover_id
+
+
+@pytest.mark.asyncio
+async def test_production_write_permission_and_soft_delete():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        admin = await client.post("/api/v1/auth/login", json={
+            "email": "admin@company.internal",
+            "password": settings.INITIAL_ADMIN_PASSWORD,
+        })
+        admin_headers = {"Authorization": f"Bearer {admin.json()['access_token']}"}
+        readonly = await client.post("/api/v1/auth/register", json={
+            "email": "reader@example.com",
+            "password": "test-password",
+            "role_name": "readonly",
+        })
+        assert readonly.status_code == 201
+        readonly_headers = {"Authorization": f"Bearer {readonly.json()['access_token']}"}
+
+        created = await client.post("/api/v1/productions", headers=admin_headers, json={"name": "Lifecycle"})
+        assert created.status_code == 201
+        production_id = created.json()["id"]
+        path = f"/api/v1/productions/{production_id}"
+
+        assert (await client.get(path, headers=readonly_headers)).status_code == 200
+        assert (await client.post("/api/v1/productions", headers=readonly_headers, json={"name": "Denied"})).status_code == 403
+        assert (await client.patch(path, headers=readonly_headers, json={"name": "Denied"})).status_code == 403
+        assert (await client.delete(path, headers=readonly_headers)).status_code == 403
+
+        updated = await client.patch(path, headers=admin_headers, json={"name": "Updated"})
+        assert updated.status_code == 200
+        assert updated.json()["name"] == "Updated"
+        unchanged = await client.patch(path, headers=admin_headers, json={"name": "Updated"})
+        assert unchanged.status_code == 200
+        assert datetime.fromisoformat(unchanged.json()["updated_at"]).replace(tzinfo=None) == (
+            datetime.fromisoformat(updated.json()["updated_at"]).replace(tzinfo=None)
+        )
+
+        assert (await client.delete(path, headers=admin_headers)).status_code == 204
+        assert (await client.delete(path, headers=admin_headers)).status_code == 204
+        assert (await client.get(path, headers=admin_headers)).status_code == 404
+        assert (await client.get("/api/v1/productions", headers=admin_headers)).json() == []
+
+        async with AsyncSessionLocal() as session:
+            actions = (await session.execute(
+                select(AuditLog.action).where(
+                    AuditLog.entity_type == "production",
+                    AuditLog.entity_id == production_id,
+                ).order_by(AuditLog.created_at)
+            )).scalars().all()
+        assert actions == ["production.create", "production.update", "production.delete"]
