@@ -1,0 +1,87 @@
+name: Nightly Deep Regression
+
+on:
+  schedule:
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CI: "true"
+  ENVIRONMENT: "test"
+  NEXT_TELEMETRY_DISABLED: "1"
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  full-regression:
+    name: Full Python + Web + repository gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        run: |
+          python -m pip install -r apps/api/requirements.txt
+          python -m pip install -r storyboard-system/requirements.txt
+          npm ci
+          npm ci --prefix storyboard-system --workspaces=false
+      - name: Repository invariants
+        run: |
+          python .github/scripts/regression_guard.py
+          python .github/scripts/migration_state_guard.py
+          python .github/scripts/action_pin_guard.py
+          python .github/scripts/security_invariants.py
+          python storyboard-system/tools/architecture_boundary_gate.py
+      - name: Full backend regression
+        run: |
+          mkdir -p "$RUNNER_TEMP/frameforge-legacy-data"
+          export STORYBOARD_DATA_ROOT="$RUNNER_TEMP/frameforge-legacy-data"
+          python -m pytest tests/backend -q
+          cd storyboard-system
+          python -m unittest discover -s tests -p "test_*.py" -v
+      - name: Full Web builds
+        run: |
+          npm run build
+          npm run check --prefix storyboard-system
+
+  postgres:
+    name: Nightly PostgreSQL migration and drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: frameforge
+          POSTGRES_PASSWORD: frameforge_ci
+          POSTGRES_DB: frameforge_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U frameforge -d frameforge_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: "postgresql+asyncpg://frameforge:frameforge_ci@127.0.0.1:5432/frameforge_ci"
+      DATABASE_SYNC_URL: "postgresql+psycopg://frameforge:frameforge_ci@127.0.0.1:5432/frameforge_ci"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -r apps/api/requirements.txt
+      - working-directory: apps/api
+        run: |
+          python -m alembic -c alembic.ini upgrade head
+          python -m alembic -c alembic.ini check
