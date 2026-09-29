@@ -133,6 +133,18 @@ class VersionService:
         return list(result.scalars().all())
 
     @staticmethod
+    async def get_version(
+        db: AsyncSession,
+        version_id: str,
+    ) -> ShotVersion:
+        result = await db.execute(select(ShotVersion).where(ShotVersion.id == version_id))
+        version = result.scalar_one_or_none()
+        if not version:
+            raise NotFoundError("版本不存在")
+        await VersionService._active_shot(db, version.shot_id)
+        return version
+
+    @staticmethod
     async def create_version(
         db: AsyncSession,
         shot_id: str,
