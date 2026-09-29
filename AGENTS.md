@@ -658,16 +658,24 @@ Before committing, inspect status and staged diff.
 
 Do not commit secrets, local environment files, transient diagnostics, generated debugging artifacts, or unrelated user changes.
 
-For repository-modification tasks that are being executed autonomously, push verified focused commits when remote authorization is available unless the active user instruction says not to push.
+Repository-modification work defaults to **branch → Pull Request → required Actions → merge**.
 
-After a successful push in a continuing migration task:
+- Do not push feature, migration, refactor, dependency, generated-asset, architecture, or product-behavior changes directly to `master`.
+- Create a focused branch from current `master`, use focused commits, open a PR, and let repository checks evaluate the proposed state.
+- Direct `master` pushes are reserved for an explicit user-authorized emergency repair when PR flow is unavailable. The reason must be reported.
+- Do not merge a PR whose required repository checks are red or still running.
+- Do not use a PR merely as a transport wrapper: the PR must describe ownership changes, consumer evidence, tests, migration-state changes, destructive effects, and rollback where applicable.
+- When GitHub branch protection/rulesets are unavailable, these repository rules remain the required agent behavior even though GitHub cannot technically enforce them.
 
-1. re-read repository status;
+After a successful branch push in a continuing migration task:
+
+1. re-read repository status and branch HEAD;
 2. re-read `ACTIVE_WORKSTREAMS.md`;
 3. re-read `CANONICAL_OWNER_MATRIX.md`;
-4. continue with the highest-priority unblocked coherent slice until the requested milestone or a valid stop condition is reached.
+4. inspect PR/Actions results when a PR exists;
+5. continue with the highest-priority unblocked coherent slice until the requested milestone or a valid stop condition is reached.
 
-A successful push is a checkpoint, not proof of migration completion.
+A successful push, green isolated test, or open PR is a checkpoint, not proof of migration completion.
 
 ---
 
