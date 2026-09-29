@@ -65,6 +65,21 @@ REQUIRED_PRODUCT_CAPABILITIES = (
     "Real-time Sync",
 )
 
+FORBIDDEN_REVIEW_PAGE_TOKENS = (
+    "useApplyReviewDecision",
+    "runDecision(",
+    "applyDecision.",
+    "useShotVersionDetail",
+)
+
+REQUIRED_REVIEW_PAGE_TOKENS = (
+    "useShotVersionCompare",
+    "useUpdateReviewComment",
+    "useDeleteReviewComment",
+    "审片历史",
+    "版本比较",
+)
+
 REQUIRED_SCREEN_ROWS = (
     "/login",
     "/projects",
@@ -73,6 +88,7 @@ REQUIRED_SCREEN_ROWS = (
     "/projects/[id]/timeline",
     "/projects/[id]/storyboard",
     "/projects/[id]/deliverables",
+    "/projects/[id]/review",
     "/projects/[id]/narration",
     "/projects/[id]/moodboard",
     "/projects/[id]/planning",
@@ -135,6 +151,20 @@ def require_tokens(errors: list[str], relative: str, tokens: tuple[str, ...]) ->
     for token in tokens:
         if token not in text:
             fail(errors, f"{relative} lost required contract/inventory token: {token}")
+
+
+def check_review_ui_policy(errors: list[str]) -> None:
+    path = ROOT / "apps/web/app/(workspace)/production/[id]/review/page.tsx"
+    if not path.is_file():
+        fail(errors, f"required review page missing: {path.relative_to(ROOT)}")
+        return
+    text = path.read_text(encoding="utf-8")
+    for token in FORBIDDEN_REVIEW_PAGE_TOKENS:
+        if token in text:
+            fail(errors, f"review page restored prohibited/stale contract: {token}")
+    for token in REQUIRED_REVIEW_PAGE_TOKENS:
+        if token not in text:
+            fail(errors, f"review page lost canonical contract token: {token}")
 
 
 def check_static_contracts(errors: list[str]) -> None:
@@ -250,6 +280,7 @@ def main() -> int:
     errors: list[str] = []
     check_hygiene(errors)
     check_static_contracts(errors)
+    check_review_ui_policy(errors)
     check_diff_policy(errors, args.base)
 
     if errors:
