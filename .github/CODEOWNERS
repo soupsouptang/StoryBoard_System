@@ -1,0 +1,11 @@
+# FRAMEFORGE repository ownership review defaults.
+# CODEOWNERS is advisory until GitHub branch protection/rulesets can enforce review.
+* @soupsouptang
+
+/.github/ @soupsouptang
+/AGENTS.md @soupsouptang
+/apps/api/ @soupsouptang
+/apps/web/ @soupsouptang
+/packages/ @soupsouptang
+/storyboard-system/docs/ @soupsouptang
+/storyboard-system/packages/ui/ @soupsouptang
