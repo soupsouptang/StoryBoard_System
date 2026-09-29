@@ -1,0 +1,10 @@
+# Advisory until GitHub review protection is available.
+* @soupsouptang
+/AGENTS.md @soupsouptang
+/storyboard-system/docs/ @soupsouptang
+/.frameforge/ @soupsouptang
+/apps/api/ @soupsouptang
+/apps/web/ @soupsouptang
+/packages/ @soupsouptang
+/.github/ @soupsouptang
+/storyboard-system/ @soupsouptang
