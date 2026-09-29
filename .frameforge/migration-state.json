@@ -47,6 +47,7 @@
       "legacy_owner_active": true,
       "integrated_formats": [
         "srt",
+        "vtt",
         "edl",
         "otio",
         "csv"
@@ -87,7 +88,8 @@
       "real_consumer": false,
       "legacy_owner_active": true,
       "evidence": [
-        "GitHub Actions empty PostgreSQL -> Alembic head rehearsal"
+        "GitHub Actions empty PostgreSQL 16 -> Alembic head rehearsal",
+        "core table and alembic_version verification"
       ]
     },
     "table": {

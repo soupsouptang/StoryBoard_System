@@ -112,6 +112,10 @@
     [
       "POST",
       "/api/v1/presence/rooms/{production_id}/heartbeat"
+    ],
+    [
+      "GET",
+      "/api/v1/productions/{production_id}/export/vtt"
     ]
   ]
 }
