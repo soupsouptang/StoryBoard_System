@@ -1,4 +1,4 @@
-"""Export API Routes for CMX 3600 EDL, OpenTimelineIO, SubRip SRT, and CSV."""
+"""Export API Routes for CMX 3600 EDL, OpenTimelineIO, SRT, WebVTT, and CSV."""
 from __future__ import annotations
 
 import json
@@ -17,7 +17,8 @@ from app.services.exporter import (
     generate_cmx3600_edl,
     generate_csv,
     generate_otio,
-    generate_srt
+    generate_srt,
+    generate_vtt
 )
 
 router = APIRouter(prefix="/productions/{production_id}/export", tags=["Exports"])
@@ -113,6 +114,41 @@ async def export_srt(
     return Response(
         content=srt_content.encode("utf-8-sig"),
         media_type="text/plain; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"}
+    )
+
+
+@router.get("/vtt")
+async def export_vtt(
+    production_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Export WebVTT (.vtt) subtitle cues using Legacy timing semantics."""
+    p_res = await db.execute(select(Production).where(Production.id == production_id, Production.deleted_at.is_(None)))
+    prod = p_res.scalar_one_or_none()
+    if not prod:
+        raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": "项目不存在"})
+
+    s_res = await db.execute(
+        select(Shot).where(Shot.production_id == production_id, Shot.deleted_at.is_(None)).order_by(Shot.sort_index.asc(), Shot.id.asc())
+    )
+    shots = s_res.scalars().all()
+
+    fps = prod.fps_num / (prod.fps_den or 1)
+    vtt_content = generate_vtt(
+        shots,
+        fps=fps,
+        start_timecode_frames=prod.start_timecode_frames,
+        is_drop_frame=prod.drop_frame,
+    )
+
+    safe_name = re.sub(r'[\\/:*?"<>|\x00-\x1f]', "_", prod.name).strip(" .")[:160] or "file"
+    filename = f"{safe_name}.vtt"
+    encoded_filename = urllib.parse.quote(filename)
+    return Response(
+        content=vtt_content.encode("utf-8-sig"),
+        media_type="text/vtt; charset=utf-8",
         headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"}
     )
 
