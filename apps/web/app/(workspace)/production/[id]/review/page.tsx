@@ -17,12 +17,12 @@ import {
 } from '@frameforge/ui';
 import { useProduction, useShots } from '@/lib/hooks/useProduction';
 import {
-  type ReviewAction,
-  useApplyReviewDecision,
   useCreateReviewComment,
+  useDeleteReviewComment,
   useResolveReviewComment,
   useReviewComments,
-  useReviewDecisions
+  useReviewDecisions,
+  useUpdateReviewComment
 } from '@/lib/hooks/useReview';
 import {
   useAcceptShotVersion,
@@ -36,6 +36,7 @@ import {
 import { StatusBadge } from '@/components/shot/StatusBadge';
 import { MethodBadge } from '@/components/shot/MethodBadge';
 import { shotMovementLabel } from '@/lib/shot-display';
+import { useAuthStore } from '@/stores/authStore';
 
 function formatVersionValue(value: unknown) {
   if (value === null || value === undefined || value === '') return '—';
@@ -56,9 +57,13 @@ export default function ReviewPage() {
 
   const { data: production } = useProduction(productionId);
   const { data: shots = [], isLoading } = useShots(productionId);
+  const { user } = useAuthStore();
 
   const [activeShotIndex, setActiveShotIndex] = useState(0);
   const [commentText, setCommentText] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState('');
+  const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
   const [restoreVersionId, setRestoreVersionId] = useState<string | null>(null);
   const [mergeVersionId, setMergeVersionId] = useState<string | null>(null);
@@ -76,8 +81,9 @@ export default function ReviewPage() {
   const { data: comments = [], isLoading: commentsLoading } = useReviewComments(shotId);
   const { data: decisions = [] } = useReviewDecisions(shotId);
   const createComment = useCreateReviewComment(shotId);
+  const updateComment = useUpdateReviewComment(shotId);
   const resolveComment = useResolveReviewComment(shotId);
-  const applyDecision = useApplyReviewDecision(productionId, shotId);
+  const deleteComment = useDeleteReviewComment(shotId);
   const { data: versions = [], isLoading: versionsLoading } = useShotVersions(shotId);
   const { data: selectedVersionCompare, isLoading: versionCompareLoading } =
     useShotVersionCompare(selectedVersionId);
@@ -93,21 +99,10 @@ export default function ReviewPage() {
     setMergeVersionId(null);
     setBranchParentVersionId(null);
     setBranchName('');
+    setEditingCommentId(null);
+    setEditingCommentText('');
+    setDeleteCommentId(null);
   }, [shotId]);
-
-  const runDecision = async (action: ReviewAction) => {
-    if (!currentShot) return;
-    setActionError(null);
-    try {
-      await applyDecision.mutateAsync({
-        revision: currentShot.revision,
-        action,
-        versionId: selectedVersionId
-      });
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : '审片操作失败');
-    }
-  };
 
   const handleCreateVersion = async () => {
     setActionError(null);
@@ -187,6 +182,35 @@ export default function ReviewPage() {
     }
   };
 
+  const handleUpdateComment = async () => {
+    if (!editingCommentId) return;
+    const body = editingCommentText.trim();
+    if (!body) return;
+    setActionError(null);
+    try {
+      await updateComment.mutateAsync({ id: editingCommentId, body });
+      setEditingCommentId(null);
+      setEditingCommentText('');
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : '编辑批注失败');
+    }
+  };
+
+  const handleDeleteComment = async () => {
+    if (!deleteCommentId) return;
+    setActionError(null);
+    try {
+      await deleteComment.mutateAsync(deleteCommentId);
+      if (editingCommentId === deleteCommentId) {
+        setEditingCommentId(null);
+        setEditingCommentText('');
+      }
+      setDeleteCommentId(null);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : '删除批注失败');
+    }
+  };
+
   if (isLoading || !production) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -203,8 +227,6 @@ export default function ReviewPage() {
     );
   }
 
-  const canSubmit = ['draft', 'in_progress', 'changes_requested'].includes(currentShot.status);
-  const isInReview = currentShot.status === 'review';
   const versionChanges =
     selectedVersionCompare?.fields.filter(field => field.changed) || [];
 
@@ -447,53 +469,11 @@ export default function ReviewPage() {
           </Card>
 
           <Card className="p-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="mr-auto">
-                <div className="text-sm font-semibold text-foreground">审片决策</div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  决策会绑定当前镜头 revision，并写入独立审片记录。
-                </div>
+            <div>
+              <div className="text-sm font-semibold text-foreground">审片历史</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                这里只读展示已写入的 revision-bound 审片记录；Review 页面不提供全局审批看板。
               </div>
-
-              {canSubmit && (
-                <Button
-                  onClick={() => runDecision('submit')}
-                  disabled={applyDecision.isPending}
-                >
-                  提交意见
-                </Button>
-              )}
-
-              {isInReview && (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={() => runDecision('withdraw')}
-                    disabled={applyDecision.isPending}
-                  >
-                    撤回意见
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => runDecision('request_changes')}
-                    disabled={applyDecision.isPending}
-                  >
-                    驳回意见
-                  </Button>
-                  <Button
-                    onClick={() => runDecision('approve')}
-                    disabled={applyDecision.isPending}
-                  >
-                    同意意见
-                  </Button>
-                </>
-              )}
-
-              {!canSubmit && !isInReview && (
-                <span className="text-xs text-muted-foreground">
-                  当前状态没有可执行的审片动作。
-                </span>
-              )}
             </div>
 
             {actionError && (
@@ -502,24 +482,28 @@ export default function ReviewPage() {
               </div>
             )}
 
-            {decisions.length > 0 && (
-              <div className="mt-4 border-t border-border pt-3">
-                <div className="mb-2 text-xs font-semibold text-foreground">最近决策</div>
-                <div className="space-y-1.5">
-                  {decisions.slice(0, 4).map(decision => (
-                    <div
-                      key={decision.id}
-                      className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground"
-                    >
-                      <span>
-                        {decision.action_label} · {decision.previous_status} → {decision.next_status}
+            {decisions.length === 0 ? (
+              <div className="mt-3 rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+                暂无审片历史。
+              </div>
+            ) : (
+              <div className="mt-3 divide-y divide-border border-t border-border">
+                {decisions.map(decision => (
+                  <div
+                    key={decision.id}
+                    className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-xs"
+                  >
+                    <span className="text-foreground">
+                      {decision.action_label}
+                      <span className="ml-2 text-muted-foreground">
+                        {decision.previous_status} → {decision.next_status}
                       </span>
-                      <span className="font-mono">
-                        {new Date(decision.created_at).toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                    </span>
+                    <span className="font-mono text-muted-foreground">
+                      {new Date(decision.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </Card>
@@ -540,48 +524,107 @@ export default function ReviewPage() {
                   暂无批注。
                 </div>
               ) : (
-                comments.map(comment => (
-                  <div
-                    key={comment.id}
-                    className={`rounded-md border border-border p-3 ${
-                      comment.is_resolved ? 'bg-muted/30 opacity-70' : 'bg-background'
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
-                      <span className="font-semibold text-foreground">
-                        {comment.author_name || '内部用户'}
-                        {comment.role ? <span className="ml-1 font-normal text-muted-foreground">· {comment.role}</span> : null}
-                      </span>
-                      <span className="font-mono">
-                        {new Date(comment.created_at).toLocaleString()}
-                      </span>
-                    </div>
+                comments.map(comment => {
+                  const isOwnComment = Boolean(user?.id && comment.user_id === user.id);
+                  const isEditing = editingCommentId === comment.id;
 
-                    {comment.quote_text && (
-                      <div className="mt-2 border-l-2 border-border pl-3 text-xs text-muted-foreground">
-                        {comment.quote_text}
+                  return (
+                    <div
+                      key={comment.id}
+                      className={`rounded-md border border-border p-3 ${
+                        comment.is_resolved ? 'bg-muted/30 opacity-70' : 'bg-background'
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                        <span className="font-semibold text-foreground">
+                          {comment.author_name || '内部用户'}
+                          {comment.role ? <span className="ml-1 font-normal text-muted-foreground">· {comment.role}</span> : null}
+                        </span>
+                        <span className="font-mono">
+                          {new Date(comment.created_at).toLocaleString()}
+                        </span>
                       </div>
-                    )}
 
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">
-                      {comment.body}
-                    </p>
+                      {comment.quote_text && (
+                        <div className="mt-2 border-l-2 border-border pl-3 text-xs text-muted-foreground">
+                          {comment.quote_text}
+                        </div>
+                      )}
 
-                    <div className="mt-2 flex justify-end">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => resolveComment.mutate({
-                          id: comment.id,
-                          resolved: !comment.is_resolved
-                        })}
-                        disabled={resolveComment.isPending}
-                      >
-                        {comment.is_resolved ? '重新打开' : '标记已处理'}
-                      </Button>
+                      {isEditing ? (
+                        <div className="mt-2 space-y-2">
+                          <TextArea
+                            rows={3}
+                            value={editingCommentText}
+                            onChange={event => setEditingCommentText(event.target.value)}
+                            aria-label="编辑批注"
+                            autoFocus
+                          />
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingCommentId(null);
+                                setEditingCommentText('');
+                              }}
+                              disabled={updateComment.isPending}
+                            >
+                              取消
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => void handleUpdateComment()}
+                              disabled={!editingCommentText.trim() || updateComment.isPending}
+                            >
+                              {updateComment.isPending ? '保存中…' : '保存'}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">
+                          {comment.body}
+                        </p>
+                      )}
+
+                      <div className="mt-2 flex flex-wrap justify-end gap-1">
+                        {isOwnComment && !isEditing && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingCommentId(comment.id);
+                                setEditingCommentText(comment.body);
+                              }}
+                            >
+                              编辑
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => setDeleteCommentId(comment.id)}
+                            >
+                              删除
+                            </Button>
+                          </>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => resolveComment.mutate({
+                            id: comment.id,
+                            resolved: !comment.is_resolved
+                          })}
+                          disabled={resolveComment.isPending}
+                        >
+                          {comment.is_resolved ? '重新打开' : '标记已处理'}
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
@@ -604,6 +647,36 @@ export default function ReviewPage() {
           </Card>
         </div>
       </main>
+      <Dialog
+        open={Boolean(deleteCommentId)}
+        onOpenChange={open => {
+          if (!open && !deleteComment.isPending) setDeleteCommentId(null);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogTitle>删除批注</DialogTitle>
+          <DialogDescription>
+            删除后该批注会从当前审片线程移除；删除动作仍会由后端审计记录。
+          </DialogDescription>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteCommentId(null)}
+              disabled={deleteComment.isPending}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void handleDeleteComment()}
+              disabled={deleteComment.isPending}
+            >
+              {deleteComment.isPending ? '删除中…' : '确认删除'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog
         open={Boolean(branchParentVersionId)}
         onOpenChange={open => {
