@@ -22,6 +22,7 @@ __all__ = [
     "ClientAssetRequest",
     "Comment",
     "Approval",
+    "ReviewDecision",
     "ShotVersion",
     "AuditLog",
     "Share",
