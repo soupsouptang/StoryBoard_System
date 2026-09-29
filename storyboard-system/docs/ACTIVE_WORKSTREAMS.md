@@ -31,7 +31,7 @@
 | --- | --- | --- | --- |
 | M0 文档事实与根 AGENTS | 根规则从误追加的 Legacy AGENTS 分离；架构/生命周期/组件规范按并行实现与运行 owner 修正 | VERIFIED（本轮文档盘点） | 新增切片持续按 owner 矩阵同步 |
 | M1 Canonical Owner Matrix | [矩阵](CANONICAL_OWNER_MATRIX.md) 已覆盖 HTTP、持久化、AI/Presence、Workspace 及 UI | VERIFIED（盘点） | 各切片按真实调用链更新状态 |
-| M2 `@frameforge/ui` 收敛 | shadcn/ui 为视觉/primitive 基线；`5e86a0b` 为功能基线。根包已有表单/Card/Checkbox 及 Dialog/Popover/DropdownMenu；项目创建真实消费 shared Dialog，Shot Table Column Manager 消费 shared Popover；Legacy 同名包仍供旧工作区使用 | INTEGRATED_NOT_CUT_OVER | 继续迁真实 Menu/Tooltip/Motion consumers，完成 overlay focus/collision/视觉与双消费者构建后再移除 Legacy 同名包；见 [primitive 表](UI_PRIMITIVE_PARITY.md) |
+| M2 `@frameforge/ui` 收敛 | 已建立 [shadcn UI 基线](SHADCN_UI_BASELINE.md)：`new-york` 几何 + neutral semantic theme 为视觉基线，`5e86a0b` 仅作功能/IA 基线；共享 theme 锁定 50px TopBar、224/64px desktop rail、56px mobile rail、380px Inspector 与 1152px Hub content metrics。TopBar/NavRail/Project Hub 已成为首批真实消费者；Legacy 同名包仍供旧工作区使用 | INTEGRATED_NOT_CUT_OVER | 完成 Shot Table/Inspector/Review 的 rendered 1440/1024/768/375/320 dark/light QA，并继续迁真实 primitive consumers；未有浏览器证据前不得宣称视觉完成 |
 | M3 API/持久化 | `apps/api` 已有路由/SQLAlchemy；[路由对等表](API_ROUTE_PARITY_MATRIX.md) 已建立；V-Web 已真实消费 SRT、VTT、EDL、OTIO、CSV 导出并有测试覆盖；Legacy `server.py` 仍是服务配置入口，第二 FastAPI 树并存 | IMPLEMENTED_NOT_INTEGRATED（整体；导出子项已集成） | 路由/事务对等、真实 PostgreSQL 隔离集成、旧 owner 退出 |
 | M4 Web 视图 | `apps/web` 有部分可挂载视图；Legacy `WorkspaceStage` 未从入口挂载 | IMPLEMENTED_NOT_INTEGRATED | 一个视图完成 render/state/request/mutation/save owner 接管 |
 | M5 AI | VNext mock/proposal 为进程内；无持久 Job/真实 Web 消费；接受路径未走普通 Command | BLOCKED | 禁用零外发、provider/job/proposal/人工接受合同 |

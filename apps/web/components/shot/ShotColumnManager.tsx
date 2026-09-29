@@ -47,7 +47,7 @@ export function ShotColumnManager({
         <div className="border-b border-border px-3 py-2.5">
           <div className="text-sm font-medium text-foreground">镜头表显示</div>
           <div className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
-            镜号与制作方式固定；其他列可隐藏、调整顺序和宽度。当前布局保存在此浏览器。
+            镜号与制作方式固定；其他列可隐藏、调整顺序和宽度。可通过“保存视图”同步项目布局。
           </div>
         </div>
 

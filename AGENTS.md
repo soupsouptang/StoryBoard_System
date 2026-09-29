@@ -103,6 +103,7 @@ Each architecture document has one job:
 - `ARCHITECTURE_MIGRATION.md` records **migration contracts, target boundaries, cutover gates, verification, and rollback**.
 - `LIFECYCLE_ARCHITECTURE_PLAN.md` records **lifecycle phases and phase gates**.
 - `FRAMEFORGE_COMPONENT_LIBRARY_CODEX_MASTER.md` governs **UI/component/motion/icon/graphics migration**.
+- `SHADCN_UI_BASELINE.md` is the **canonical VNext visual baseline** for shadcn geometry, neutral semantic color, Shell proportions, table/Inspector hierarchy, overlays and visual QA.
 - `CANONICAL_OWNER_MATRIX.md` records **capability ownership and cutover state**.
 
 Do not copy the same long status narrative into all of them.
@@ -433,7 +434,7 @@ Do not keep the same authoritative value simultaneously in local React state, Zu
 
 The VNext UI must recover the functional density and information architecture of the accepted FRAMEFORGE product without becoming “dense for density’s sake.”
 
-Follow `FRAMEFORGE_COMPONENT_LIBRARY_CODEX_MASTER.md`.
+Follow `FRAMEFORGE_COMPONENT_LIBRARY_CODEX_MASTER.md` and `storyboard-system/docs/SHADCN_UI_BASELINE.md`.
 
 Stable rules:
 

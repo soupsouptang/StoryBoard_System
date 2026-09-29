@@ -13,6 +13,7 @@ import { ShotInspector } from '@/components/shot/ShotInspector';
 import { ShotTrashModal } from '@/components/shot/ShotTrashModal';
 import { InlineEditCell } from '@/components/shot/InlineEditCell';
 import { ShotColumnManager } from '@/components/shot/ShotColumnManager';
+import { ShotSavedViews } from '@/components/shot/ShotSavedViews';
 import {
   ShotTableContextMenu,
   type ShotTableContextColumnKey,
@@ -21,10 +22,12 @@ import {
 import { BulkActionToolbar } from '@/components/storyboard/BulkActionToolbar';
 import { shotMovementLabel } from '@/lib/shot-display';
 import {
+  DEFAULT_SHOT_TABLE_COLUMN_ORDER,
   SHOT_TABLE_COLUMN_LABELS,
   clampShotTableColumnWidth,
   defaultShotTablePresentationPreferences,
   loadShotTablePresentationPreferences,
+  normalizeShotTablePresentationPreferences,
   saveShotTablePresentationPreferences,
   type ShotTableColumnKey,
   type ShotTablePresentationPreferences,
@@ -37,6 +40,11 @@ const ROW_PADDING: Record<ShotTableRowHeight, string> = {
   comfortable: 'py-3',
   auto: 'py-2'
 };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
 
 function shotColumnValue(
   shot: Shot,
@@ -150,6 +158,59 @@ export default function ShotListPage() {
     if (id && typeof window !== 'undefined') {
       saveShotTablePresentationPreferences(id, next, window.localStorage);
     }
+  };
+
+  const applySavedTableView = (config: Record<string, unknown>) => {
+    const presentation = normalizeShotTablePresentationPreferences(config.presentation);
+    setTablePresentation(presentation);
+    if (id && typeof window !== 'undefined') {
+      saveShotTablePresentationPreferences(id, presentation, window.localStorage);
+    }
+
+    resetFilters();
+    const savedFilters = isRecord(config.filters) ? config.filters : {};
+    setFilter(
+      'searchQuery',
+      typeof savedFilters.searchQuery === 'string' ? savedFilters.searchQuery : ''
+    );
+    setFilter(
+      'primaryMethod',
+      typeof savedFilters.primaryMethod === 'string' ? savedFilters.primaryMethod : 'all'
+    );
+    setFilter(
+      'department',
+      typeof savedFilters.department === 'string' ? savedFilters.department : 'all'
+    );
+    setFilter(
+      'status',
+      typeof savedFilters.status === 'string' ? savedFilters.status : 'all'
+    );
+
+    const savedSort = isRecord(config.sort) ? config.sort : {};
+    const validSortKeys = new Set<string>([
+      'default',
+      'display_number',
+      'primary_method',
+      ...DEFAULT_SHOT_TABLE_COLUMN_ORDER
+    ]);
+    const nextSortKey =
+      typeof savedSort.key === 'string' && validSortKeys.has(savedSort.key)
+        ? (savedSort.key as 'default' | ShotTableContextColumnKey)
+        : 'default';
+    const nextSortDirection = savedSort.direction === 'desc' ? 'desc' : 'asc';
+
+    setSortKey(nextSortKey);
+    setSortDirection(nextSortDirection);
+
+    const hasSavedFilters =
+      Boolean(
+        typeof savedFilters.searchQuery === 'string' &&
+        savedFilters.searchQuery.trim()
+      ) ||
+      (typeof savedFilters.primaryMethod === 'string' && savedFilters.primaryMethod !== 'all') ||
+      (typeof savedFilters.department === 'string' && savedFilters.department !== 'all') ||
+      (typeof savedFilters.status === 'string' && savedFilters.status !== 'all');
+    setShowFilters(hasSavedFilters);
   };
 
   const resizeColumnBy = (column: ShotTableColumnKey, delta: number) => {
@@ -383,6 +444,31 @@ export default function ShotListPage() {
     filters.status !== 'all'
   ].filter(Boolean).length;
 
+  const currentSavedViewConfig = useMemo<Record<string, unknown>>(
+    () => ({
+      presentation: tablePresentation,
+      filters: {
+        searchQuery: filters.searchQuery,
+        primaryMethod: filters.primaryMethod,
+        department: filters.department,
+        status: filters.status
+      },
+      sort: {
+        key: sortKey,
+        direction: sortDirection
+      }
+    }),
+    [
+      tablePresentation,
+      filters.searchQuery,
+      filters.primaryMethod,
+      filters.department,
+      filters.status,
+      sortKey,
+      sortDirection
+    ]
+  );
+
   const canonicalOrder = useMemo(
     () => [...shots]
       .sort((a, b) => (a.sort_index - b.sort_index) || a.id.localeCompare(b.id))
@@ -497,6 +583,12 @@ export default function ShotListPage() {
               <Icons.PanelRightOpen className="h-3.5 w-3.5" />
               详情
             </Button>
+
+            <ShotSavedViews
+              productionId={production.id}
+              currentConfig={currentSavedViewConfig}
+              onApply={applySavedTableView}
+            />
 
             <ShotColumnManager
               columnOrder={tablePresentation.columnOrder}

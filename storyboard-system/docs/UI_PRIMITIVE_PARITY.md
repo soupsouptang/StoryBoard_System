@@ -1,6 +1,6 @@
 # UI primitive parity ledger
 
-更新基线：2026-09-29。**视觉/primitive 基线是 shadcn/ui，功能/交互基线是 `5e86a0b`，实现目标是当前 `master`。** 旧 owner 是 `storyboard-system/packages/ui`；新 owner 是仓库根 `packages/ui`。迁移时保留 `5e86a0b` 的真实能力，但以 shadcn/Radix 的视觉、focus、overlay 和 accessibility 语义重建，不复制 Legacy CSS。消费者数量指直接导入该控件的 TSX 模块数；V = `apps/web`，L = `storyboard-system/src/workspace`。
+更新基线：2026-09-29。**视觉/primitive 基线是 [SHADCN_UI_BASELINE.md](SHADCN_UI_BASELINE.md) 所定义的 shadcn/ui `new-york` + neutral semantic theme；功能/交互基线是 `5e86a0b`，实现目标是当前 `master`。** 旧 owner 是 `storyboard-system/packages/ui`；新 owner 是仓库根 `packages/ui`。迁移时保留 `5e86a0b` 的真实能力，但以 shadcn/Radix 的视觉、focus、overlay 和 accessibility 语义重建，不复制 Legacy CSS。消费者数量指直接导入该控件的 TSX 模块数；V = `apps/web`，L = `storyboard-system/src/workspace`。
 
 | Primitive | Old owner / L 消费数 | New owner / V 消费数 | API compatibility | Visual compatibility | Focus behavior | Accessibility | Tests / evidence | Cutover |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
