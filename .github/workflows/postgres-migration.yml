@@ -28,7 +28,7 @@ permissions:
 
 jobs:
   postgres-upgrade:
-    name: Empty PostgreSQL -> Alembic head
+    name: Empty PostgreSQL -> Alembic head + schema drift
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -51,8 +51,8 @@ jobs:
       DATABASE_SYNC_URL: "postgresql+psycopg://frameforge:frameforge_ci@127.0.0.1:5432/frameforge_ci"
       PYTHONUNBUFFERED: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.11"
           cache: pip
@@ -64,13 +64,15 @@ jobs:
       - name: Upgrade fresh PostgreSQL database to head
         working-directory: apps/api
         run: python -m alembic -c alembic.ini upgrade head
+      - name: Reject model / Alembic schema drift
+        working-directory: apps/api
+        run: python -m alembic -c alembic.ini check
       - name: Verify canonical tables and Alembic version
         working-directory: apps/api
         run: |
-          python - <<'PY'
+          python - <<'PYCODE'
           from sqlalchemy import create_engine, inspect, text
           from app.core.config import settings
-
           engine = create_engine(settings.DATABASE_SYNC_URL)
           with engine.connect() as connection:
               tables = set(inspect(connection).get_table_names())
@@ -83,4 +85,4 @@ jobs:
                   raise SystemExit("alembic_version is empty")
               print(f"PASS: PostgreSQL migrated to {revision}; {len(tables)} tables present")
           engine.dispose()
-          PY
+          PYCODE

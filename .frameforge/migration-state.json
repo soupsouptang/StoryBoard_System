@@ -1,0 +1,353 @@
+{
+  "schema_version": 1,
+  "updated": "2026-09-29",
+  "allowed_states": [
+    "VERIFIED",
+    "IMPLEMENTED_NOT_INTEGRATED",
+    "INTEGRATED_NOT_CUT_OVER",
+    "CUTOVER_READY",
+    "CUT_OVER",
+    "LEGACY_RETIRED",
+    "BLOCKED"
+  ],
+  "capabilities": {
+    "api.http": {
+      "matrix_label": "HTTP API",
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner_paths": [
+        "storyboard-system/server.py"
+      ],
+      "target_owner_paths": [
+        "apps/api/main.py"
+      ],
+      "consumer_paths": [],
+      "tests": [
+        "tests/backend/test_api_auth.py"
+      ],
+      "evidence_paths": [
+        "storyboard-system/docs/API_ROUTE_PARITY_MATRIX.md"
+      ]
+    },
+    "auth": {
+      "matrix_label": "Authentication",
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner_paths": [
+        "storyboard-system/server.py"
+      ],
+      "target_owner_paths": [
+        "apps/api/app/api/v1/auth.py"
+      ],
+      "consumer_paths": [
+        "apps/web/app/(auth)/login/page.tsx"
+      ],
+      "tests": [
+        "tests/backend/test_api_auth.py"
+      ],
+      "evidence_paths": [
+        "storyboard-system/docs/API_ROUTE_PARITY_MATRIX.md"
+      ]
+    },
+    "shot.crud": {
+      "matrix_label": "Shot CRUD",
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner_paths": [
+        "storyboard-system/server.py",
+        "storyboard-system/shot_updates.py"
+      ],
+      "target_owner_paths": [
+        "apps/api/app/api/v1/shots.py",
+        "apps/api/app/services/shot_service.py"
+      ],
+      "consumer_paths": [
+        "apps/web/lib/hooks/useProduction.ts"
+      ],
+      "tests": [
+        "tests/backend/test_productions_shots.py",
+        "tests/backend/test_shot_service_patch_contract.py"
+      ],
+      "evidence_paths": [
+        "storyboard-system/docs/CANONICAL_OWNER_MATRIX.md"
+      ]
+    },
+    "shot.bulk": {
+      "matrix_label": "Bulk Shot",
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner_paths": [
+        "storyboard-system/server.py",
+        "storyboard-system/shot_bulk_updates.py"
+      ],
+      "target_owner_paths": [
+        "apps/api/app/api/v1/shots.py"
+      ],
+      "consumer_paths": [
+        "apps/web/lib/hooks/useProduction.ts"
+      ],
+      "tests": [
+        "tests/backend/test_productions_shots.py"
+      ],
+      "evidence_paths": [
+        "storyboard-system/docs/CANONICAL_OWNER_MATRIX.md"
+      ]
+    },
+    "fields": {
+      "matrix_label": "Fields",
+      "state": "BLOCKED",
+      "current_owner_paths": [
+        "storyboard-system/field_lifecycle.py"
+      ],
+      "target_owner_paths": [
+        "apps/api"
+      ],
+      "consumer_paths": [],
+      "tests": [],
+      "evidence_paths": [
+        "storyboard-system/docs/CANONICAL_OWNER_MATRIX.md"
+      ]
+    },
+    "import": {
+      "matrix_label": "Import",
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner_paths": [
+        "storyboard-system/import_parsing.py",
+        "storyboard-system/import_staging.py"
+      ],
+      "target_owner_paths": [
+        "apps/api/app/api/v1/imports.py"
+      ],
+      "consumer_paths": [],
+      "tests": [],
+      "evidence_paths": [
+        "storyboard-system/docs/API_ROUTE_PARITY_MATRIX.md"
+      ]
+    },
+    "export": {
+      "matrix_label": "Export",
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner_paths": [
+        "storyboard-system/server.py",
+        "storyboard-system/delivery_exports.py"
+      ],
+      "target_owner_paths": [
+        "apps/api/app/api/v1/exports.py",
+        "apps/api/app/services/exporter.py"
+      ],
+      "consumer_paths": [
+        "apps/web/app/(workspace)/production/[id]/deliverables/page.tsx"
+      ],
+      "tests": [
+        "tests/backend/test_exports_srt.py"
+      ],
+      "evidence_paths": [
+        "storyboard-system/docs/API_ROUTE_PARITY_MATRIX.md"
+      ],
+      "note": "V-Web consumes SRT/VTT/EDL/OTIO/CSV; Legacy remains runtime owner for remaining formats and deployment."
+    },
+    "review": {
+      "matrix_label": "Review",
+      "state": "BLOCKED",
+      "current_owner_paths": [
+        "storyboard-system/server.py"
+      ],
+      "target_owner_paths": [
+        "apps/api",
+        "apps/web"
+      ],
+      "consumer_paths": [],
+      "tests": [],
+      "evidence_paths": [
+        "storyboard-system/docs/CANONICAL_OWNER_MATRIX.md"
+      ]
+    },
+    "assets": {
+      "matrix_label": "Assets",
+      "state": "BLOCKED",
+      "current_owner_paths": [
+        "storyboard-system/asset_cleanup.py"
+      ],
+      "target_owner_paths": [
+        "apps/api"
+      ],
+      "consumer_paths": [],
+      "tests": [],
+      "evidence_paths": [
+        "storyboard-system/docs/CANONICAL_OWNER_MATRIX.md"
+      ]
+    },
+    "ai": {
+      "matrix_label": "AI",
+      "state": "BLOCKED",
+      "current_owner_paths": [
+        "storyboard-system/ai_system"
+      ],
+      "target_owner_paths": [
+        "apps/api/app/api/v1/ai.py",
+        "apps/api/app/services/ai_provider.py",
+        "apps/api/app/services/ai_proposal.py"
+      ],
+      "consumer_paths": [],
+      "tests": [
+        "tests/backend/test_ai_and_presence.py"
+      ],
+      "evidence_paths": [
+        "storyboard-system/docs/CANONICAL_OWNER_MATRIX.md"
+      ]
+    },
+    "presence": {
+      "matrix_label": "Presence",
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner_paths": [
+        "storyboard-system/server.py",
+        "storyboard-system/presence_system"
+      ],
+      "target_owner_paths": [
+        "apps/api/app/api/v1/presence.py",
+        "apps/api/app/services/presence.py",
+        "apps/web/components/PresenceBar.tsx"
+      ],
+      "consumer_paths": [],
+      "tests": [
+        "tests/backend/test_ai_and_presence.py"
+      ],
+      "evidence_paths": [
+        "storyboard-system/docs/CANONICAL_OWNER_MATRIX.md"
+      ]
+    },
+    "workspace.shell": {
+      "matrix_label": "Workspace shell",
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner_paths": [
+        "storyboard-system/static/index.html"
+      ],
+      "target_owner_paths": [
+        "apps/web/app/(workspace)"
+      ],
+      "consumer_paths": [
+        "apps/web/app/(workspace)/production/[id]/layout.tsx"
+      ],
+      "tests": [],
+      "evidence_paths": [
+        "storyboard-system/docs/SCREEN_PARITY_MATRIX.md"
+      ]
+    },
+    "table": {
+      "matrix_label": "Table",
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner_paths": [
+        "storyboard-system/static/app.js"
+      ],
+      "target_owner_paths": [
+        "apps/web/app/(workspace)/production/[id]/shots/page.tsx"
+      ],
+      "consumer_paths": [
+        "apps/web/app/(workspace)/production/[id]/shots/page.tsx"
+      ],
+      "tests": [],
+      "evidence_paths": [
+        "storyboard-system/docs/PRODUCT_PARITY_MATRIX.md"
+      ]
+    },
+    "inspector": {
+      "matrix_label": "Inspector",
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner_paths": [
+        "storyboard-system/static/app.js"
+      ],
+      "target_owner_paths": [
+        "apps/web/components/shot/ShotInspector.tsx"
+      ],
+      "consumer_paths": [
+        "apps/web/app/(workspace)/production/[id]/shots/page.tsx"
+      ],
+      "tests": [],
+      "evidence_paths": [
+        "storyboard-system/docs/PRODUCT_PARITY_MATRIX.md"
+      ]
+    },
+    "selection": {
+      "matrix_label": "Selection",
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner_paths": [
+        "storyboard-system/static/app.js"
+      ],
+      "target_owner_paths": [
+        "apps/web/stores/useWorkspaceStore.ts"
+      ],
+      "consumer_paths": [
+        "apps/web/app/(workspace)/production/[id]/shots/page.tsx"
+      ],
+      "tests": [],
+      "evidence_paths": [
+        "storyboard-system/docs/CANONICAL_OWNER_MATRIX.md"
+      ]
+    },
+    "ui.components": {
+      "matrix_label": "UI components",
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner_paths": [
+        "storyboard-system/packages/ui"
+      ],
+      "target_owner_paths": [
+        "packages/ui"
+      ],
+      "consumer_paths": [
+        "apps/web/app/(auth)/login/page.tsx",
+        "apps/web/app/(workspace)/production/[id]/deliverables/page.tsx"
+      ],
+      "tests": [],
+      "evidence_paths": [
+        "storyboard-system/docs/UI_PRIMITIVE_PARITY.md"
+      ]
+    },
+    "motion": {
+      "matrix_label": "Motion",
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner_paths": [
+        "storyboard-system/packages/ui/src/motion.tsx"
+      ],
+      "target_owner_paths": [
+        "packages/ui"
+      ],
+      "consumer_paths": [],
+      "tests": [],
+      "evidence_paths": [
+        "storyboard-system/docs/UI_PRIMITIVE_PARITY.md"
+      ]
+    },
+    "i18n": {
+      "matrix_label": "i18n",
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner_paths": [
+        "storyboard-system/static/app.js"
+      ],
+      "target_owner_paths": [
+        "apps/web/lib/i18n.ts"
+      ],
+      "consumer_paths": [
+        "apps/web/app/(auth)/login/page.tsx"
+      ],
+      "tests": [],
+      "evidence_paths": [
+        "storyboard-system/docs/CANONICAL_OWNER_MATRIX.md"
+      ]
+    },
+    "postgresql": {
+      "matrix_label": "PostgreSQL persistence",
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner_paths": [
+        "storyboard-system/server.py"
+      ],
+      "target_owner_paths": [
+        "apps/api/alembic",
+        "apps/api/app/core/database.py"
+      ],
+      "consumer_paths": [],
+      "tests": [
+        ".github/workflows/postgres-migration.yml"
+      ],
+      "evidence_paths": [
+        "storyboard-system/docs/ACTIVE_WORKSTREAMS.md"
+      ],
+      "note": "Fresh PostgreSQL 16 -> Alembic head is CI-verified; runtime cutover and copied-data rehearsal remain."
+    }
+  }
+}

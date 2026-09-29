@@ -39,13 +39,18 @@ export default function DeliverablesPage() {
       desc: '根据镜头精准时码对齐导出的旁白与解说词字幕。'
     },
     {
+      id: 'vtt',
+      title: '旁白字幕（VTT）',
+      desc: '导出与 SRT 同源时码的 WebVTT 字幕，用于网页播放器与在线审片。'
+    },
+    {
       id: 'pdf',
       title: '分镜图版（PDF）',
       desc: '导出用于审片的高清分镜图版（排版引擎迁移中）。'
     }
   ];
 
-  const supportedFormats = new Set(['csv', 'edl', 'otio', 'srt']);
+  const supportedFormats = new Set(['csv', 'edl', 'otio', 'srt', 'vtt']);
 
   const handleExport = async (formatId: string) => {
     if (!supportedFormats.has(formatId) || downloading) return;
@@ -102,6 +107,7 @@ export default function DeliverablesPage() {
               </div>
 
               <Button
+                aria-label={`导出 ${fmt.id.toUpperCase()}`}
                 onClick={() => handleExport(fmt.id)}
                 disabled={!isSupported || downloading !== null}
                 className="w-full sm:w-auto"

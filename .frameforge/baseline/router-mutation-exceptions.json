@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "purpose": "Temporary grandfathered V-API router mutation ownership. This list may shrink during migration but must not grow.",
+  "allowed_direct_mutation_functions": [
+    "apps/api/app/api/v1/auth.py::register",
+    "apps/api/app/api/v1/imports.py::commit_table_import",
+    "apps/api/app/api/v1/productions.py::create_production",
+    "apps/api/app/api/v1/productions.py::delete_production",
+    "apps/api/app/api/v1/productions.py::update_production",
+    "apps/api/app/api/v1/shares.py::publish_production_share",
+    "apps/api/app/api/v1/shares.py::revoke_production_share",
+    "apps/api/app/api/v1/shots.py::bulk_update_shots",
+    "apps/api/app/api/v1/shots.py::delete_shot",
+    "apps/api/app/api/v1/shots.py::purge_shot",
+    "apps/api/app/api/v1/shots.py::reorder_shots",
+    "apps/api/app/api/v1/shots.py::restore_shot"
+  ]
+}

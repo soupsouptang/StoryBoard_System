@@ -59,7 +59,6 @@ try:
 
         # Seed Admin Credentials
         INITIAL_ADMIN_EMAIL: str = "admin@company.internal"
-        INITIAL_ADMIN_PASSWORD: str = "FrameForge2026!Admin"
         INITIAL_ADMIN_PASSWORD: str = DEFAULT_ADMIN_PW
         INITIAL_ADMIN_NAME: str = "系统超级管理员"
 

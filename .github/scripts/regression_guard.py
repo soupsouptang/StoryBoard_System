@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
-"""Repository-level guardrails against silent FRAMEFORGE regression.
-
-This script is intentionally dependency-free so every GitHub runner can execute it
-before application dependencies are installed.
-"""
+"""Dependency-free guardrails against silent FRAMEFORGE regression."""
 
 from __future__ import annotations
 
 import argparse
-import re
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -16,81 +12,43 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = "5e86a0bb11a20ecd631d9c2af66260a73d7c92e7"
 
-FORBIDDEN_ROOT_FILES = {
-    "patch.py",
-    "refactor_shots.js",
-    "replace.js",
-    "update_matrix.js",
-    "tash drop stash@{0}",
-}
-FORBIDDEN_ROOT_SUFFIXES = {".orig", ".rej", ".patch", ".diff", ".tmp"}
-
 REQUIRED_CONSTITUTION = (
     BASELINE,
     "Single Owner Invariant",
     "UI QA Hard Gate",
     "Presence and Realtime Invariant",
     "No False Completion",
-    "LEGACY_RETIRED",
-)
-
-REQUIRED_PRODUCT_CAPABILITIES = (
-    "Project Cover Fallback",
-    "Workspace IA: Narration",
-    "Workspace IA: Moodboard",
-    "Workspace IA: Lighting",
-    "Workspace IA: Review",
-    "Read-first Table",
-    "Inline Double-click Editing",
-    "Column Manager",
-    "Saved View / Column Layout",
-    "Search",
-    "Filtering & Sorting",
-    "Grouping",
-    "Bulk Actions",
-    "Context Menu",
-    "Shot Reorder",
-    "Undo / Redo",
-    "Save Status",
-    "Production Steps",
-    "Custom Fields",
-    "Comments",
-    "Versions",
-    "Share",
-    "Project Trash",
-    "Strict No-Op Revision",
-    "Shot Command Parity",
-    "409 Conflict Rehearsal",
-    "Ephemeral Presence",
-    "Real-time Sync",
-)
-
-REQUIRED_SCREEN_ROWS = (
-    "/login",
-    "/projects",
-    "/projects/[id]",
-    "/projects/[id]/shots",
-    "/projects/[id]/timeline",
-    "/projects/[id]/storyboard",
-    "/projects/[id]/deliverables",
-    "/projects/[id]/narration",
-    "/projects/[id]/moodboard",
-    "/projects/[id]/planning",
+    "branch → Pull Request",
 )
 
 TEXT_SUFFIXES = {
     ".md", ".py", ".js", ".jsx", ".ts", ".tsx", ".json", ".yml", ".yaml",
     ".css", ".html", ".toml", ".ini", ".mjs", ".cjs",
 }
+FORBIDDEN_SUFFIXES = {
+    ".orig", ".rej", ".patch", ".diff", ".tmp", ".bak", ".swp", ".swo",
+    ".db", ".sqlite", ".sqlite3", ".log",
+}
+ALLOWED_ROOT_SCRIPTS = {
+    "analyze_video_cuts.py",
+    "make_cut_sheets.py",
+    "prepare_web_storyboard.py",
+}
 
 
 def git(*args: str) -> str:
-    return subprocess.check_output(["git", *args], cwd=ROOT, text=True, encoding="utf-8", errors="replace")
+    return subprocess.check_output(
+        ["git", *args], cwd=ROOT, text=True, encoding="utf-8", errors="replace"
+    )
 
 
 def tracked_files() -> list[Path]:
     raw = subprocess.check_output(["git", "ls-files", "-z"], cwd=ROOT)
     return [Path(p.decode("utf-8", "surrogateescape")) for p in raw.split(b"\0") if p]
+
+
+def load_json(relative: str) -> dict:
+    return json.loads((ROOT / relative).read_text(encoding="utf-8"))
 
 
 def fail(errors: list[str], message: str) -> None:
@@ -99,19 +57,30 @@ def fail(errors: list[str], message: str) -> None:
 
 def check_hygiene(errors: list[str]) -> None:
     for rel in tracked_files():
-        if len(rel.parts) == 1:
-            if rel.name in FORBIDDEN_ROOT_FILES or rel.suffix.lower() in FORBIDDEN_ROOT_SUFFIXES:
-                fail(errors, f"tracked temporary/root patch artifact is forbidden: {rel}")
+        suffix = rel.suffix.lower()
+        if suffix in FORBIDDEN_SUFFIXES:
+            allowed_evidence = rel.as_posix().startswith("storyboard-system/docs/audits/") and suffix in {".patch", ".diff"}
+            if not allowed_evidence:
+                fail(errors, f"tracked temporary/debug artifact is forbidden: {rel}")
 
-        if rel.suffix.lower() not in TEXT_SUFFIXES:
+        if len(rel.parts) == 1 and suffix in {".py", ".js", ".mjs", ".cjs"}:
+            if rel.name not in ALLOWED_ROOT_SCRIPTS:
+                fail(errors, f"ad-hoc root script is forbidden; move reusable tooling to tools/ or .github/scripts/: {rel}")
+
+        if rel.name.lower().startswith(("tmp_", "temp_", "debug_", "patch_", "replace_")):
+            allowed_scratch = rel.as_posix().startswith("storyboard-system/scratch/")
+            if not allowed_scratch and not rel.as_posix().startswith(("tests/", "storyboard-system/tests/", ".github/scripts/")):
+                fail(errors, f"tracked temporary-looking artifact is forbidden outside explicit scratch/test/tool locations: {rel}")
+
+        if suffix not in TEXT_SUFFIXES:
             continue
         if not (
             len(rel.parts) == 1
-            or rel.parts[0] in {".github", "apps", "packages"}
+            or rel.parts[0] in {".github", ".frameforge", "apps", "packages"}
             or rel.as_posix().startswith("storyboard-system/docs/")
             or rel.as_posix().startswith("storyboard-system/src/")
             or rel.as_posix().startswith("storyboard-system/fastapi_app/")
-            or (rel.parts[0] == "storyboard-system" and len(rel.parts) == 2 and rel.suffix == ".py")
+            or (rel.parts[0] == "storyboard-system" and len(rel.parts) == 2 and suffix == ".py")
         ):
             continue
 
@@ -126,7 +95,7 @@ def check_hygiene(errors: list[str]) -> None:
             fail(errors, f"control characters {bad} found in tracked text file: {rel}")
 
 
-def require_tokens(errors: list[str], relative: str, tokens: tuple[str, ...]) -> None:
+def require_tokens(errors: list[str], relative: str, tokens: list[str] | tuple[str, ...]) -> None:
     path = ROOT / relative
     if not path.is_file():
         fail(errors, f"required file missing: {relative}")
@@ -137,19 +106,25 @@ def require_tokens(errors: list[str], relative: str, tokens: tuple[str, ...]) ->
             fail(errors, f"{relative} lost required contract/inventory token: {token}")
 
 
+def check_machine_baseline(errors: list[str]) -> None:
+    product = load_json(".frameforge/baseline/product-capabilities.json")
+    routes = load_json(".frameforge/baseline/routes.json")
+    ui = load_json(".frameforge/baseline/ui-entrypoints.json")
+
+    for name, payload in (("product", product), ("routes", routes), ("ui", ui)):
+        if payload.get("golden_baseline") != BASELINE:
+            fail(errors, f"{name} baseline does not point at {BASELINE}")
+
+    require_tokens(errors, "storyboard-system/docs/PRODUCT_PARITY_MATRIX.md", product.get("capabilities", []))
+    require_tokens(errors, "storyboard-system/docs/API_ROUTE_PARITY_MATRIX.md", routes.get("legacy_export_formats", []))
+    require_tokens(errors, "storyboard-system/docs/SCREEN_PARITY_MATRIX.md", [item["legacy"] for item in ui.get("screens", [])])
+
+
 def check_static_contracts(errors: list[str]) -> None:
     require_tokens(errors, "AGENTS.md", REQUIRED_CONSTITUTION)
-    require_tokens(
-        errors,
-        "storyboard-system/docs/PRODUCT_PARITY_MATRIX.md",
-        REQUIRED_PRODUCT_CAPABILITIES,
-    )
-    require_tokens(
-        errors,
-        "storyboard-system/docs/SCREEN_PARITY_MATRIX.md",
-        REQUIRED_SCREEN_ROWS,
-    )
+    check_machine_baseline(errors)
     for path in (
+        ".frameforge/migration-state.json",
         "storyboard-system/docs/ACTIVE_WORKSTREAMS.md",
         "storyboard-system/docs/CANONICAL_OWNER_MATRIX.md",
         "storyboard-system/docs/API_ROUTE_PARITY_MATRIX.md",
@@ -171,8 +146,7 @@ def changed_paths(base: str) -> tuple[set[str], list[tuple[str, str]]]:
         status = fields[0]
         if status.startswith("R") and len(fields) >= 3:
             changed.update((fields[1], fields[2]))
-            statuses.append((status, fields[1]))
-            statuses.append((status, fields[2]))
+            statuses.extend(((status, fields[1]), (status, fields[2])))
         elif len(fields) >= 2:
             changed.add(fields[1])
             statuses.append((status, fields[1]))
@@ -183,7 +157,12 @@ def check_diff_policy(errors: list[str], base: str | None) -> None:
     if not base:
         return
     try:
-        subprocess.check_call(["git", "cat-file", "-e", f"{base}^{{commit}}"], cwd=ROOT)
+        subprocess.check_call(
+            ["git", "cat-file", "-e", f"{base}^{{commit}}"],
+            cwd=ROOT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
     except subprocess.CalledProcessError:
         fail(errors, f"diff base is unavailable: {base}")
         return
@@ -196,20 +175,16 @@ def check_diff_policy(errors: list[str], base: str | None) -> None:
         "screen": "storyboard-system/docs/SCREEN_PARITY_MATRIX.md",
         "api": "storyboard-system/docs/API_ROUTE_PARITY_MATRIX.md",
         "ui": "storyboard-system/docs/UI_PRIMITIVE_PARITY.md",
+        "state": ".frameforge/migration-state.json",
     }
 
     critical_prefixes = (
-        "apps/web/app/",
-        "apps/web/components/",
-        "apps/api/app/",
-        "packages/",
-        "storyboard-system/src/",
-        "storyboard-system/packages/",
-        "storyboard-system/static/",
+        "apps/web/app/", "apps/web/components/", "apps/api/app/", "packages/",
+        "storyboard-system/src/", "storyboard-system/packages/", "storyboard-system/static/",
     )
     retirement = [
         path for status, path in statuses
-        if (status.startswith("D") or status.startswith("R")) and path.startswith(critical_prefixes)
+        if status.startswith(("D", "R")) and path.startswith(critical_prefixes)
     ]
 
     large_deletions: list[str] = []
@@ -225,7 +200,7 @@ def check_diff_policy(errors: list[str], base: str | None) -> None:
     if not sensitive:
         return
 
-    required = {docs["active"], docs["owner"]}
+    required = {docs["active"], docs["owner"], docs["state"]}
     if any(p.startswith(("apps/web/", "storyboard-system/src/", "storyboard-system/static/")) for p in sensitive):
         required.update((docs["product"], docs["screen"]))
     if any(p.startswith(("apps/api/", "storyboard-system/")) and not p.startswith(("storyboard-system/src/", "storyboard-system/static/")) for p in sensitive):
@@ -235,11 +210,8 @@ def check_diff_policy(errors: list[str], base: str | None) -> None:
 
     missing = sorted(required - changed)
     if missing:
-        fail(
-            errors,
-            "critical deletion/large contraction requires migration ledgers in the same change; "
-            f"sensitive={sorted(set(sensitive))}; missing={missing}",
-        )
+        fail(errors, "critical deletion/large contraction requires migration ledgers in the same change; "
+             f"sensitive={sorted(set(sensitive))}; missing={missing}")
 
 
 def main() -> int:
@@ -258,7 +230,7 @@ def main() -> int:
             print(f" - {item}", file=sys.stderr)
         return 1
 
-    print("PASS: repository hygiene, constitution, parity inventory, and diff policy are intact")
+    print("PASS: repository hygiene, machine baseline, constitution, and diff policy are intact")
     return 0
 
 

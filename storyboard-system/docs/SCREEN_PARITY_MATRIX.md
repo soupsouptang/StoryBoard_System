@@ -12,7 +12,7 @@ This document tracks the recovery of existing FRAMEFORGE screens in the VNext ar
 | /projects/[id]/shots | /production/[id]/shots | 🟡 INTEGRATED_NOT_CUT_OVER | Dense read-first table. Trash modal restored. Needs inline edit & column tools |
 | /projects/[id]/timeline | /production/[id]/timeline| 🟡 PARTIAL | Present but basic |
 | /projects/[id]/storyboard| /production/[id]/storyboard| 🟡 PARTIAL | Present but basic |
-| /projects/[id]/deliverables| /production/[id]/deliverables| 🟡 PARTIAL | PDF/Export mock UI present, backend export exists but not fully wired with options |
+| /projects/[id]/deliverables| /production/[id]/deliverables| 🟡 PARTIAL | SRT/VTT/EDL/OTIO/CSV 已接真实 V-API 下载；PDF 与其余高级交付仍在迁移 |
 | /projects/[id]/narration | N/A | 🔴 MISSING | Core legacy feature |
 | /projects/[id]/moodboard | N/A | 🔴 MISSING | Core legacy feature |
 | /projects/[id]/planning | N/A | 🔴 MISSING | Core legacy feature |

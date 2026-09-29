@@ -1,0 +1,177 @@
+name: Visual Regression Evidence
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - "apps/web/**"
+      - "packages/ui/**"
+      - "packages/types/**"
+      - "packages/timecode/**"
+      - "apps/api/app/api/v1/auth.py"
+      - "apps/api/app/api/v1/productions.py"
+      - "apps/api/app/api/v1/shots.py"
+      - "apps/api/app/core/config.py"
+      - "apps/api/app/services/seed.py"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/scripts/visual_snapshot.cjs"
+      - ".github/scripts/visual_compare.py"
+      - ".github/workflows/visual-regression.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CI: "true"
+  ENVIRONMENT: "test"
+  NEXT_TELEMETRY_DISABLED: "1"
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  base-vs-head:
+    name: Base vs head screenshot diff
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve comparison base
+        id: base
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE="$(git rev-parse HEAD^)"
+          fi
+          echo "sha=$BASE" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ steps.base.outputs.sha }}
+          path: _base
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install runtime and visual diff dependencies
+        run: |
+          python -m pip install -r apps/api/requirements.txt
+          python -m pip install pillow
+          npm ci
+          npm ci --prefix _base
+          npm ci --prefix storyboard-system --workspaces=false
+          cd storyboard-system
+          npx playwright install --with-deps chromium
+
+      - name: Build base VNext Web
+        working-directory: _base
+        env:
+          NEXT_PUBLIC_API_URL: "http://127.0.0.1:8000"
+        run: |
+          npm run build --workspace=@frameforge/contracts
+          npm run build --workspace=@frameforge/timecode
+          npm run build --workspace=@frameforge/types
+          npm run build --workspace=@frameforge/ui
+          npm run build --workspace=@frameforge/web
+
+      - name: Capture base screenshots
+        shell: bash
+        run: |
+          mkdir -p qa-artifacts/visual/base qa-artifacts/visual/logs
+          DATABASE_URL="sqlite+aiosqlite:///$RUNNER_TEMP/frameforge-visual-base.db"           DATABASE_SYNC_URL="sqlite:///$RUNNER_TEMP/frameforge-visual-base.db"             python -m uvicorn main:app --app-dir _base/apps/api --host 127.0.0.1 --port 8000             > qa-artifacts/visual/logs/base-api.log 2>&1 &
+          API_PID=$!
+          (cd _base && npm run start --workspace=@frameforge/web)             > qa-artifacts/visual/logs/base-web.log 2>&1 &
+          WEB_PID=$!
+          cleanup() {
+            kill "$WEB_PID" "$API_PID" 2>/dev/null || true
+            wait "$WEB_PID" "$API_PID" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8000/healthz >/dev/null 2>&1 && curl -fsS http://127.0.0.1:3000/login >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8000/healthz >/dev/null
+          curl -fsS http://127.0.0.1:3000/login >/dev/null
+          FRAMEFORGE_VISUAL_OUT="$PWD/qa-artifacts/visual/base"             node .github/scripts/visual_snapshot.cjs
+          cleanup
+          trap - EXIT
+
+      - name: Build head VNext Web
+        env:
+          NEXT_PUBLIC_API_URL: "http://127.0.0.1:8000"
+        run: |
+          npm run build --workspace=@frameforge/contracts
+          npm run build --workspace=@frameforge/timecode
+          npm run build --workspace=@frameforge/types
+          npm run build --workspace=@frameforge/ui
+          npm run build --workspace=@frameforge/web
+
+      - name: Capture head screenshots
+        shell: bash
+        run: |
+          mkdir -p qa-artifacts/visual/head
+          DATABASE_URL="sqlite+aiosqlite:///$RUNNER_TEMP/frameforge-visual-head.db"           DATABASE_SYNC_URL="sqlite:///$RUNNER_TEMP/frameforge-visual-head.db"             python -m uvicorn main:app --app-dir apps/api --host 127.0.0.1 --port 8000             > qa-artifacts/visual/logs/head-api.log 2>&1 &
+          API_PID=$!
+          npm run start --workspace=@frameforge/web             > qa-artifacts/visual/logs/head-web.log 2>&1 &
+          WEB_PID=$!
+          cleanup() {
+            kill "$WEB_PID" "$API_PID" 2>/dev/null || true
+            wait "$WEB_PID" "$API_PID" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8000/healthz >/dev/null 2>&1 && curl -fsS http://127.0.0.1:3000/login >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8000/healthz >/dev/null
+          curl -fsS http://127.0.0.1:3000/login >/dev/null
+          FRAMEFORGE_VISUAL_OUT="$PWD/qa-artifacts/visual/head"             node .github/scripts/visual_snapshot.cjs
+          cleanup
+          trap - EXIT
+
+      - name: Decide whether the PR declares UI scope
+        id: scope
+        shell: bash
+        run: |
+          BASE="${{ steps.base.outputs.sha }}"
+          if git diff --name-only "$BASE"...HEAD | grep -Eq '^(apps/web/|packages/ui/|packages/types/|packages/timecode/|package\.json$|package-lock\.json$)'; then
+            echo "allow=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "allow=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compare screenshots and layout metrics
+        shell: bash
+        run: |
+          ARGS=()
+          if [ "${{ steps.scope.outputs.allow }}" = "true" ]; then
+            ARGS+=(--allow-visual-change)
+          fi
+          python .github/scripts/visual_compare.py             --base-dir qa-artifacts/visual/base             --head-dir qa-artifacts/visual/head             --diff-dir qa-artifacts/visual/diff             "${ARGS[@]}"
+
+      - name: Upload before / after / diff visual evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: visual-regression-${{ github.run_id }}
+          path: qa-artifacts/visual
+          retention-days: 14
