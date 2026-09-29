@@ -17,13 +17,15 @@ def main() -> int:
     args = parser.parse_args()
 
     api_root = Path(args.api_root).resolve()
+    output = Path(args.output).resolve()
+    output.parent.mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("ENVIRONMENT", "test")
     sys.path.insert(0, str(api_root))
     os.chdir(api_root)
 
     from main import app
 
-    Path(args.output).write_text(
+    output.write_text(
         json.dumps(app.openapi(), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
