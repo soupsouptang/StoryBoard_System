@@ -20,6 +20,7 @@ const viewports = [
 (async () => {
   const browser = await chromium.launch({ headless: true });
   const failures = [];
+  const report = [];
   try {
     for (const viewport of viewports) {
       const page = await browser.newPage({ viewport });
@@ -56,6 +57,7 @@ const viewports = [
         };
       });
 
+      report.push({ viewport, metrics, browserErrors: errors });
       if (metrics.scrollWidth > metrics.viewportWidth + 1) {
         failures.push(`${viewport.width}px: horizontal overflow ${metrics.scrollWidth} > ${metrics.viewportWidth}`);
       }
@@ -99,6 +101,7 @@ const viewports = [
     await browser.close();
   }
 
+  fs.writeFileSync(path.join(out, 'metrics-report.json'), JSON.stringify(report, null, 2) + '\n');
   if (failures.length) {
     console.error('VNext UI guard FAILED');
     for (const failure of failures) console.error(' - ' + failure);
