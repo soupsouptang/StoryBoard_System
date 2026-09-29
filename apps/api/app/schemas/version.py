@@ -44,7 +44,7 @@ class ShotVersionOut(BaseModel):
 
 
 
-class ShotVersionDetail(ShotVersionOut):
+class ShotVersionDetailOut(ShotVersionOut):
     snapshot: dict[str, Any]
 
 

@@ -13,7 +13,7 @@ from app.schemas.version import (
     ShotVersionCreate,
     ShotVersionMerge,
     ShotVersionCompareResult,
-    ShotVersionDetail,
+    ShotVersionDetailOut,
     ShotVersionMergeResult,
     ShotVersionOut,
     ShotVersionRestore,
@@ -67,13 +67,6 @@ def _version_dict(version) -> dict:
     }
 
 
-def _version_detail_dict(version) -> dict:
-    return {
-        **_version_dict(version),
-        "snapshot": version.snapshot if isinstance(version.snapshot, dict) else {},
-    }
-
-
 @router.get("/shots/{shot_id}/versions", response_model=list[ShotVersionOut])
 async def list_shot_versions(
     shot_id: str,
@@ -123,7 +116,7 @@ async def create_shot_branch(
         raise _http(error)
 
 
-@router.get("/versions/{version_id}", response_model=ShotVersionDetail)
+@router.get("/versions/{version_id}", response_model=ShotVersionDetailOut)
 async def get_shot_version(
     version_id: str,
     db: AsyncSession = Depends(get_db),
@@ -131,7 +124,10 @@ async def get_shot_version(
 ):
     try:
         version = await VersionService.get_version(db, version_id)
-        return _version_detail_dict(version)
+        return {
+            **_version_dict(version),
+            "snapshot": version.snapshot if isinstance(version.snapshot, dict) else {},
+        }
     except DomainError as error:
         raise _http(error)
 
