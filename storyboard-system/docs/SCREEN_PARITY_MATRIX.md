@@ -22,7 +22,7 @@ Status vocabulary:
 | /projects/[id]/shots | /production/[id]/shots | INTEGRATED_NOT_CUT_OVER | Real V-API consumer; selection/Inspector are decoupled, description/VO inline edit is live, modifier multi-select plus method/department/status filtering and sorting are wired to canonical workspace state. Column manager/saved layouts and broader parity remain. |
 | /projects/[id]/timeline | /production/[id]/timeline | IMPLEMENTED_NOT_INTEGRATED | V-Web implementation exists but remains below baseline timeline behavior. |
 | /projects/[id]/storyboard | /production/[id]/storyboard | IMPLEMENTED_NOT_INTEGRATED | V-Web implementation exists but remains below baseline storyboard/wall behavior. |
-| /projects/[id]/deliverables | /production/[id]/deliverables | INTEGRATED_NOT_CUT_OVER | CSV/EDL/OTIO/SRT use real V-API; PDF/Word/layout parity remains incomplete. |
+| /projects/[id]/deliverables | /production/[id]/deliverables | INTEGRATED_NOT_CUT_OVER | CSV/EDL/OTIO/SRT use real V-API; PDF/Word/layout parity remains incomplete. |\n| /projects/[id]/review | /production/[id]/review | INTEGRATED_NOT_CUT_OVER | Fake local comments were removed. The page consumes persisted comments and read-only review history; prohibited global approval-dashboard controls are intentionally absent. Version/compare/Word-style audit and rendered visual parity remain. |
 | /projects/[id]/narration | N/A | BLOCKED | Baseline capability not yet migrated to canonical V-Web. |
 | /projects/[id]/moodboard | N/A | BLOCKED | Baseline capability not yet migrated to canonical V-Web. |
 | /projects/[id]/planning / lighting | N/A | BLOCKED | Baseline scene-planning/lighting capability not yet migrated. |

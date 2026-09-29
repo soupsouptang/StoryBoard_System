@@ -22,7 +22,7 @@ Status vocabulary:
 | Workspace IA: Narration | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |
 | Workspace IA: Moodboard | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |
 | Workspace IA: Lighting | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |
-| Workspace IA: Review | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical V-Web Review now consumes real V-API comments and revision-aware review decisions. Version creation/compare/restore and rendered-browser parity remain incomplete. |
+| Workspace IA: Review | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical V-Web consumes persisted review comments and read-only revision-bound history. Global approve/reject/submit dashboard controls are intentionally absent per current product rules. Version/compare/Word-style audit/inline diff parity and fresh visual QA remain. |
 
 ## 2. Shot Workspace Advanced Capabilities
 | Capability | Baseline | VNext target | Status | Gap / evidence |

@@ -65,7 +65,7 @@ REQUIRED_PRODUCT_CAPABILITIES = (
     "Real-time Sync",
 )
 
-REQUIRED_SCREEN_ROWS = (
+FORBIDDEN_REVIEW_PAGE_TOKENS = (\n    \"useApplyReviewDecision\",\n    \"runDecision(\",\n    \"applyDecision.\",\n)\n\nREQUIRED_SCREEN_ROWS = (
     "/login",
     "/projects",
     "/projects/[id]",
