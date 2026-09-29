@@ -12,7 +12,7 @@
 3. **智能旁白计时算法 (VO Auto-Timing)**：基于中英文文字量与标点停顿权重（逗号 `+8f`、句号 `+16f`、省略号 `+14f`），通过最大余数法自动平衡总片长，严格保护锁定镜头。
 4. **制作方式精细化管理 (Production Method)**：实拍 (LIVE)、购买素材 (STOCK)、客户素材 (CLIENT)、历史资料 (ARCHIVE)、静帧 (STILL)、AE合成 (AE)、MG动效 (MG)、3D三维 (3D)、视效 (VFX)、字卡 (TYPE)。
 5. **智能 Excel/CSV 导入引擎**：多工作表智能探测，支持别名词典模糊匹配、匹配置信度指示、导入前 Diff 预览与冲突检测。
-6. **工业级多格式工程导出**：一键导出 CMX 3600 EDL (DaVinci/Premiere)、OpenTimelineIO (`.otio`)、SubRip (`.srt`) 旁白字幕及 Excel 制作表。
+6. **工业级多格式工程导出**：一键导出 CMX 3600 EDL (DaVinci/Premiere)、OpenTimelineIO (`.otio`)、SubRip (`.srt`)、WebVTT (`.vtt`) 旁白字幕及 Excel 制作表。
 7. **不可猜测 Token 匿名审片分享**：免登录访客只读审片页面 (`/share/[token]`)，包含剧场预览监视器、分镜画册 (Cards) 与全片视觉墙 (Wall) 切换、一键打包下载及随时撤销。
 8. **内外网分离与零数据驻留 (Zero-Residency)**：外网节点仅部署静态应用壳与 L4 TLS Passthrough 密文转发，全量业务数据、账号权限及媒体代理均位于公司内网。
 9. **离线设计体系与排版**：100% 离线内嵌 Google Material Symbols SVG Sprite 注册表，采用更纱黑体 (Sarasa Gothic) 等宽数字排版，DaVinci Resolve / Linear 暗黑专业影视调色台风格。
