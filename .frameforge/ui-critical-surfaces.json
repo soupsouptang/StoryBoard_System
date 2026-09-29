@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "surfaces": [
+    {
+      "route": "/login",
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "width": 1024,
+          "height": 800
+        },
+        {
+          "width": 768,
+          "height": 900
+        },
+        {
+          "width": 375,
+          "height": 812
+        },
+        {
+          "width": 320,
+          "height": 568
+        }
+      ],
+      "invariants": [
+        "no horizontal overflow",
+        "interactive controls remain inside viewport",
+        "keyboard focus enters controls",
+        "locale toggle remains usable",
+        "theme toggle remains usable",
+        "register mode exposes expected fields"
+      ]
+    }
+  ],
+  "screenshot_policy": "Every browser run uploads screenshots and SHA-256 evidence. Exact pixel baselines are established only from a reviewed green run to avoid blessing an unverified image."
+}

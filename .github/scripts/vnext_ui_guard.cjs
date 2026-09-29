@@ -1,5 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const { createHash } = require('node:crypto');
 const { createRequire } = require('node:module');
 
 const requireFromLegacy = createRequire(path.join(process.cwd(), 'package.json'));
@@ -31,10 +32,12 @@ const viewports = [
       });
 
       await page.goto(base + '/login', { waitUntil: 'networkidle' });
+      const screenshotPath = path.join(out, `login-${viewport.width}x${viewport.height}.png`);
       await page.screenshot({
-        path: path.join(out, `login-${viewport.width}x${viewport.height}.png`),
+        path: screenshotPath,
         fullPage: true,
       });
+      const screenshotSha256 = createHash('sha256').update(fs.readFileSync(screenshotPath)).digest('hex');
 
       const metrics = await page.evaluate(() => {
         const root = document.documentElement;
@@ -57,7 +60,7 @@ const viewports = [
         };
       });
 
-      report.push({ viewport, metrics, browserErrors: errors });
+      report.push({ viewport, metrics, screenshotSha256, browserErrors: errors });
       if (metrics.scrollWidth > metrics.viewportWidth + 1) {
         failures.push(`${viewport.width}px: horizontal overflow ${metrics.scrollWidth} > ${metrics.viewportWidth}`);
       }
@@ -107,6 +110,7 @@ const viewports = [
     for (const failure of failures) console.error(' - ' + failure);
     process.exitCode = 1;
   } else {
+    console.log('VISUAL_EVIDENCE ' + JSON.stringify(report));
     console.log('PASS: VNext login rendered and remained usable at 1440/1024/768/375/320');
   }
 })().catch(error => {
