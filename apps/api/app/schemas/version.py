@@ -44,6 +44,10 @@ class ShotVersionOut(BaseModel):
 
 
 
+class ShotVersionDetail(ShotVersionOut):
+    snapshot: dict[str, Any]
+
+
 class ShotVersionRestoreResult(BaseModel):
     changed: bool
     shot_id: str
