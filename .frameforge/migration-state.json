@@ -139,7 +139,8 @@
       ],
       "evidence_paths": [
         "storyboard-system/docs/API_ROUTE_PARITY_MATRIX.md"
-      ]
+      ],
+      "note": "V-Web consumes SRT/VTT/EDL/OTIO/CSV; Legacy remains runtime owner for remaining formats and deployment."
     },
     "review": {
       "matrix_label": "Review",
@@ -330,7 +331,7 @@
       ]
     },
     "postgresql": {
-      "matrix_label": null,
+      "matrix_label": "PostgreSQL persistence",
       "state": "IMPLEMENTED_NOT_INTEGRATED",
       "current_owner_paths": [
         "storyboard-system/server.py"
