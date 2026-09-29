@@ -5,8 +5,6 @@ import { useParams } from 'next/navigation';
 import { Button, Card, Icons, TextArea } from '@frameforge/ui';
 import { useProduction, useShots } from '@/lib/hooks/useProduction';
 import {
-  type ReviewAction,
-  useApplyReviewDecision,
   useCreateReviewComment,
   useResolveReviewComment,
   useReviewComments,
@@ -25,7 +23,7 @@ export default function ReviewPage() {
 
   const [activeShotIndex, setActiveShotIndex] = useState(0);
   const [commentText, setCommentText] = useState('');
-  const [actionError, setActionError] = useState<string | null>(null);
+  const [commentError, setCommentError] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeShotIndex >= shots.length) setActiveShotIndex(0);
@@ -35,34 +33,21 @@ export default function ReviewPage() {
   const shotId = currentShot?.id || '';
 
   const { data: comments = [], isLoading: commentsLoading } = useReviewComments(shotId);
-  const { data: decisions = [] } = useReviewDecisions(shotId);
+  const { data: decisions = [], isLoading: decisionsLoading } = useReviewDecisions(shotId);
   const createComment = useCreateReviewComment(shotId);
   const resolveComment = useResolveReviewComment(shotId);
-  const applyDecision = useApplyReviewDecision(productionId, shotId);
-
-  const runDecision = async (action: ReviewAction) => {
-    if (!currentShot) return;
-    setActionError(null);
-    try {
-      await applyDecision.mutateAsync({
-        revision: currentShot.revision,
-        action
-      });
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : '审片操作失败');
-    }
-  };
 
   const handleAddComment = async (event: React.FormEvent) => {
     event.preventDefault();
     const body = commentText.trim();
     if (!body || !currentShot) return;
-    setActionError(null);
+
+    setCommentError(null);
     try {
       await createComment.mutateAsync(body);
       setCommentText('');
     } catch (error) {
-      setActionError(error instanceof Error ? error.message : '发送批注失败');
+      setCommentError(error instanceof Error ? error.message : '发送批注失败');
     }
   };
 
@@ -82,9 +67,6 @@ export default function ReviewPage() {
     );
   }
 
-  const canSubmit = ['draft', 'in_progress', 'changes_requested'].includes(currentShot.status);
-  const isInReview = currentShot.status === 'review';
-
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:flex-row">
       <aside className="flex max-h-52 w-full shrink-0 flex-col border-b border-border bg-background lg:max-h-none lg:w-72 lg:border-b-0 lg:border-r">
@@ -94,14 +76,14 @@ export default function ReviewPage() {
           </h3>
         </div>
 
-        <div className="flex-1 overflow-y-auto divide-y divide-border">
+        <div className="flex-1 divide-y divide-border overflow-y-auto">
           {shots.map((shot, index) => (
             <button
               key={shot.id}
               type="button"
               onClick={() => {
                 setActiveShotIndex(index);
-                setActionError(null);
+                setCommentError(null);
               }}
               className={`flex w-full items-center justify-between gap-3 p-3 text-left text-xs transition-colors ${
                 index === activeShotIndex
@@ -160,91 +142,24 @@ export default function ReviewPage() {
             </div>
           </Card>
 
-          <Card className="p-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="mr-auto">
-                <div className="text-sm font-semibold text-foreground">审片决策</div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  决策会绑定当前镜头 revision，并写入独立审片记录。
-                </div>
-              </div>
-
-              {canSubmit && (
-                <Button
-                  onClick={() => runDecision('submit')}
-                  disabled={applyDecision.isPending}
-                >
-                  提交意见
-                </Button>
-              )}
-
-              {isInReview && (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={() => runDecision('withdraw')}
-                    disabled={applyDecision.isPending}
-                  >
-                    撤回意见
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => runDecision('request_changes')}
-                    disabled={applyDecision.isPending}
-                  >
-                    驳回意见
-                  </Button>
-                  <Button
-                    onClick={() => runDecision('approve')}
-                    disabled={applyDecision.isPending}
-                  >
-                    同意意见
-                  </Button>
-                </>
-              )}
-
-              {!canSubmit && !isInReview && (
-                <span className="text-xs text-muted-foreground">
-                  当前状态没有可执行的审片动作。
-                </span>
-              )}
-            </div>
-
-            {actionError && (
-              <div role="alert" className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
-                {actionError}
-              </div>
-            )}
-
-            {decisions.length > 0 && (
-              <div className="mt-4 border-t border-border pt-3">
-                <div className="mb-2 text-xs font-semibold text-foreground">最近决策</div>
-                <div className="space-y-1.5">
-                  {decisions.slice(0, 4).map(decision => (
-                    <div
-                      key={decision.id}
-                      className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground"
-                    >
-                      <span>
-                        {decision.action_label} · {decision.previous_status} → {decision.next_status}
-                      </span>
-                      <span className="font-mono">
-                        {new Date(decision.created_at).toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </Card>
-
           <Card className="p-5">
             <div className="mb-4 flex items-center gap-2">
               <Icons.MessageSquare className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-              <h3 className="text-sm font-semibold text-foreground">
-                审片批注与意见 ({comments.length})
-              </h3>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">
+                  审片批注与意见 ({comments.length})
+                </h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  批注直接写入当前镜头的审阅记录。
+                </p>
+              </div>
             </div>
+
+            {commentError && (
+              <div role="alert" className="mb-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
+                {commentError}
+              </div>
+            )}
 
             <div className="space-y-3">
               {commentsLoading ? (
@@ -314,6 +229,42 @@ export default function ReviewPage() {
                 </Button>
               </div>
             </form>
+          </Card>
+
+          <Card className="p-5">
+            <div className="mb-3">
+              <h3 className="text-sm font-semibold text-foreground">审片历史</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                这里只读展示已存在的 revision-bound 决策记录；版本、对比、Word-style Audit 与逐条差异继续按迁移矩阵恢复。
+              </p>
+            </div>
+
+            {decisionsLoading ? (
+              <div className="py-5 text-center text-xs text-muted-foreground">正在加载审片历史...</div>
+            ) : decisions.length === 0 ? (
+              <div className="rounded-md border border-dashed border-border p-5 text-center text-xs text-muted-foreground">
+                暂无审片历史。
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {decisions.map(decision => (
+                  <div
+                    key={decision.id}
+                    className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-xs"
+                  >
+                    <span className="text-foreground">
+                      {decision.action_label}
+                      <span className="ml-2 text-muted-foreground">
+                        {decision.previous_status} → {decision.next_status}
+                      </span>
+                    </span>
+                    <span className="font-mono text-muted-foreground">
+                      {new Date(decision.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
         </div>
       </main>

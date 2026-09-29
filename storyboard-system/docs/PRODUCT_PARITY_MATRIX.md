@@ -22,7 +22,7 @@ Status vocabulary:
 | Workspace IA: Narration | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |
 | Workspace IA: Moodboard | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |
 | Workspace IA: Lighting | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |
-| Workspace IA: Review | Present | Present | BLOCKED | Review/version/comment surface not yet migrated. |
+| Workspace IA: Review | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical V-Web consumes persisted review comments and read-only revision-bound history. Global approve/reject/submit dashboard controls are intentionally absent per current product rules. Version/compare/Word-style audit/inline diff parity and fresh visual QA remain. |
 
 ## 2. Shot Workspace Advanced Capabilities
 | Capability | Baseline | VNext target | Status | Gap / evidence |
@@ -45,7 +45,7 @@ Status vocabulary:
 | Save Status / Dirty Draft | Present | Present | INTEGRATED_NOT_CUT_OVER | Inspector now tracks changed fields and preserves drafts; browser/visual regression still required. |
 | Production Steps | Present | Present | BLOCKED | Not yet migrated. |
 | Custom Fields | Present | Present | BLOCKED | Not yet migrated. |
-| Comments | Present | Present | BLOCKED | Not yet migrated. |
+| Comments | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical Review page reads/writes persisted comments through V-API and supports resolved/reopened state. Edit/delete/reply/quote UX and full browser parity remain. |
 | Versions | Present | Present | BLOCKED | Not yet migrated. |
 | Share | Present | Present | BLOCKED | VNext share contract is not baseline-parity. |
 | Shot Trash | Present | Present | INTEGRATED_NOT_CUT_OVER | Soft delete/list/restore/purge plus project-scoped bulk trash route through `ShotService`; trash/restore now advance revision and all lifecycle mutations emit audit rows. Retention policy and immutable version-history parity remain incomplete. |
