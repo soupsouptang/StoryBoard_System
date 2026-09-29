@@ -1,5 +1,6 @@
 """Shot schemas exported for v1 API routes."""
 from app.schemas.production import (
+    BulkTrashShotsRequest,
     BulkUpdateShotsRequest,
     ShotCreate,
     ShotOut,
@@ -13,6 +14,7 @@ __all__ = [
     "ShotPatch",
     "ShotReorderItem",
     "ShotReorderRequest",
+    "BulkTrashShotsRequest",
     "BulkUpdateShotsRequest",
     "ShotOut",
 ]

@@ -61,3 +61,15 @@ Current implementation target: `master`. Product behavior reference: `5e86a0b`, 
 | Visual warning state | shared warning tokens and Tailwind mapping restored | IMPLEMENTED_NOT_INTEGRATED | verify conflict/dirty states in light/dark browser renders |
 
 Do not begin Narration, Moodboard, Lighting, or wider product recovery until this stabilization slice has passed CI and the Shot workspace has fresh rendered-browser QA.
+
+## 2026-09-29 V-Web UI parity recovery
+
+| Slice | Current evidence | Status | Next gate |
+| --- | --- | --- | --- |
+| Project Hub hierarchy | Real deterministic cover fallback remains; mobile/desktop cards now preserve compact cover hierarchy and accessible open affordance | INTEGRATED_NOT_CUT_OVER | real cover-media resolver plus fresh dark/light browser comparison |
+| Brand / utility controls | Login, Hub and Workspace now share the Film mark plus Lucide Sun/Moon theme semantics; locale controls use the same target-language labels | INTEGRATED_NOT_CUT_OVER | rendered dark/light verification; do not treat source parity as visual acceptance |
+| Shot selection + table toolbar | Selection stays separate from Inspector; Shift range, Ctrl/Cmd toggle, explicit Details action, real search/filter/sort and atomic bulk toolbar coexist on the canonical page | INTEGRATED_NOT_CUT_OVER | browser keyboard/pointer regression and conflict-path QA |
+| Column visibility | Root `@frameforge/ui` now exports a Radix Popover consumed by a real Shot Table column manager; visibility persists per production/browser | INTEGRATED_NOT_CUT_OVER | resize/reorder, server saved-view semantics, archived/purged custom-field lifecycle and context menus remain |
+| Mobile workspace navigation | Horizontal rail now exposes an overflow fade while retaining route access | BLOCKED_VISUAL | inspect 375/320 with recovered full IA before accepting the mobile navigation model |
+
+No UI slice in this section is visually complete until real rendered-browser evidence covers the relevant desktop/narrow widths. The current screenshots remain regression/failure evidence where product parity is still missing.

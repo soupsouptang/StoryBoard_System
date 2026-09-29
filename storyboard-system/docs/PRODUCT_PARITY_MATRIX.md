@@ -31,13 +31,14 @@ Status vocabulary:
 | Inline Double-click Editing | Present | Present | INTEGRATED_NOT_CUT_OVER | Description and voice-over cells use real PATCH; broader field coverage and full keyboard/conflict parity remain. |
 | Row Single Click | Select | Select | INTEGRATED_NOT_CUT_OVER | Selection no longer implicitly opens Inspector. |
 | Row Double Click | Open Inspector | Open Inspector | INTEGRATED_NOT_CUT_OVER | Real consumer exists; broader workspace parity remains. |
-| Column Manager | Present | Present | BLOCKED | Resize/reorder/visibility lifecycle not yet migrated. |
+| Column Manager | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical V-Web now has real show/hide controls persisted per production/browser. Resize/reorder, archived/purged field lifecycle, server-saved layouts and full baseline context-menu semantics remain. |
 | Saved View / Column Layout | Present | Present | BLOCKED | Not yet migrated. |
 | Row Height | Present | Present | BLOCKED | Not yet migrated. |
 | Search | Present | Present | INTEGRATED_NOT_CUT_OVER | Basic local search exists; parity with baseline search/filter semantics is incomplete. |
-| Filtering & Sorting | Present | Present | BLOCKED | Not yet migrated. |
+| Multi-select | Present | Present | INTEGRATED_NOT_CUT_OVER | Shift-range and Ctrl/Cmd toggle selection now use the canonical workspace selection owner; bulk-action UI parity remains incomplete. |
+| Filtering & Sorting | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical V-Web now consumes workspace search plus method/department/status filters and client sorting; advanced baseline filter semantics and persisted saved views remain. |
 | Grouping | Present | Present | BLOCKED | Not yet migrated. |
-| Bulk Actions | Present | Present | BLOCKED | Canonical UI is still missing. V-API bulk writes now use revision-aware atomic `ShotService` semantics and suppress no-op revisions; Panel/custom-field/audit parity remains incomplete. |
+| Bulk Actions | Present | Present | INTEGRATED_NOT_CUT_OVER | Shot Table mounts the canonical bulk toolbar; method/status/department edits use revision-aware atomic `ShotService` writes and bulk trash uses one project-scoped atomic request. Panel/custom-field/audit parity and fresh rendered visual QA remain incomplete. |
 | Context Menu | Present | Present | BLOCKED | Not yet migrated. |
 | Shot Reorder | Present | Present | BLOCKED | API exists but canonical UI/command parity is incomplete. |
 | Undo / Redo | Present | Present | BLOCKED | Not yet migrated. |
@@ -47,7 +48,7 @@ Status vocabulary:
 | Comments | Present | Present | BLOCKED | Not yet migrated. |
 | Versions | Present | Present | BLOCKED | Not yet migrated. |
 | Share | Present | Present | BLOCKED | VNext share contract is not baseline-parity. |
-| Shot Trash | Present | Present | INTEGRATED_NOT_CUT_OVER | Soft delete/list/restore/purge route through `ShotService` and lifecycle API coverage exists; actor/audit history and any real retention policy remain incomplete. |
+| Shot Trash | Present | Present | INTEGRATED_NOT_CUT_OVER | Soft delete/list/restore/purge plus project-scoped bulk trash route through `ShotService`; canonical UI cache refresh and irreversible confirmation are wired. Actor/audit history and any real retention policy remain incomplete. |
 
 ## 3. Server State & Collaboration
 | Capability | Baseline | VNext target | Status | Gap / evidence |

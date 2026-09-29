@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Check, ChevronDown } from 'lucide-react';
-import { Select as Choice, Tooltip } from 'radix-ui';
+import { Popover as FloatingPopover, Select as Choice, Tooltip } from 'radix-ui';
 import { Button, type ButtonProps } from './components/button';
 import { Input } from './components/input';
 import { TextArea } from './components/textarea';
@@ -13,6 +13,44 @@ export type IconButtonProps = ButtonProps & { label: string };
 
 export function UIProvider({ children }: React.PropsWithChildren) {
   return <Tooltip.Provider delayDuration={450}>{children}</Tooltip.Provider>;
+}
+
+export type PopoverProps = React.PropsWithChildren<{
+  label: string;
+  trigger: React.ReactElement;
+  className?: string;
+  align?: 'start' | 'center' | 'end';
+  side?: 'top' | 'right' | 'bottom' | 'left';
+}>;
+
+export function Popover({
+  label,
+  trigger,
+  children,
+  className,
+  align = 'end',
+  side = 'bottom'
+}: PopoverProps) {
+  return (
+    <FloatingPopover.Root>
+      <FloatingPopover.Trigger asChild>{trigger}</FloatingPopover.Trigger>
+      <FloatingPopover.Portal>
+        <FloatingPopover.Content
+          aria-label={label}
+          align={align}
+          side={side}
+          sideOffset={6}
+          collisionPadding={12}
+          className={cn(
+            'z-50 max-h-[min(70vh,520px)] min-w-64 overflow-auto rounded-md border border-border bg-popover p-3 text-popover-foreground shadow-xl outline-none',
+            className
+          )}
+        >
+          {children}
+        </FloatingPopover.Content>
+      </FloatingPopover.Portal>
+    </FloatingPopover.Root>
+  );
 }
 
 export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(

@@ -19,7 +19,7 @@ Status vocabulary:
 | /login | /login | INTEGRATED_NOT_CUT_OVER | Real auth UI exists, but full visual/product parity and runtime cutover evidence are not sufficient for CUTOVER_READY. |
 | /projects | /productions | INTEGRATED_NOT_CUT_OVER | Real API consumer; monogram cover fallback restored. Real cover media and fresh visual QA remain. |
 | /projects/[id] entry | /production/[id] | VERIFIED | Route is now a redirect to the selected Shot workspace; unauthorized feature-card overview is no longer the product path. |
-| /projects/[id]/shots | /production/[id]/shots | INTEGRATED_NOT_CUT_OVER | Real V-API consumer; selection/Inspector decoupled, inline edit and responsive table work are partial. Column tools and broader parity remain. |
+| /projects/[id]/shots | /production/[id]/shots | INTEGRATED_NOT_CUT_OVER | Real V-API consumer; selection/Inspector are decoupled, description/VO inline edit is live, modifier multi-select plus method/department/status filtering and sorting are wired to canonical workspace state. Column manager/saved layouts and broader parity remain. |
 | /projects/[id]/timeline | /production/[id]/timeline | IMPLEMENTED_NOT_INTEGRATED | V-Web implementation exists but remains below baseline timeline behavior. |
 | /projects/[id]/storyboard | /production/[id]/storyboard | IMPLEMENTED_NOT_INTEGRATED | V-Web implementation exists but remains below baseline storyboard/wall behavior. |
 | /projects/[id]/deliverables | /production/[id]/deliverables | INTEGRATED_NOT_CUT_OVER | CSV/EDL/OTIO/SRT use real V-API; PDF/Word/layout parity remains incomplete. |

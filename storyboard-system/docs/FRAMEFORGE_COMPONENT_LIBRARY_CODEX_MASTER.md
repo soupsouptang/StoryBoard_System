@@ -3,7 +3,16 @@
 
 > Status: ACTIVE UI REFACTORING CONTRACT
 > Audit Date: 2026-09-29
-> Baseline: `ARCHITECTURE.md` (2026-09-27 审计增强版)
+> Architecture truth: current `master` + `ARCHITECTURE.md`
+> Visual / component baseline: **shadcn/ui**
+> Functional / product baseline: **`5e86a0bb11a20ecd631d9c2af66260a73d7c92e7`**
+>
+> Baseline rule:
+> - shadcn/ui decides primitive proportions, radius, spacing, focus, overlay and accessibility behavior.
+> - `5e86a0b` decides which existing FRAMEFORGE capabilities and interaction contracts must survive migration.
+> - shadcn visual simplification is never permission to remove a capability present at the functional baseline.
+> - Legacy CSS/DOM is evidence for behavior, not the visual target to copy pixel-for-pixel.
+> - Current explicit user decisions and later accepted removals override `5e86a0b`.
 >
 > Scope:
 > - UI Component Library

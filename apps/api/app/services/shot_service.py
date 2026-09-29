@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import DomainError, NotFoundError, ConflictError
 from app.models.production import Production
 from app.models.shot import Panel, Shot
-from app.schemas.shot import BulkUpdateShotsRequest, ShotCreate, ShotPatch
+from app.schemas.shot import BulkUpdateShotsRequest, ShotCreate, ShotPatch, ShotReorderRequest
 
 class ShotService:
     # Patchable shot data only. Identity, ownership, revision, timestamps,
@@ -154,6 +154,134 @@ class ShotService:
         await db.delete(shot)
         await db.flush()
         return True
+
+    @staticmethod
+    async def bulk_trash_shots(
+        db: AsyncSession,
+        production_id: str,
+        shot_ids: list[str],
+        user_id: str,
+    ) -> dict[str, int | bool]:
+        """Idempotently move selected shots from one production into Trash.
+
+        The full selection is scope-validated before mutation so a stale or
+        cross-production selection cannot leave a partially deleted batch.
+        """
+        unique_ids = list(dict.fromkeys(shot_ids))[:10000]
+        if not unique_ids:
+            raise DomainError("未选择镜头", code="VALIDATION_ERROR")
+
+        result = await db.execute(select(Shot).where(Shot.id.in_(unique_ids)))
+        shots = {shot.id: shot for shot in result.scalars().all()}
+
+        missing_ids = [shot_id for shot_id in unique_ids if shot_id not in shots]
+        foreign_ids = [
+            shot_id for shot_id in unique_ids
+            if shot_id in shots and shots[shot_id].production_id != production_id
+        ]
+        if missing_ids or foreign_ids:
+            raise ConflictError(
+                message="部分镜头不属于当前项目或已不存在，请刷新选择后重试。",
+                details={
+                    "missing_shot_ids": missing_ids,
+                    "foreign_shot_ids": foreign_ids,
+                },
+            )
+
+        now = datetime.now(timezone.utc)
+        moved_count = 0
+        already_trashed_count = 0
+        for shot_id in unique_ids:
+            shot = shots[shot_id]
+            if shot.deleted_at is not None:
+                already_trashed_count += 1
+                continue
+            shot.deleted_at = now
+            shot.updated_at = now
+            moved_count += 1
+
+        if moved_count:
+            await db.flush()
+
+        return {
+            "ok": True,
+            "moved_count": moved_count,
+            "already_trashed_count": already_trashed_count,
+        }
+
+    @staticmethod
+    async def reorder_shots(
+        db: AsyncSession,
+        req: ShotReorderRequest,
+        user_id: str,
+    ) -> dict[str, int | bool]:
+        """Apply an atomic revision-aware numeric reorder.
+
+        Ordering is a shot mutation in the functional baseline. The complete
+        selection is loaded and revision-checked before any sort index changes,
+        so a stale item cannot partially reorder the project.
+        """
+        items = list(req.items)
+        if not items:
+            return {"ok": True, "reordered_count": 0, "unchanged_count": 0}
+
+        shot_ids = [item.id for item in items]
+        if len(shot_ids) != len(set(shot_ids)):
+            raise DomainError("镜头排序列表包含重复镜头", code="VALIDATION_ERROR")
+
+        result = await db.execute(
+            select(Shot).where(
+                Shot.id.in_(shot_ids),
+                Shot.deleted_at.is_(None),
+            )
+        )
+        shots = {shot.id: shot for shot in result.scalars().all()}
+        missing_ids = [shot_id for shot_id in shot_ids if shot_id not in shots]
+        if missing_ids:
+            raise NotFoundError("部分镜头不存在或已进入废纸篓，请刷新后重试。")
+
+        production_ids = {shots[shot_id].production_id for shot_id in shot_ids}
+        if len(production_ids) != 1:
+            raise ConflictError(
+                message="排序请求包含不同项目的镜头，请刷新后重试。",
+                details={"shot_ids": shot_ids},
+            )
+
+        for item in items:
+            shot = shots[item.id]
+            if shot.revision != item.revision:
+                raise ConflictError(
+                    message="排序列表包含已被其他用户更新的镜头，请刷新后重试。",
+                    details={
+                        "shot_id": item.id,
+                        "server_revision": shot.revision,
+                        "client_revision": item.revision,
+                    },
+                )
+
+        reordered_count = 0
+        unchanged_count = 0
+        now = datetime.now(timezone.utc)
+
+        for item in items:
+            shot = shots[item.id]
+            if shot.sort_index == item.sort_index:
+                unchanged_count += 1
+                continue
+
+            shot.sort_index = item.sort_index
+            shot.revision += 1
+            shot.updated_at = now
+            reordered_count += 1
+
+        if reordered_count:
+            await db.flush()
+
+        return {
+            "ok": True,
+            "reordered_count": reordered_count,
+            "unchanged_count": unchanged_count,
+        }
 
     @staticmethod
     async def bulk_update_shots(

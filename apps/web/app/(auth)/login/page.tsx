@@ -55,10 +55,10 @@ export default function LoginPage() {
           size="sm"
           onClick={() => setLocale(locale === 'zh-CN' ? 'en-US' : 'zh-CN')}
           aria-label={locale === 'zh-CN' ? 'Switch to English' : '切换为中文'}
-          className="px-2.5"
+          className="px-2.5 font-mono"
+          title={locale === 'zh-CN' ? 'Switch to English' : '切换为简体中文'}
         >
-          <span className="sm:hidden">{locale === 'zh-CN' ? 'EN' : '中'}</span>
-          <span className="hidden sm:inline">{locale === 'zh-CN' ? 'EN / English' : '中 / 简体中文'}</span>
+          {locale === 'zh-CN' ? 'EN' : '中'}
         </Button>
         <Button
           variant="outline"
@@ -66,9 +66,9 @@ export default function LoginPage() {
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
           className="px-2.5"
+          title={theme === 'dark' ? '切换到亮色主题' : '切换到暗色主题'}
         >
-          <span className="sm:hidden">{theme === 'dark' ? '☀' : '☾'}</span>
-          <span className="hidden sm:inline">{theme === 'dark' ? '☀ Light' : '☾ Dark'}</span>
+          {theme === 'dark' ? <Icons.Sun className="h-4 w-4" /> : <Icons.Moon className="h-4 w-4" />}
         </Button>
       </div>
 

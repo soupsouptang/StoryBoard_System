@@ -13,6 +13,7 @@ from app.models.production import Production
 from app.models.shot import Panel, ProductionStep, Shot
 from app.models.user import User
 from app.schemas.shot import (
+    BulkTrashShotsRequest,
     BulkUpdateShotsRequest,
     ShotCreate,
     ShotOut,
@@ -122,6 +123,32 @@ async def purge_shot(
     return None
 
 
+@router.post("/productions/{production_id}/shots/bulk-trash", status_code=status.HTTP_200_OK)
+async def bulk_trash_shots(
+    production_id: str,
+    req: BulkTrashShotsRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Atomically move a project-scoped shot selection into Trash."""
+    try:
+        return await ShotService.bulk_trash_shots(db, production_id, req.shot_ids, current_user.id)
+    except ConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "BULK_SHOT_SCOPE_CONFLICT",
+                "message": e.message,
+                "details": e.details,
+            },
+        )
+    except DomainError as e:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": e.code, "message": e.message},
+        )
+
+
 @router.get("/productions/{production_id}/shots/trash", response_model=list[dict])
 async def list_trash_shots(
     production_id: str,
@@ -154,15 +181,28 @@ async def reorder_shots(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Transactional numeric reorder (Spec Section 46-47)."""
-    for item in req.items:
-        await db.execute(
-            update(Shot)
-            .where(Shot.id == item.id)
-            .values(sort_index=item.sort_index, updated_at=datetime.now(timezone.utc))
+    """Revision-aware atomic numeric reorder through the canonical ShotService."""
+    try:
+        return await ShotService.reorder_shots(db, req, current_user.id)
+    except NotFoundError as e:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": e.code, "message": e.message},
         )
-    await db.flush()
-    return {"ok": True, "reordered_count": len(req.items)}
+    except ConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "SHOT_REVISION_CONFLICT",
+                "message": e.message,
+                "details": e.details,
+            },
+        )
+    except DomainError as e:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": e.code, "message": e.message},
+        )
 
 
 @router.post("/shots/bulk-update", status_code=status.HTTP_200_OK)

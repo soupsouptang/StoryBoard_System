@@ -91,6 +91,7 @@ class ShotPatch(BaseModel):
 class ShotReorderItem(BaseModel):
     id: str
     sort_index: float
+    revision: int
 
 
 class ShotReorderRequest(BaseModel):
@@ -103,6 +104,10 @@ class BulkUpdateShotsRequest(BaseModel):
     # Expected server revisions for every selected shot. Bulk writes use the
     # same optimistic-concurrency contract as single-shot PATCH.
     revisions: dict[str, int] = Field(default_factory=dict)
+
+
+class BulkTrashShotsRequest(BaseModel):
+    shot_ids: list[str]
 
 
 class ShotOut(BaseModel):

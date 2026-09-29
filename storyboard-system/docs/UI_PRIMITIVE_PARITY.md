@@ -1,6 +1,6 @@
 # UI primitive parity ledger
 
-更新基线：2026-09-29，基于 `c783e99` 根 UI 收敛。旧 owner 是 `storyboard-system/packages/ui`；新 owner 是仓库根 `packages/ui`。消费者数量指直接导入该控件的 TSX 模块数；V = `apps/web`，L = `storyboard-system/src/workspace`。
+更新基线：2026-09-29。**视觉/primitive 基线是 shadcn/ui，功能/交互基线是 `5e86a0b`，实现目标是当前 `master`。** 旧 owner 是 `storyboard-system/packages/ui`；新 owner 是仓库根 `packages/ui`。迁移时保留 `5e86a0b` 的真实能力，但以 shadcn/Radix 的视觉、focus、overlay 和 accessibility 语义重建，不复制 Legacy CSS。消费者数量指直接导入该控件的 TSX 模块数；V = `apps/web`，L = `storyboard-system/src/workspace`。
 
 | Primitive | Old owner / L 消费数 | New owner / V 消费数 | API compatibility | Visual compatibility | Focus behavior | Accessibility | Tests / evidence | Cutover |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -15,6 +15,6 @@
 | Badge | Legacy / 手写 | root / 1（项目状态、方式） | `variant` (default, secondary, destructive, outline) | neutral 语义化微标 | 静态展示 | 状态文本 | V-Web build；项目大厅测试 | INTEGRATED_NOT_CUT_OVER |
 | Checkbox | Legacy / 1 | root / 0 | Radix Checkbox primitive | neutral 边框与勾选态 | 键盘 Tab / Space 切换 | role="checkbox" | 根 UI build；待批量操作消费 | IMPLEMENTED_NOT_INTEGRATED |
 | Icons | Legacy 手写 svg | root (lucide-react) / 全站 | Lucide 图标集导出 | 单一图标系统，语义化尺寸 | 无独立焦点 | aria-hidden | V-Web 全站实装 | INTEGRATED_NOT_CUT_OVER |
-| Popover / Menu / Modal | Legacy / 2 / 1 / 0 | root / 0 | 控制状态、关闭、对齐待迁 | collision/portal/层级待迁 | Escape/外点/焦点返回待迁 | dialog/menu 语义待迁 | 旧工作区用例不能证明根包 | BLOCKED（root 未迁） |
+| Popover / Menu / Modal | Legacy / 2 / 1 / 0 | root Popover / V Shot Table 1；Menu/Modal 未迁 | Popover 已使用 Radix portal/collision；Menu/Modal 待迁 | canonical Shot Table 列管理已消费 Popover；视觉仍待浏览器复核 | Popover 继承 Radix Escape/外点/焦点返回；需真实浏览器证明 | aria-label + Radix trigger/content；Menu/Dialog 仍待迁 | V-Web 列管理为真实 consumer；尚无本轮 rendered-browser 证据 | INTEGRATED_NOT_CUT_OVER（Popover）；Menu/Modal BLOCKED |
 
 删除 Legacy 同名包前，必须完成根包 primitive parity，旧工作区改为消费根包，并让 `storyboard-system npm run check` 与 `apps/web build`、实际浏览器焦点和视觉测试同时通过。未达到门槛前两个 source tree 保留，禁止宣称 `CUT_OVER`。

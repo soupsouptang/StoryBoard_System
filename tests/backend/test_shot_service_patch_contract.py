@@ -114,6 +114,7 @@ def _service_class():
         "AsyncSession": object,
         "ShotCreate": object,
         "ShotPatch": object,
+        "ShotReorderRequest": object,
         "BulkUpdateShotsRequest": object,
         "Shot": _Shot,
         "select": lambda model: _Select(),
@@ -247,6 +248,61 @@ class ShotServiceMutationContractTest(unittest.TestCase):
         self.assertEqual([shot.revision for shot in shots], [4, 6])
         self.assertEqual(db.flush_count, 1)
 
+
+
+    def test_reorder_noop_does_not_increment_revision(self):
+        shots = [_Shot("shot-1", revision=3), _Shot("shot-2", revision=5)]
+        shots[0].sort_index = 1000.0
+        shots[1].sort_index = 2000.0
+        db = _Session(shots)
+        request = SimpleNamespace(items=[
+            SimpleNamespace(id="shot-1", sort_index=1000.0, revision=3),
+            SimpleNamespace(id="shot-2", sort_index=2000.0, revision=5),
+        ])
+
+        result = asyncio.run(_service_class().reorder_shots(db, request, "editor-1"))
+
+        self.assertEqual(result, {"ok": True, "reordered_count": 0, "unchanged_count": 2})
+        self.assertEqual([shot.revision for shot in shots], [3, 5])
+        self.assertEqual(db.flush_count, 0)
+
+    def test_reorder_conflict_is_checked_before_any_mutation(self):
+        shots = [_Shot("shot-1", revision=3), _Shot("shot-2", revision=5)]
+        shots[0].sort_index = 1000.0
+        shots[1].sort_index = 2000.0
+        db = _Session(shots)
+        request = SimpleNamespace(items=[
+            SimpleNamespace(id="shot-1", sort_index=2000.0, revision=3),
+            SimpleNamespace(id="shot-2", sort_index=1000.0, revision=4),
+        ])
+
+        with self.assertRaises(_ConflictError) as conflict:
+            asyncio.run(_service_class().reorder_shots(db, request, "editor-1"))
+
+        self.assertEqual(
+            conflict.exception.details,
+            {"shot_id": "shot-2", "server_revision": 5, "client_revision": 4},
+        )
+        self.assertEqual([shot.sort_index for shot in shots], [1000.0, 2000.0])
+        self.assertEqual([shot.revision for shot in shots], [3, 5])
+        self.assertEqual(db.flush_count, 0)
+
+    def test_reorder_changed_rows_increment_once_and_flush_once(self):
+        shots = [_Shot("shot-1", revision=3), _Shot("shot-2", revision=5)]
+        shots[0].sort_index = 1000.0
+        shots[1].sort_index = 2000.0
+        db = _Session(shots)
+        request = SimpleNamespace(items=[
+            SimpleNamespace(id="shot-1", sort_index=2000.0, revision=3),
+            SimpleNamespace(id="shot-2", sort_index=1000.0, revision=5),
+        ])
+
+        result = asyncio.run(_service_class().reorder_shots(db, request, "editor-1"))
+
+        self.assertEqual(result, {"ok": True, "reordered_count": 2, "unchanged_count": 0})
+        self.assertEqual([shot.sort_index for shot in shots], [2000.0, 1000.0])
+        self.assertEqual([shot.revision for shot in shots], [4, 6])
+        self.assertEqual(db.flush_count, 1)
 
 if __name__ == "__main__":
     unittest.main()

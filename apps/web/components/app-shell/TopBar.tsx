@@ -21,7 +21,7 @@ export function TopBar({ production }: TopBarProps) {
       <div className="flex min-w-0 items-center gap-3">
         <Link href="/productions" className="flex items-center gap-2.5 group">
           <div className="flex h-7 w-7 items-center justify-center rounded bg-accent text-accent-foreground border border-border group-hover:border-ring transition shadow-sm">
-            <Icons.Clapperboard className="h-4 w-4" />
+            <Icons.Film className="h-4 w-4" />
           </div>
           <span className="font-bold text-sm tracking-tight text-foreground group-hover:text-foreground transition">
             {t('appName')}
@@ -54,19 +54,20 @@ export function TopBar({ production }: TopBarProps) {
         <Button variant="outline" size="sm"
           onClick={() => setLocale(locale === 'zh-CN' ? 'en-US' : 'zh-CN')}
           className="rounded border border-border bg-background px-2 py-1 font-mono text-foreground hover:border-ring hover:text-foreground transition"
-          title="切换中英文语言"
+          title={locale === 'zh-CN' ? 'Switch to English' : '切换为简体中文'}
+          aria-label={locale === 'zh-CN' ? 'Switch to English' : '切换为简体中文'}
         >
-          {locale === 'zh-CN' ? 'EN' : '中文'}
+          {locale === 'zh-CN' ? 'EN' : '中'}
         </Button>
 
         {/* Theme Toggle */}
         <Button variant="outline" size="sm"
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
           className="rounded border border-border bg-background px-2.5 py-1 text-foreground hover:border-ring hover:text-foreground transition"
-          title="切换暗黑/明亮主题"
-          aria-label="切换暗黑或明亮主题"
+          title={theme === 'dark' ? '切换到亮色主题' : '切换到暗色主题'}
+          aria-label={theme === 'dark' ? '切换到亮色主题' : '切换到暗色主题'}
         >
-          {theme === 'dark' ? '☀' : '☾'}
+          {theme === 'dark' ? <Icons.Sun className="h-4 w-4" /> : <Icons.Moon className="h-4 w-4" />}
         </Button>
 
         {/* User Menu */}
