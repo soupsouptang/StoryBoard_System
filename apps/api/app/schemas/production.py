@@ -50,6 +50,7 @@ class ProductionOut(BaseModel):
     updated_at: Any
     shot_count: Optional[int] = 0
     total_duration_frames: Optional[int] = 0
+    cover_media_id: Optional[str] = None
 
     class Config:
         from_attributes = True
