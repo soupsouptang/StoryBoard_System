@@ -64,6 +64,10 @@ jobs:
       - name: Upgrade fresh PostgreSQL database to head
         working-directory: apps/api
         run: python -m alembic -c alembic.ini upgrade head
+      - name: Detect SQLAlchemy / Alembic schema drift
+        working-directory: apps/api
+        run: python -m alembic -c alembic.ini check
+
       - name: Verify canonical tables and Alembic version
         working-directory: apps/api
         run: |

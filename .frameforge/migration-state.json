@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "updated": "2026-09-29",
+  "states": [
+    "VERIFIED",
+    "IMPLEMENTED_NOT_INTEGRATED",
+    "INTEGRATED_NOT_CUT_OVER",
+    "CUTOVER_READY",
+    "CUT_OVER",
+    "LEGACY_RETIRED",
+    "BLOCKED"
+  ],
+  "capabilities": {
+    "http_api": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "storyboard-system/server.py",
+      "target_owner": "apps/api",
+      "real_consumer": false,
+      "legacy_owner_active": true
+    },
+    "authentication": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "storyboard-system/server.py",
+      "target_owner": "apps/api/app/api/v1/auth.py",
+      "real_consumer": false,
+      "legacy_owner_active": true
+    },
+    "production": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "storyboard-system/server.py",
+      "target_owner": "apps/api/app/api/v1/productions.py",
+      "real_consumer": false,
+      "legacy_owner_active": true
+    },
+    "shot_crud": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "storyboard-system/server.py + shot_updates.py",
+      "target_owner": "apps/api/app/api/v1/shots.py",
+      "real_consumer": true,
+      "legacy_owner_active": true
+    },
+    "export": {
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner": "storyboard-system/server.py + delivery_exports.py",
+      "target_owner": "apps/api/app/api/v1/exports.py",
+      "real_consumer": true,
+      "legacy_owner_active": true,
+      "integrated_formats": [
+        "srt",
+        "edl",
+        "otio",
+        "csv"
+      ]
+    },
+    "workspace_shell": {
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner": "storyboard-system/static",
+      "target_owner": "apps/web",
+      "real_consumer": true,
+      "legacy_owner_active": true
+    },
+    "ui_components": {
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner": "storyboard-system/packages/ui + handwritten controls",
+      "target_owner": "packages/ui",
+      "real_consumer": true,
+      "legacy_owner_active": true
+    },
+    "presence": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "Legacy collaboration manager",
+      "target_owner": "apps/api realtime + apps/web",
+      "real_consumer": false,
+      "legacy_owner_active": true
+    },
+    "ai": {
+      "state": "BLOCKED",
+      "current_owner": "Legacy ai_system / default disabled",
+      "target_owner": "apps/api + apps/web",
+      "real_consumer": false,
+      "legacy_owner_active": true
+    },
+    "postgresql": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "Legacy SQLite runtime",
+      "target_owner": "PostgreSQL + Alembic",
+      "real_consumer": false,
+      "legacy_owner_active": true,
+      "evidence": [
+        "GitHub Actions empty PostgreSQL -> Alembic head rehearsal"
+      ]
+    },
+    "table": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "storyboard-system/static/app.js",
+      "target_owner": "apps/web",
+      "real_consumer": true,
+      "legacy_owner_active": true
+    },
+    "inspector": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "storyboard-system/static/app.js",
+      "target_owner": "apps/web",
+      "real_consumer": true,
+      "legacy_owner_active": true
+    },
+    "selection": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "Legacy state.selection",
+      "target_owner": "apps/web workspace store",
+      "real_consumer": true,
+      "legacy_owner_active": true
+    }
+  }
+}
