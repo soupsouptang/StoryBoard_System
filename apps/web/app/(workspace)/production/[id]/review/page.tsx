@@ -17,8 +17,6 @@ import {
 } from '@frameforge/ui';
 import { useProduction, useShots } from '@/lib/hooks/useProduction';
 import {
-  type ReviewAction,
-  useApplyReviewDecision,
   useCreateReviewComment,
   useResolveReviewComment,
   useReviewComments,
@@ -126,7 +124,6 @@ export default function ReviewPage() {
   const { data: decisions = [] } = useReviewDecisions(shotId);
   const createComment = useCreateReviewComment(shotId);
   const resolveComment = useResolveReviewComment(shotId);
-  const applyDecision = useApplyReviewDecision(productionId, shotId);
   const { data: versions = [], isLoading: versionsLoading } = useShotVersions(shotId);
   const { data: selectedVersionDetail, isLoading: versionDetailLoading } =
     useShotVersionDetail(selectedVersionId);
@@ -143,20 +140,6 @@ export default function ReviewPage() {
     setBranchParentVersionId(null);
     setBranchName('');
   }, [shotId]);
-
-  const runDecision = async (action: ReviewAction) => {
-    if (!currentShot) return;
-    setActionError(null);
-    try {
-      await applyDecision.mutateAsync({
-        revision: currentShot.revision,
-        action,
-        versionId: selectedVersionId
-      });
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : '审片操作失败');
-    }
-  };
 
   const handleCreateVersion = async () => {
     setActionError(null);
@@ -252,8 +235,6 @@ export default function ReviewPage() {
     );
   }
 
-  const canSubmit = ['draft', 'in_progress', 'changes_requested'].includes(currentShot.status);
-  const isInReview = currentShot.status === 'review';
   const currentShotRecord = currentShot as unknown as Record<string, unknown>;
   const versionChanges = selectedVersionDetail
     ? Object.entries(selectedVersionDetail.snapshot)
@@ -505,53 +486,11 @@ export default function ReviewPage() {
           </Card>
 
           <Card className="p-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="mr-auto">
-                <div className="text-sm font-semibold text-foreground">审片决策</div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  决策会绑定当前镜头 revision，并写入独立审片记录。
-                </div>
+            <div>
+              <div className="text-sm font-semibold text-foreground">审片历史</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                这里只读展示已写入的 revision-bound 审片记录；Review 页面不提供全局审批看板。
               </div>
-
-              {canSubmit && (
-                <Button
-                  onClick={() => runDecision('submit')}
-                  disabled={applyDecision.isPending}
-                >
-                  提交意见
-                </Button>
-              )}
-
-              {isInReview && (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={() => runDecision('withdraw')}
-                    disabled={applyDecision.isPending}
-                  >
-                    撤回意见
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => runDecision('request_changes')}
-                    disabled={applyDecision.isPending}
-                  >
-                    驳回意见
-                  </Button>
-                  <Button
-                    onClick={() => runDecision('approve')}
-                    disabled={applyDecision.isPending}
-                  >
-                    同意意见
-                  </Button>
-                </>
-              )}
-
-              {!canSubmit && !isInReview && (
-                <span className="text-xs text-muted-foreground">
-                  当前状态没有可执行的审片动作。
-                </span>
-              )}
             </div>
 
             {actionError && (
@@ -560,24 +499,28 @@ export default function ReviewPage() {
               </div>
             )}
 
-            {decisions.length > 0 && (
-              <div className="mt-4 border-t border-border pt-3">
-                <div className="mb-2 text-xs font-semibold text-foreground">最近决策</div>
-                <div className="space-y-1.5">
-                  {decisions.slice(0, 4).map(decision => (
-                    <div
-                      key={decision.id}
-                      className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground"
-                    >
-                      <span>
-                        {decision.action_label} · {decision.previous_status} → {decision.next_status}
+            {decisions.length === 0 ? (
+              <div className="mt-3 rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+                暂无审片历史。
+              </div>
+            ) : (
+              <div className="mt-3 divide-y divide-border border-t border-border">
+                {decisions.map(decision => (
+                  <div
+                    key={decision.id}
+                    className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-xs"
+                  >
+                    <span className="text-foreground">
+                      {decision.action_label}
+                      <span className="ml-2 text-muted-foreground">
+                        {decision.previous_status} → {decision.next_status}
                       </span>
-                      <span className="font-mono">
-                        {new Date(decision.created_at).toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                    </span>
+                    <span className="font-mono text-muted-foreground">
+                      {new Date(decision.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </Card>
