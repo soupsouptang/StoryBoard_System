@@ -152,42 +152,86 @@ export function useBulkUpdateShots(productionId: string) {
   });
 }
 
+export interface ReorderShotsInput {
+  orderedShotIds: string[];
+  baseOrder: string[];
+  revisions: Record<string, number>;
+}
+
 export function useReorderShots(productionId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (orderedShotIds: string[]) => {
-      const currentShots = queryClient.getQueryData<Shot[]>(['shots', productionId]) ?? [];
-      const activeOrder = [...currentShots]
-        .sort((a, b) => (a.sort_index - b.sort_index) || a.id.localeCompare(b.id))
-        .map(shot => shot.id);
-
+    mutationKey: ['shots', productionId, 'reorder'],
+    mutationFn: async ({ orderedShotIds, baseOrder, revisions }: ReorderShotsInput) => {
       if (
-        orderedShotIds.length !== activeOrder.length ||
-        new Set(orderedShotIds).size !== activeOrder.length ||
-        activeOrder.some(id => !orderedShotIds.includes(id))
+        orderedShotIds.length !== baseOrder.length ||
+        new Set(orderedShotIds).size !== baseOrder.length ||
+        new Set(baseOrder).size !== baseOrder.length ||
+        baseOrder.some(id => !orderedShotIds.includes(id)) ||
+        baseOrder.some(id => revisions[id] === undefined)
       ) {
-        throw new Error('重新排序必须包含当前项目的完整镜头集合，请刷新后重试。');
+        throw new Error(
+          '重新排序必须包含当前项目的完整镜头集合和版本信息，请刷新后重试。'
+        );
       }
-
-      const byId = new Map(currentShots.map(shot => [shot.id, shot]));
 
       return apiClient('/api/v1/shots/reorder', {
         method: 'POST',
         json: {
           production_id: productionId,
-          base_order: activeOrder,
+          base_order: baseOrder,
           items: orderedShotIds.map((id, index) => ({
             id,
             sort_index: (index + 1) * 1000,
-            revision: byId.get(id)!.revision
+            revision: revisions[id]
           }))
         }
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['shots', productionId] });
-      queryClient.invalidateQueries({ queryKey: ['production', productionId] });
+    onMutate: async ({ orderedShotIds }) => {
+      await queryClient.cancelQueries({ queryKey: ['shots', productionId] });
+      const currentShots =
+        queryClient.getQueryData<Shot[]>(['shots', productionId]) ?? [];
+      const previousSortIndexes = Object.fromEntries(
+        currentShots.map(shot => [shot.id, shot.sort_index])
+      );
+      const rank = new Map(orderedShotIds.map((id, index) => [id, index]));
+
+      queryClient.setQueryData<Shot[]>(['shots', productionId], old => {
+        if (!old) return old;
+        return old
+          .map(shot => {
+            const index = rank.get(shot.id);
+            return index === undefined
+              ? shot
+              : { ...shot, sort_index: (index + 1) * 1000 };
+          })
+          .sort((a, b) => (a.sort_index - b.sort_index) || a.id.localeCompare(b.id));
+      });
+
+      return { previousSortIndexes };
+    },
+    onError: (_error, _variables, context) => {
+      if (!context?.previousSortIndexes) return;
+
+      queryClient.setQueryData<Shot[]>(['shots', productionId], old => {
+        if (!old) return old;
+        return old
+          .map(shot => {
+            const previousSortIndex = context.previousSortIndexes[shot.id];
+            return previousSortIndex === undefined
+              ? shot
+              : { ...shot, sort_index: previousSortIndex };
+          })
+          .sort((a, b) => (a.sort_index - b.sort_index) || a.id.localeCompare(b.id));
+      });
+    },
+    onSettled: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['shots', productionId] }),
+        queryClient.invalidateQueries({ queryKey: ['production', productionId] })
+      ]);
     }
   });
 }

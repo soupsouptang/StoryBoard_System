@@ -2,7 +2,7 @@
 
 import { Button, Icons, Input, Select } from '@frameforge/ui';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import type { Shot } from '@frameforge/types';
 import { useProduction, useReorderShots, useShots, useUpdateShot } from '@/lib/hooks/useProduction';
@@ -85,8 +85,25 @@ export default function ShotListPage() {
     () => defaultShotTablePresentationPreferences()
   );
   const [contextTarget, setContextTarget] = useState<ShotTableContextTarget | null>(null);
-  const [draggedShotId, setDraggedShotId] = useState<string | null>(null);
-  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const [reorderPreview, setReorderPreview] = useState<{
+    sourceIds: string[];
+    targetId: string | null;
+    insertAfter: boolean;
+    x: number;
+    y: number;
+  } | null>(null);
+  const reorderDragRef = useRef<{
+    pointerId: number;
+    sourceId: string;
+    groupIds: string[];
+    startX: number;
+    startY: number;
+    active: boolean;
+    targetId: string | null;
+    insertAfter: boolean;
+    handle: HTMLButtonElement;
+    timer: ReturnType<typeof setTimeout>;
+  } | null>(null);
 
   const {
     filters,
@@ -323,7 +340,8 @@ export default function ShotListPage() {
 
   const visibleShots = useMemo(() => {
     const query = filters.searchQuery.trim().toLowerCase();
-    const filtered = shots.filter(item => {
+    const orderedShots = [...shots].sort((a, b) => (a.sort_index - b.sort_index) || a.id.localeCompare(b.id));
+    const filtered = orderedShots.filter(item => {
       if (
         query &&
         ![
@@ -362,6 +380,234 @@ export default function ShotListPage() {
     });
   }, [shots, filters, sortKey, sortDirection]);
 
+  const canonicalShots = useMemo(
+    () => [...shots].sort((a, b) => (a.sort_index - b.sort_index) || a.id.localeCompare(b.id)),
+    [shots]
+  );
+  const canonicalShotIds = useMemo(
+    () => canonicalShots.map(shot => shot.id),
+    [canonicalShots]
+  );
+
+  const clearShotReorderDrag = () => {
+    const drag = reorderDragRef.current;
+    if (drag) {
+      clearTimeout(drag.timer);
+      try {
+        drag.handle.releasePointerCapture(drag.pointerId);
+      } catch {
+        // Pointer capture may already have been released by the browser.
+      }
+    }
+    reorderDragRef.current = null;
+    setReorderPreview(null);
+  };
+
+  const movingGroupFor = (sourceId: string) => {
+    if (!selectedShotIds.includes(sourceId) || selectedShotIds.length <= 1) {
+      return [sourceId];
+    }
+    const selected = new Set(selectedShotIds);
+    return canonicalShotIds.filter(shotId => selected.has(shotId));
+  };
+
+  const commitShotReorder = async (
+    sourceId: string,
+    targetId: string,
+    insertAfter: boolean,
+    groupIds: string[]
+  ) => {
+    if (sortKey !== 'default' || reorderShots.isPending) return;
+
+    const valid = new Set(canonicalShotIds);
+    const movingSet = new Set(
+      [sourceId, ...groupIds].filter(shotId => valid.has(shotId))
+    );
+    if (!movingSet.size || movingSet.has(targetId) || !valid.has(targetId)) return;
+
+    const moving = canonicalShotIds.filter(shotId => movingSet.has(shotId));
+    const remaining = canonicalShotIds.filter(shotId => !movingSet.has(shotId));
+    let insertion = remaining.indexOf(targetId);
+    if (insertion < 0) return;
+    if (insertAfter) insertion += 1;
+
+    const nextOrder = [
+      ...remaining.slice(0, insertion),
+      ...moving,
+      ...remaining.slice(insertion)
+    ];
+    if (nextOrder.every((shotId, index) => shotId === canonicalShotIds[index])) return;
+
+    try {
+      await reorderShots.mutateAsync({
+        orderedShotIds: nextOrder,
+        baseOrder: canonicalShotIds,
+        revisions: Object.fromEntries(canonicalShots.map(shot => [shot.id, shot.revision]))
+      });
+    } catch {
+      // Mutation error state is rendered above the table; optimistic state is
+      // rolled back by the hook before the next interaction is allowed.
+    }
+  };
+
+  const beginShotReorder = (
+    shotId: string,
+    event: React.PointerEvent<HTMLButtonElement>
+  ) => {
+    event.stopPropagation();
+    if (sortKey !== 'default' || reorderShots.isPending) return;
+
+    event.preventDefault();
+    const groupIds = movingGroupFor(shotId);
+    const drag = {
+      pointerId: event.pointerId,
+      sourceId: shotId,
+      groupIds,
+      startX: event.clientX,
+      startY: event.clientY,
+      active: false,
+      targetId: null as string | null,
+      insertAfter: false,
+      handle: event.currentTarget,
+      timer: undefined as unknown as ReturnType<typeof setTimeout>
+    };
+
+    const activate = () => {
+      if (reorderDragRef.current !== drag || drag.active) return;
+      drag.active = true;
+      window.getSelection()?.removeAllRanges();
+      setReorderPreview({
+        sourceIds: drag.groupIds,
+        targetId: drag.targetId,
+        insertAfter: drag.insertAfter,
+        x: drag.startX,
+        y: drag.startY
+      });
+    };
+
+    drag.timer = setTimeout(activate, event.pointerType === 'mouse' ? 90 : 260);
+    reorderDragRef.current = drag;
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture is a progressive enhancement for drag continuity.
+    }
+  };
+
+  const moveShotReorder = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = reorderDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const distance = Math.hypot(
+      event.clientX - drag.startX,
+      event.clientY - drag.startY
+    );
+
+    if (!drag.active) {
+      if (event.pointerType === 'mouse' && distance > 4) {
+        clearTimeout(drag.timer);
+        drag.active = true;
+      } else if (event.pointerType !== 'mouse' && distance > 10) {
+        clearShotReorderDrag();
+        return;
+      } else {
+        return;
+      }
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const target = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest('tr[data-shot-id]') as HTMLTableRowElement | null;
+    const targetId = target?.dataset.shotId || null;
+
+    if (!target || !targetId || drag.groupIds.includes(targetId)) {
+      drag.targetId = null;
+      setReorderPreview({
+        sourceIds: drag.groupIds,
+        targetId: null,
+        insertAfter: false,
+        x: event.clientX,
+        y: event.clientY
+      });
+      return;
+    }
+
+    const rect = target.getBoundingClientRect();
+    drag.targetId = targetId;
+    drag.insertAfter = event.clientY >= rect.top + rect.height / 2;
+    setReorderPreview({
+      sourceIds: drag.groupIds,
+      targetId,
+      insertAfter: drag.insertAfter,
+      x: event.clientX,
+      y: event.clientY
+    });
+  };
+
+  const finishShotReorder = (
+    event: React.PointerEvent<HTMLButtonElement>,
+    shouldCommit: boolean
+  ) => {
+    const drag = reorderDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    if (drag.active) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    const snapshot = {
+      sourceId: drag.sourceId,
+      groupIds: drag.groupIds,
+      targetId: drag.targetId,
+      insertAfter: drag.insertAfter,
+      active: drag.active
+    };
+    clearShotReorderDrag();
+
+    if (shouldCommit && snapshot.active && snapshot.targetId) {
+      void commitShotReorder(
+        snapshot.sourceId,
+        snapshot.targetId,
+        snapshot.insertAfter,
+        snapshot.groupIds
+      );
+    }
+  };
+
+  const moveShotByKeyboard = (sourceId: string, direction: -1 | 1) => {
+    if (sortKey !== 'default' || reorderShots.isPending) return;
+    const groupIds = movingGroupFor(sourceId);
+    const group = new Set(groupIds);
+    const first = canonicalShotIds.findIndex(shotId => group.has(shotId));
+    let last = -1;
+    canonicalShotIds.forEach((shotId, index) => {
+      if (group.has(shotId)) last = index;
+    });
+
+    if (direction < 0) {
+      for (let index = first - 1; index >= 0; index -= 1) {
+        const targetId = canonicalShotIds[index];
+        if (!group.has(targetId)) {
+          void commitShotReorder(sourceId, targetId, false, groupIds);
+          return;
+        }
+      }
+      return;
+    }
+
+    for (let index = last + 1; index < canonicalShotIds.length; index += 1) {
+      const targetId = canonicalShotIds[index];
+      if (!group.has(targetId)) {
+        void commitShotReorder(sourceId, targetId, true, groupIds);
+        return;
+      }
+    }
+  };
+
   if (!production) return null;
 
   const fps = production.fps_num / (production.fps_den || 1);
@@ -382,48 +628,6 @@ export default function ShotListPage() {
     filters.department !== 'all',
     filters.status !== 'all'
   ].filter(Boolean).length;
-
-  const canonicalOrder = useMemo(
-    () => [...shots]
-      .sort((a, b) => (a.sort_index - b.sort_index) || a.id.localeCompare(b.id))
-      .map(shot => shot.id),
-    [shots]
-  );
-
-  const canReorder =
-    sortKey === 'default' &&
-    sortDirection === 'asc' &&
-    !filters.searchQuery.trim() &&
-    filters.primaryMethod === 'all' &&
-    filters.department === 'all' &&
-    filters.status === 'all' &&
-    visibleShots.length === shots.length &&
-    shots.length > 1;
-
-  const moveShotByKeyboard = async (shotId: string, direction: -1 | 1) => {
-    if (!canReorder || reorderShots.isPending) return;
-    const currentIndex = canonicalOrder.indexOf(shotId);
-    const targetIndex = currentIndex + direction;
-    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= canonicalOrder.length) return;
-
-    const nextOrder = [...canonicalOrder];
-    [nextOrder[currentIndex], nextOrder[targetIndex]] = [
-      nextOrder[targetIndex],
-      nextOrder[currentIndex]
-    ];
-    await reorderShots.mutateAsync(nextOrder);
-  };
-
-  const commitRowDrop = async (sourceId: string, targetId: string) => {
-    if (!canReorder || reorderShots.isPending || sourceId === targetId) return;
-
-    const nextOrder = canonicalOrder.filter(id => id !== sourceId);
-    const targetIndex = nextOrder.indexOf(targetId);
-    if (targetIndex < 0) return;
-
-    nextOrder.splice(targetIndex, 0, sourceId);
-    await reorderShots.mutateAsync(nextOrder);
-  };
 
   const toggleLock = async (shot: Shot, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -456,6 +660,21 @@ export default function ShotListPage() {
           {selectedShotIds.length > 0 && (
             <span className="whitespace-nowrap rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
               已选 {selectedShotIds.length}
+            </span>
+          )}
+
+          {reorderShots.isPending && (
+            <span className="whitespace-nowrap text-[11px] font-mono text-muted-foreground">
+              ↻ 排序同步中…
+            </span>
+          )}
+          {reorderShots.error && (
+            <span
+              role="alert"
+              className="max-w-72 truncate text-[11px] text-destructive"
+              title={reorderShots.error instanceof Error ? reorderShots.error.message : '镜头排序保存失败'}
+            >
+              {reorderShots.error instanceof Error ? reorderShots.error.message : '镜头排序保存失败'}
             </span>
           )}
 
@@ -507,15 +726,6 @@ export default function ShotListPage() {
               onRowHeightChange={handleRowHeightChange}
               onReset={resetColumnLayout}
             />
-
-            {!canReorder && shots.length > 1 && (
-              <span
-                className="hidden whitespace-nowrap text-[11px] text-muted-foreground xl:inline"
-                title="清除搜索/筛选并恢复默认升序后可拖动镜号旁的手柄调整顺序"
-              >
-                顺序已锁定
-              </span>
-            )}
 
             <Button
               variant="ghost"
@@ -611,6 +821,17 @@ export default function ShotListPage() {
           productionId={production.id}
           onClose={() => setIsTrashOpen(false)}
         />
+      )}
+
+      {reorderPreview && reorderPreview.sourceIds.length > 1 && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed z-[80] flex items-center gap-1 rounded-md border border-border bg-popover px-2 py-1 text-[11px] font-medium text-popover-foreground shadow-md"
+          style={{ left: reorderPreview.x + 14, top: reorderPreview.y + 14 }}
+        >
+          <Icons.GripVertical className="h-3 w-3 text-muted-foreground" />
+          {reorderPreview.sourceIds.length} 个镜头
+        </div>
       )}
 
       <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
@@ -747,27 +968,7 @@ export default function ShotListPage() {
                   return (
                     <tr
                       key={shot.id}
-                      onDragOver={event => {
-                        if (!canReorder || !draggedShotId) return;
-                        event.preventDefault();
-                        event.dataTransfer.dropEffect = 'move';
-                        setDropTargetId(shot.id);
-                      }}
-                      onDragLeave={event => {
-                        if (
-                          event.currentTarget.contains(event.relatedTarget as Node | null)
-                        ) return;
-                        if (dropTargetId === shot.id) setDropTargetId(null);
-                      }}
-                      onDrop={event => {
-                        if (!canReorder || !draggedShotId) return;
-                        event.preventDefault();
-                        event.stopPropagation();
-                        const sourceId = draggedShotId;
-                        setDraggedShotId(null);
-                        setDropTargetId(null);
-                        void commitRowDrop(sourceId, shot.id);
-                      }}
+                      data-shot-id={shot.id}
                       onClick={event => {
                         selectShot(
                           shot.id,
@@ -812,63 +1013,62 @@ export default function ShotListPage() {
                       tabIndex={0}
                       aria-selected={isSelected}
                       aria-current={isInspected ? 'true' : undefined}
-                      className={`group cursor-pointer transition-colors duration-100 ${
+                      className={`group cursor-pointer transition-[color,background-color,opacity,box-shadow] duration-100 ${
                         isSelected ? 'bg-accent hover:bg-accent/80' : 'hover:bg-accent'
                       } ${isInspected ? 'ring-1 ring-inset ring-ring/50' : ''} ${
-                        draggedShotId === shot.id ? 'opacity-60' : ''
-                      } ${
-                        dropTargetId === shot.id && draggedShotId !== shot.id
-                          ? 'shadow-[inset_0_2px_0_hsl(var(--ring))]'
-                          : ''
+                        reorderPreview?.sourceIds.includes(shot.id) ? 'relative z-[1] opacity-70 shadow-sm' : ''
                       }`}
+                      style={
+                        reorderPreview?.targetId === shot.id
+                          ? {
+                              boxShadow: reorderPreview.insertAfter
+                                ? 'inset 0 -2px 0 hsl(var(--primary))'
+                                : 'inset 0 2px 0 hsl(var(--primary))'
+                            }
+                          : undefined
+                      }
                     >
                       <td
-                        className={`sticky left-0 z-10 w-20 border-r border-border px-2 ${rowPadding} font-mono font-bold text-foreground ${
+                        className={`sticky left-0 z-10 w-20 border-r border-border px-3 ${rowPadding} font-mono font-bold text-foreground ${
                           isSelected ? 'bg-accent' : 'bg-card group-hover:bg-accent'
                         }`}
                       >
                         <div className="flex min-w-0 items-center gap-1">
-                          <button
+                          <Button
                             type="button"
-                            draggable={canReorder && !reorderShots.isPending}
-                            aria-label={
-                              canReorder
-                                ? `拖动镜头 ${shot.display_number} 调整顺序；方向键可逐行移动`
-                                : '当前筛选或排序状态下不可调整镜头顺序'
-                            }
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`调整镜头 ${shot.display_number} 顺序`}
+                            aria-disabled={sortKey !== 'default' || reorderShots.isPending}
                             title={
-                              canReorder
-                                ? '拖动调整镜头顺序；聚焦后使用 ↑ / ↓ 微调'
-                                : '清除筛选并恢复默认升序后可调整镜头顺序'
+                              sortKey !== 'default'
+                                ? '当前表格已排序，请先清除排序后再调整镜头顺序'
+                                : '拖动调整顺序；Alt + ↑/↓ 可键盘移动'
                             }
-                            disabled={!canReorder || reorderShots.isPending}
                             onClick={event => event.stopPropagation()}
                             onDoubleClick={event => event.stopPropagation()}
-                            onDragStart={event => {
-                              event.stopPropagation();
-                              setDraggedShotId(shot.id);
-                              setDropTargetId(null);
-                              event.dataTransfer.effectAllowed = 'move';
-                              event.dataTransfer.setData('text/plain', shot.id);
-                            }}
-                            onDragEnd={() => {
-                              setDraggedShotId(null);
-                              setDropTargetId(null);
-                            }}
+                            onPointerDown={event => beginShotReorder(shot.id, event)}
+                            onPointerMove={moveShotReorder}
+                            onPointerUp={event => finishShotReorder(event, true)}
+                            onPointerCancel={event => finishShotReorder(event, false)}
                             onKeyDown={event => {
                               event.stopPropagation();
-                              if (event.key === 'ArrowUp') {
+                              if (event.altKey && event.key === 'ArrowUp') {
                                 event.preventDefault();
-                                void moveShotByKeyboard(shot.id, -1);
-                              } else if (event.key === 'ArrowDown') {
+                                moveShotByKeyboard(shot.id, -1);
+                              } else if (event.altKey && event.key === 'ArrowDown') {
                                 event.preventDefault();
-                                void moveShotByKeyboard(shot.id, 1);
+                                moveShotByKeyboard(shot.id, 1);
                               }
                             }}
-                            className="flex h-6 w-5 shrink-0 cursor-grab items-center justify-center rounded-sm text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-25"
+                            className={`h-6 w-6 shrink-0 touch-pan-y p-0 text-muted-foreground transition-opacity ${
+                              sortKey === 'default' && !reorderShots.isPending
+                                ? 'cursor-grab opacity-45 hover:opacity-100 active:cursor-grabbing'
+                                : 'cursor-not-allowed opacity-25'
+                            }`}
                           >
-                            <Icons.GripVertical className="h-3.5 w-3.5" aria-hidden="true" />
-                          </button>
+                            <Icons.GripVertical className="h-3.5 w-3.5" />
+                          </Button>
                           <span className="min-w-0 truncate">{shot.display_number}</span>
                         </div>
                       </td>
