@@ -23,6 +23,7 @@ Status vocabulary:
 | /projects/[id]/timeline | /production/[id]/timeline | IMPLEMENTED_NOT_INTEGRATED | V-Web implementation exists but remains below baseline timeline behavior. |
 | /projects/[id]/storyboard | /production/[id]/storyboard | IMPLEMENTED_NOT_INTEGRATED | V-Web implementation exists but remains below baseline storyboard/wall behavior. |
 | /projects/[id]/deliverables | /production/[id]/deliverables | INTEGRATED_NOT_CUT_OVER | CSV/EDL/OTIO/SRT use real V-API; PDF/Word/layout parity remains incomplete. |
+| /projects/[id]/review | /production/[id]/review | INTEGRATED_NOT_CUT_OVER | Persisted comments plus version save/branch/merge/restore and Before–After compare are live. Review decisions render as read-only history; prohibited global approval-dashboard controls are intentionally absent. Word-style audit/inline accept-reject and rendered visual parity remain. |
 | /projects/[id]/narration | N/A | BLOCKED | Baseline capability not yet migrated to canonical V-Web. |
 | /projects/[id]/moodboard | N/A | BLOCKED | Baseline capability not yet migrated to canonical V-Web. |
 | /projects/[id]/planning / lighting | N/A | BLOCKED | Baseline scene-planning/lighting capability not yet migrated. |
