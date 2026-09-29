@@ -32,15 +32,15 @@
 | M0 文档事实与根 AGENTS | 根规则从误追加的 Legacy AGENTS 分离；架构/生命周期/组件规范按并行实现与运行 owner 修正 | VERIFIED（本轮文档盘点） | 新增切片持续按 owner 矩阵同步 |
 | M1 Canonical Owner Matrix | [矩阵](CANONICAL_OWNER_MATRIX.md) 已覆盖 HTTP、持久化、AI/Presence、Workspace 及 UI | VERIFIED（盘点） | 各切片按真实调用链更新状态 |
 | M2 `@frameforge/ui` 收敛 | 根包已有 Button/IconButton/Input/TextArea/Field/Select；V-Web 登录页消费 Button/Input/Field/Select；Legacy 同名包仍供旧工作区使用 | INTEGRATED_NOT_CUT_OVER（已消费控件） | 补齐 Checkbox/Overlay/Motion、双消费者构建与浏览器验收后移除 Legacy 同名包；见 [primitive 表](UI_PRIMITIVE_PARITY.md) |
-| M3 API/持久化 | `apps/api` 已有路由/SQLAlchemy；[路由对等表](API_ROUTE_PARITY_MATRIX.md) 已建立；V-Web 已真实消费 SRT、EDL、OTIO、CSV 导出并有测试覆盖；Legacy `server.py` 仍是服务配置入口，第二 FastAPI 树并存 | IMPLEMENTED_NOT_INTEGRATED（整体；导出子项已集成） | 路由/事务对等、真实 PostgreSQL 隔离集成、旧 owner 退出 |
+| M3 API/持久化 | `apps/api` 已有路由/SQLAlchemy；[路由对等表](API_ROUTE_PARITY_MATRIX.md) 已建立；V-Web 已真实消费 SRT、VTT、EDL、OTIO、CSV 导出并有测试覆盖；Legacy `server.py` 仍是服务配置入口，第二 FastAPI 树并存 | IMPLEMENTED_NOT_INTEGRATED（整体；导出子项已集成） | 路由/事务对等、真实 PostgreSQL 隔离集成、旧 owner 退出 |
 | M4 Web 视图 | `apps/web` 有部分可挂载视图；Legacy `WorkspaceStage` 未从入口挂载 | IMPLEMENTED_NOT_INTEGRATED | 一个视图完成 render/state/request/mutation/save owner 接管 |
 | M5 AI | VNext mock/proposal 为进程内；无持久 Job/真实 Web 消费；接受路径未走普通 Command | BLOCKED | 禁用零外发、provider/job/proposal/人工接受合同 |
 | M6 Presence | VNext service 仍为进程内；canonical V-Web consumer 已主动断开，Redis/WS auth 尚未完成 | BLOCKED | authenticated WS、Redis TTL/pubsub、session_id、多 worker 与重连验收后才能重新接 UI |
-| M7 PostgreSQL | Alembic/asyncpg 代码存在；尚无本轮真实 PG 升级与 SQLite 副本迁移报告 | BLOCKED | empty→head、事务/业务集成与机器可读迁移核验 |
+| M7 PostgreSQL | GitHub Actions 已在隔离 PostgreSQL 16 上完成 empty→Alembic head，并校验核心表/版本；真实运行时仍未切换，SQLite→PostgreSQL 数据副本迁移尚未演练 | IMPLEMENTED_NOT_INTEGRATED | SQLite 副本→PostgreSQL、业务事务/引用/回滚演练后再评估 CUTOVER_READY |
 
 旧 2026-09-29 “完整 AI/Presence/React”等记录属于实现切片的历史笔记，不能作为当前 cutover 证据。`VNEXT_PROGRESS.md` 已将历史“READY FOR RELEASE”撤出当前状态。当前未部署，也未接触生产数据。未完成的路径继续保留 Legacy owner，不删除迁移源。
 
-本轮代码与验证记录见 [VNEXT_PROGRESS.md](worklogs/VNEXT_PROGRESS.md)。M2 只接入了登录页四种根控件；Legacy UI 包未退出，`apps/web` 全站尚未共享控件化。M3 的 SRT 已有 V-Web 真实下载入口，但 Legacy 仍为生产服务配置入口；分享与注册是有测试的局部修复，其他路由与持久化收敛仍是下一门槛。
+本轮代码与验证记录见 [VNEXT_PROGRESS.md](worklogs/VNEXT_PROGRESS.md)。M2 只接入了登录页四种根控件；Legacy UI 包未退出，`apps/web` 全站尚未共享控件化。M3 的 SRT/VTT/EDL/OTIO/CSV 已有 V-Web 真实下载入口，但 Legacy 仍为生产服务配置入口；分享与注册是有测试的局部修复，其他路由与持久化收敛仍是下一门槛。
 
 
 ## 2026-09-29 Regression Stabilization

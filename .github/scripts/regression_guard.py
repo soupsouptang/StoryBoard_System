@@ -23,7 +23,11 @@ FORBIDDEN_ROOT_FILES = {
     "update_matrix.js",
     "tash drop stash@{0}",
 }
-FORBIDDEN_ROOT_SUFFIXES = {".orig", ".rej", ".patch", ".diff", ".tmp"}
+FORBIDDEN_ROOT_SUFFIXES = {".orig", ".rej", ".patch", ".diff", ".tmp", ".bak"}
+FORBIDDEN_ROOT_PREFIXES = (
+    "debug", "temp", "tmp", "patch", "replace", "update_matrix", "refactor_",
+)
+FORBIDDEN_ANY_SUFFIXES = {".orig", ".rej"}
 
 REQUIRED_CONSTITUTION = (
     BASELINE,
@@ -99,9 +103,20 @@ def fail(errors: list[str], message: str) -> None:
 
 def check_hygiene(errors: list[str]) -> None:
     for rel in tracked_files():
+        lower_name = rel.name.lower()
         if len(rel.parts) == 1:
-            if rel.name in FORBIDDEN_ROOT_FILES or rel.suffix.lower() in FORBIDDEN_ROOT_SUFFIXES:
+            root_temp_name = (
+                lower_name.startswith(FORBIDDEN_ROOT_PREFIXES)
+                and rel.suffix.lower() in {".py", ".js", ".cjs", ".mjs", ".patch", ".diff", ".tmp", ".bak"}
+            )
+            if (
+                rel.name in FORBIDDEN_ROOT_FILES
+                or rel.suffix.lower() in FORBIDDEN_ROOT_SUFFIXES
+                or root_temp_name
+            ):
                 fail(errors, f"tracked temporary/root patch artifact is forbidden: {rel}")
+        if rel.suffix.lower() in FORBIDDEN_ANY_SUFFIXES:
+            fail(errors, f"tracked merge/reject artifact is forbidden: {rel}")
 
         if rel.suffix.lower() not in TEXT_SUFFIXES:
             continue

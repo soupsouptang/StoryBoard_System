@@ -4,7 +4,7 @@ import { Button, Icons, Input, Select } from '@frameforge/ui';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import type { Shot } from '@frameforge/types';
+import type { Department, ProductionMethod, Shot, ShotStatus } from '@frameforge/types';
 import { useProduction, useShots, useUpdateShot } from '@/lib/hooks/useProduction';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { MethodBadge } from '@/components/shot/MethodBadge';
@@ -172,15 +172,15 @@ export default function ShotListPage() {
   const fps = production.fps_num / (production.fps_den || 1);
 
   const methodOptions = useMemo(
-    () => Array.from(new Set(shots.map(item => item.primary_method).filter((value): value is string => Boolean(value)))).sort(),
+    () => Array.from(new Set(shots.map(item => item.primary_method).filter((value): value is ProductionMethod => Boolean(value)))).sort(),
     [shots]
   );
   const departmentOptions = useMemo(
-    () => Array.from(new Set(shots.map(item => item.department).filter((value): value is string => Boolean(value)))).sort(),
+    () => Array.from(new Set(shots.map(item => item.department).filter((value): value is Department => Boolean(value)))).sort(),
     [shots]
   );
   const statusOptions = useMemo(
-    () => Array.from(new Set(shots.map(item => item.status).filter((value): value is string => Boolean(value)))).sort(),
+    () => Array.from(new Set(shots.map(item => item.status).filter((value): value is ShotStatus => Boolean(value)))).sort(),
     [shots]
   );
 

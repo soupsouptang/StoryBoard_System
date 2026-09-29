@@ -1,0 +1,164 @@
+name: Nightly Deep Regression
+
+on:
+  schedule:
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-deep-regression
+  cancel-in-progress: true
+
+jobs:
+  full-backend:
+    name: Full VNext backend suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ENVIRONMENT: "test"
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+      - run: python -m pip install -r apps/api/requirements.txt
+      - run: python -m pytest tests/backend -q
+
+  full-legacy:
+    name: Full Legacy regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: storyboard-system/requirements.txt
+      - run: python -m pip install -r storyboard-system/requirements.txt
+      - name: Isolate Legacy data
+        run: |
+          mkdir -p "$RUNNER_TEMP/frameforge-nightly-data"
+          echo "STORYBOARD_DATA_ROOT=$RUNNER_TEMP/frameforge-nightly-data" >> "$GITHUB_ENV"
+      - working-directory: storyboard-system
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+
+  repository-guards:
+    name: Repository guard suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - run: python .github/scripts/regression_guard.py --base HEAD^
+      - run: python .github/scripts/migration_state_guard.py
+      - run: python -m compileall -q apps/api storyboard-system/fastapi_app storyboard-system/repositories storyboard-system/tools
+
+  nightly-postgres:
+    name: Nightly PostgreSQL migration rehearsal
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: frameforge
+          POSTGRES_PASSWORD: frameforge_ci
+          POSTGRES_DB: frameforge_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U frameforge -d frameforge_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      ENVIRONMENT: "test"
+      DATABASE_URL: "postgresql+asyncpg://frameforge:frameforge_ci@127.0.0.1:5432/frameforge_ci"
+      DATABASE_SYNC_URL: "postgresql+psycopg://frameforge:frameforge_ci@127.0.0.1:5432/frameforge_ci"
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: apps/api/requirements.txt
+      - run: python -m pip install -r apps/api/requirements.txt
+      - working-directory: apps/api
+        run: |
+          python -m alembic -c alembic.ini upgrade head
+          python -m alembic -c alembic.ini check
+
+  nightly-browser:
+    name: Nightly VNext browser QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_API_URL: "http://127.0.0.1:8000"
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            storyboard-system/package-lock.json
+      - run: npm ci
+      - run: |
+          npm run build --workspace=@frameforge/contracts
+          npm run build --workspace=@frameforge/timecode
+          npm run build --workspace=@frameforge/types
+          npm run build --workspace=@frameforge/ui
+          npm run build --workspace=@frameforge/web
+      - working-directory: storyboard-system
+        run: |
+          npm ci --workspaces=false
+          npx playwright install --with-deps chromium
+      - run: |
+          mkdir -p qa-artifacts/vnext-ui
+          npm run start --workspace=@frameforge/web > qa-artifacts/vnext-ui/next.log 2>&1 &
+          for attempt in {1..60}; do
+            curl --fail --silent http://127.0.0.1:3000/login >/dev/null && exit 0
+            sleep 1
+          done
+          exit 1
+      - working-directory: storyboard-system
+        run: node ../.github/scripts/vnext_ui_guard.cjs
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: nightly-vnext-browser-${{ github.sha }}
+          path: qa-artifacts/vnext-ui
+          if-no-files-found: warn
+          retention-days: 14
+
+  nightly-gate:
+    name: Nightly gate
+    if: always()
+    needs: [full-backend, full-legacy, repository-guards, nightly-postgres, nightly-browser]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require nightly jobs
+        env:
+          A: ${{ needs.full-backend.result }}
+          B: ${{ needs.full-legacy.result }}
+          C: ${{ needs.repository-guards.result }}
+          D: ${{ needs.nightly-postgres.result }}
+          E: ${{ needs.nightly-browser.result }}
+        run: |
+          test "$A" = success
+          test "$B" = success
+          test "$C" = success
+          test "$D" = success
+          test "$E" = success

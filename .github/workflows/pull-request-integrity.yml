@@ -1,0 +1,30 @@
+name: Pull Request Integrity
+
+on:
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  current-master:
+    name: PR branch contains current master
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - name: Require branch to contain current master
+        shell: bash
+        run: |
+          git fetch --no-tags origin master
+          if ! git merge-base --is-ancestor origin/master HEAD; then
+            echo "::error::PR branch is stale relative to master. Reconcile current master before merge."
+            git log --oneline --decorate --graph -n 20 HEAD origin/master
+            exit 1
+          fi

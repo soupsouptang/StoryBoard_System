@@ -11,6 +11,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 API = ROOT / "apps" / "api"
+EPHEMERAL_FIELD_NAMES = {
+    "presence", "presence_state", "heartbeat", "last_seen",
+    "cursor_x", "cursor_y", "cursor_visible", "active_viewport",
+    "typing", "cell_lock", "edit_lock",
+}
 
 
 def run_config(extra: dict[str, str], remove: tuple[str, ...] = ()) -> subprocess.CompletedProcess[str]:
@@ -65,6 +70,12 @@ def main() -> int:
         text = path.read_text(encoding="utf-8")
         if re.search(r"__tablename__\s*=\s*['\"][^'\"]*presence", text, re.IGNORECASE):
             errors.append(f"Presence must remain ephemeral; persistent presence table found in {path.relative_to(ROOT)}")
+        for field in EPHEMERAL_FIELD_NAMES:
+            pattern = rf"^\s*{re.escape(field)}\s*:\s*Mapped\["
+            if re.search(pattern, text, re.MULTILINE):
+                errors.append(
+                    f"Presence must remain ephemeral; durable model field {field!r} found in {path.relative_to(ROOT)}"
+                )
 
     tracked = subprocess.check_output(["git", "ls-files"], cwd=ROOT, text=True).splitlines()
     forbidden_names = {".env", ".env.production", "id_rsa", "id_ed25519"}

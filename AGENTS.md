@@ -767,3 +767,26 @@ When uncertain, prefer:
 The objective is not to make FRAMEFORGE look migrated.
 
 The objective is to make FRAMEFORGE actually converge.
+
+---
+
+## 31. Branch and Pull Request Discipline
+
+Repository modification work should use a short-lived branch and pull request by default.
+
+Preferred flow:
+
+`master → task branch → focused commits → required Actions → pull request → review → merge`
+
+Rules:
+
+- Do not push feature, migration, refactor, schema, or broad UI changes directly to `master` unless the active user explicitly requests a direct hotfix.
+- Branch names should describe one coherent slice, for example `fix/shot-conflict`, `refactor/export-vtt`, or `chore/maintenance-guardrails`.
+- Keep unrelated work out of the branch.
+- Open a pull request before treating the branch as integrated.
+- A pull request is not ready to merge while required validation is red, skipped for an unexplained reason, or missing for an affected subsystem.
+- When branch protection is unavailable, agents must still follow this workflow voluntarily; lack of server-side enforcement is not permission to bypass it.
+- Never merge a PR merely because its code compiles. Apply the milestone and real-consumer rules from this constitution.
+- If another actor moves `master` while a task branch is active, re-check the diff and update/rebase only when the branch can be reconciled without discarding user work.
+
+For pull requests that change runtime ownership, schema, generated assets, routes, or visible product behavior, update the relevant canonical evidence in the same branch.

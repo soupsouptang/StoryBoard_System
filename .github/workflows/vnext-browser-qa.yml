@@ -1,0 +1,86 @@
+name: VNext Browser QA
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "apps/web/**"
+      - "packages/ui/**"
+      - "packages/types/**"
+      - "packages/contracts/**"
+      - "packages/timecode/**"
+      - ".github/scripts/vnext_ui_guard.cjs"
+      - ".github/workflows/vnext-browser-qa.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "apps/web/**"
+      - "packages/ui/**"
+      - "packages/types/**"
+      - "packages/contracts/**"
+      - "packages/timecode/**"
+      - ".github/scripts/vnext_ui_guard.cjs"
+      - ".github/workflows/vnext-browser-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-qa:
+    name: 1440 / 1024 / 768 / 375 / 320 browser gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_API_URL: "http://127.0.0.1:8000"
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            storyboard-system/package-lock.json
+      - name: Install VNext dependencies
+        run: npm ci
+      - name: Build shared packages and VNext Web
+        run: |
+          npm run build --workspace=@frameforge/contracts
+          npm run build --workspace=@frameforge/timecode
+          npm run build --workspace=@frameforge/types
+          npm run build --workspace=@frameforge/ui
+          npm run build --workspace=@frameforge/web
+      - name: Install Playwright harness
+        working-directory: storyboard-system
+        run: |
+          npm ci --workspaces=false
+          npx playwright install --with-deps chromium
+      - name: Start VNext Web
+        run: |
+          mkdir -p qa-artifacts/vnext-ui
+          npm run start --workspace=@frameforge/web > qa-artifacts/vnext-ui/next.log 2>&1 &
+          echo $! > qa-artifacts/vnext-ui/next.pid
+      - name: Wait for VNext Web
+        shell: bash
+        run: |
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:3000/login >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat qa-artifacts/vnext-ui/next.log
+          exit 1
+      - name: Run browser QA
+        working-directory: storyboard-system
+        run: node ../.github/scripts/vnext_ui_guard.cjs
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: vnext-browser-qa-${{ github.sha }}
+          path: qa-artifacts/vnext-ui
+          if-no-files-found: warn
+          retention-days: 14

@@ -51,8 +51,8 @@ jobs:
       DATABASE_SYNC_URL: "postgresql+psycopg://frameforge:frameforge_ci@127.0.0.1:5432/frameforge_ci"
       PYTHONUNBUFFERED: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.11"
           cache: pip
@@ -64,6 +64,10 @@ jobs:
       - name: Upgrade fresh PostgreSQL database to head
         working-directory: apps/api
         run: python -m alembic -c alembic.ini upgrade head
+      - name: Detect SQLAlchemy / Alembic schema drift
+        working-directory: apps/api
+        run: python -m alembic -c alembic.ini check
+
       - name: Verify canonical tables and Alembic version
         working-directory: apps/api
         run: |

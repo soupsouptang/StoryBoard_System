@@ -39,13 +39,18 @@ export default function DeliverablesPage() {
       desc: '根据镜头精准时码对齐导出的旁白与解说词字幕。'
     },
     {
+      id: 'vtt',
+      title: '旁白字幕（WebVTT）',
+      desc: '与 SRT 使用相同镜头帧时序，输出适用于网页播放器与在线审片的 WebVTT 字幕。'
+    },
+    {
       id: 'pdf',
       title: '分镜图版（PDF）',
       desc: '导出用于审片的高清分镜图版（排版引擎迁移中）。'
     }
   ];
 
-  const supportedFormats = new Set(['csv', 'edl', 'otio', 'srt']);
+  const supportedFormats = new Set(['csv', 'edl', 'otio', 'srt', 'vtt']);
 
   const handleExport = async (formatId: string) => {
     if (!supportedFormats.has(formatId) || downloading) return;
