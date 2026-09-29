@@ -22,7 +22,7 @@ Status vocabulary:
 | Workspace IA: Narration | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |
 | Workspace IA: Moodboard | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |
 | Workspace IA: Lighting | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |
-| Workspace IA: Review | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical V-Web Review consumes persistent comments, revision-aware review decisions, immutable Shot versions, accept/restore plus named branch/merge actions. Compare UI, richer snapshot scope and rendered-browser parity remain incomplete. |
+| Workspace IA: Review | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical V-Web Review consumes persisted comments, immutable version snapshots, branch/merge/restore and Before–After compare, while revision-bound review decisions are read-only history. Global approve/reject/submit dashboard controls are intentionally absent per current product rules. Word-style audit/inline accept-reject and rendered-browser parity remain incomplete. |
 
 ## 2. Shot Workspace Advanced Capabilities
 | Capability | Baseline | VNext target | Status | Gap / evidence |
@@ -46,7 +46,7 @@ Status vocabulary:
 | Production Steps | Present | Present | BLOCKED | Not yet migrated. |
 | Custom Fields | Present | Present | BLOCKED | Not yet migrated. |
 | Comments | Present | Present | INTEGRATED_NOT_CUT_OVER | V-API now persists create/edit/resolve/reopen/delete semantics with actor audit, quote metadata, role and parent linkage; V-Web Review consumes real comments instead of local fake state. Browser/permission parity remains. |
-| Versions | Present | Present | INTEGRATED_NOT_CUT_OVER | V-API now provides immutable per-shot versions with serialized version numbering, accept, revision-checked restore, named branches and explicit merge-with-backup semantics; Review consumes create/select/accept/restore/branch/merge. Compare UI and Panel/asset/custom-field snapshot parity remain. |
+| Versions | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical V-API/V-Web now cover immutable snapshot create/list/detail, accepted-version marking, revision-checked restore, named branch, explicit merge and read-only Before–After compare. Word-style audit, inline accept/reject and full browser parity remain. |
 | Share | Present | Present | BLOCKED | VNext share contract is not baseline-parity. |
 | Shot Trash | Present | Present | INTEGRATED_NOT_CUT_OVER | Soft delete/list/restore/purge plus project-scoped bulk trash route through `ShotService`; trash/restore now advance revision and all lifecycle mutations emit audit rows. Retention policy and immutable version-history parity remain incomplete. |
 
