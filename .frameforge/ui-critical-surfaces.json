@@ -35,5 +35,7 @@
       ]
     }
   ],
-  "screenshot_policy": "Every browser run uploads screenshots and SHA-256 evidence. Exact pixel baselines are established only from a reviewed green run to avoid blessing an unverified image."
+  "screenshot_policy": "Every browser run uploads screenshots and SHA-256 evidence. Exact pixel baselines are established only from a reviewed green run to avoid blessing an unverified image.",
+  "artifact_retention_days": 14,
+  "review_rule": "A screenshot hash is evidence, not an automatic design verdict; bless a pixel baseline only after reviewed green browser QA."
 }
