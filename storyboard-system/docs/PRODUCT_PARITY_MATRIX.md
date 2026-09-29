@@ -22,7 +22,7 @@ Status vocabulary:
 | Workspace IA: Narration | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |
 | Workspace IA: Moodboard | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |
 | Workspace IA: Lighting | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |
-| Workspace IA: Review | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical V-Web Review consumes persistent comments, revision-aware review decisions, immutable Shot versions, accept/restore plus named branch/merge actions. Compare UI, richer snapshot scope and rendered-browser parity remain incomplete. |
+| Workspace IA: Review | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical V-Web Review consumes persistent comments, revision-aware decisions, immutable Shot versions, named branch/accept/restore/merge, and a server-owned before/after compare projection. Panel/asset/custom-field snapshot scope and rendered-browser parity remain incomplete. |
 
 ## 2. Shot Workspace Advanced Capabilities
 | Capability | Baseline | VNext target | Status | Gap / evidence |
@@ -31,12 +31,12 @@ Status vocabulary:
 | Inline Double-click Editing | Present | Present | INTEGRATED_NOT_CUT_OVER | Description and voice-over cells use real PATCH; broader field coverage and full keyboard/conflict parity remain. |
 | Row Single Click | Select | Select | INTEGRATED_NOT_CUT_OVER | Selection no longer implicitly opens Inspector. |
 | Row Double Click | Open Inspector | Open Inspector | INTEGRATED_NOT_CUT_OVER | Real consumer exists; broader workspace parity remains. |
-| Column Manager | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical V-Web now persists visibility, order, pointer/keyboard column widths and row-height preferences per production/browser. Server-saved layouts plus archived/purged custom-field lifecycle remain. |
-| Saved View / Column Layout | Present | Present | BLOCKED | Not yet migrated. |
-| Row Height | Present | Present | INTEGRATED_NOT_CUT_OVER | Compact/standard/comfortable/auto row-height controls are wired into the canonical table and persisted locally; server saved-view parity and rendered-browser QA remain. |
+| Column Manager | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical V-Web persists visibility, order, pointer/keyboard widths and row-height locally, and the same normalized layout can now be stored in a server Saved View. Archived/purged custom-field lifecycle remains. |
+| Saved View / Column Layout | Present | Present | INTEGRATED_NOT_CUT_OVER | V-API persists shared/private Saved Views with optimistic revision conflicts and no-op suppression; the canonical Shot Table has a shadcn Popover/Dialog consumer for create/apply/overwrite/delete of layout + search/filter/sort state. Grouping/custom-field layout parity and rendered-browser QA remain. |
+| Row Height | Present | Present | INTEGRATED_NOT_CUT_OVER | Compact/standard/comfortable/auto row height is wired into the canonical table, persisted locally and included in server Saved Views; rendered-browser QA remains. |
 | Search | Present | Present | INTEGRATED_NOT_CUT_OVER | Basic local search exists; parity with baseline search/filter semantics is incomplete. |
 | Multi-select | Present | Present | INTEGRATED_NOT_CUT_OVER | Shift-range and Ctrl/Cmd toggle selection now use the canonical workspace selection owner; bulk-action UI parity remains incomplete. |
-| Filtering & Sorting | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical V-Web now consumes workspace search plus method/department/status filters and client sorting; advanced baseline filter semantics and persisted saved views remain. |
+| Filtering & Sorting | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical V-Web consumes search plus method/department/status filters and client sorting; current effective filter/sort state is now round-tripped through server Saved Views. Advanced baseline filter/group semantics remain. |
 | Grouping | Present | Present | BLOCKED | Not yet migrated. |
 | Bulk Actions | Present | Present | INTEGRATED_NOT_CUT_OVER | Shot Table mounts the canonical bulk toolbar; method/status/department edits use revision-aware atomic `ShotService` writes and bulk trash uses one project-scoped atomic request. Panel/custom-field/audit parity and fresh rendered visual QA remain incomplete. |
 | Context Menu | Present | Present | INTEGRATED_NOT_CUT_OVER | Canonical Shot Table now uses shared shadcn/Radix DropdownMenu for row/column actions, keyboard ContextMenu/Shift+F10 entry and focus return. Baseline action coverage and narrow-width rendered QA remain. |
@@ -46,7 +46,7 @@ Status vocabulary:
 | Production Steps | Present | Present | BLOCKED | Not yet migrated. |
 | Custom Fields | Present | Present | BLOCKED | Not yet migrated. |
 | Comments | Present | Present | INTEGRATED_NOT_CUT_OVER | V-API now persists create/edit/resolve/reopen/delete semantics with actor audit, quote metadata, role and parent linkage; V-Web Review consumes real comments instead of local fake state. Browser/permission parity remains. |
-| Versions | Present | Present | INTEGRATED_NOT_CUT_OVER | V-API now provides immutable per-shot versions with serialized version numbering, accept, revision-checked restore, named branches and explicit merge-with-backup semantics; Review consumes create/select/accept/restore/branch/merge. Compare UI and Panel/asset/custom-field snapshot parity remain. |
+| Versions | Present | Present | INTEGRATED_NOT_CUT_OVER | V-API provides immutable per-shot versions with serialized numbering, detail snapshots, accept, revision-checked restore, named branches, explicit merge-with-backup and server-owned compare; Review consumes the full current chain. Panel/asset/custom-field snapshot parity and rendered QA remain. |
 | Share | Present | Present | BLOCKED | VNext share contract is not baseline-parity. |
 | Shot Trash | Present | Present | INTEGRATED_NOT_CUT_OVER | Soft delete/list/restore/purge plus project-scoped bulk trash route through `ShotService`; trash/restore now advance revision and all lifecycle mutations emit audit rows. Retention policy and immutable version-history parity remain incomplete. |
 
