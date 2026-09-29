@@ -80,7 +80,17 @@ async function noPageOverflow(page, label) {
         assert(scroll.scroll >= scroll.client, vp.name + ': shot table scroll region invalid');
 
         const firstRow = page.locator('tbody tr').first();
-        await firstRow.dblclick();
+
+        // Product contract: editable cells consume double-click for inline editing.
+        const editableCell = firstRow.locator('[title="双击进行编辑"]').first();
+        await editableCell.dblclick();
+        const inlineInput = editableCell.locator('input');
+        await inlineInput.waitFor({ state: 'visible', timeout: 5000 });
+        await inlineInput.press('Escape');
+        await inlineInput.waitFor({ state: 'hidden', timeout: 5000 });
+
+        // Product contract: double-clicking a non-inline row area opens the Inspector.
+        await firstRow.locator('td').first().dblclick();
         const inspector = page.locator('aside').filter({ hasText: 'SHOT' }).first();
         await inspector.waitFor({ state: 'visible', timeout: 10000 });
         const box = await inspector.boundingBox();
