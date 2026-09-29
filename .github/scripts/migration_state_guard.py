@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 STATE = ROOT / ".frameforge" / "migration-state.json"
+CANONICAL_OWNER_MATRIX = ROOT / "storyboard-system" / "docs" / "CANONICAL_OWNER_MATRIX.md"
 VALID = {
     "VERIFIED",
     "IMPLEMENTED_NOT_INTEGRATED",
@@ -43,6 +44,20 @@ def main() -> int:
 
         if state == "CUT_OVER" and item.get("legacy_owner_active") and not item.get("evidence"):
             errors.append(f"{name}: CUT_OVER with an active legacy source requires explicit evidence")
+
+    matrix_text = CANONICAL_OWNER_MATRIX.read_text(encoding="utf-8")
+    for name, item in capabilities.items():
+        row = item.get("matrix_row")
+        if not row:
+            continue
+        matches = [line for line in matrix_text.splitlines() if line.startswith(f"| {row} |")]
+        if len(matches) != 1:
+            errors.append(f"{name}: expected exactly one owner-matrix row for {row!r}, found {len(matches)}")
+            continue
+        if item["state"] not in matches[0]:
+            errors.append(
+                f"{name}: machine state {item['state']} disagrees with CANONICAL_OWNER_MATRIX row {row!r}"
+            )
 
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     for state in VALID:

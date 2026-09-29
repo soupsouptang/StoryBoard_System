@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "Direct persistence operations currently located in HTTP routers. This is a ratchet: counts may not change unless this baseline is deliberately updated in the same reviewed PR.",
+  "description": "Direct persistence operations currently located in HTTP routers. Exact-count ratchet: any change requires an intentional baseline update in the same reviewed PR, so reductions cannot silently regress later.",
   "patterns": [
     "db.add(",
     "db.delete(",
@@ -13,8 +13,8 @@
   "files": {
     "apps/api/app/api/v1/auth.py": 2,
     "apps/api/app/api/v1/imports.py": 3,
-    "apps/api/app/api/v1/productions.py": 5,
+    "apps/api/app/api/v1/productions.py": 4,
     "apps/api/app/api/v1/shares.py": 3,
-    "apps/api/app/api/v1/shots.py": 6
+    "apps/api/app/api/v1/shots.py": 1
   }
 }
