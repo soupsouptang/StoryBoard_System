@@ -53,6 +53,20 @@ export function useCreateReviewComment(shotId: string) {
   });
 }
 
+export function useUpdateReviewComment(shotId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: string }) =>
+      apiClient<ReviewComment>(`/api/v1/comments/${id}`, {
+        method: 'PATCH',
+        json: { body }
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['review-comments', shotId] });
+    }
+  });
+}
+
 export function useResolveReviewComment(shotId: string) {
   const queryClient = useQueryClient();
   return useMutation({

@@ -75,6 +75,14 @@ async def test_review_comments_and_decisions_are_persistent_and_revision_aware()
         assert comments.status_code == 200
         assert [item["id"] for item in comments.json()] == [comment["id"]]
 
+        edited = await client.patch(
+            f"/api/v1/comments/{comment['id']}",
+            headers=headers,
+            json={"body": "调整画面节奏并缩短尾部停顿"},
+        )
+        assert edited.status_code == 200
+        assert edited.json()["body"] == "调整画面节奏并缩短尾部停顿"
+
         resolved = await client.post(
             f"/api/v1/comments/{comment['id']}/resolve",
             headers=headers,
@@ -82,6 +90,14 @@ async def test_review_comments_and_decisions_are_persistent_and_revision_aware()
         )
         assert resolved.status_code == 200
         assert resolved.json()["is_resolved"] is True
+
+        reopened = await client.post(
+            f"/api/v1/comments/{comment['id']}/resolve",
+            headers=headers,
+            json={"resolved": False},
+        )
+        assert reopened.status_code == 200
+        assert reopened.json()["is_resolved"] is False
 
         submitted = await client.post(
             f"/api/v1/shots/{shot_id}/review-decisions",
