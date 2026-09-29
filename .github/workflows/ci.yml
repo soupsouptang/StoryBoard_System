@@ -26,20 +26,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.11"
       - name: Run architecture boundary gate
-        run: python storyboard-system/tools/architecture_boundary_gate.py
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p qa-artifacts/ci
+          python storyboard-system/tools/architecture_boundary_gate.py 2>&1 | tee qa-artifacts/ci/architecture.log
+      - name: Upload failure evidence
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: architecture-failure-${{ github.run_id }}
+          path: qa-artifacts/ci
+          retention-days: 7
 
   vnext-backend:
     name: VNext API contracts
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.11"
           cache: pip
@@ -49,37 +60,59 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r apps/api/requirements.txt
       - name: Run API contract tests
-        run: python -m pytest tests/backend -q
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p qa-artifacts/ci
+          python -m pytest tests/backend -q --junitxml=qa-artifacts/ci/backend-junit.xml 2>&1 | tee qa-artifacts/ci/backend.log
+      - name: Upload failure evidence
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: backend-failure-${{ github.run_id }}
+          path: qa-artifacts/ci
+          retention-days: 7
 
   vnext-web:
     name: VNext Web build
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: package-lock.json
       - name: Install monorepo dependencies
         run: npm ci
-      - name: Build shared packages
+      - name: Build canonical web and shared packages
+        shell: bash
         run: |
-          npm run build --workspace=@frameforge/contracts
-          npm run build --workspace=@frameforge/timecode
-          npm run build --workspace=@frameforge/types
-          npm run build --workspace=@frameforge/ui
-      - name: Build Next.js application
-        run: npm run build --workspace=@frameforge/web
+          set -o pipefail
+          mkdir -p qa-artifacts/ci
+          {
+            npm run build --workspace=@frameforge/contracts
+            npm run build --workspace=@frameforge/timecode
+            npm run build --workspace=@frameforge/types
+            npm run build --workspace=@frameforge/ui
+            npm run build --workspace=@frameforge/web
+          } 2>&1 | tee qa-artifacts/ci/vnext-web-build.log
+      - name: Upload failure evidence
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: vnext-web-failure-${{ github.run_id }}
+          path: qa-artifacts/ci
+          retention-days: 7
 
   legacy-python:
     name: Legacy Python regression
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.11"
           cache: pip
@@ -95,15 +128,26 @@ jobs:
           echo "STORYBOARD_DATA_ROOT=$RUNNER_TEMP/frameforge-legacy-data" >> "$GITHUB_ENV"
       - name: Run Legacy Python regression
         working-directory: storyboard-system
-        run: python -m unittest discover -s tests -p "test_*.py" -v
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p ../qa-artifacts/ci
+          python -m unittest discover -s tests -p "test_*.py" -v 2>&1 | tee ../qa-artifacts/ci/legacy-python.log
+      - name: Upload failure evidence
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: legacy-python-failure-${{ github.run_id }}
+          path: qa-artifacts/ci
+          retention-days: 7
 
   legacy-web:
     name: Legacy workspace typecheck and build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22"
           cache: npm
@@ -113,17 +157,23 @@ jobs:
         run: npm ci --workspaces=false
       - name: Typecheck and build Legacy workspace
         working-directory: storyboard-system
-        run: npm run check
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p ../qa-artifacts/ci
+          npm run check 2>&1 | tee ../qa-artifacts/ci/legacy-web.log
+      - name: Upload failure evidence
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: legacy-web-failure-${{ github.run_id }}
+          path: qa-artifacts/ci
+          retention-days: 7
 
   ci-gate:
     name: CI gate
     if: always()
-    needs:
-      - architecture-boundaries
-      - vnext-backend
-      - vnext-web
-      - legacy-python
-      - legacy-web
+    needs: [architecture-boundaries, vnext-backend, vnext-web, legacy-python, legacy-web]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -135,8 +185,7 @@ jobs:
           LEGACY_PY_RESULT: ${{ needs.legacy-python.result }}
           LEGACY_WEB_RESULT: ${{ needs.legacy-web.result }}
         run: |
-          printf 'architecture=%s\nbackend=%s\nweb=%s\nlegacy-python=%s\nlegacy-web=%s\n' \
-            "$ARCHITECTURE_RESULT" "$BACKEND_RESULT" "$WEB_RESULT" "$LEGACY_PY_RESULT" "$LEGACY_WEB_RESULT"
+          printf 'architecture=%s\nbackend=%s\nweb=%s\nlegacy-python=%s\nlegacy-web=%s\n'             "$ARCHITECTURE_RESULT" "$BACKEND_RESULT" "$WEB_RESULT" "$LEGACY_PY_RESULT" "$LEGACY_WEB_RESULT"
           test "$ARCHITECTURE_RESULT" = "success"
           test "$BACKEND_RESULT" = "success"
           test "$WEB_RESULT" = "success"
