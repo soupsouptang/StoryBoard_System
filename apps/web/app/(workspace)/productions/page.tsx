@@ -10,10 +10,11 @@ import {
   DialogHeader, DialogTitle, Field, Icons, Input, Select
 } from '@frameforge/ui';
 import { ProjectCover } from '@/components/ProjectCover';
+import { TopBar } from '@/components/app-shell/TopBar';
 
 export default function ProductionsPage() {
   const router = useRouter();
-  const { user, logout, locale, setLocale, theme, setTheme, t } = useAuthStore();
+  const { t } = useAuthStore();
 
   const [productions, setProductions] = useState<Production[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,51 +70,10 @@ export default function ProductionsPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Top Bar (50px) */}
-      <header className="sticky top-0 z-30 flex h-[50px] items-center justify-between border-b border-border bg-card/90 px-3 backdrop-blur sm:px-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-7 w-7 items-center justify-center rounded bg-accent text-accent-foreground border border-border">
-            <Icons.Film />
-          </div>
-          <span className="font-bold text-sm tracking-tight text-foreground">{t('appName')}</span>
-        </div>
-
-        <div className="flex items-center gap-1 text-xs sm:gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setLocale(locale === 'zh-CN' ? 'en-US' : 'zh-CN')}
-            aria-label={locale === 'zh-CN' ? 'Switch to English' : '切换为简体中文'}
-            title={locale === 'zh-CN' ? 'Switch to English' : '切换为简体中文'}
-            className="font-mono"
-          >
-            {locale === 'zh-CN' ? 'EN' : '中'}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            aria-label={theme === 'dark' ? '切换到亮色主题' : '切换到暗色主题'}
-            title={theme === 'dark' ? '切换到亮色主题' : '切换到暗色主题'}
-          >
-            {theme === 'dark' ? <Icons.Sun className="h-4 w-4" /> : <Icons.Moon className="h-4 w-4" />}
-          </Button>
-          <div className="flex items-center gap-2 border-l border-border pl-4 text-muted-foreground">
-            <span className="hidden text-foreground font-medium sm:inline">{user?.display_name || user?.email}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => { logout(); router.push('/login'); }}
-              className="text-muted-foreground hover:text-destructive"
-            >
-              退出
-            </Button>
-          </div>
-        </div>
-      </header>
+      <TopBar />
 
       {/* Main Content */}
-      <main className="mx-auto max-w-6xl p-4 sm:p-8">
+      <main className="mx-auto w-full max-w-[var(--ff-page-max-w)] p-[var(--ff-content-pad)] sm:p-[var(--ff-content-pad-lg)]">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3 sm:mb-8">
           <div>
             <h2 className="text-lg font-bold text-foreground">{t('productions')}</h2>

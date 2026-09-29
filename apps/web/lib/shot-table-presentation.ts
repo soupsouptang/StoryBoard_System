@@ -115,6 +115,43 @@ export function defaultShotTablePresentationPreferences(): ShotTablePresentation
   };
 }
 
+export function normalizeShotTablePresentationPreferences(
+  value: unknown
+): ShotTablePresentationPreferences {
+  const fallback = defaultShotTablePresentationPreferences();
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return fallback;
+
+  const parsed = value as Partial<ShotTablePresentationPreferences>;
+  const hiddenColumns = Array.isArray(parsed.hiddenColumns)
+    ? parsed.hiddenColumns.filter(
+        (item): item is ShotTableColumnKey =>
+          typeof item === 'string' && COLUMN_KEYS.has(item as ShotTableColumnKey)
+      )
+    : [];
+
+  const columnWidths = { ...DEFAULT_SHOT_TABLE_COLUMN_WIDTHS };
+  if (parsed.columnWidths && typeof parsed.columnWidths === 'object') {
+    for (const column of DEFAULT_SHOT_TABLE_COLUMN_ORDER) {
+      const width = parsed.columnWidths[column];
+      if (typeof width === 'number') {
+        columnWidths[column] = clampShotTableColumnWidth(column, width);
+      }
+    }
+  }
+
+  return {
+    version: 1,
+    columnOrder: normalizeShotTableColumnOrder(parsed.columnOrder),
+    hiddenColumns: Array.from(new Set(hiddenColumns)),
+    columnWidths,
+    rowHeight:
+      typeof parsed.rowHeight === 'string' &&
+      ROW_HEIGHTS.has(parsed.rowHeight as ShotTableRowHeight)
+        ? (parsed.rowHeight as ShotTableRowHeight)
+        : 'standard'
+  };
+}
+
 const LEGACY_COLUMN_KEY_MAP: Record<string, ShotTableColumnKey> = {
   shotSize: 'shot_size',
   lens: 'lens_mm',
@@ -136,34 +173,7 @@ export function loadShotTablePresentationPreferences(
   try {
     const raw = storage.getItem(`frameforge:shot-table:${productionId}:presentation-v1`);
     if (raw) {
-      const parsed = JSON.parse(raw) as Partial<ShotTablePresentationPreferences>;
-      const hiddenColumns = Array.isArray(parsed.hiddenColumns)
-        ? parsed.hiddenColumns.filter(
-            (item): item is ShotTableColumnKey =>
-              typeof item === 'string' && COLUMN_KEYS.has(item as ShotTableColumnKey)
-          )
-        : [];
-      const columnWidths = { ...DEFAULT_SHOT_TABLE_COLUMN_WIDTHS };
-      if (parsed.columnWidths && typeof parsed.columnWidths === 'object') {
-        for (const column of DEFAULT_SHOT_TABLE_COLUMN_ORDER) {
-          const width = parsed.columnWidths[column];
-          if (typeof width === 'number') {
-            columnWidths[column] = clampShotTableColumnWidth(column, width);
-          }
-        }
-      }
-
-      return {
-        version: 1,
-        columnOrder: normalizeShotTableColumnOrder(parsed.columnOrder),
-        hiddenColumns: Array.from(new Set(hiddenColumns)),
-        columnWidths,
-        rowHeight:
-          typeof parsed.rowHeight === 'string' &&
-          ROW_HEIGHTS.has(parsed.rowHeight as ShotTableRowHeight)
-            ? (parsed.rowHeight as ShotTableRowHeight)
-            : 'standard'
-      };
+      return normalizeShotTablePresentationPreferences(JSON.parse(raw));
     }
 
     // Compatibility bridge for the short-lived order/visibility v2 slice.
