@@ -144,6 +144,7 @@ export interface Production {
   deleted_at?: string | null;
   shot_count?: number;
   total_duration_frames?: number;
+  cover_media_id?: string | null;
 }
 
 export interface Sequence {
