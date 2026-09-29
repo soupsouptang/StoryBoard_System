@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "golden_baseline": "5e86a0bb11a20ecd631d9c2af66260a73d7c92e7",
+  "source": "storyboard-system/docs/SCREEN_PARITY_MATRIX.md",
+  "screens": [
+    {
+      "legacy": "/login",
+      "vnext": "/login"
+    },
+    {
+      "legacy": "/projects",
+      "vnext": "/productions"
+    },
+    {
+      "legacy": "/projects/[id]",
+      "vnext": "/production/[id]"
+    },
+    {
+      "legacy": "/projects/[id]/shots",
+      "vnext": "/production/[id]/shots"
+    },
+    {
+      "legacy": "/projects/[id]/timeline",
+      "vnext": "/production/[id]/timeline"
+    },
+    {
+      "legacy": "/projects/[id]/storyboard",
+      "vnext": "/production/[id]/storyboard"
+    },
+    {
+      "legacy": "/projects/[id]/deliverables",
+      "vnext": "/production/[id]/deliverables"
+    },
+    {
+      "legacy": "/projects/[id]/narration",
+      "vnext": null
+    },
+    {
+      "legacy": "/projects/[id]/moodboard",
+      "vnext": null
+    },
+    {
+      "legacy": "/projects/[id]/planning",
+      "vnext": null
+    }
+  ]
+}
