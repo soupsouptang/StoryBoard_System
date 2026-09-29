@@ -63,6 +63,12 @@ Current implementation target: `master`. Product behavior reference: `5e86a0b`, 
 
 Do not begin Narration, Moodboard, Lighting, or wider product recovery until this stabilization slice has passed CI and the Shot workspace has fresh rendered-browser QA.
 
+## 2026-09-29 Review parity recovery
+
+| Slice | Current evidence | Status | Next gate |
+| --- | --- | --- | --- |
+| Review parity | Canonical V-API persists comments and revision-bound history; V-Web consumes comments, immutable version snapshots, accepted-version state and revision-checked restore without restoring the removed global approve/reject/submit dashboard controls | INTEGRATED_NOT_CUT_OVER | restore Compare/Word-style Audit/inline diff, comment edit/delete/reply/quote UX, permission/browser QA and rendered visual parity |
+
 ## 2026-09-29 V-Web UI parity recovery
 
 | Slice | Current evidence | Status | Next gate |
