@@ -1,0 +1,35 @@
+name: Master Provenance
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  merged-pr-origin:
+    name: Master commit came through PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Reject unapproved direct master pushes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        shell: bash
+        run: |
+          if printf '%s' "$COMMIT_MESSAGE" | grep -Fq '[emergency-direct-push]'; then
+            echo "Emergency direct-push marker present; repository policy requires explicit user authorization."
+            exit 0
+          fi
+          curl -fsSL             -H "Authorization: Bearer $GH_TOKEN"             -H "Accept: application/vnd.github+json"             "https://api.github.com/repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" > prs.json
+          python - <<'PYCODE'
+          import json
+          prs = json.load(open("prs.json", encoding="utf-8"))
+          merged = [pr for pr in prs if pr.get("merged_at")]
+          if not merged:
+              raise SystemExit("master commit has no associated merged PR; direct master pushes violate FRAMEFORGE repository policy")
+          print("PASS: associated merged PR(s):", ", ".join("#" + str(pr["number"]) for pr in merged))
+          PYCODE
