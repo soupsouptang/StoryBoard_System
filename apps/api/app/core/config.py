@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 from typing import List
+from sqlalchemy.engine import make_url
 
 API_DIR = Path(__file__).resolve().parents[2]
 BASE_DIR = Path(__file__).resolve().parents[4]
@@ -9,6 +10,28 @@ DB_FILE = API_DIR / "frameforge.db"
 
 DEFAULT_SECRET_KEY = "frameforge-secret-key-production-ready-2026"
 DEFAULT_ADMIN_PW = "FrameForge2026!Admin"
+
+
+def resolve_sync_database_url(async_url: str, sync_url: str | None) -> str:
+    async_target = make_url(async_url)
+    sync_driver = {
+        "sqlite+aiosqlite": "sqlite",
+        "postgresql+asyncpg": "postgresql+psycopg",
+    }.get(async_target.drivername)
+    if sync_driver is None:
+        raise ValueError(f"Unsupported async database driver: {async_target.drivername}")
+
+    expected = async_target.set(drivername=sync_driver)
+    if sync_url is None:
+        return expected.render_as_string(hide_password=False)
+
+    actual = make_url(sync_url)
+    target_fields = ("username", "password", "host", "port", "database")
+    if actual.drivername != sync_driver or any(
+        getattr(actual, field) != getattr(expected, field) for field in target_fields
+    ):
+        raise ValueError("DATABASE_SYNC_URL must target the same database as DATABASE_URL")
+    return sync_url
 
 try:
     from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -42,10 +65,7 @@ try:
             "DATABASE_URL",
             f"sqlite+aiosqlite:///{DB_FILE.as_posix()}"
         )
-        DATABASE_SYNC_URL: str = os.environ.get(
-            "DATABASE_SYNC_URL",
-            f"sqlite:///{DB_FILE.as_posix()}"
-        )
+        DATABASE_SYNC_URL: str | None = None
 
         # Redis
         REDIS_URL: str = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
@@ -106,10 +126,7 @@ except ImportError:
             "DATABASE_URL",
             f"sqlite+aiosqlite:///{DB_FILE.as_posix()}"
         )
-        DATABASE_SYNC_URL: str = os.environ.get(
-            "DATABASE_SYNC_URL",
-            f"sqlite:///{DB_FILE.as_posix()}"
-        )
+        DATABASE_SYNC_URL: str | None = os.environ.get("DATABASE_SYNC_URL")
 
         REDIS_URL: str = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
         S3_ENDPOINT: str = os.environ.get("S3_ENDPOINT", "http://localhost:9000")
@@ -137,3 +154,5 @@ except ImportError:
 
     settings = Settings()
     settings.validate_production()
+
+settings.DATABASE_SYNC_URL = resolve_sync_database_url(settings.DATABASE_URL, settings.DATABASE_SYNC_URL)
