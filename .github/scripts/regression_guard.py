@@ -8,6 +8,7 @@ before application dependencies are installed.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 import sys
@@ -23,7 +24,11 @@ FORBIDDEN_ROOT_FILES = {
     "update_matrix.js",
     "tash drop stash@{0}",
 }
-FORBIDDEN_ROOT_SUFFIXES = {".orig", ".rej", ".patch", ".diff", ".tmp"}
+FORBIDDEN_ROOT_SUFFIXES = {".orig", ".rej", ".patch", ".diff", ".tmp", ".log", ".db", ".sqlite", ".sqlite3"}
+FORBIDDEN_ROOT_NAME_PATTERN = re.compile(
+    r"^(?:patch|replace|refactor|update|fix|debug|temp|tmp)(?:[_-].*)?\.(?:py|js|ts|sh|ps1)$",
+    re.IGNORECASE,
+)
 
 REQUIRED_CONSTITUTION = (
     BASELINE,
@@ -34,49 +39,7 @@ REQUIRED_CONSTITUTION = (
     "LEGACY_RETIRED",
 )
 
-REQUIRED_PRODUCT_CAPABILITIES = (
-    "Project Cover Fallback",
-    "Workspace IA: Narration",
-    "Workspace IA: Moodboard",
-    "Workspace IA: Lighting",
-    "Workspace IA: Review",
-    "Read-first Table",
-    "Inline Double-click Editing",
-    "Column Manager",
-    "Saved View / Column Layout",
-    "Search",
-    "Filtering & Sorting",
-    "Grouping",
-    "Bulk Actions",
-    "Context Menu",
-    "Shot Reorder",
-    "Undo / Redo",
-    "Save Status",
-    "Production Steps",
-    "Custom Fields",
-    "Comments",
-    "Versions",
-    "Share",
-    "Shot Trash",
-    "Strict No-Op Revision",
-    "Shot Command Parity",
-    "409 Conflict",
-    "Ephemeral Presence",
-    "Real-time Sync",
-)
-
-REQUIRED_SCREEN_ROWS = (
-    "/login",
-    "/projects",
-    "/projects/[id]",
-    "/projects/[id]/shots",
-    "/projects/[id]/timeline",
-    "/projects/[id]/storyboard",
-    "/projects/[id]/deliverables",
-    "/projects/[id]/narration",
-    "/projects/[id]/moodboard",
-    "/projects/[id]/planning",
-)
+BASELINE_INVENTORY = ROOT / ".frameforge" / "product-baseline.json"
 
 TEXT_SUFFIXES = {
     ".md", ".py", ".js", ".jsx", ".ts", ".tsx", ".json", ".yml", ".yaml",
@@ -100,7 +63,11 @@ def fail(errors: list[str], message: str) -> None:
 def check_hygiene(errors: list[str]) -> None:
     for rel in tracked_files():
         if len(rel.parts) == 1:
-            if rel.name in FORBIDDEN_ROOT_FILES or rel.suffix.lower() in FORBIDDEN_ROOT_SUFFIXES:
+            if (
+                rel.name in FORBIDDEN_ROOT_FILES
+                or rel.suffix.lower() in FORBIDDEN_ROOT_SUFFIXES
+                or FORBIDDEN_ROOT_NAME_PATTERN.match(rel.name)
+            ):
                 fail(errors, f"tracked temporary/root patch artifact is forbidden: {rel}")
 
         if rel.suffix.lower() not in TEXT_SUFFIXES:
@@ -139,15 +106,22 @@ def require_tokens(errors: list[str], relative: str, tokens: tuple[str, ...]) ->
 
 def check_static_contracts(errors: list[str]) -> None:
     require_tokens(errors, "AGENTS.md", REQUIRED_CONSTITUTION)
+    if not BASELINE_INVENTORY.is_file():
+        fail(errors, "machine-readable product baseline inventory is missing")
+        inventory = {}
+    else:
+        inventory = json.loads(BASELINE_INVENTORY.read_text(encoding="utf-8"))
+    if inventory.get("baseline_commit") != BASELINE:
+        fail(errors, "product baseline inventory commit does not match repository constitution")
     require_tokens(
         errors,
         "storyboard-system/docs/PRODUCT_PARITY_MATRIX.md",
-        REQUIRED_PRODUCT_CAPABILITIES,
+        tuple(inventory.get("capabilities") or ()),
     )
     require_tokens(
         errors,
         "storyboard-system/docs/SCREEN_PARITY_MATRIX.md",
-        REQUIRED_SCREEN_ROWS,
+        tuple(inventory.get("screens") or ()),
     )
     for path in (
         "storyboard-system/docs/ACTIVE_WORKSTREAMS.md",

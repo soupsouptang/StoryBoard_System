@@ -1,6 +1,6 @@
 """
 Industry Standard Deliverable & NLE Export Adapters for FrameForge OS.
-Generates CMX 3600 EDL, OpenTimelineIO (.otio), SubRip (.srt), and UTF-8 CSV.
+Generates CMX 3600 EDL, OpenTimelineIO (.otio), SubRip (.srt), WebVTT (.vtt), and UTF-8 CSV.
 """
 from __future__ import annotations
 
@@ -133,6 +133,23 @@ def generate_srt(
         current_frame += dur
 
     return "\r\n".join(cues) if start_timecode_frames is not None else "\n".join(cues)
+
+
+def generate_vtt(
+    shots: list[Any],
+    fps: float = 25.0,
+    *,
+    start_timecode_frames: int | None = None,
+    is_drop_frame: bool = False,
+) -> str:
+    """Generate WebVTT using the same integer-frame timing contract as Legacy SRT/VTT."""
+    srt = generate_srt(
+        shots,
+        fps=fps,
+        start_timecode_frames=start_timecode_frames,
+        is_drop_frame=is_drop_frame,
+    )
+    return "WEBVTT\r\n\r\n" + srt.replace(",", ".")
 
 
 def generate_otio(shots: list[Any], fps: float = 25.0, title: str = "FrameForge Timeline") -> dict:

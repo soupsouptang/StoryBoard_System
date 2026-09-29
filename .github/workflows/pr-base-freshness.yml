@@ -1,0 +1,34 @@
+name: PR Base Freshness
+
+on:
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  up-to-date:
+    name: PR contains current master
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - name: Fetch current master
+        run: git fetch --no-tags origin master
+      - name: Require current master to be an ancestor of PR head
+        shell: bash
+        run: |
+          if git merge-base --is-ancestor origin/master HEAD; then
+            echo "PASS: PR contains current origin/master"
+            exit 0
+          fi
+          echo "::error::PR branch is stale relative to master. Rebase/replay the task branch onto current master before merge."
+          echo "PR head:    $(git rev-parse HEAD)"
+          echo "master:     $(git rev-parse origin/master)"
+          echo "merge-base: $(git merge-base HEAD origin/master)"
+          exit 1

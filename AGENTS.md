@@ -659,7 +659,15 @@ Before committing, inspect status and staged diff.
 
 Do not commit secrets, local environment files, transient diagnostics, generated debugging artifacts, or unrelated user changes.
 
-For repository-modification tasks that are being executed autonomously, push verified focused commits when remote authorization is available unless the active user instruction says not to push.
+For repository-modification tasks, the default integration path is:
+
+`task branch → focused commit(s) → pull request → required validation → merge`.
+
+Do not push ordinary migration or refactor work directly to `master`. Direct `master` updates are reserved for an explicit active-user instruction, a narrowly scoped repository-administration change that cannot reasonably use a PR, or an emergency repair whose reason is documented.
+
+When GitHub branch protection/rulesets are unavailable, agents must still follow branch/PR discipline voluntarily; lack of server-side enforcement is not permission to bypass reviewable integration.
+
+Before opening a PR, update the task branch against current `master` when practical and rerun affected gates. Never force-push `master`.
 
 After a successful push in a continuing migration task:
 
