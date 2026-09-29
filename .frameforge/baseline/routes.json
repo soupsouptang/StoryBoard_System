@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "golden_baseline": "5e86a0bb11a20ecd631d9c2af66260a73d7c92e7",
+  "source": "storyboard-system/docs/API_ROUTE_PARITY_MATRIX.md",
+  "legacy_export_formats": [
+    "edl",
+    "otio",
+    "fcpxml",
+    "srt",
+    "vtt",
+    "shooting_list",
+    "stock_list",
+    "motion_list",
+    "vfx_list",
+    "csv",
+    "json",
+    "project-pdf"
+  ],
+  "required_vnext_route_markers": [
+    "/auth/login",
+    "/auth/register",
+    "/auth/me",
+    "/productions",
+    "/shots/{id}",
+    "/shots/bulk-update",
+    "/shots/reorder",
+    "/productions/{id}/import-preview",
+    "/productions/{id}/import-commit",
+    "/productions/{id}/export/{edl\\|otio\\|srt\\|vtt\\|csv}",
+    "/share/{token}",
+    "/presence/rooms/{id}",
+    "/ai/status"
+  ]
+}
