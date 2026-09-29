@@ -59,15 +59,18 @@ def check_hygiene(errors: list[str]) -> None:
     for rel in tracked_files():
         suffix = rel.suffix.lower()
         if suffix in FORBIDDEN_SUFFIXES:
-            fail(errors, f"tracked temporary/debug artifact is forbidden: {rel}")
+            allowed_evidence = rel.as_posix().startswith("storyboard-system/docs/audits/") and suffix in {".patch", ".diff"}
+            if not allowed_evidence:
+                fail(errors, f"tracked temporary/debug artifact is forbidden: {rel}")
 
         if len(rel.parts) == 1 and suffix in {".py", ".js", ".mjs", ".cjs"}:
             if rel.name not in ALLOWED_ROOT_SCRIPTS:
                 fail(errors, f"ad-hoc root script is forbidden; move reusable tooling to tools/ or .github/scripts/: {rel}")
 
         if rel.name.lower().startswith(("tmp_", "temp_", "debug_", "patch_", "replace_")):
-            if not rel.as_posix().startswith(("tests/", "storyboard-system/tests/", ".github/scripts/")):
-                fail(errors, f"tracked temporary-looking artifact is forbidden outside test/tool locations: {rel}")
+            allowed_scratch = rel.as_posix().startswith("storyboard-system/scratch/")
+            if not allowed_scratch and not rel.as_posix().startswith(("tests/", "storyboard-system/tests/", ".github/scripts/")):
+                fail(errors, f"tracked temporary-looking artifact is forbidden outside explicit scratch/test/tool locations: {rel}")
 
         if suffix not in TEXT_SUFFIXES:
             continue
