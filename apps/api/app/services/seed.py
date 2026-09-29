@@ -24,7 +24,7 @@ ROLES = [
 
 
 async def seed_database(db: AsyncSession) -> None:
-    """Seed initial roles, admin user, and Tianjin 80-shot sample production."""
+    """Seed required roles/admin; optional demo production is explicit opt-in."""
     # 1. Seed Roles
     for r_data in ROLES:
         res = await db.execute(select(Role).where(Role.name == r_data["name"]))
@@ -49,7 +49,11 @@ async def seed_database(db: AsyncSession) -> None:
         db.add(admin_user)
         await db.flush()
 
-    # 3. Seed Tianjin 80-Shot Demo Project if no production exists
+    # 3. Demo product data is optional. Normal development/test startup must
+    # stay product-neutral unless DEMO_SEED_ENABLED is explicitly enabled.
+    if not settings.DEMO_SEED_ENABLED:
+        return
+
     prod_res = await db.execute(select(Production).limit(1))
     if not prod_res.scalar_one_or_none():
         pid = str(uuid.uuid4())

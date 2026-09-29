@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from typing import Any, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ProductionCreate(BaseModel):
@@ -100,6 +100,9 @@ class ShotReorderRequest(BaseModel):
 class BulkUpdateShotsRequest(BaseModel):
     shot_ids: list[str]
     updates: dict[str, Any]
+    # Expected server revisions for every selected shot. Bulk writes use the
+    # same optimistic-concurrency contract as single-shot PATCH.
+    revisions: dict[str, int] = Field(default_factory=dict)
 
 
 class ShotOut(BaseModel):

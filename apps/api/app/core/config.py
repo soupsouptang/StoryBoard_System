@@ -57,11 +57,12 @@ try:
         S3_BUCKET: str = "frameforge-media"
         S3_USE_SSL: bool = False
 
-        # Seed Admin Credentials
+        # Seed Admin Credentials. Product/demo data is opt-in so normal
+        # development and visual QA do not silently acquire a sample project.
         INITIAL_ADMIN_EMAIL: str = "admin@company.internal"
-        INITIAL_ADMIN_PASSWORD: str = "FrameForge2026!Admin"
         INITIAL_ADMIN_PASSWORD: str = DEFAULT_ADMIN_PW
         INITIAL_ADMIN_NAME: str = "系统超级管理员"
+        DEMO_SEED_ENABLED: bool = False
 
         # AI Configuration (Section 19: AI default disabled)
         AI_ENABLED: bool = False
@@ -120,6 +121,7 @@ except ImportError:
         INITIAL_ADMIN_EMAIL: str = os.environ.get("INITIAL_ADMIN_EMAIL", "admin@company.internal")
         INITIAL_ADMIN_PASSWORD: str = os.environ.get("INITIAL_ADMIN_PASSWORD", DEFAULT_ADMIN_PW)
         INITIAL_ADMIN_NAME: str = os.environ.get("INITIAL_ADMIN_NAME", "系统超级管理员")
+        DEMO_SEED_ENABLED: bool = os.environ.get("DEMO_SEED_ENABLED", "").strip().lower() in {"1", "true", "yes", "on"}
         AI_ENABLED: bool = False
 
         def validate_production(self) -> None:

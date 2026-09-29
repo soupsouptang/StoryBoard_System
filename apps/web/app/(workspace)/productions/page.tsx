@@ -157,7 +157,7 @@ export default function ProductionsPage() {
                     <span className="uppercase">{prod.template_type}</span>
                     <span>{prod.fps_num} FPS</span>
                     <span>{prod.aspect_ratio}</span>
-                    <span>{(prod as any).shot_count || 0} SHOTS</span>
+                    <span>{prod.shot_count ?? 0} SHOTS</span>
                   </div>
                 </div>
                 <span className="shrink-0 text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">进入工作区 →</span>
@@ -185,7 +185,7 @@ export default function ProductionsPage() {
                   required
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  placeholder="例如：天津国际农产品交易中心 · 形象宣传片"
+                  placeholder="例如：品牌年度形象片"
                 />
               </Field>
 

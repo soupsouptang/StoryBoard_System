@@ -1,26 +1,39 @@
 # FRAMEFORGE Screen Parity Matrix
 
-This document tracks the recovery of existing FRAMEFORGE screens in the VNext architecture.
+This document tracks VNext screen recovery against the accepted FRAMEFORGE product behavior.
+
+Status vocabulary:
+- VERIFIED
+- IMPLEMENTED_NOT_INTEGRATED
+- INTEGRATED_NOT_CUT_OVER
+- CUTOVER_READY
+- CUT_OVER
+- LEGACY_RETIRED
+- BLOCKED
+- BLOCKED_VISUAL
 
 ## Web UI Pages (apps/web)
 
-| Route / Screen | VNext Route | Status | Notes |
+| Baseline Screen | VNext Route | Status | Notes |
 | :--- | :--- | :--- | :--- |
-| /login | /login | 🟢 CUTOVER_READY | Responsive, strict neutral theme, visual QA passing |
-| /projects | /productions | 🟡 INTEGRATED_NOT_CUT_OVER | Missing visual QA and media hydration |
-| /projects/[id] | /production/[id] | 🔴 REMOVE / RECONCILE | Not a baseline capability, unauthorized product redesign |
-| /projects/[id]/shots | /production/[id]/shots | 🟡 INTEGRATED_NOT_CUT_OVER | Dense read-first table. Trash modal restored. Needs inline edit & column tools |
-| /projects/[id]/timeline | /production/[id]/timeline| 🟡 PARTIAL | Present but basic |
-| /projects/[id]/storyboard| /production/[id]/storyboard| 🟡 PARTIAL | Present but basic |
-| /projects/[id]/deliverables| /production/[id]/deliverables| 🟡 PARTIAL | PDF/Export mock UI present, backend export exists but not fully wired with options |
-| /projects/[id]/narration | N/A | 🔴 MISSING | Core legacy feature |
-| /projects/[id]/moodboard | N/A | 🔴 MISSING | Core legacy feature |
-| /projects/[id]/planning | N/A | 🔴 MISSING | Core legacy feature |
+| /login | /login | INTEGRATED_NOT_CUT_OVER | Real auth UI exists, but full visual/product parity and runtime cutover evidence are not sufficient for CUTOVER_READY. |
+| /projects | /productions | INTEGRATED_NOT_CUT_OVER | Real API consumer; monogram cover fallback restored. Real cover media and fresh visual QA remain. |
+| /projects/[id] entry | /production/[id] | VERIFIED | Route is now a redirect to the selected Shot workspace; unauthorized feature-card overview is no longer the product path. |
+| /projects/[id]/shots | /production/[id]/shots | INTEGRATED_NOT_CUT_OVER | Real V-API consumer; selection/Inspector decoupled, inline edit and responsive table work are partial. Column tools and broader parity remain. |
+| /projects/[id]/timeline | /production/[id]/timeline | IMPLEMENTED_NOT_INTEGRATED | V-Web implementation exists but remains below baseline timeline behavior. |
+| /projects/[id]/storyboard | /production/[id]/storyboard | IMPLEMENTED_NOT_INTEGRATED | V-Web implementation exists but remains below baseline storyboard/wall behavior. |
+| /projects/[id]/deliverables | /production/[id]/deliverables | INTEGRATED_NOT_CUT_OVER | CSV/EDL/OTIO/SRT use real V-API; PDF/Word/layout parity remains incomplete. |
+| /projects/[id]/narration | N/A | BLOCKED | Baseline capability not yet migrated to canonical V-Web. |
+| /projects/[id]/moodboard | N/A | BLOCKED | Baseline capability not yet migrated to canonical V-Web. |
+| /projects/[id]/planning / lighting | N/A | BLOCKED | Baseline scene-planning/lighting capability not yet migrated. |
 
-*Legend:*
-- 🔴 MISSING: Dropped in VNext, needs recovery
-- 🟡 PARTIAL: Partially implemented or buggy
-- 🟢 IMPLEMENTED_NOT_INTEGRATED: UI exists, mock data
-- 🟡 INTEGRATED_NOT_CUT_OVER: UI exists, real API, functional parity close
-- 🟢 CUTOVER_READY: Parity proven, QA passes
-- 🟢 CUT_OVER: Authoritative runtime
+## Visual gate
+
+The recent mobile screenshot is failure evidence, not a pass baseline. For Shot Workspace, fresh browser inspection is still required for:
+- 1440×900
+- 1024×768
+- 768×1024
+- 375×812
+- 320×568
+
+Check table horizontal scroll ownership, sticky columns, toolbar density, Inspector overlay, safe-area behavior, conflict states, and focus/keyboard behavior.

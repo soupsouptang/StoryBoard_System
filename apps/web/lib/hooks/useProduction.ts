@@ -103,16 +103,30 @@ export function useBulkUpdateShots(productionId: string) {
       shotIds: string[];
       updates: Record<string, unknown>;
     }) => {
+      const currentShots = queryClient.getQueryData<Shot[]>(['shots', productionId]) ?? [];
+      const byId = new Map(currentShots.map(shot => [shot.id, shot]));
+      const missing = shotIds.filter(id => !byId.has(id));
+
+      if (missing.length > 0) {
+        throw new Error('批量修改前需要刷新镜头数据，以取得最新版本号。');
+      }
+
+      const revisions = Object.fromEntries(
+        shotIds.map(id => [id, byId.get(id)!.revision])
+      );
+
       return apiClient(`/api/v1/shots/bulk-update`, {
         method: 'POST',
         json: {
           shot_ids: shotIds,
-          updates
+          updates,
+          revisions
         }
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shots', productionId] });
+      queryClient.invalidateQueries({ queryKey: ['production', productionId] });
     }
   });
 }

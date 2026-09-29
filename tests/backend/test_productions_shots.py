@@ -39,6 +39,12 @@ async def test_production_and_shot_pipeline():
         token = login_res.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
 
+        # Development/test seed initializes required roles/admin only. Product
+        # demo data is explicit opt-in and must not pollute a normal test run.
+        empty_list = await client.get("/api/v1/productions", headers=headers)
+        assert empty_list.status_code == 200
+        assert empty_list.json() == []
+
         # 2. Create Production
         p_res = await client.post("/api/v1/productions", headers=headers, json={
             "name": "2026 电影概念先导片",
@@ -98,3 +104,30 @@ async def test_production_and_shot_pipeline():
         # Verify Shot is filtered out after soft delete
         list_res = await client.get(f"/api/v1/productions/{pid}/shots", headers=headers)
         assert len(list_res.json()) == 0
+
+        # 8. Trash list exposes the soft-deleted shot.
+        trash_res = await client.get(f"/api/v1/productions/{pid}/shots/trash", headers=headers)
+        assert trash_res.status_code == 200
+        trash_rows = trash_res.json()
+        assert [row["id"] for row in trash_rows] == [sid]
+
+        # 9. Restore returns the authoritative bumped revision and makes the shot visible again.
+        restore_res = await client.post(f"/api/v1/shots/{sid}/restore", headers=headers)
+        assert restore_res.status_code == 200
+        restored = restore_res.json()
+        assert restored["id"] == sid
+        assert restored["revision"] == 3
+
+        list_after_restore = await client.get(f"/api/v1/productions/{pid}/shots", headers=headers)
+        assert len(list_after_restore.json()) == 1
+        assert list_after_restore.json()[0]["revision"] == 3
+
+        # 10. Purge is only reachable after the shot is back in Trash.
+        del_again = await client.delete(f"/api/v1/shots/{sid}", headers=headers)
+        assert del_again.status_code == 204
+        purge_res = await client.delete(f"/api/v1/shots/{sid}/purge", headers=headers)
+        assert purge_res.status_code == 204
+
+        trash_after_purge = await client.get(f"/api/v1/productions/{pid}/shots/trash", headers=headers)
+        assert trash_after_purge.status_code == 200
+        assert trash_after_purge.json() == []

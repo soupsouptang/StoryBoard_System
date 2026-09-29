@@ -37,7 +37,7 @@ Status vocabulary:
 | Search | Present | Present | INTEGRATED_NOT_CUT_OVER | Basic local search exists; parity with baseline search/filter semantics is incomplete. |
 | Filtering & Sorting | Present | Present | BLOCKED | Not yet migrated. |
 | Grouping | Present | Present | BLOCKED | Not yet migrated. |
-| Bulk Actions | Present | Present | BLOCKED | Backend endpoint exists, but canonical UI and command parity are incomplete. |
+| Bulk Actions | Present | Present | BLOCKED | Canonical UI is still missing. V-API bulk writes now use revision-aware atomic `ShotService` semantics and suppress no-op revisions; Panel/custom-field/audit parity remains incomplete. |
 | Context Menu | Present | Present | BLOCKED | Not yet migrated. |
 | Shot Reorder | Present | Present | BLOCKED | API exists but canonical UI/command parity is incomplete. |
 | Undo / Redo | Present | Present | BLOCKED | Not yet migrated. |
@@ -47,13 +47,13 @@ Status vocabulary:
 | Comments | Present | Present | BLOCKED | Not yet migrated. |
 | Versions | Present | Present | BLOCKED | Not yet migrated. |
 | Share | Present | Present | BLOCKED | VNext share contract is not baseline-parity. |
-| Shot Trash | Present | Present | INTEGRATED_NOT_CUT_OVER | Soft delete/list/restore/purge exist, but command/audit/tests and retention behavior are incomplete. |
+| Shot Trash | Present | Present | INTEGRATED_NOT_CUT_OVER | Soft delete/list/restore/purge route through `ShotService` and lifecycle API coverage exists; actor/audit history and any real retention policy remain incomplete. |
 
 ## 3. Server State & Collaboration
 | Capability | Baseline | VNext target | Status | Gap / evidence |
 | :--- | :--- | :--- | :--- | :--- |
 | Strict No-Op Revision | Present | Present | INTEGRATED_NOT_CUT_OVER | `ShotService.patch_shot` suppresses revision changes for no-op writes and has a focused contract test. |
-| Shot Command Parity | Present | Present | INTEGRATED_NOT_CUT_OVER | Create/PATCH use `ShotService`; trash, reorder, bulk, actor/audit/history still bypass the full canonical command boundary. |
+| Shot Command Parity | Present | Present | INTEGRATED_NOT_CUT_OVER | Create/PATCH, trash/restore/purge, and bulk writes now flow through `ShotService`; reorder plus actor/audit/history and full Panel/asset semantics still need convergence. |
 | 409 Conflict | Present | Strict | INTEGRATED_NOT_CUT_OVER | API conflict path and draft-preserving UI exist; full end-to-end/browser conflict resolution is not yet cutover-ready. |
 | Ephemeral Presence | Active | Authenticated Redis-backed | BLOCKED | Canonical UI consumer must remain disconnected until WS auth + Redis multi-worker semantics are complete. |
 | Real-time Sync | Active | Authenticated realtime | BLOCKED | No authoritative cutover yet. |

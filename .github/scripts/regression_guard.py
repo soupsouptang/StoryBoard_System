@@ -28,7 +28,6 @@ FORBIDDEN_ROOT_PREFIXES = (
     "debug", "temp", "tmp", "patch", "replace", "update_matrix", "refactor_",
 )
 FORBIDDEN_ANY_SUFFIXES = {".orig", ".rej"}
-ALLOWED_TOOL_DIRS = {".github", "tools", "scripts", "tests"}
 
 REQUIRED_CONSTITUTION = (
     BASELINE,
@@ -62,10 +61,10 @@ REQUIRED_PRODUCT_CAPABILITIES = (
     "Comments",
     "Versions",
     "Share",
-    "Project Trash",
+    "Shot Trash",
     "Strict No-Op Revision",
     "Shot Command Parity",
-    "409 Conflict Rehearsal",
+    "409 Conflict",
     "Ephemeral Presence",
     "Real-time Sync",
 )

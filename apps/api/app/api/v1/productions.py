@@ -9,7 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1.deps import get_current_user
 from app.core.database import get_db
-from app.models.production import Production, Sequence, Scene
+from app.models.production import Production
 from app.models.shot import Shot
 from app.models.user import User
 from app.schemas.production import ProductionCreate, ProductionOut, ProductionUpdate
@@ -70,15 +70,6 @@ async def create_production(
     )
     db.add(prod)
 
-    # Add default sequence
-    seq = Sequence(
-        id=str(uuid.uuid4()),
-        production_id=pid,
-        display_number="SEQ010",
-        name="第一篇章 / 序幕",
-        sort_index=1000.0
-    )
-    db.add(seq)
     await db.flush()
 
     p_out = ProductionOut.model_validate(prod)

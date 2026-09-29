@@ -35,9 +35,29 @@
 | M3 API/持久化 | `apps/api` 已有路由/SQLAlchemy；[路由对等表](API_ROUTE_PARITY_MATRIX.md) 已建立；V-Web 已真实消费 SRT、VTT、EDL、OTIO、CSV 导出并有测试覆盖；Legacy `server.py` 仍是服务配置入口，第二 FastAPI 树并存 | IMPLEMENTED_NOT_INTEGRATED（整体；导出子项已集成） | 路由/事务对等、真实 PostgreSQL 隔离集成、旧 owner 退出 |
 | M4 Web 视图 | `apps/web` 有部分可挂载视图；Legacy `WorkspaceStage` 未从入口挂载 | IMPLEMENTED_NOT_INTEGRATED | 一个视图完成 render/state/request/mutation/save owner 接管 |
 | M5 AI | VNext mock/proposal 为进程内；无持久 Job/真实 Web 消费；接受路径未走普通 Command | BLOCKED | 禁用零外发、provider/job/proposal/人工接受合同 |
-| M6 Presence | VNext service 为进程内；无 Redis 多 worker 和 V-Web client | IMPLEMENTED_NOT_INTEGRATED | Redis TTL/pubsub、session_id、多 worker 与重连验收 |
+| M6 Presence | VNext service 仍为进程内；canonical V-Web consumer 已主动断开，Redis/WS auth 尚未完成 | BLOCKED | authenticated WS、Redis TTL/pubsub、session_id、多 worker 与重连验收后才能重新接 UI |
 | M7 PostgreSQL | GitHub Actions 已在隔离 PostgreSQL 16 上完成 empty→Alembic head，并校验核心表/版本；真实运行时仍未切换，SQLite→PostgreSQL 数据副本迁移尚未演练 | IMPLEMENTED_NOT_INTEGRATED | SQLite 副本→PostgreSQL、业务事务/引用/回滚演练后再评估 CUTOVER_READY |
 
 旧 2026-09-29 “完整 AI/Presence/React”等记录属于实现切片的历史笔记，不能作为当前 cutover 证据。`VNEXT_PROGRESS.md` 已将历史“READY FOR RELEASE”撤出当前状态。当前未部署，也未接触生产数据。未完成的路径继续保留 Legacy owner，不删除迁移源。
 
 本轮代码与验证记录见 [VNEXT_PROGRESS.md](worklogs/VNEXT_PROGRESS.md)。M2 只接入了登录页四种根控件；Legacy UI 包未退出，`apps/web` 全站尚未共享控件化。M3 的 SRT/VTT/EDL/OTIO/CSV 已有 V-Web 真实下载入口，但 Legacy 仍为生产服务配置入口；分享与注册是有测试的局部修复，其他路由与持久化收敛仍是下一门槛。
+
+
+## 2026-09-29 Regression Stabilization
+
+Current implementation target: `master`. Product behavior reference: `5e86a0b`, overridden by later explicit user decisions.
+
+| Slice | Current evidence | Status | Next gate |
+| --- | --- | --- | --- |
+| Shot PATCH contract | V-Web sends changed fields; server revision is authoritative; `ShotService` has explicit patch whitelist and no-op suppression | INTEGRATED_NOT_CUT_OVER | actor/audit/history plus bulk/reorder/trash convergence |
+| VNext bulk Shot contract | V-Web now sends per-shot server revisions; V-API validates the whole batch before mutation, rejects stale rows with 409, and suppresses no-op revision bumps | IMPLEMENTED_NOT_INTEGRATED | add the baseline bulk-action UI plus Panel/custom-field/audit semantics before real consumer cutover |
+| Inspector draft safety | dirty drafts are preserved per Shot and rebased after a 409 refresh | INTEGRATED_NOT_CUT_OVER | browser regression for switch/refetch/conflict/close on desktop and narrow widths |
+| Inline edit | description/voice-over use real V-API PATCH and preserve input on conflict | INTEGRATED_NOT_CUT_OVER | expand field coverage and browser/keyboard conflict QA |
+| Mobile Shot table | table owns horizontal scroll, first columns are sticky, Inspector overlays on narrow widths, `100dvh`/safe-area added | BLOCKED_VISUAL | real 1440/1024/768/375/320 rendered inspection |
+| Presence | V-Web TopBar consumer disconnected again | BLOCKED | authenticated WS + Redis TTL/pubsub + multi-worker before reconnecting UI |
+| Project entry | unauthorized feature-card overview replaced by redirect to selected Shot workspace | VERIFIED | keep IA aligned while recovering remaining baseline capabilities |
+| Project cover | deterministic monogram/gradient fallback only; no fake media URL | INTEGRATED_NOT_CUT_OVER | canonical cover media read model + media resolver |
+| Shot Trash | soft delete/list/restore/purge now flow through `ShotService`; API lifecycle coverage exists; UI no longer promises unimplemented 30-day cleanup | INTEGRATED_NOT_CUT_OVER | actor/audit history and any real retention policy before further promotion |
+| Visual warning state | shared warning tokens and Tailwind mapping restored | IMPLEMENTED_NOT_INTEGRATED | verify conflict/dirty states in light/dark browser renders |
+
+Do not begin Narration, Moodboard, Lighting, or wider product recovery until this stabilization slice has passed CI and the Shot workspace has fresh rendered-browser QA.

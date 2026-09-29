@@ -142,6 +142,8 @@ export interface Production {
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
+  shot_count?: number;
+  total_duration_frames?: number;
 }
 
 export interface Sequence {

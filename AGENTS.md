@@ -122,6 +122,7 @@ Capability migration uses these states:
 - `CUT_OVER` — the target path is the authoritative runtime owner.
 - `LEGACY_RETIRED` — the former owner has zero runtime consumers and is removed or deliberately inert.
 - `BLOCKED` — a required prerequisite, decision, credential, environment, or dependency is missing.
+- `BLOCKED_VISUAL` — code or functional checks may pass, but required rendered-browser visual evidence is missing or has failed.
 
 A file, route, component, test, migration, package, or directory existing does **not** prove migration completion.
 
@@ -766,6 +767,7 @@ When uncertain, prefer:
 The objective is not to make FRAMEFORGE look migrated.
 
 The objective is to make FRAMEFORGE actually converge.
+
 ---
 
 ## 31. Branch and Pull Request Discipline
@@ -788,4 +790,3 @@ Rules:
 - If another actor moves `master` while a task branch is active, re-check the diff and update/rebase only when the branch can be reconciled without discarding user work.
 
 For pull requests that change runtime ownership, schema, generated assets, routes, or visible product behavior, update the relevant canonical evidence in the same branch.
-

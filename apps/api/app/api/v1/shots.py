@@ -93,11 +93,7 @@ async def delete_shot(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(Shot).where(Shot.id == id, Shot.deleted_at.is_(None)))
-    shot = result.scalar_one_or_none()
-    if shot:
-        shot.deleted_at = datetime.now(timezone.utc)
-        await db.flush()
+    await ShotService.trash_shot(db, id, current_user.id)
     return None
 
 
@@ -108,15 +104,11 @@ async def restore_shot(
     current_user: User = Depends(get_current_user)
 ) -> dict:
     """Restore a soft-deleted shot."""
-    result = await db.execute(select(Shot).where(Shot.id == id, Shot.deleted_at.is_not(None)))
-    shot = result.scalar_one_or_none()
-    if not shot:
-        raise HTTPException(status_code=404, detail="Shot not found in trash")
-    shot.deleted_at = None
-    # Bump revision to notify clients of state change
-    shot.revision += 1
-    await db.flush()
-    return {"ok": True, "id": id}
+    try:
+        shot = await ShotService.restore_shot(db, id, current_user.id)
+        return {"ok": True, "id": shot.id, "revision": shot.revision}
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail={"code": e.code, "message": e.message})
 
 
 @router.delete("/shots/{id}/purge", status_code=status.HTTP_204_NO_CONTENT)
@@ -125,12 +117,8 @@ async def purge_shot(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Permanently delete a shot."""
-    result = await db.execute(select(Shot).where(Shot.id == id, Shot.deleted_at.is_not(None)))
-    shot = result.scalar_one_or_none()
-    if shot:
-        await db.delete(shot)
-        await db.flush()
+    """Permanently delete a shot that is already in Trash."""
+    await ShotService.purge_shot(db, id, current_user.id)
     return None
 
 
@@ -183,18 +171,25 @@ async def bulk_update_shots(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Bulk update multiple shots in a single transaction (Spec Section 71)."""
-    allowed_fields = {"primary_method", "department", "owner_id", "status", "sequence_id", "scene_id", "lens_mm"}
-    valid_updates = {k: v for k, v in req.updates.items() if k in allowed_fields}
-    if not valid_updates:
-        raise HTTPException(status_code=400, detail={"code": "VALIDATION_ERROR", "message": "无有效的批量更新字段"})
-
-    valid_updates["updated_at"] = datetime.now(timezone.utc)
-    for sid in req.shot_ids:
-        await db.execute(
-            update(Shot)
-            .where(Shot.id == sid, Shot.deleted_at.is_(None))
-            .values(**valid_updates)
+    """Revision-aware atomic bulk update through the canonical ShotService."""
+    try:
+        return await ShotService.bulk_update_shots(db, req, current_user.id)
+    except NotFoundError as e:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": e.code, "message": e.message},
         )
-    await db.flush()
-    return {"ok": True, "updated_count": len(req.shot_ids)}
+    except ConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "SHOT_REVISION_CONFLICT",
+                "message": e.message,
+                "details": e.details,
+            },
+        )
+    except DomainError as e:
+        raise HTTPException(
+            status_code=400,
+            detail={"code": e.code, "message": e.message},
+        )
