@@ -1,0 +1,9 @@
+# Advisory until GitHub plan/admin permissions allow enforced rulesets.
+/AGENTS.md @soupsouptang
+/.github/ @soupsouptang
+/.frameforge/ @soupsouptang
+/apps/api/ @soupsouptang
+/apps/web/ @soupsouptang
+/packages/ @soupsouptang
+/storyboard-system/docs/ @soupsouptang
+* @soupsouptang

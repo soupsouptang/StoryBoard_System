@@ -1,0 +1,48 @@
+name: PR Contract
+
+on:
+  pull_request:
+    branches: [master]
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  description-contract:
+    name: PR evidence contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PR_BODY: ${{ github.event.pull_request.body }}
+    steps:
+      - name: Require migration and verification evidence
+        shell: python
+        run: |
+          import os, sys
+
+          body = os.environ.get("PR_BODY", "")
+          required = [
+              "## Scope",
+              "## Migration state",
+              "## Verification",
+              "## Regression / parity",
+              "## Data / production safety",
+              "## Rollback",
+          ]
+          missing = [heading for heading in required if heading.lower() not in body.lower()]
+          errors = []
+          if missing:
+              errors.append("missing sections: " + ", ".join(missing))
+          if len(body.strip()) < 500:
+              errors.append("PR body is too short to contain migration evidence")
+          if "real consumer" not in body.lower():
+              errors.append("PR must explicitly identify real consumer impact/evidence")
+          if "production" not in body.lower():
+              errors.append("PR must explicitly address production/data safety")
+          if errors:
+              print("FRAMEFORGE PR evidence contract FAILED:")
+              for error in errors:
+                  print(" -", error)
+              sys.exit(1)
+          print("PASS: PR description contains required evidence sections")

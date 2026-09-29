@@ -87,6 +87,25 @@ async def test_srt_uses_legacy_timing_voiceover_and_download_bytes(export_client
 
 
 @pytest.mark.asyncio
+async def test_vtt_uses_legacy_timing_voiceover_and_download_bytes(export_client):
+    token = create_access_token({"sub": "export-user"})
+    response = await export_client.get(
+        "/api/v1/productions/export-production/export/vtt",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "text/vtt; charset=utf-8"
+    assert response.headers["content-disposition"] == (
+        "attachment; filename*=UTF-8''" + quote("My_Film_ 开场.vtt")
+    )
+    assert response.content == (
+        "WEBVTT\r\n\r\n"
+        "1\r\n01:00:00.000 --> 01:00:02.000\r\n第一句\r\n\r\n"
+        "2\r\n01:00:03.000 --> 01:00:04.000\r\n第二句\r\n"
+    ).encode("utf-8-sig")
+
+
+@pytest.mark.asyncio
 async def test_edl_export(export_client):
     token = create_access_token({"sub": "export-user"})
     response = await export_client.get(

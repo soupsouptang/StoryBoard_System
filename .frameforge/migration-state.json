@@ -1,0 +1,354 @@
+{
+  "schema_version": 1,
+  "product_baseline": "5e86a0bb11a20ecd631d9c2af66260a73d7c92e7",
+  "state_model": [
+    "VERIFIED",
+    "IMPLEMENTED_NOT_INTEGRATED",
+    "INTEGRATED_NOT_CUT_OVER",
+    "CUTOVER_READY",
+    "CUT_OVER",
+    "LEGACY_RETIRED",
+    "BLOCKED",
+    "BLOCKED_VISUAL"
+  ],
+  "capabilities": {
+    "HTTP API": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "storyboard-system/server.py",
+      "target_owner": "apps/api",
+      "legacy_owner": "storyboard-system/server.py",
+      "evidence": {
+        "real_consumer": false,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "API_ROUTE_PARITY_MATRIX"
+        ]
+      },
+      "blocker": "real clients and missing route families have not cut over"
+    },
+    "Authentication": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "storyboard-system/server.py",
+      "target_owner": "apps/api/app/api/v1/auth.py",
+      "legacy_owner": "storyboard-system/server.py",
+      "evidence": {
+        "real_consumer": false,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "tests/backend/test_api_auth.py"
+        ]
+      },
+      "blocker": "legacy session/profile lifecycle parity and runtime client cutover"
+    },
+    "Production": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "storyboard-system/server.py",
+      "target_owner": "apps/api/app/api/v1/productions.py",
+      "legacy_owner": "storyboard-system/server.py",
+      "evidence": {
+        "real_consumer": false,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "tests/backend/test_productions_shots.py"
+        ]
+      },
+      "blocker": "project lifecycle and ID mapping parity"
+    },
+    "Shot CRUD": {
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner": "storyboard-system/server.py + shot_updates.py",
+      "target_owner": "apps/api/app/services/shot_service.py",
+      "legacy_owner": "storyboard-system/server.py",
+      "evidence": {
+        "real_consumer": true,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "tests/backend/test_shot_service_patch_contract.py",
+          "tests/backend/test_productions_shots.py"
+        ]
+      },
+      "blocker": "immutable history, panels/assets/custom fields and legacy writer retirement"
+    },
+    "Bulk Shot": {
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner": "storyboard-system/shot_bulk_updates.py",
+      "target_owner": "apps/api",
+      "legacy_owner": "storyboard-system/shot_bulk_updates.py",
+      "evidence": {
+        "real_consumer": true,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "backend bulk contract tests"
+        ]
+      },
+      "blocker": "advanced bulk semantics and visual/browser parity"
+    },
+    "Fields": {
+      "state": "BLOCKED",
+      "current_owner": "storyboard-system/field_lifecycle.py",
+      "target_owner": "apps/api",
+      "legacy_owner": "storyboard-system/field_lifecycle.py",
+      "evidence": {
+        "real_consumer": false,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": []
+      },
+      "blocker": "V-API field lifecycle is incomplete"
+    },
+    "Import": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "storyboard-system/import_parsing.py + import_staging.py",
+      "target_owner": "apps/api/app/api/v1/imports.py",
+      "legacy_owner": "storyboard-system/server.py",
+      "evidence": {
+        "real_consumer": false,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "import contract tests"
+        ]
+      },
+      "blocker": "embedded images, modes and rollback parity"
+    },
+    "Export": {
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner": "storyboard-system/server.py + delivery_exports.py",
+      "target_owner": "apps/api/app/api/v1/exports.py",
+      "legacy_owner": "storyboard-system/server.py",
+      "evidence": {
+        "real_consumer": true,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "tests/backend/test_exports_srt.py"
+        ]
+      },
+      "blocker": "remaining formats and Legacy runtime retirement"
+    },
+    "Review": {
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner": "storyboard-system/server.py + legacy web",
+      "target_owner": "apps/api + apps/web",
+      "legacy_owner": "storyboard-system/server.py",
+      "evidence": {
+        "real_consumer": true,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "tests/backend/test_review_api.py",
+          "tests/backend/test_version_api.py",
+          "V-Web build/browser QA"
+        ]
+      },
+      "blocker": "complete version compare/snapshot scope parity, rendered-browser review QA, and Legacy review retirement"
+    },
+    "Revision": {
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner": "storyboard-system/shot_versions.py",
+      "target_owner": "apps/api VersionService + apps/web Review",
+      "legacy_owner": "storyboard-system/shot_versions.py",
+      "evidence": {
+        "real_consumer": true,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "tests/backend/test_version_api.py",
+          "V-Web Review real consumer"
+        ]
+      },
+      "blocker": "complete snapshot scope and Legacy version/history retirement"
+    },
+    "Assets": {
+      "state": "BLOCKED",
+      "current_owner": "storyboard-system",
+      "target_owner": "apps/api",
+      "legacy_owner": "storyboard-system",
+      "evidence": {
+        "real_consumer": false,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": []
+      },
+      "blocker": "media bytes/reference migration and rollback"
+    },
+    "AI": {
+      "state": "BLOCKED",
+      "current_owner": "legacy ai_system / disabled product",
+      "target_owner": "apps/api + apps/web",
+      "legacy_owner": "storyboard-system/ai_system",
+      "evidence": {
+        "real_consumer": false,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "tests/backend/test_ai_and_presence.py"
+        ]
+      },
+      "blocker": "durable jobs/proposals and standard-command acceptance path"
+    },
+    "Presence": {
+      "state": "BLOCKED",
+      "current_owner": "storyboard-system CollaborationManager",
+      "target_owner": "apps/api realtime + apps/web",
+      "legacy_owner": "storyboard-system/server.py",
+      "evidence": {
+        "real_consumer": false,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "tests/backend/test_ai_and_presence.py"
+        ]
+      },
+      "blocker": "authenticated WS + Redis TTL/pubsub + multi-worker"
+    },
+    "Workspace shell": {
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner": "legacy web",
+      "target_owner": "apps/web",
+      "legacy_owner": "storyboard-system/static",
+      "evidence": {
+        "real_consumer": true,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "browser QA required"
+        ]
+      },
+      "blocker": "navigation/state/request ownership and full responsive parity"
+    },
+    "Table": {
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner": "legacy static/app.js",
+      "target_owner": "apps/web",
+      "legacy_owner": "storyboard-system/static/app.js",
+      "evidence": {
+        "real_consumer": true,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "browser QA required"
+        ]
+      },
+      "blocker": "column lifecycle/group/context menu/visual parity"
+    },
+    "Card": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "legacy web",
+      "target_owner": "apps/web",
+      "legacy_owner": "storyboard-system/static",
+      "evidence": {
+        "real_consumer": false,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": []
+      },
+      "blocker": "real canonical consumer and narrow-screen parity"
+    },
+    "Timeline": {
+      "state": "BLOCKED",
+      "current_owner": "legacy web",
+      "target_owner": "apps/web",
+      "legacy_owner": "storyboard-system/static",
+      "evidence": {
+        "real_consumer": false,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": []
+      },
+      "blocker": "operable V-Web timeline with canonical mutation path"
+    },
+    "Inspector": {
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner": "legacy static/app.js",
+      "target_owner": "apps/web",
+      "legacy_owner": "storyboard-system/static/app.js",
+      "evidence": {
+        "real_consumer": true,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "browser QA required"
+        ]
+      },
+      "blocker": "rendered browser QA and history/command parity"
+    },
+    "Selection": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "legacy state.selection",
+      "target_owner": "apps/web workspace store",
+      "legacy_owner": "storyboard-system/static/app.js",
+      "evidence": {
+        "real_consumer": false,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": []
+      },
+      "blocker": "all views must share one selection owner"
+    },
+    "UI components": {
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner": "legacy UI package + handwritten controls",
+      "target_owner": "packages/ui",
+      "legacy_owner": "storyboard-system/packages/ui",
+      "evidence": {
+        "real_consumer": true,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "root UI build",
+          "browser QA required"
+        ]
+      },
+      "blocker": "primitive parity and Legacy imports remain"
+    },
+    "Motion": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "legacy motion + CSS",
+      "target_owner": "packages/ui",
+      "legacy_owner": "storyboard-system/packages/ui",
+      "evidence": {
+        "real_consumer": false,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": []
+      },
+      "blocker": "shared tokens/consumers and reduced-motion parity"
+    },
+    "i18n": {
+      "state": "INTEGRATED_NOT_CUT_OVER",
+      "current_owner": "mixed legacy/V-Web strings",
+      "target_owner": "apps/web i18n",
+      "legacy_owner": "storyboard-system/static",
+      "evidence": {
+        "real_consumer": true,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "V-Web build"
+        ]
+      },
+      "blocker": "remaining hard-coded product strings and preference ownership"
+    },
+    "PostgreSQL": {
+      "state": "IMPLEMENTED_NOT_INTEGRATED",
+      "current_owner": "legacy SQLite runtime",
+      "target_owner": "PostgreSQL + Alembic",
+      "legacy_owner": "storyboard-system SQLite",
+      "evidence": {
+        "real_consumer": false,
+        "runtime_verified": true,
+        "legacy_zero_consumers": false,
+        "tests": [
+          "PostgreSQL Migration Rehearsal: empty -> head"
+        ]
+      },
+      "blocker": "realistic SQLite-copy migration, transaction/business integration and rollback"
+    }
+  }
+}

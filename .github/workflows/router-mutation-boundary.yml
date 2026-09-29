@@ -1,0 +1,41 @@
+name: Router Mutation Boundary
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "apps/api/app/api/v1/**"
+      - ".github/scripts/command_boundary_guard.py"
+      - ".github/workflows/router-mutation-boundary.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "apps/api/app/api/v1/**"
+      - ".github/scripts/command_boundary_guard.py"
+      - ".github/workflows/router-mutation-boundary.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mutation-boundary:
+    name: Router -> service mutation boundary
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - name: Resolve comparison base
+        id: base
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then BASE="${{ github.event.pull_request.base.sha }}"; else BASE="${{ github.event.before }}"; fi
+          if [ -z "$BASE" ] || printf '%s' "$BASE" | grep -Eq '^0+$'; then BASE="$(git rev-parse HEAD^)"; fi
+          echo "sha=$BASE" >> "$GITHUB_OUTPUT"
+      - name: Prevent new direct router persistence mutations
+        run: python .github/scripts/command_boundary_guard.py --base "${{ steps.base.outputs.sha }}"

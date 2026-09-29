@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "5e86a0bb11a20ecd631d9c2af66260a73d7c92e7",
+  "capabilities": [
+    "Project Cover Fallback",
+    "Workspace IA: Narration",
+    "Workspace IA: Moodboard",
+    "Workspace IA: Lighting",
+    "Workspace IA: Review",
+    "Read-first Table",
+    "Inline Double-click Editing",
+    "Column Manager",
+    "Saved View / Column Layout",
+    "Search",
+    "Filtering & Sorting",
+    "Grouping",
+    "Bulk Actions",
+    "Context Menu",
+    "Shot Reorder",
+    "Undo / Redo",
+    "Save Status",
+    "Production Steps",
+    "Custom Fields",
+    "Comments",
+    "Versions",
+    "Share",
+    "Shot Trash",
+    "Strict No-Op Revision",
+    "Shot Command Parity",
+    "409 Conflict",
+    "Ephemeral Presence",
+    "Real-time Sync"
+  ],
+  "screens": [
+    "/login",
+    "/projects",
+    "/projects/[id]",
+    "/projects/[id]/shots",
+    "/projects/[id]/timeline",
+    "/projects/[id]/storyboard",
+    "/projects/[id]/deliverables",
+    "/projects/[id]/narration",
+    "/projects/[id]/moodboard",
+    "/projects/[id]/planning"
+  ],
+  "policy": {
+    "baseline_is_behavior_inventory": true,
+    "later_explicit_product_decisions_override": true,
+    "legacy_implementation_is_not_frozen": true
+  }
+}
