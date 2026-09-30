@@ -7,6 +7,7 @@ import { framesToSeconds } from '@frameforge/timecode';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { getMethodStyle } from '@/lib/media-resolver';
 import { MethodBadge } from '../shot/MethodBadge';
+import { ShotPanelImage } from '../shot/ShotPanelImage';
 
 interface WallViewProps {
   production: Production;
@@ -52,11 +53,13 @@ export function WallView({
           >
             {/* Visual Tile */}
             <div className={`relative w-full aspect-video bg-gradient-to-br ${style.bg} flex items-center justify-center p-2`}>
-              <div className="text-center">
-                <span className={`font-mono text-lg font-black tracking-wider ${style.text} drop-shadow`}>
-                  {shot.display_number}
-                </span>
-              </div>
+              <ShotPanelImage shot={shot} className="absolute inset-0 h-full w-full object-cover">
+                <div className="text-center">
+                  <span className={`font-mono text-lg font-black tracking-wider ${style.text} drop-shadow`}>
+                    {shot.display_number}
+                  </span>
+                </div>
+              </ShotPanelImage>
 
               {/* Top Badge */}
               <div className="absolute top-1 left-1 z-10 scale-90 origin-top-left">

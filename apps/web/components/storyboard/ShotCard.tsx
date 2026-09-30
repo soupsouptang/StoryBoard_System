@@ -11,6 +11,7 @@ import { getMethodStyle } from '@/lib/media-resolver';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useUpdateShot } from '@/lib/hooks/useProduction';
 import { shotMovementLabel } from '@/lib/shot-display';
+import { ShotPanelImage } from '@/components/shot/ShotPanelImage';
 
 interface ShotCardProps {
   shot: Shot;
@@ -63,18 +64,17 @@ export function ShotCard({
       <div
         className={`relative w-full aspect-video bg-gradient-to-br ${style.bg} border-b border-border flex items-center justify-center overflow-hidden`}
       >
-        {/* Placeholder / Visual Grid Lines */}
-        <div className="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]" />
-
-        {/* Framing & Shot Info Center Stamp */}
-        <div className="flex flex-col items-center justify-center p-4 text-center z-10">
-          <span className={`font-mono text-2xl font-black tracking-widest ${style.text} drop-shadow`}>
-            {shot.display_number}
-          </span>
-          <span className="text-[11px] text-foreground font-medium mt-1 line-clamp-1">
-            {shot.name || shot.description?.slice(0, 20) || '画面分镜图'}
-          </span>
-        </div>
+        <ShotPanelImage shot={shot} className="absolute inset-0 h-full w-full object-cover">
+          <div className="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]" />
+          <div className="flex flex-col items-center justify-center p-4 text-center z-10">
+            <span className={`font-mono text-2xl font-black tracking-widest ${style.text} drop-shadow`}>
+              {shot.display_number}
+            </span>
+            <span className="text-[11px] text-foreground font-medium mt-1 line-clamp-1">
+              {shot.name || shot.description?.slice(0, 20) || '画面分镜图'}
+            </span>
+          </div>
+        </ShotPanelImage>
 
         {/* Top Badges Overlay */}
         <div className="absolute top-2 left-2 right-2 flex items-center justify-between z-10">

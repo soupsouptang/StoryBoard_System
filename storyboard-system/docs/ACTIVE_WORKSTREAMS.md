@@ -1,5 +1,11 @@
 # FrameForge 并行迁移工作簿
 
+## 2026-09-30 增量
+
+- 数据库 URL 配对和 ProductionService 拆分已分别本地提交；数据库配置测试 2 项、Production/Review/保存视图相关测试 5 项通过。GitHub HTTPS 凭据未就绪，推送尚未完成。
+- Shot 图片/文字图框恢复切片已接 V-API Panel/Asset 与 V-Web 表、卡、墙；空 SQLite Alembic 升级到最新通过，隔离后端测试通过。媒体默认写入 `apps/api/media/`，可通过 `FRAMEFORGE_MEDIA_DIR` 指向持久目录；生产 cutover 前仍需对象存储或持久卷、旧媒体复制和引用/回滚核验。
+- `5e86a0b` 仍是功能基线，根 shadcn/ui 仍是视觉基线。其余表格高级功能、生产步骤、字段生命周期、Narration/Moodboard/Lighting 等尚未恢复，不得宣称整体对等。
+
 更新：2026-09-29。Git 根目录为 `referenced-chatgpt-conversation-this-is-an`；`storyboard-system` 仍是 Legacy 运行/迁移源，`apps/api`、`apps/web`、根 `packages/*` 是目标 owner。此表为当前协调账本，旧切片“本地验收”不代表目标架构 cutover。唯一 owner 和逐项门槛见 [CANONICAL_OWNER_MATRIX.md](CANONICAL_OWNER_MATRIX.md)。
 | 轨道 | 会话 / 执行者 | 独占范围 | 本轮完成门槛 | 状态 |
 | --- | --- | --- | --- | --- |

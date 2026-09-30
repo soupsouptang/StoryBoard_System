@@ -86,3 +86,16 @@ export async function apiDownload(path: string, fallbackFilename: string): Promi
   filename = filename.replace(/[\\/:*?"<>|\x00-\x1f]/g, '_').replace(/^\.+|\.+$/g, '') || fallbackFilename;
   return { blob: await response.blob(), filename };
 }
+
+export async function apiImageBlob(assetId: string, signal?: AbortSignal): Promise<Blob> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('frameforge_token') : null;
+  const response = await fetch(`${API_BASE}/api/v1/assets/${encodeURIComponent(assetId)}/content`, {
+    signal,
+    headers: {
+      Accept: 'image/*',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    }
+  });
+  if (!response.ok) throw new ApiError(response.status, `图片加载失败 (${response.status})`);
+  return response.blob();
+}

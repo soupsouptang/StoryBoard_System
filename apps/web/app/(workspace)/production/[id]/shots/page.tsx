@@ -14,6 +14,7 @@ import { ShotInspector } from '@/components/shot/ShotInspector';
 import { ShotTrashModal } from '@/components/shot/ShotTrashModal';
 import { InlineEditCell } from '@/components/shot/InlineEditCell';
 import { CustomFieldCell } from '@/components/shot/CustomFieldCell';
+import { ShotImageCell } from '@/components/shot/ShotImageCell';
 import { ShotColumnManager } from '@/components/shot/ShotColumnManager';
 import { ShotCustomFieldManager } from '@/components/shot/ShotCustomFieldManager';
 import { ShotSavedViews } from '@/components/shot/ShotSavedViews';
@@ -60,6 +61,8 @@ function shotColumnValue(
       return shot.display_number || '';
     case 'primary_method':
       return shot.primary_method || '';
+    case 'panel_image':
+      return shot.panels?.some(panel => panel.asset_id) ? 1 : 0;
     case 'shot_size':
       return shot.shot_size || '';
     case 'lens_mm':
@@ -68,6 +71,8 @@ function shotColumnValue(
       return shotMovementLabel(shot);
     case 'description':
       return shot.description || '';
+    case 'panel_frame':
+      return shot.panel_frame || '';
     case 'voice_over':
       return shot.voice_over || '';
     case 'duration_frames':
@@ -536,6 +541,10 @@ export default function ShotListPage() {
     [shots]
   );
 
+  if (!production) return null;
+
+  const fps = production.fps_num / (production.fps_den || 1);
+
   const canReorder =
     groupMode === 'none' &&
     sortKey === 'default' &&
@@ -546,10 +555,6 @@ export default function ShotListPage() {
     filters.status === 'all' &&
     visibleShots.length === shots.length &&
     shots.length > 1;
-
-  if (!production) return null;
-
-  const fps = production.fps_num / (production.fps_den || 1);
 
   const moveShotByKeyboard = async (shotId: string, direction: -1 | 1) => {
     if (!canReorder || reorderShots.isPending) return;
@@ -1086,6 +1091,14 @@ export default function ShotListPage() {
                       </td>
 
                       {visibleColumns.map(column => {
+                        if (column === 'panel_image') {
+                          return (
+                            <td key={column} className={`px-2 ${rowPadding}`}>
+                              <ShotImageCell shot={shot} />
+                            </td>
+                          );
+                        }
+
                         if (column === 'shot_size') {
                           return (
                             <td key={column} className={`px-3 ${rowPadding} font-mono text-foreground`}>
@@ -1119,6 +1132,20 @@ export default function ShotListPage() {
                                 field="description"
                                 value={shot.description || ''}
                                 placeholder="双击输入画面描述"
+                              />
+                            </td>
+                          );
+                        }
+
+                        if (column === 'panel_frame') {
+                          return (
+                            <td key={column} className={`px-3 ${rowPadding} text-foreground`}>
+                              <InlineEditCell
+                                productionId={production.id}
+                                shot={shot}
+                                field="panel_frame"
+                                value={shot.panel_frame || ''}
+                                placeholder="双击输入分镜图框"
                               />
                             </td>
                           );
@@ -1218,11 +1245,11 @@ export default function ShotListPage() {
         {isInspectorOpen && inspectedShot && (
           <>
             <div
-              className="fixed inset-0 z-40 bg-background/70 md:hidden"
+              className="fixed inset-0 z-40 bg-background/70 lg:hidden"
               onClick={closeInspector}
               aria-hidden="true"
             />
-            <div className="fixed inset-x-2 top-[58px] bottom-[calc(env(safe-area-inset-bottom)+8px)] z-50 min-w-0 overflow-hidden rounded-lg border border-border bg-card shadow-2xl [&>aside]:h-full [&>aside]:w-full md:static md:inset-auto md:z-auto md:w-[380px] md:shrink-0 md:rounded-none md:border-0 md:shadow-none md:[&>aside]:w-[380px]">
+            <div className="fixed inset-x-2 top-[58px] bottom-[calc(env(safe-area-inset-bottom)+8px)] z-50 min-w-0 overflow-hidden rounded-lg border border-border bg-card shadow-2xl [&>aside]:h-full [&>aside]:w-full lg:static lg:inset-auto lg:z-auto lg:w-[380px] lg:shrink-0 lg:rounded-none lg:border-0 lg:shadow-none lg:[&>aside]:w-[380px]">
               <ShotInspector
                 shot={inspectedShot}
                 production={production}

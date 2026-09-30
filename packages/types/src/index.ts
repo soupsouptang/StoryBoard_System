@@ -184,6 +184,7 @@ export interface Shot {
   sort_index: number;
   name?: string | null;
   description: string;
+  panel_frame: string;
   action: string;
   performance: string;
   composition: string;

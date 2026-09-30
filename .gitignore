@@ -16,6 +16,7 @@ storyboard-system/__pycache__/
 *.tar.gz
 *.zip
 *.db
+apps/api/media/
 .pytest_cache/
 
 # Node

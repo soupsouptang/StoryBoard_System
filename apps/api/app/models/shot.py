@@ -20,6 +20,7 @@ class Shot(Base):
     name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     description: Mapped[str] = mapped_column(Text, default="")
+    panel_frame: Mapped[str] = mapped_column(Text, default="")
     action: Mapped[str] = mapped_column(Text, default="")
     performance: Mapped[str] = mapped_column(Text, default="")
     composition: Mapped[str] = mapped_column(Text, default="")

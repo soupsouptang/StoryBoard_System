@@ -62,6 +62,7 @@ class ShotCreate(BaseModel):
     scene_id: Optional[str] = None
     name: Optional[str] = None
     description: str = ""
+    panel_frame: str = ""
     action: str = ""
     performance: str = ""
     composition: str = ""
@@ -116,6 +117,20 @@ class BulkTrashShotsRequest(BaseModel):
     shot_ids: list[str]
 
 
+class PanelOut(BaseModel):
+    id: str
+    shot_id: str
+    display_number: str
+    sort_index: float
+    asset_id: Optional[str] = None
+    duration_frames: Optional[int] = None
+    description: Optional[str] = None
+    deleted_at: Optional[Any] = None
+
+    class Config:
+        from_attributes = True
+
+
 class ShotOut(BaseModel):
     id: str
     production_id: str
@@ -125,6 +140,8 @@ class ShotOut(BaseModel):
     sort_index: float
     name: Optional[str] = None
     description: str
+    panel_frame: str
+    panels: list[PanelOut] = Field(default_factory=list)
     action: str
     performance: str
     composition: str
