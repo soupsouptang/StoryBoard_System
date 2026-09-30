@@ -31,6 +31,7 @@ export default function StoryboardPage() {
     clearSelection,
     inspectedShotId,
     isInspectorOpen,
+    isImportModalOpen,
     openInspector,
     closeInspector,
     toggleInspector
@@ -219,7 +220,7 @@ export default function StoryboardPage() {
       {/* Smart Table Import Modal */}
       <ImportModal
         production={production}
-        isOpen={useWorkspaceStore(s => s.isImportModalOpen)}
+        isOpen={isImportModalOpen}
         onClose={() => useWorkspaceStore.getState().setImportModalOpen(false)}
       />
     </div>

@@ -34,17 +34,12 @@ export default function TimelinePage() {
   const inspectedShot = shots.find(s => s.id === inspectedShotId) || null;
 
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  if (!production) return null;
-
-  const fps = production.fps_num / (production.fps_den || 1);
+  const fps = production ? production.fps_num / (production.fps_den || 1) : 24;
   const totalFrames = shots.reduce((acc, s) => acc + (s.duration_frames || 0), 0);
-  const totalTimecode = framesToTimecode(totalFrames, fps, production.drop_frame);
-  const currentTimecode = framesToTimecode(currentFrame, fps, production.drop_frame);
 
   // Playhead animation
   useEffect(() => {
-    if (isPlaying) {
+    if (production && isPlaying) {
       playIntervalRef.current = setInterval(() => {
         setCurrentFrame(prev => {
           if (prev >= totalFrames) {
@@ -61,7 +56,12 @@ export default function TimelinePage() {
     return () => {
       if (playIntervalRef.current) clearInterval(playIntervalRef.current);
     };
-  }, [isPlaying, totalFrames, fps]);
+  }, [isPlaying, totalFrames, fps, production]);
+
+  if (!production) return null;
+
+  const totalTimecode = framesToTimecode(totalFrames, fps, production.drop_frame);
+  const currentTimecode = framesToTimecode(currentFrame, fps, production.drop_frame);
 
   // Compute accumulated shot start frames
   let accumulated = 0;
