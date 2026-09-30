@@ -8,7 +8,14 @@
 
 ## 核查基线
 
-远端 master：bf69345c64d8ec2a4e299705bc8c1fd3827bcbca。本地历史 checkout 为 fede242，远端领先 24 个提交；已建立与远端一致的新集成 checkout。仓库默认主分支是 master。
+远端 master（2026-10-01 拉取后）：`af467cb9f7ba3b02f048d62d9e606b4df4a0078e`。当前集成分支：`integration/ui-backend-check-20261001`；本轮记录前 HEAD：`01732b4e7e2e3aaa6b72d8acbb8976902a595cac`。仓库默认主分支是 `master`。
+
+当前迁移必须同时遵守两条独立基线：
+
+- **功能基线**：`5e86a0bb11a20ecd631d9c2af66260a73d7c92e7`。它决定哪些页面、入口、信息、交互、状态和数据能力必须保留。
+- **视觉基线**：shadcn/ui `new-york` + neutral semantic palette，统一 owner 为 repo-root `packages/ui` / `@frameforge/ui`。它决定控件几何、圆角、层级、间距、表单、Card、Dialog、Popover、DropdownMenu、focus 与可访问性表现。
+
+固定规则：`5e86a0b decides WHAT survives; shadcn decides HOW the new UI is presented.` 仅导入 `@frameforge/ui`、仅改色或重新画一个更简化页面，都不能视为 shadcn 重构完成。
 
 本公开清单只记录产品与迁移工作，不包含本地密码、IP、环境文件、用户素材或详细安全审计内容。完整内部审计留本地。
 
@@ -17,11 +24,11 @@
 | 模块 | 当前事实 | 下一步 |
 | --- | --- | --- |
 | Shell / Projects | 已接共享组件，但原层级、功能入口、文案和移动端仍需逐项对照 | 按原方案恢复，保留真实 API 操作；五尺寸深浅色渲染 |
-| Shot Table | 选择/Inspector 分离、行内编辑、列管理、分组、Saved Views 已存在 | 恢复未齐的原交互，验证滚动/sticky/分组/多选/键盘 |
+| Shot Table | 选择/Inspector 分离、行内编辑、列管理、分组、Saved Views 已存在；本轮恢复主工具栏可见的 `新建镜头` shadcn Primary Button，并挂回真实 `NewShotModal` | 继续按功能基线逐项恢复入口与原交互；桌面 1440 先验收表格层级、密度、截断、sticky、工具栏和右侧组织 |
 | 菜单与列管理 | 已接共享 Popover/DropdownMenu | 对照原动作清单；窄屏碰撞、关闭、焦点返回；无假回调 |
 | 编辑草稿 | changedFields、服务器 revision 和冲突输入保留已实现 | 中文 IME、双窗口、切换/关闭、失败后重试 |
 | 自定义列 | 最新远端已有创建/编辑/类型/隐藏/归档/恢复/永久删除和值编辑 | 旧视图/缓存不复活已删列；类型转换与并发验证 |
-| Review | 评论与版本/分支/恢复/合并已有消费者 | 回复、引用编写及原审阅阅读层级；不能恢复已删除审批看板 |
+| Review | 评论与版本/分支/恢复/合并已有消费者，但当前页面被重写成版本中心的大卡片组合；基线要求的逐镜头审阅决策入口缺失 | 恢复逐镜头 `提交意见 / 同意 / 驳回` 审计流程和原审阅阅读层级；全局 approval dashboard 仍保持移除，不能把版本 accept/restore/merge 当成审阅决策替代品 |
 | 媒体封面 | API 已有 cover_media_id，前端仍是 monogram fallback | 真实媒体 resolver 与图片消费/失败回退 |
 | 上传 | 历史手机有类型不一致报错，具体样本原因未确认 | 复现输入/转码/元数据链，保留合法校验 |
 | PDF / 导出 | SRT/EDL/OTIO/CSV 已接真实下载 | 核对现有 VTT PR；PDF/Word/工程往返独立迁移 |
@@ -38,8 +45,39 @@
 - Shot Trash 轻量合同测试 2/2 通过。
 - 上述不等于完整数据库、PostgreSQL 并发或真实浏览器验收。
 - 未部署，未访问或修改生产数据。
-- 桌面/1024/768/375/320 的深浅主题、表格自身横滚、Inspector、菜单焦点与真实图片仍按模块验证；没有 document 横向滚动不等于视觉合格。
+- **2026-10-01 当前视觉验收状态：`BLOCKED_VISUAL / FAIL`。** 不能声明 Visual PASS、Migration Complete、CUT_OVER、CUTOVER_READY 或 Ready to Merge。
+- 用户最新门槛为 **桌面优先**：当前先只验收 1440×900 核心页面；1024/768/375/320 的窄屏与移动端 QA 暂后，直到 Shell / Project Hub、Shot Table、Inspector、Review 四个桌面核心面均通过。
+- 桌面 1440 已确认问题：Shot Table 的层级、密度、文本截断和右侧组织仍显粗糙；Inspector 必须继续与 selection 分离并维持约 380px 桌面目标；Review 缺少逐镜头 `提交意见 / 同意 / 驳回`，且当前版本中心构图偏离接受的审阅层级。
+- 没有 document 横向滚动、构建成功、组件来自 shadcn，均不等于视觉合格。
 - 全量重构时，只清理有零消费者证据的旧实现；仍服务真实功能的 Legacy 不是可直接删除的残留。
+
+## 2026-10-01 桌面视觉检查点
+
+当前桌面收敛顺序固定为：
+
+1. Shell / Project Hub
+2. Shot Table 主工具栏与表格主体
+3. Inspector
+4. Review
+
+本轮已落地但尚未宣称通过的代码修改：
+
+- `apps/web/app/(workspace)/production/[id]/shots/page.tsx`
+  - 恢复主工具栏可见的 `新建镜头` Primary Button；
+  - 使用现有 workspace store 打开真实 `NewShotModal`；
+  - 为弹窗提供当前 production、从现有 shots 推导的 sequence 列表和下一镜号。
+- `apps/web/app/(workspace)/production/[id]/review/page.tsx`
+  - 保留 `getCommentReferences` 的类型收窄修复，避免在未明确元素类型时直接对数组结果 `.filter()` 造成类型问题；该修改不改变产品行为。
+
+当前 1440 视觉证据固定保存在仓库，不删除：
+
+- `storyboard-system/docs/audits/visual-evidence/2026-10-01/productions-1440.png`
+- `storyboard-system/docs/audits/visual-evidence/2026-10-01/shots-1440.png`
+- `storyboard-system/docs/audits/visual-evidence/2026-10-01/review-1440.png`
+
+这些截图是当前失败/对照证据，不是通过基线。
+
+Review 语义必须按功能基线恢复：`Ready for Review` 对应逐镜头“提交意见”；选中 revision 后可执行“同意 <revision>”或“驳回 <revision>”。历史 `shot_versions.py` 还明确区分 `提交意见 / 撤回意见 / 同意意见 / 驳回意见`。全局审批看板已移除这一产品决定继续有效；两者不能混为一谈。
 
 ## 模块推进和 Git 同步规则
 
