@@ -73,13 +73,13 @@ export function TopBar({ production }: TopBarProps) {
         <div className="flex items-center gap-1 border-l border-border pl-1 sm:gap-3 sm:pl-3">
           <div className="hidden items-center gap-1.5 sm:flex">
             <Icons.CircleUserRound className="h-4 w-4 text-muted-foreground" />
-            <span className="text-foreground font-medium">{user?.display_name || user?.email || '制作管理员'}</span>
+            <span className="text-foreground font-medium">{user?.display_name || user?.email || ''}</span>
           </div>
 
           <Button variant="ghost" size="sm"
             onClick={() => {
               logout();
-              router.push('/login');
+              router.replace('/login');
             }}
             className="text-muted-foreground hover:text-destructive"
           >

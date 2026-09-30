@@ -8,15 +8,15 @@ import { useAuthStore } from '@/stores/authStore';
 
 export default function HomePage() {
   const router = useRouter();
-  const token = useAuthStore(s => s.token);
+  const status = useAuthStore(s => s.status);
 
   useEffect(() => {
-    if (token) {
+    if (status === 'authenticated') {
       router.replace('/productions');
-    } else {
+    } else if (status === 'anonymous') {
       router.replace('/login');
     }
-  }, [token, router]);
+  }, [status, router]);
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-background text-muted-foreground">
