@@ -30,6 +30,7 @@ class _Shot:
     id = _Field()
     production_id = _Field()
     deleted_at = _Field()
+    panels = _Field()
 
     def __init__(self, shot_id="shot-1", revision=3, department="camera"):
         self.id = shot_id
@@ -47,6 +48,9 @@ class _Shot:
 
 
 class _Select:
+    def options(self, *options):
+        return self
+
     def where(self, *conditions):
         return self
 
@@ -129,6 +133,7 @@ def _service_class():
         "Shot": _Shot,
         "AuditLog": _AuditLog,
         "select": lambda model: _Select(),
+        "selectinload": lambda relationship: relationship,
         "NotFoundError": _NotFoundError,
         "DomainError": _DomainError,
         "ConflictError": _ConflictError,

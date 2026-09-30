@@ -59,6 +59,25 @@ export function useUpdateShot(productionId: string) {
   });
 }
 
+export function useUploadPanelImage(productionId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ shot, file }: { shot: Shot; file: File }) => {
+      const body = new FormData();
+      body.append('revision', String(shot.revision));
+      body.append('image', file);
+      return apiClient<{ asset_id: string; revision: number }>(`/api/v1/shots/${shot.id}/panel-image`, {
+        method: 'POST',
+        body
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shots', productionId] });
+      queryClient.invalidateQueries({ queryKey: ['production', productionId] });
+    }
+  });
+}
+
 export function useCreateShot(productionId: string) {
   const queryClient = useQueryClient();
 

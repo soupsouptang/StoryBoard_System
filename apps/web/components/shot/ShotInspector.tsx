@@ -21,7 +21,7 @@ type ShotDraft = { form: Partial<Shot>; snapshot: Partial<Shot>; changes: Partia
 function editableShotValues(shot: Shot): Partial<Shot> {
   return {
     name: shot.name ?? '', display_number: shot.display_number,
-    description: shot.description ?? '', voice_over: shot.voice_over ?? '',
+    description: shot.description ?? '', panel_frame: shot.panel_frame ?? '', voice_over: shot.voice_over ?? '',
     dialogue: shot.dialogue ?? '', subtitle: shot.subtitle ?? '',
     director_notes: shot.director_notes ?? '', primary_method: shot.primary_method,
     department: shot.department, owner_id: shot.owner_id ?? '',
@@ -176,7 +176,7 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
   };
 
   return (
-    <aside className="flex h-full w-[380px] flex-col border-l border-border bg-card shadow-2xl z-20">
+    <aside className="z-20 flex h-full w-[var(--ff-inspector-w)] flex-col border-l border-border bg-card">
       {/* Inspector Header */}
       <div className="flex h-[50px] items-center justify-between border-b border-border px-4 bg-background/60">
         <div className="flex items-center gap-2">
@@ -187,7 +187,7 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
             REV #{shot.revision}
           </span>
           {saveStatus === 'saved' && (
-            <span className="text-[10px] font-mono text-green-500 font-medium">✓ 已保存</span>
+            <span className="text-[10px] font-mono text-foreground font-medium">✓ 已保存</span>
           )}
           {saveStatus === 'saving' && (
             <span className="text-[10px] font-mono text-muted-foreground">保存中…</span>
@@ -203,7 +203,7 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
             size="sm"
             onClick={handleSave}
             disabled={saveStatus === 'saving' || (!isDirty && saveStatus !== 'conflict')}
-            className="flex items-center gap-1 rounded px-3 py-1 text-xs font-bold disabled:opacity-50 transition"
+            className="gap-1 text-xs"
           >
             <Icons.Check className="h-3.5 w-3.5" />
             {saveStatus === 'saving' ? '保存中…' : '保存'}
@@ -213,7 +213,7 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
             size="sm"
             onClick={handleClose}
             aria-label="关闭镜头详情"
-            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground"
           >
             <Icons.X className="h-4 w-4" />
           </Button>
@@ -266,10 +266,11 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
       )}
 
       {/* Tabs */}
-      <div className="flex border-b border-border bg-background/40 text-xs font-medium text-muted-foreground">
+      <div className="flex overflow-x-auto border-b border-border bg-background/40 text-xs font-medium text-muted-foreground">
         <Button variant="ghost" size="sm"
           onClick={() => setActiveTab('creative')}
-          className={`flex-1 py-2 text-center border-b-2 transition ${
+          aria-pressed={activeTab === 'creative'}
+          className={`min-w-max flex-1 border-b-2 py-2 text-center transition-colors ${
             activeTab === 'creative' ? 'border-ring text-foreground bg-card' : 'border-transparent hover:text-foreground'
           }`}
         >
@@ -277,7 +278,8 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
         </Button>
         <Button variant="ghost" size="sm"
           onClick={() => setActiveTab('camera')}
-          className={`flex-1 py-2 text-center border-b-2 transition ${
+          aria-pressed={activeTab === 'camera'}
+          className={`min-w-max flex-1 border-b-2 py-2 text-center transition-colors ${
             activeTab === 'camera' ? 'border-ring text-foreground bg-card' : 'border-transparent hover:text-foreground'
           }`}
         >
@@ -285,7 +287,8 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
         </Button>
         <Button variant="ghost" size="sm"
           onClick={() => setActiveTab('pipeline')}
-          className={`flex-1 py-2 text-center border-b-2 transition ${
+          aria-pressed={activeTab === 'pipeline'}
+          className={`min-w-max flex-1 border-b-2 py-2 text-center transition-colors ${
             activeTab === 'pipeline' ? 'border-ring text-foreground bg-card' : 'border-transparent hover:text-foreground'
           }`}
         >
@@ -293,7 +296,8 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
         </Button>
         <Button variant="ghost" size="sm"
           onClick={() => setActiveTab('timing')}
-          className={`flex-1 py-2 text-center border-b-2 transition ${
+          aria-pressed={activeTab === 'timing'}
+          className={`min-w-max flex-1 border-b-2 py-2 text-center transition-colors ${
             activeTab === 'timing' ? 'border-ring text-foreground bg-card' : 'border-transparent hover:text-foreground'
           }`}
         >
@@ -306,46 +310,55 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
         {activeTab === 'creative' && (
           <>
             <div>
-              <label className="block text-muted-foreground mb-1 font-medium">镜头名称 / 标题</label>
+              <label htmlFor="shot-panel-frame" className="block text-muted-foreground mb-1 font-medium">分镜图框</label>
               <Input
+                id="shot-panel-frame"
+                value={formData.panel_frame || ''}
+                onChange={event => handleFieldChange('panel_frame', event.target.value)}
+                placeholder="例如：正面双人构图"
+              />
+            </div>
+            <div>
+              <label htmlFor="shot-name" className="block text-muted-foreground mb-1 font-medium">镜头名称 / 标题</label>
+              <Input
+                id="shot-name"
                 type="text"
                 value={formData.name || ''}
                 onChange={e => handleFieldChange('name', e.target.value)}
                 placeholder="例如：园区鸟瞰全景"
-                className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground outline-none focus:border-ring"
               />
             </div>
 
             <div>
-              <label className="block text-muted-foreground mb-1 font-medium">画面构图与视觉描述 (Visual Action)</label>
+              <label htmlFor="shot-description" className="block text-muted-foreground mb-1 font-medium">画面构图与视觉描述 (Visual Action)</label>
               <TextArea
+                id="shot-description"
                 rows={4}
                 value={formData.description || ''}
                 onChange={e => handleFieldChange('description', e.target.value)}
                 placeholder="详细描述画面构图、运动轨迹与光影氛围..."
-                className="w-full rounded border border-border bg-background p-2.5 text-foreground outline-none focus:border-ring leading-relaxed"
               />
             </div>
 
             <div>
-              <label className="block text-muted-foreground mb-1 font-medium">对应解说词旁白 (Voice Over)</label>
+              <label htmlFor="shot-voice-over" className="block text-muted-foreground mb-1 font-medium">对应解说词旁白 (Voice Over)</label>
               <TextArea
+                id="shot-voice-over"
                 rows={4}
                 value={formData.voice_over || ''}
                 onChange={e => handleFieldChange('voice_over', e.target.value)}
                 placeholder="输入本镜对应的解说词或台词旁白..."
-                className="w-full rounded border border-border bg-background p-2.5 text-foreground outline-none focus:border-ring leading-relaxed"
               />
             </div>
 
             <div>
-              <label className="block text-muted-foreground mb-1 font-medium">导演备注 (Director Notes)</label>
+              <label htmlFor="shot-director-notes" className="block text-muted-foreground mb-1 font-medium">导演备注 (Director Notes)</label>
               <TextArea
+                id="shot-director-notes"
                 rows={2}
                 value={formData.director_notes || ''}
                 onChange={e => handleFieldChange('director_notes', e.target.value)}
                 placeholder="导演特别要求与注意事项..."
-                className="w-full rounded border border-border bg-background p-2 text-foreground outline-none focus:border-ring"
               />
             </div>
           </>
@@ -361,18 +374,17 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
                   value={formData.shot_size || '全景'}
                   onChange={value => handleFieldChange('shot_size', value)}
                   options={[ { value: "大远景", label: "大远景 (EWS)" }, { value: "远景", label: "远景 (WS)" }, { value: "全景", label: "全景 (FS)" }, { value: "中景", label: "中景 (MS)" }, { value: "近景", label: "近景 (MCU)" }, { value: "特写", label: "特写 (CU)" }, { value: "大特写", label: "大特写 (ECU)" } ]}
-                  className="w-full rounded border border-border bg-background px-2.5 py-1.5 text-foreground outline-none focus:border-ring"
                 />
               </div>
 
               <div>
-                <label className="block text-muted-foreground mb-1">焦段 (mm)</label>
+                <label htmlFor="shot-lens-mm" className="block text-muted-foreground mb-1">焦段 (mm)</label>
                 <Input
+                  id="shot-lens-mm"
                   type="number"
                   value={formData.lens_mm || ''}
                   onChange={e => handleFieldChange('lens_mm', Number(e.target.value))}
                   placeholder="50"
-                  className="w-full rounded border border-border bg-background px-2.5 py-1.5 text-foreground outline-none focus:border-ring"
                 />
               </div>
             </div>
@@ -385,7 +397,6 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
                   value={formData.camera_angle || '平视'}
                   onChange={value => handleFieldChange('camera_angle', value)}
                   options={[ { value: "平视", label: "平视 (Eye Level)" }, { value: "俯视", label: "俯视 (High Angle)" }, { value: "仰视", label: "仰视 (Low Angle)" }, { value: "鸟瞰", label: "鸟瞰 (Bird's Eye)" }, { value: "斜角", label: "荷兰角 (Dutch Angle)" } ]}
-                  className="w-full rounded border border-border bg-background px-2.5 py-1.5 text-foreground outline-none focus:border-ring"
                 />
               </div>
 
@@ -396,19 +407,18 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
                   value={formData.camera_height || '胸高'}
                   onChange={value => handleFieldChange('camera_height', value)}
                   options={[ { value: "视平线", label: "视平线" }, { value: "胸高", label: "胸高" }, { value: "腰高", label: "腰高" }, { value: "贴地", label: "贴地低角度" }, { value: "高空航拍", label: "高空航拍" } ]}
-                  className="w-full rounded border border-border bg-background px-2.5 py-1.5 text-foreground outline-none focus:border-ring"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-muted-foreground mb-1">摄影设备 / 载具</label>
+              <label htmlFor="shot-camera" className="block text-muted-foreground mb-1">摄影设备 / 载具</label>
               <Input
+                id="shot-camera"
                 type="text"
                 value={formData.camera || ''}
                 onChange={e => handleFieldChange('camera', e.target.value)}
                 placeholder="例如：ARRI Alexa Mini + 航拍无人机"
-                className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground outline-none focus:border-ring"
               />
             </div>
           </>
@@ -423,7 +433,6 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
                 value={formData.primary_method || 'live'}
                 onChange={value => handleFieldChange('primary_method', value)}
                 options={[ { value: "live", label: "实拍 (LIVE SHOOT)" }, { value: "stock", label: "购买素材 (STOCK FOOTAGE)" }, { value: "client", label: "客户素材 (CLIENT ASSET)" }, { value: "archive", label: "历史资料 (ARCHIVE)" }, { value: "still", label: "静帧 (STILL FRAME)" }, { value: "ae", label: "AE合成包装 (AE COMP)" }, { value: "mg", label: "动效设计 (MOTION GRAPHICS)" }, { value: "three_d", label: "3D三维制作 (3D ANIMATION)" }, { value: "vfx", label: "视效特效 (VFX SHOT)" }, { value: "type", label: "纯文字字卡 (TITLE CARD)" } ]}
-                className="w-full rounded border border-border bg-background px-3 py-2 text-foreground outline-none focus:border-ring font-mono font-semibold"
               />
             </div>
 
@@ -435,18 +444,17 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
                   value={formData.department || 'camera'}
                   onChange={value => handleFieldChange('department', value)}
                   options={[ { value: "camera", label: "摄影组 (Camera)" }, { value: "director", label: "导演组 (Director)" }, { value: "production", label: "制片组 (Production)" }, { value: "art", label: "美术组 (Art)" }, { value: "stock", label: "素材组 (Stock)" }, { value: "editorial", label: "剪辑组 (Editorial)" }, { value: "motion", label: "动效组 (Motion)" }, { value: "three_d", label: "三维组 (3D)" }, { value: "vfx", label: "视效组 (VFX)" }, { value: "sound", label: "声音组 (Sound)" }, { value: "color", label: "调色组 (Color)" } ]}
-                  className="w-full rounded border border-border bg-background px-2.5 py-1.5 text-foreground outline-none focus:border-ring"
                 />
               </div>
 
               <div>
-                <label className="block text-muted-foreground mb-1">责任负责人</label>
+                <label htmlFor="shot-owner" className="block text-muted-foreground mb-1">责任负责人</label>
                 <Input
+                  id="shot-owner"
                   type="text"
                   value={formData.owner_id || ''}
                   onChange={e => handleFieldChange('owner_id', e.target.value)}
                   placeholder="例如：张指导"
-                  className="w-full rounded border border-border bg-background px-2.5 py-1.5 text-foreground outline-none focus:border-ring"
                 />
               </div>
             </div>
@@ -458,7 +466,6 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
                 value={formData.status || 'draft'}
                 onChange={value => handleFieldChange('status', value)}
                 options={[ { value: "draft", label: "规划中 (Draft)" }, { value: "in_progress", label: "制作中 (In Progress)" }, { value: "review", label: "待审片 (Ready for Review)" }, { value: "changes_requested", label: "需修改 (Changes Requested)" }, { value: "approved", label: "已审批 (Approved)" }, { value: "locked", label: "已锁定 (Locked)" } ]}
-                className="w-full rounded border border-border bg-background px-3 py-1.5 text-foreground outline-none focus:border-ring"
               />
             </div>
 
@@ -468,6 +475,7 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
                 <div className="text-[11px] text-muted-foreground">标记是否需要三维/合成组介入</div>
               </div>
               <Checkbox
+                aria-label="需要视效制作"
                 checked={formData.vfx_required || false}
                 onCheckedChange={checked => handleFieldChange('vfx_required', checked === true)}
               />
@@ -492,20 +500,21 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">SMPTE 时码</span>
-                <span className="font-mono text-xs font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/20">
+                <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs font-bold text-foreground">
                   {timecode}
                 </span>
               </div>
             </div>
 
             <div>
-              <label className="block text-muted-foreground mb-1">手动调整帧数 (Integer Frames)</label>
+              <label htmlFor="shot-duration-frames" className="block text-muted-foreground mb-1">手动调整帧数 (Integer Frames)</label>
               <Input
+                id="shot-duration-frames"
                 type="number"
                 min={1}
                 value={formData.duration_frames || ''}
                 onChange={e => handleFieldChange('duration_frames', Number(e.target.value))}
-                className="w-full rounded border border-border bg-background px-3 py-2 text-foreground font-mono outline-none focus:border-ring"
+                className="font-mono"
               />
             </div>
 
@@ -515,6 +524,7 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
                 <div className="text-[11px] text-muted-foreground">自动计时会跳过锁定镜头</div>
               </div>
               <Checkbox
+                aria-label="锁定镜头时长"
                 checked={formData.timing_locked || false}
                 onCheckedChange={checked => handleFieldChange('timing_locked', checked === true)}
               />
@@ -548,7 +558,7 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
             variant="destructive"
             size="sm"
             onClick={() => setConfirmDelete(true)}
-            className="flex w-full items-center justify-center gap-2 rounded border py-2 text-xs font-medium transition text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            className="w-full gap-2 text-xs"
           >
             <Icons.Trash2 className="h-4 w-4" />
             移至废纸篓 (Trash Shot)

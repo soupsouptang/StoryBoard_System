@@ -1,8 +1,10 @@
 export type ShotTableColumnKey =
+  | 'panel_image'
   | 'shot_size'
   | 'lens_mm'
   | 'camera_movement'
   | 'description'
+  | 'panel_frame'
   | 'voice_over'
   | 'duration_frames'
   | 'department'
@@ -12,10 +14,12 @@ export type ShotTableColumnKey =
 export type ShotTableRowHeight = 'compact' | 'standard' | 'comfortable' | 'auto';
 
 export const DEFAULT_SHOT_TABLE_COLUMN_ORDER: ShotTableColumnKey[] = [
+  'panel_image',
   'shot_size',
   'lens_mm',
   'camera_movement',
   'description',
+  'panel_frame',
   'voice_over',
   'duration_frames',
   'department',
@@ -24,10 +28,12 @@ export const DEFAULT_SHOT_TABLE_COLUMN_ORDER: ShotTableColumnKey[] = [
 ];
 
 export const SHOT_TABLE_COLUMN_LABELS: Record<ShotTableColumnKey, string> = {
+  panel_image: '分镜画面',
   shot_size: '景别',
   lens_mm: '焦段',
   camera_movement: '机位运镜',
   description: '画面内容与构图',
+  panel_frame: '分镜图框',
   voice_over: '对应旁白',
   duration_frames: '时长 / 帧数',
   department: '部门',
@@ -36,10 +42,12 @@ export const SHOT_TABLE_COLUMN_LABELS: Record<ShotTableColumnKey, string> = {
 };
 
 export const DEFAULT_SHOT_TABLE_COLUMN_WIDTHS: Record<ShotTableColumnKey, number> = {
+  panel_image: 128,
   shot_size: 80,
   lens_mm: 80,
   camera_movement: 132,
   description: 260,
+  panel_frame: 160,
   voice_over: 240,
   duration_frames: 126,
   department: 104,
@@ -48,10 +56,12 @@ export const DEFAULT_SHOT_TABLE_COLUMN_WIDTHS: Record<ShotTableColumnKey, number
 };
 
 const SHOT_TABLE_COLUMN_MIN_WIDTHS: Record<ShotTableColumnKey, number> = {
+  panel_image: 112,
   shot_size: 72,
   lens_mm: 72,
   camera_movement: 96,
   description: 160,
+  panel_frame: 120,
   voice_over: 160,
   duration_frames: 108,
   department: 88,
@@ -60,10 +70,12 @@ const SHOT_TABLE_COLUMN_MIN_WIDTHS: Record<ShotTableColumnKey, number> = {
 };
 
 const SHOT_TABLE_COLUMN_MAX_WIDTHS: Record<ShotTableColumnKey, number> = {
+  panel_image: 240,
   shot_size: 180,
   lens_mm: 180,
   camera_movement: 320,
   description: 560,
+  panel_frame: 360,
   voice_over: 560,
   duration_frames: 240,
   department: 280,
@@ -101,6 +113,14 @@ export function normalizeShotTableColumnOrder(value: unknown): ShotTableColumnKe
   const deduped = Array.from(new Set(requested));
   for (const column of DEFAULT_SHOT_TABLE_COLUMN_ORDER) {
     if (!deduped.includes(column)) deduped.push(column);
+  }
+  if (!requested.includes('panel_image')) {
+    deduped.splice(deduped.indexOf('panel_image'), 1);
+    deduped.unshift('panel_image');
+  }
+  if (!requested.includes('panel_frame')) {
+    deduped.splice(deduped.indexOf('panel_frame'), 1);
+    deduped.splice(deduped.indexOf('description') + 1, 0, 'panel_frame');
   }
   return deduped;
 }

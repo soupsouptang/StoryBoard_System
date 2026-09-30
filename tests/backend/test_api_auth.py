@@ -67,4 +67,19 @@ async def test_user_registration():
         assert res.status_code == 201
         data = res.json()
         assert data["user"]["display_name"] == "张总导演"
-        assert data["user"]["role"]["name"] == "director"
+        assert data["user"]["role"]["name"] == "readonly"
+
+        admin_request = await client.post("/api/v1/auth/register", json={
+            "email": "self_admin@company.internal",
+            "password": "AdminPass2026!",
+            "role_name": "admin",
+        })
+        assert admin_request.status_code == 201
+        assert admin_request.json()["user"]["role"]["name"] == "readonly"
+        token = admin_request.json()["access_token"]
+        denied = await client.post(
+            "/api/v1/productions",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"name": "Should be denied"},
+        )
+        assert denied.status_code == 403

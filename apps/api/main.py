@@ -15,6 +15,7 @@ from app.api.v1.health import router as health_router
 from app.api.v1.imports import router as imports_router
 from app.api.v1.ai import router as ai_router
 from app.api.v1.presence import router as presence_router
+from app.api.v1.panel_media import router as panel_media_router
 from app.api.v1.productions import router as productions_router
 from app.api.v1.review import router as review_router
 from app.api.v1.saved_views import router as saved_views_router
@@ -119,6 +120,7 @@ app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(custom_fields_router, prefix=settings.API_V1_PREFIX)
 app.include_router(productions_router, prefix=settings.API_V1_PREFIX)
 app.include_router(shots_router, prefix=settings.API_V1_PREFIX)
+app.include_router(panel_media_router, prefix=settings.API_V1_PREFIX)
 app.include_router(review_router, prefix=settings.API_V1_PREFIX)
 app.include_router(saved_views_router, prefix=settings.API_V1_PREFIX)
 app.include_router(versions_router, prefix=settings.API_V1_PREFIX)

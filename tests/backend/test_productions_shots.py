@@ -1,9 +1,11 @@
 """Pytest Suite for Productions, Shots, Soft Delete, Reordering, and Revision Conflicts."""
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 import pytest
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import select
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "apps" / "api"))
 
@@ -11,6 +13,8 @@ from main import app
 from app.core.config import settings
 from app.core.database import Base, async_engine, AsyncSessionLocal
 from app.models.asset import Asset, ShotAssetLink
+from app.models.collaboration import AuditLog
+from app.api.v1 import panel_media
 from app.services.seed import seed_database
 
 
@@ -203,3 +207,119 @@ async def test_production_cover_media_id_uses_first_linked_image():
         detail = await client.get(f"/api/v1/productions/{pid}", headers=headers)
         assert detail.status_code == 200
         assert detail.json()["cover_media_id"] == cover_id
+
+
+@pytest.mark.asyncio
+async def test_production_write_permission_and_soft_delete():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        admin = await client.post("/api/v1/auth/login", json={
+            "email": "admin@company.internal",
+            "password": settings.INITIAL_ADMIN_PASSWORD,
+        })
+        admin_headers = {"Authorization": f"Bearer {admin.json()['access_token']}"}
+        readonly = await client.post("/api/v1/auth/register", json={
+            "email": "reader@example.com",
+            "password": "test-password",
+            "role_name": "readonly",
+        })
+        assert readonly.status_code == 201
+        readonly_headers = {"Authorization": f"Bearer {readonly.json()['access_token']}"}
+
+        created = await client.post("/api/v1/productions", headers=admin_headers, json={"name": "Lifecycle"})
+        assert created.status_code == 201
+        production_id = created.json()["id"]
+        path = f"/api/v1/productions/{production_id}"
+
+        assert (await client.get(path, headers=readonly_headers)).status_code == 200
+        assert (await client.post("/api/v1/productions", headers=readonly_headers, json={"name": "Denied"})).status_code == 403
+        assert (await client.patch(path, headers=readonly_headers, json={"name": "Denied"})).status_code == 403
+        assert (await client.delete(path, headers=readonly_headers)).status_code == 403
+
+        updated = await client.patch(path, headers=admin_headers, json={"name": "Updated"})
+        assert updated.status_code == 200
+        assert updated.json()["name"] == "Updated"
+        unchanged = await client.patch(path, headers=admin_headers, json={"name": "Updated"})
+        assert unchanged.status_code == 200
+        assert datetime.fromisoformat(unchanged.json()["updated_at"]).replace(tzinfo=None) == (
+            datetime.fromisoformat(updated.json()["updated_at"]).replace(tzinfo=None)
+        )
+
+        assert (await client.delete(path, headers=admin_headers)).status_code == 204
+        assert (await client.delete(path, headers=admin_headers)).status_code == 204
+        assert (await client.get(path, headers=admin_headers)).status_code == 404
+        assert (await client.get("/api/v1/productions", headers=admin_headers)).json() == []
+
+        async with AsyncSessionLocal() as session:
+            actions = (await session.execute(
+                select(AuditLog.action).where(
+                    AuditLog.entity_type == "production",
+                    AuditLog.entity_id == production_id,
+                ).order_by(AuditLog.created_at)
+            )).scalars().all()
+        assert actions == ["production.create", "production.update", "production.delete"]
+
+
+@pytest.mark.asyncio
+async def test_panel_frame_text_and_authenticated_image(tmp_path, monkeypatch):
+    monkeypatch.setattr(panel_media, "MEDIA_ROOT", tmp_path)
+    image_bytes = b"\x89PNG\r\n\x1a\n" + b"panel-frame-test"
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        login = await client.post("/api/v1/auth/login", json={
+            "email": "admin@company.internal",
+            "password": settings.INITIAL_ADMIN_PASSWORD,
+        })
+        headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+        production = await client.post("/api/v1/productions", headers=headers, json={"name": "Panel QA"})
+        production_id = production.json()["id"]
+        created = await client.post(f"/api/v1/productions/{production_id}/shots", headers=headers, json={
+            "display_number": "001", "panel_frame": "正面双人构图",
+        })
+        assert created.status_code == 201
+        shot = created.json()
+        assert shot["panel_frame"] == "正面双人构图"
+        assert len(shot["panels"]) == 1
+
+        upload = await client.post(
+            f"/api/v1/shots/{shot['id']}/panel-image", headers=headers,
+            data={"revision": str(shot["revision"])},
+            files={"image": ("frame.png", image_bytes, "image/png")},
+        )
+        assert upload.status_code == 200
+        asset_id = upload.json()["asset_id"]
+        assert upload.json()["revision"] == shot["revision"] + 1
+
+        listed = await client.get(f"/api/v1/productions/{production_id}/shots", headers=headers)
+        assert listed.status_code == 200
+        assert listed.json()[0]["panels"][0]["asset_id"] == asset_id
+        assert listed.json()[0]["panel_frame"] == "正面双人构图"
+        assert (await client.get(f"/api/v1/assets/{asset_id}/content")).status_code == 401
+        content = await client.get(f"/api/v1/assets/{asset_id}/content", headers=headers)
+        assert content.status_code == 200
+        assert content.content == image_bytes
+        assert content.headers["content-type"] == "image/png"
+
+        stale = await client.post(
+            f"/api/v1/shots/{shot['id']}/panel-image", headers=headers,
+            data={"revision": str(shot["revision"])},
+            files={"image": ("frame.png", image_bytes, "image/png")},
+        )
+        assert stale.status_code == 409
+        invalid = await client.post(
+            f"/api/v1/shots/{shot['id']}/panel-image", headers=headers,
+            data={"revision": str(upload.json()["revision"])},
+            files={"image": ("bad.png", b"not an image", "image/png")},
+        )
+        assert invalid.status_code == 415
+        assert len(list(tmp_path.iterdir())) == 1
+
+        replaced = await client.post(
+            f"/api/v1/shots/{shot['id']}/panel-image", headers=headers,
+            data={"revision": str(upload.json()["revision"])},
+            files={"image": ("replacement.png", image_bytes, "image/png")},
+        )
+        assert replaced.status_code == 200
+        assert replaced.json()["asset_id"] != asset_id
+        current = await client.get(f"/api/v1/productions/{production_id}/shots", headers=headers)
+        assert current.json()[0]["panels"][0]["asset_id"] == replaced.json()["asset_id"]
+        cover = await client.get(f"/api/v1/productions/{production_id}", headers=headers)
+        assert cover.json()["cover_media_id"] == replaced.json()["asset_id"]

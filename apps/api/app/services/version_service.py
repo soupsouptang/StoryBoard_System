@@ -25,6 +25,7 @@ class VersionService:
     COMPARE_FIELDS = (
         ("name", "镜头标题"),
         ("description", "画面描述"),
+        ("panel_frame", "分镜图框"),
         ("voice_over", "对应旁白"),
         ("duration_frames", "时长 / 帧数"),
         ("shot_size", "景别"),

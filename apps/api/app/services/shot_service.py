@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from app.core.exceptions import DomainError, NotFoundError, ConflictError
 from app.models.collaboration import AuditLog
 from app.models.production import Production
@@ -12,7 +13,7 @@ class ShotService:
     # Patchable shot data only. Identity, ownership, revision, timestamps,
     # deletion and ordering are managed by their dedicated commands.
     PATCH_FIELDS = frozenset({
-        "sequence_id", "scene_id", "display_number", "name", "description",
+        "sequence_id", "scene_id", "display_number", "name", "description", "panel_frame",
         "action", "performance", "composition", "director_notes",
         "duration_frames", "timing_locked", "shot_size", "camera_angle",
         "camera_height", "lens_mm", "camera", "sensor", "aperture",
@@ -68,6 +69,7 @@ class ShotService:
             sort_index=new_sort,
             name=req.name,
             description=req.description,
+            panel_frame=req.panel_frame,
             action=req.action,
             performance=req.performance,
             composition=req.composition,
@@ -99,7 +101,7 @@ class ShotService:
             sort_index=1000.0,
             duration_frames=req.duration_frames
         )
-        db.add(panel)
+        shot.panels.append(panel)
         ShotService._audit_shot_mutation(
             db,
             user_id=user_id,
@@ -112,7 +114,7 @@ class ShotService:
 
     @staticmethod
     async def patch_shot(db: AsyncSession, shot_id: str, req: ShotPatch, user_id: str) -> Shot:
-        result = await db.execute(select(Shot).where(Shot.id == shot_id, Shot.deleted_at.is_(None)))
+        result = await db.execute(select(Shot).options(selectinload(Shot.panels)).where(Shot.id == shot_id, Shot.deleted_at.is_(None)))
         shot = result.scalar_one_or_none()
         if not shot:
             raise NotFoundError("镜头不存在")

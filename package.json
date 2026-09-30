@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "npm run dev --workspace=apps/web",
     "dev:api": "python apps/api/main.py",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspace=@frameforge/contracts && npm run build --workspace=@frameforge/timecode && npm run build --workspace=@frameforge/types && npm run build --workspace=@frameforge/ui && npm run build --workspace=@frameforge/web",
     "test": "npm run test --workspaces --if-present",
     "test:backend": "pytest tests/backend",
     "lint": "npm run lint --workspaces --if-present"

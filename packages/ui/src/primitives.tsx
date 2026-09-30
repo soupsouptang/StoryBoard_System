@@ -53,7 +53,7 @@ export type SelectProps = {
 export function Select({ label, value, options, onChange, disabled, required, name, className }: SelectProps) {
   return (
     <Choice.Root value={value} onValueChange={onChange} disabled={disabled} required={required} name={name}>
-      <Choice.Trigger className={cn('flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50', className)} aria-label={label}>
+      <Choice.Trigger className={cn('flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50', className)} aria-label={label}>
         <Choice.Value />
         <Choice.Icon><ChevronDown className="h-4 w-4 opacity-60" aria-hidden="true" /></Choice.Icon>
       </Choice.Trigger>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/authStore';
 import type { Production } from '@frameforge/types';
+import { timecodeToFrames } from '@frameforge/timecode';
 import {
   Badge, Button, Card, Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle, Field, Icons, Input, Select
@@ -26,6 +27,8 @@ export default function ProductionsPage() {
   const [fps, setFps] = useState(25);
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [targetSeconds, setTargetSeconds] = useState(270);
+  const [startTimecode, setStartTimecode] = useState('01:00:00:00');
+  const [timecodeError, setTimecodeError] = useState('');
 
   const fetchProductions = async () => {
     try {
@@ -45,6 +48,10 @@ export default function ProductionsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (Number(startTimecode.slice(-2)) >= fps) {
+      setTimecodeError(`帧数必须小于当前帧率 ${fps}`);
+      return;
+    }
     try {
       const targetFrames = targetSeconds ? Math.round(targetSeconds * fps) : null;
       await apiClient<Production>('/api/v1/productions', {
@@ -55,13 +62,14 @@ export default function ProductionsPage() {
           fps_num: fps,
           fps_den: 1,
           drop_frame: false,
-          start_timecode_frames: Math.round(fps * 3600), // 01:00:00:00
+          start_timecode_frames: timecodeToFrames(startTimecode, fps),
           target_duration_frames: targetFrames,
           aspect_ratio: aspectRatio
         }
       });
       setShowModal(false);
       setName('');
+      setStartTimecode('01:00:00:00');
       fetchProductions();
     } catch (err: any) {
       alert(err.message || '创建项目失败');
@@ -118,7 +126,7 @@ export default function ProductionsPage() {
                 }}
                 className="group flex min-h-[90px] cursor-pointer items-center gap-3 p-3 transition hover:bg-accent/40 sm:gap-4 sm:p-4"
               >
-                <ProjectCover name={prod.name} className="h-12 w-[72px] sm:h-[56px] sm:w-24" />
+                <ProjectCover name={prod.name} mediaId={prod.cover_media_id} className="h-12 w-[72px] sm:h-[56px] sm:w-24" />
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex min-w-0 items-center gap-2">
                     <h3 className="min-w-0 flex-1 truncate text-sm font-bold tracking-tight text-foreground sm:text-base">{prod.name}</h3>
@@ -217,6 +225,20 @@ export default function ProductionsPage() {
                   />
                 </Field>
               </div>
+
+              <Field label="起始时码">
+                <Input
+                  required
+                  value={startTimecode}
+                  onChange={e => { setStartTimecode(e.target.value); setTimecodeError(''); }}
+                  pattern="[0-9]{2}:[0-5][0-9]:[0-5][0-9]:[0-9]{2}"
+                  title="格式：HH:MM:SS:FF"
+                  aria-invalid={Boolean(timecodeError)}
+                  aria-describedby={timecodeError ? 'start-timecode-error' : undefined}
+                  className="font-mono"
+                />
+                {timecodeError && <span id="start-timecode-error" role="alert" className="text-xs text-destructive">{timecodeError}</span>}
+              </Field>
 
             <DialogFooter className="border-t border-border pt-4">
               <Button

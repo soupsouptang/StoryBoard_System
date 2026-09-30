@@ -93,9 +93,9 @@ export function InlineEditCell({
       if (err instanceof ApiError && (err.status === 409 || err.code === 'SHOT_REVISION_CONFLICT')) {
         setHasConflict(true);
         setConflictRevision(shot.revision);
-        setSaveError('镜头已在别处修改。当前输入已保留；列表刷新到最新版本后可再次保存，或放弃输入。');
+        setSaveError('��ͷ���ڱ��޸ġ���ǰ�����ѱ������б�ˢ�µ����°汾����ٴα��棬��������롣');
       } else {
-        setSaveError(err instanceof Error ? err.message : '保存失败，请重试');
+        setSaveError(err instanceof Error ? err.message : '����ʧ�ܣ�������');
       }
     } finally {
       setIsSaving(false);
@@ -137,11 +137,11 @@ export function InlineEditCell({
             <div className="mt-2 flex gap-2">
               {!hasConflict && (
                 <Button size="sm" variant="outline" onMouseDown={e => e.preventDefault()} onClick={() => void saveChange()}>
-                  重试保存
+                  ���Ա���
                 </Button>
               )}
               <Button size="sm" variant="ghost" onMouseDown={e => e.preventDefault()} onClick={() => { setSaveError(null); setHasConflict(false); setConflictRevision(null); setIsEditing(false); }}>
-                放弃输入
+                ��������
               </Button>
             </div>
           </div>
@@ -154,9 +154,9 @@ export function InlineEditCell({
     <div
       onDoubleClick={handleDoubleClick}
       className={`cursor-text rounded px-1.5 py-0.5 -mx-1.5 transition-colors hover:bg-muted ${className} ${isSaving ? 'opacity-50' : ''}`}
-      title="双击进行编辑"
+      title="˫�����б༭"
     >
-      <div className="line-clamp-1">{value || placeholder || <span className="text-muted-foreground italic">空</span>}</div>
+      <div className="line-clamp-1">{value || placeholder || <span className="text-muted-foreground italic">��</span>}</div>
     </div>
   );
 }

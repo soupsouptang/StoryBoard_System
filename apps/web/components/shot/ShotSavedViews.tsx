@@ -22,6 +22,7 @@ import {
   useSavedViews,
   useUpdateSavedView
 } from '@/lib/hooks/useSavedViews';
+import { normalizeShotTablePresentationPreferences } from '@/lib/shot-table-presentation';
 
 interface ShotSavedViewsProps {
   productionId: string;
@@ -34,7 +35,8 @@ export function ShotSavedViews({
   currentConfig,
   onApply
 }: ShotSavedViewsProps) {
-  const { data: views = [], isLoading } = useSavedViews(productionId);
+  const { data, isLoading, isError, refetch } = useSavedViews(productionId);
+  const views = (data ?? []).filter(view => view.view_type === 'table');
   const createView = useCreateSavedView(productionId);
   const updateView = useUpdateSavedView(productionId);
   const deleteView = useDeleteSavedView(productionId);
@@ -128,13 +130,24 @@ export function ShotSavedViews({
               <div className="px-3 py-6 text-center text-xs text-muted-foreground">
                 正在加载保存视图...
               </div>
+            ) : isError ? (
+              <div role="alert" className="px-3 py-6 text-center text-xs text-destructive">
+                加载保存视图失败。
+                <Button variant="ghost" size="sm" onClick={() => void refetch()}>
+                  重试
+                </Button>
+              </div>
             ) : views.length === 0 ? (
               <div className="rounded-md border border-dashed border-border px-3 py-6 text-center text-xs text-muted-foreground">
                 暂无保存视图。
               </div>
             ) : (
               views.map(view => {
-                const active = activeViewId === view.id;
+                const active = activeViewId === view.id &&
+                  JSON.stringify(currentConfig) === JSON.stringify({
+                    ...view.config,
+                    presentation: normalizeShotTablePresentationPreferences(view.config.presentation)
+                  });
                 return (
                   <div
                     key={view.id}

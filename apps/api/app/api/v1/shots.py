@@ -7,6 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from app.api.v1.deps import get_current_user
 from app.core.database import get_db
 from app.models.production import Production
@@ -37,7 +38,7 @@ async def list_production_shots(
     current_user: User = Depends(get_current_user)
 ):
     query = (
-        select(Shot)
+        select(Shot).options(selectinload(Shot.panels))
         .where(Shot.production_id == production_id, Shot.deleted_at.is_(None))
         .order_by(Shot.sort_index.asc(), Shot.display_number.asc())
     )
