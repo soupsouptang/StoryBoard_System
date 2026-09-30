@@ -14,7 +14,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     display_name: str = ""
-    role_name: str = "producer"
+    role_name: str = "readonly"  # Legacy request field; public registration never grants this role.
 
 
 class TokenResponse(BaseModel):
