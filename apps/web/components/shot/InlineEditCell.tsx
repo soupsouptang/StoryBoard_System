@@ -33,6 +33,7 @@ export function InlineEditCell({
   const [conflictRevision, setConflictRevision] = useState<number | null>(null);
   
   const inputRef = useRef<HTMLInputElement>(null);
+  const isComposingRef = useRef(false);
   const updateShot = useUpdateShot(productionId);
 
   useEffect(() => {
@@ -48,7 +49,7 @@ export function InlineEditCell({
     if (hasConflict && conflictRevision !== null && shot.revision !== conflictRevision) {
       setHasConflict(false);
       setConflictRevision(null);
-      setSaveError(null);
+      setSaveError('镜头已更新。当前输入已保留，可重试保存，或放弃输入。');
     }
   }, [hasConflict, conflictRevision, shot.revision]);
 
@@ -70,6 +71,9 @@ export function InlineEditCell({
     }
 
     if (finalValue === value) {
+      setSaveError(null);
+      setHasConflict(false);
+      setConflictRevision(null);
       setIsEditing(false);
       return;
     }
@@ -101,6 +105,9 @@ export function InlineEditCell({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     e.stopPropagation(); // prevent row keyboard selection
     if (e.key === 'Enter') {
+      if (isComposingRef.current || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) {
+        return;
+      }
       e.preventDefault();
       void saveChange();
     } else if (e.key === 'Escape') {
@@ -117,6 +124,8 @@ export function InlineEditCell({
           type={type}
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
+          onCompositionStart={() => { isComposingRef.current = true; }}
+          onCompositionEnd={() => { isComposingRef.current = false; }}
           onBlur={() => { if (!saveError) void saveChange(); }}
           onKeyDown={handleKeyDown}
           disabled={isSaving}

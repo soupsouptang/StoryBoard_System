@@ -13,6 +13,7 @@ import {
   DialogTitle,
   Icons,
   Input,
+  Select,
   TextArea
 } from '@frameforge/ui';
 import { useProduction, useShots } from '@/lib/hooks/useProduction';
@@ -24,6 +25,7 @@ import {
   useReviewDecisions,
   useUpdateReviewComment
 } from '@/lib/hooks/useReview';
+import type { ReviewComment } from '@/lib/hooks/useReview';
 import {
   useAcceptShotVersion,
   useCreateShotBranch,
@@ -37,6 +39,45 @@ import { StatusBadge } from '@/components/shot/StatusBadge';
 import { MethodBadge } from '@/components/shot/MethodBadge';
 import { shotMovementLabel } from '@/lib/shot-display';
 import { useAuthStore } from '@/stores/authStore';
+
+type CommentReferenceField = 'description' | 'voiceover' | 'name';
+
+interface CommentReference {
+  field: CommentReferenceField;
+  label: string;
+  text: string;
+}
+
+interface CommentDraft {
+  body: string;
+  parentId: string | null;
+  quoteField: CommentReferenceField | '';
+  quoteText: string;
+}
+
+const COMMENT_REFERENCE_LABELS: Record<CommentReferenceField, string> = {
+  description: '画面描述',
+  voiceover: '对应旁白',
+  name: '镜头标题'
+};
+
+function getCommentReferences(shot: {
+  description?: string | null;
+  voice_over?: string | null;
+  name?: string | null;
+  display_number: string;
+}): CommentReference[] {
+  return [
+    { field: 'description', label: COMMENT_REFERENCE_LABELS.description, text: shot.description || '' },
+    { field: 'voiceover', label: COMMENT_REFERENCE_LABELS.voiceover, text: shot.voice_over || '' },
+    { field: 'name', label: COMMENT_REFERENCE_LABELS.name, text: shot.name || `SHOT ${shot.display_number}` }
+  ].filter(reference => Boolean(reference.text.trim()));
+}
+
+function commentDraftMatches(left: CommentDraft, right: CommentDraft) {
+  return left.body === right.body && left.parentId === right.parentId &&
+    left.quoteField === right.quoteField && left.quoteText === right.quoteText;
+}
 
 function formatVersionValue(value: unknown) {
   if (value === null || value === undefined || value === '') return '—';
@@ -60,7 +101,7 @@ export default function ReviewPage() {
   const { user } = useAuthStore();
 
   const [activeShotIndex, setActiveShotIndex] = useState(0);
-  const [commentText, setCommentText] = useState('');
+  const [commentDrafts, setCommentDrafts] = useState<Record<string, CommentDraft>>({});
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
   const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
@@ -77,6 +118,14 @@ export default function ReviewPage() {
 
   const currentShot = shots[activeShotIndex] || shots[0];
   const shotId = currentShot?.id || '';
+  const commentReferences = currentShot ? getCommentReferences(currentShot) : [];
+  const initialCommentDraft: CommentDraft = {
+    body: '',
+    parentId: null,
+    quoteField: commentReferences[0]?.field || '',
+    quoteText: commentReferences[0]?.text || ''
+  };
+  const commentDraft = commentDrafts[shotId] || initialCommentDraft;
 
   const { data: comments = [], isLoading: commentsLoading } = useReviewComments(shotId);
   const { data: decisions = [] } = useReviewDecisions(shotId);
@@ -92,6 +141,13 @@ export default function ReviewPage() {
   const acceptVersion = useAcceptShotVersion(shotId);
   const restoreVersion = useRestoreShotVersion(productionId, shotId);
   const mergeVersion = useMergeShotVersion(productionId, shotId);
+
+  const updateCommentDraft = (update: (draft: CommentDraft) => CommentDraft) => {
+    setCommentDrafts(previous => ({
+      ...previous,
+      [shotId]: update(previous[shotId] || initialCommentDraft)
+    }));
+  };
 
   useEffect(() => {
     setSelectedVersionId(null);
@@ -171,14 +227,33 @@ export default function ReviewPage() {
 
   const handleAddComment = async (event: React.FormEvent) => {
     event.preventDefault();
-    const body = commentText.trim();
-    if (!body || !currentShot) return;
+    const submittedDraft = { ...commentDraft, body: commentDraft.body.trim() };
+    if (!submittedDraft.body || !currentShot) return;
+    if (submittedDraft.parentId && !comments.some(comment => comment.id === submittedDraft.parentId)) {
+      setActionError('回复目标已不可用，请重新选择会话目标。');
+      updateCommentDraft(draft => ({ ...draft, parentId: null }));
+      return;
+    }
+    const submittedShotId = shotId;
     setActionError(null);
     try {
-      await createComment.mutateAsync(body);
-      setCommentText('');
+      await createComment.mutateAsync({
+        body: submittedDraft.body,
+        parent_id: submittedDraft.parentId,
+        quote_field: submittedDraft.quoteField,
+        quote_text: submittedDraft.quoteText
+      });
+      setCommentDrafts(previous => {
+        const savedDraft = previous[submittedShotId] || submittedDraft;
+        if (!commentDraftMatches(savedDraft, submittedDraft)) return previous;
+        const next = { ...previous };
+        delete next[submittedShotId];
+        return next;
+      });
     } catch (error) {
-      setActionError(error instanceof Error ? error.message : '发送批注失败');
+      if (shotId === submittedShotId) {
+        setActionError(error instanceof Error ? error.message : '发送批注失败');
+      }
     }
   };
 
@@ -229,6 +304,127 @@ export default function ReviewPage() {
 
   const versionChanges =
     selectedVersionCompare?.fields.filter(field => field.changed) || [];
+  const commentsByParent = new Map<string, ReviewComment[]>();
+  comments.forEach(comment => {
+    const parentKey = comment.parent_id || '';
+    commentsByParent.set(parentKey, [...(commentsByParent.get(parentKey) || []), comment]);
+  });
+  const commentRoots = comments.filter(comment =>
+    !comment.parent_id || !comments.some(parent => parent.id === comment.parent_id)
+  );
+  const renderComment = (comment: ReviewComment, depth = 0): React.ReactNode => {
+    const isOwnComment = Boolean(user?.id && comment.user_id === user.id);
+    const isEditing = editingCommentId === comment.id;
+    const replies = commentsByParent.get(comment.id) || [];
+
+    return (
+      <div key={comment.id} className={depth ? 'relative ml-3 border-l-2 border-border pl-3 sm:ml-6 sm:pl-4' : ''}>
+        <article className={`rounded-md border border-border p-3 ${comment.is_resolved ? 'bg-muted/30 opacity-75' : 'bg-background'}`}>
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
+            <span className="font-semibold text-foreground">
+              {comment.author_name || '内部用户'}
+              {comment.role ? <span className="ml-1 font-normal text-muted-foreground">· {comment.role}</span> : null}
+              {depth > 0 && <span className="ml-2 rounded-sm bg-muted px-1.5 py-0.5 font-normal">回复</span>}
+            </span>
+            <span className="font-mono">{new Date(comment.created_at).toLocaleString()}</span>
+          </div>
+
+          {comment.quote_text && (
+            <blockquote className="mt-2 min-w-0 border-l-2 border-ring bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+              <div className="mb-1 font-medium text-foreground">
+                引用 · {COMMENT_REFERENCE_LABELS[comment.quote_field as CommentReferenceField] || '镜头字段'}
+              </div>
+              <p className="whitespace-pre-wrap break-words">{comment.quote_text}</p>
+            </blockquote>
+          )}
+
+          {isEditing ? (
+            <div className="mt-2 space-y-2">
+              <TextArea
+                rows={3}
+                value={editingCommentText}
+                onChange={event => setEditingCommentText(event.target.value)}
+                aria-label="编辑批注"
+                autoFocus
+              />
+              <div className="flex justify-end gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setEditingCommentId(null);
+                    setEditingCommentText('');
+                  }}
+                  disabled={updateComment.isPending}
+                >
+                  取消
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => void handleUpdateComment()}
+                  disabled={!editingCommentText.trim() || updateComment.isPending}
+                >
+                  {updateComment.isPending ? '保存中…' : '保存'}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-2 whitespace-pre-wrap break-words text-sm text-foreground">{comment.body}</p>
+          )}
+
+          <div className="mt-2 flex flex-wrap items-center justify-end gap-1">
+            {!isEditing && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => updateCommentDraft(draft => ({ ...draft, parentId: comment.id }))}
+              >
+                回复
+              </Button>
+            )}
+            {isOwnComment && !isEditing && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setEditingCommentId(comment.id);
+                    setEditingCommentText(comment.body);
+                  }}
+                >
+                  编辑
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setDeleteCommentId(comment.id)}
+                >
+                  删除
+                </Button>
+              </>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => resolveComment.mutate({ id: comment.id, resolved: !comment.is_resolved })}
+              disabled={resolveComment.isPending}
+            >
+              {comment.is_resolved ? '重新打开' : '标记已处理'}
+            </Button>
+          </div>
+        </article>
+        {replies.length > 0 && (
+          <div className="mt-2 space-y-2">
+            {replies.map(reply => renderComment(reply, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+  const replyTarget = commentDraft.parentId
+    ? comments.find(comment => comment.id === commentDraft.parentId) || null
+    : null;
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:flex-row">
@@ -524,123 +720,87 @@ export default function ReviewPage() {
                   暂无批注。
                 </div>
               ) : (
-                comments.map(comment => {
-                  const isOwnComment = Boolean(user?.id && comment.user_id === user.id);
-                  const isEditing = editingCommentId === comment.id;
-
-                  return (
-                    <div
-                      key={comment.id}
-                      className={`rounded-md border border-border p-3 ${
-                        comment.is_resolved ? 'bg-muted/30 opacity-70' : 'bg-background'
-                      }`}
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
-                        <span className="font-semibold text-foreground">
-                          {comment.author_name || '内部用户'}
-                          {comment.role ? <span className="ml-1 font-normal text-muted-foreground">· {comment.role}</span> : null}
-                        </span>
-                        <span className="font-mono">
-                          {new Date(comment.created_at).toLocaleString()}
-                        </span>
-                      </div>
-
-                      {comment.quote_text && (
-                        <div className="mt-2 border-l-2 border-border pl-3 text-xs text-muted-foreground">
-                          {comment.quote_text}
-                        </div>
-                      )}
-
-                      {isEditing ? (
-                        <div className="mt-2 space-y-2">
-                          <TextArea
-                            rows={3}
-                            value={editingCommentText}
-                            onChange={event => setEditingCommentText(event.target.value)}
-                            aria-label="编辑批注"
-                            autoFocus
-                          />
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setEditingCommentId(null);
-                                setEditingCommentText('');
-                              }}
-                              disabled={updateComment.isPending}
-                            >
-                              取消
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => void handleUpdateComment()}
-                              disabled={!editingCommentText.trim() || updateComment.isPending}
-                            >
-                              {updateComment.isPending ? '保存中…' : '保存'}
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">
-                          {comment.body}
-                        </p>
-                      )}
-
-                      <div className="mt-2 flex flex-wrap justify-end gap-1">
-                        {isOwnComment && !isEditing && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setEditingCommentId(comment.id);
-                                setEditingCommentText(comment.body);
-                              }}
-                            >
-                              编辑
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => setDeleteCommentId(comment.id)}
-                            >
-                              删除
-                            </Button>
-                          </>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => resolveComment.mutate({
-                            id: comment.id,
-                            resolved: !comment.is_resolved
-                          })}
-                          disabled={resolveComment.isPending}
-                        >
-                          {comment.is_resolved ? '重新打开' : '标记已处理'}
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })
+                <div className="space-y-3">
+                  {commentRoots.map(comment => renderComment(comment))}
+                </div>
               )}
             </div>
 
             <form onSubmit={handleAddComment} className="mt-4 space-y-2 border-t border-border pt-4">
+              {replyTarget && (
+                <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-muted/40 p-3 text-xs">
+                  <div className="min-w-0">
+                    <div className="font-medium text-foreground">
+                      回复 {replyTarget.author_name || '内部用户'} 的批注
+                    </div>
+                    <p className="mt-1 line-clamp-3 whitespace-pre-wrap break-words text-muted-foreground">
+                      {replyTarget.body}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => updateCommentDraft(draft => ({ ...draft, parentId: null }))}
+                  >
+                    取消回复
+                  </Button>
+                </div>
+              )}
+              <div className="grid gap-3 rounded-md border border-border bg-card/60 p-3 sm:grid-cols-[minmax(0,1fr)_minmax(180px,0.8fr)] sm:items-end">
+                <div className="min-w-0">
+                  <div className="text-xs font-medium text-foreground">引用镜头内容</div>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    引用会随批注保存，方便协作者确认讨论对象。
+                  </p>
+                </div>
+                <Select
+                  label="引用镜头字段"
+                  value={commentDraft.quoteField || '__none__'}
+                  options={[
+                    { value: '__none__', label: '不引用镜头字段' },
+                    ...commentReferences.map(reference => ({ value: reference.field, label: reference.label }))
+                  ]}
+                  onChange={value => {
+                    const selected = commentReferences.find(reference => reference.field === value);
+                    updateCommentDraft(draft => ({
+                      ...draft,
+                      quoteField: selected?.field || '',
+                      quoteText: selected?.text || ''
+                    }));
+                  }}
+                  disabled={!commentReferences.length}
+                  className="h-9"
+                />
+                {commentDraft.quoteField && commentDraft.quoteText && (
+                  <blockquote className="min-w-0 whitespace-pre-wrap break-words border-l-2 border-ring pl-3 text-xs text-muted-foreground sm:col-span-2">
+                    <span className="mb-1 block font-medium text-foreground">
+                      {COMMENT_REFERENCE_LABELS[commentDraft.quoteField]} · SHOT {currentShot.display_number}
+                    </span>
+                    {commentDraft.quoteText}
+                  </blockquote>
+                )}
+              </div>
               <TextArea
                 rows={3}
-                value={commentText}
-                onChange={event => setCommentText(event.target.value)}
-                placeholder="添加该镜头的导演审片批注..."
+                maxLength={1000}
+                value={commentDraft.body}
+                onChange={event => updateCommentDraft(draft => ({ ...draft, body: event.target.value }))}
+                placeholder={replyTarget ? '回复这条批注…' : '像 Word 批注一样写下修改意见…'}
+                aria-label={replyTarget ? `回复 ${replyTarget.author_name || '内部用户'} 的批注` : '添加该镜头的审片批注'}
               />
-              <div className="flex justify-end">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[11px] text-muted-foreground" aria-live="polite">
+                  {replyTarget
+                    ? `会发布到 ${replyTarget.author_name || '内部用户'} 的批注线程 · SHOT ${currentShot.display_number}`
+                    : `会发布到 SHOT ${currentShot.display_number} 的新会话`}
+                </span>
                 <Button
                   type="submit"
-                  disabled={!commentText.trim() || createComment.isPending}
+                  disabled={!commentDraft.body.trim() || createComment.isPending || Boolean(commentDraft.parentId && !replyTarget)}
                 >
-                  {createComment.isPending ? '发送中…' : '发送批注'}
+                  {createComment.isPending ? '发送中…' : replyTarget ? '发送回复' : '发送批注'}
                 </Button>
               </div>
             </form>

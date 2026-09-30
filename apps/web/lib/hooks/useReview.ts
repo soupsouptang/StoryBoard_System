@@ -18,6 +18,13 @@ export interface ReviewComment {
   updated_at: string;
 }
 
+export interface CreateReviewCommentInput {
+  body: string;
+  parent_id?: string | null;
+  quote_field?: string;
+  quote_text?: string;
+}
+
 export interface ReviewDecision {
   id: string;
   shot_id: string;
@@ -42,10 +49,15 @@ export function useReviewComments(shotId: string) {
 export function useCreateReviewComment(shotId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: string) =>
+    mutationFn: (input: CreateReviewCommentInput) =>
       apiClient<ReviewComment>(`/api/v1/shots/${shotId}/comments`, {
         method: 'POST',
-        json: { body }
+        json: {
+          body: input.body,
+          parent_id: input.parent_id || null,
+          quote_field: input.quote_field || '',
+          quote_text: input.quote_text || ''
+        }
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['review-comments', shotId] });
