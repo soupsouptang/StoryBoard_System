@@ -56,7 +56,7 @@ export function NavRail({ productionId }: NavRailProps) {
   return (
     <nav
       aria-label="项目工作区导航"
-      className={`relative z-20 flex h-[var(--ff-shell-mobile-nav-h)] w-full shrink-0 flex-row border-b border-border bg-background transition-[width] duration-[var(--ff-motion-normal)] select-none after:pointer-events-none after:absolute after:right-0 after:top-0 after:h-[var(--ff-shell-mobile-nav-h)] after:w-7 after:bg-gradient-to-l after:from-background after:to-transparent md:h-auto md:flex-col md:border-b-0 md:border-r md:after:hidden ${
+      className={`relative z-20 flex h-[var(--ff-shell-mobile-nav-h)] w-full shrink-0 flex-row border-b border-border bg-background transition-[width] duration-[var(--ff-motion-normal)] select-none after:pointer-events-none after:absolute after:right-0 after:top-0 after:h-[var(--ff-shell-mobile-nav-h)] after:w-7 after:bg-gradient-to-l after:from-background after:to-transparent after:backdrop-blur-[3px] md:h-auto md:flex-col md:border-b-0 md:border-r md:after:hidden ${
         collapsed
           ? 'md:w-[var(--ff-shell-nav-collapsed-w)]'
           : 'md:w-[var(--ff-shell-nav-expanded-w)]'

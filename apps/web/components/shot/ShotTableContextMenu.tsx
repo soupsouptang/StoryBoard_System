@@ -99,6 +99,7 @@ export function ShotTableContextMenu({
   } | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const restoreFocusOnCloseRef = useRef(true);
 
   useEffect(() => {
     if (target?.returnFocus) {
@@ -150,10 +151,19 @@ export function ShotTableContextMenu({
           align="start"
           side="bottom"
           sideOffset={2}
-          className="min-w-64"
+          className="max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-64 overflow-y-auto"
+          onPointerDownOutside={() => {
+            restoreFocusOnCloseRef.current = false;
+          }}
+          onFocusOutside={() => {
+            restoreFocusOnCloseRef.current = false;
+          }}
           onCloseAutoFocus={event => {
             event.preventDefault();
-            returnFocusRef.current?.focus({ preventScroll: true });
+            if (restoreFocusOnCloseRef.current) {
+              returnFocusRef.current?.focus({ preventScroll: true });
+            }
+            restoreFocusOnCloseRef.current = true;
           }}
         >
           {target?.kind === 'column' && (

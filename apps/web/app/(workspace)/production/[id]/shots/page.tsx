@@ -4,7 +4,7 @@ import { Button, Icons, Input, Select } from '@frameforge/ui';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import type { Shot } from '@frameforge/types';
+import type { Sequence, Shot } from '@frameforge/types';
 import { useProduction, useReorderShots, useShots, useUpdateShot } from '@/lib/hooks/useProduction';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useCustomFields, useCustomFieldValues } from '@/lib/hooks/useCustomFields';
@@ -18,6 +18,7 @@ import { ShotImageCell } from '@/components/shot/ShotImageCell';
 import { ShotColumnManager } from '@/components/shot/ShotColumnManager';
 import { ShotCustomFieldManager } from '@/components/shot/ShotCustomFieldManager';
 import { ShotSavedViews } from '@/components/shot/ShotSavedViews';
+import { NewShotModal } from '@/components/storyboard/NewShotModal';
 import {
   ShotTableContextMenu,
   type ShotTableContextColumnKey,
@@ -120,8 +121,29 @@ export default function ShotListPage() {
     inspectedShotId,
     isInspectorOpen,
     openInspector,
-    closeInspector
+    closeInspector,
+    setNewShotModalOpen
   } = useWorkspaceStore();
+
+  const sequences: Sequence[] = useMemo(() => {
+    const sequenceMap = new Map<string, Sequence>();
+    for (const shot of shots) {
+      if (!shot.sequence_id || sequenceMap.has(shot.sequence_id)) continue;
+      sequenceMap.set(shot.sequence_id, {
+        id: shot.sequence_id,
+        production_id: id,
+        display_number: 'SEQ',
+        name: `场次 ${shot.sequence_id.slice(0, 8)}`,
+        description: '',
+        sort_index: 1000,
+        created_at: '',
+        updated_at: ''
+      });
+    }
+    return Array.from(sequenceMap.values());
+  }, [id, shots]);
+
+  const nextShotNumber = `${(shots.length + 1).toString().padStart(3, '0')}`;
 
   useEffect(() => {
     if (!id || typeof window === 'undefined') return;
@@ -616,6 +638,16 @@ export default function ShotListPage() {
           )}
 
           <div className="ml-auto flex max-w-full items-center gap-1 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setNewShotModalOpen(true)}
+              className="h-8 px-3 text-xs font-semibold"
+            >
+              <Icons.Plus className="h-3.5 w-3.5" />
+              新建镜头
+            </Button>
+
             <Button
               variant={showFilters || activeFilterCount > 0 || groupMode !== 'none' ? 'secondary' : 'ghost'}
               size="sm"
@@ -1285,6 +1317,12 @@ export default function ShotListPage() {
       <BulkActionToolbar
         production={production}
         allShotIds={visibleShotIds}
+      />
+
+      <NewShotModal
+        production={production}
+        sequences={sequences}
+        nextNumber={nextShotNumber}
       />
     </div>
   );

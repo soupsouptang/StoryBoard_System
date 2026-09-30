@@ -49,7 +49,7 @@ export function InlineEditCell({
     if (hasConflict && conflictRevision !== null && shot.revision !== conflictRevision) {
       setHasConflict(false);
       setConflictRevision(null);
-      setSaveError('��ͷ�Ѹ��¡���ǰ�����ѱ����������Ա��棬��������롣');
+      setSaveError('镜头已更新。当前输入已保留，可重试保存，或放弃输入。');
     }
   }, [hasConflict, conflictRevision, shot.revision]);
 

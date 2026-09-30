@@ -19,22 +19,19 @@ Status vocabulary:
 | /login | /login | INTEGRATED_NOT_CUT_OVER | Real auth UI exists, but full visual/product parity and runtime cutover evidence are not sufficient for CUTOVER_READY. |
 | /projects | /productions | INTEGRATED_NOT_CUT_OVER | Authenticated cover media and monogram fallback render in synthetic browser QA at 1440/1024/768/375/320; 320 dark/light checked. Copied media and representative visual QA remain. |
 | /projects/[id] entry | /production/[id] | VERIFIED | Route is now a redirect to the selected Shot workspace; unauthorized feature-card overview is no longer the product path. |
-| /projects/[id]/shots | /production/[id]/shots | INTEGRATED_NOT_CUT_OVER | Real V-API consumer; selection/Inspector are decoupled, description/VO plus custom-field values are editable, custom-field create/edit/type-change/hide/archive/restore/purge is wired to the shadcn manager, and column manager/saved layouts plus method/department/status filtering, sorting and sequence/method grouping are live. Unsafe field-type changes that would silently rewrite stored Shot values are blocked; fresh rendered-browser QA remains. |
+| /projects/[id]/shots | /production/[id]/shots | BLOCKED_VISUAL | Real V-API consumer; selection/Inspector are decoupled, inline/custom-field editing, column manager, saved layouts, filtering, sorting and grouping are live. The visible primary `新建镜头` entry regressed during the page rewrite and has now been restored through the real `NewShotModal`. Desktop 1440 still fails the accepted shadcn/new-york hierarchy, density, truncation and right-side organization, so this screen is not visually accepted. |
 | /projects/[id]/timeline | /production/[id]/timeline | IMPLEMENTED_NOT_INTEGRATED | V-Web implementation exists but remains below baseline timeline behavior. |
 | /projects/[id]/storyboard | /production/[id]/storyboard | IMPLEMENTED_NOT_INTEGRATED | V-Web implementation exists but remains below baseline storyboard/wall behavior. |
 | /projects/[id]/deliverables | /production/[id]/deliverables | INTEGRATED_NOT_CUT_OVER | CSV/EDL/OTIO/SRT use real V-API; PDF/Word/layout parity remains incomplete. |
-| /projects/[id]/review | /production/[id]/review | INTEGRATED_NOT_CUT_OVER | Persisted comment create/edit/delete/resolve/reopen plus version save/branch/merge/restore and canonical Before–After compare are live. Review decisions render as read-only history; prohibited global approval-dashboard controls are absent. Reply/quote authoring, Word-style audit/inline accept-reject and rendered visual parity remain. |
+| /projects/[id]/review | /production/[id]/review | BLOCKED_VISUAL | Persisted comments plus version save/branch/merge/restore and Before–After compare are live, but the screen was rewritten into a version-centric large-card composition and currently lacks the functional-baseline per-shot `提交意见 / 同意 / 驳回` review decision flow. That per-shot Word-style audit flow must return. The removed global approval dashboard remains removed; version accept/restore/merge operations are not substitutes for review decisions. Desktop 1440 visual hierarchy also remains failed. |
 | /projects/[id]/narration | N/A | BLOCKED | Baseline capability not yet migrated to canonical V-Web. |
 | /projects/[id]/moodboard | N/A | BLOCKED | Baseline capability not yet migrated to canonical V-Web. |
 | /projects/[id]/planning / lighting | N/A | BLOCKED | Baseline scene-planning/lighting capability not yet migrated. |
 
 ## Visual gate
 
-The recent mobile screenshot is failure evidence, not a pass baseline. For Shot Workspace, fresh browser inspection is still required for:
-- 1440×900
-- 1024×768
-- 768×1024
-- 375×812
-- 320×568
+Current gate is **desktop-first**. The active required rendered evidence is **1440×900** for Shell / Project Hub, Shot Table, Inspector and Review. Current status is `BLOCKED_VISUAL / FAIL`.
 
-Check table horizontal scroll ownership, sticky columns, toolbar density, Inspector overlay, safe-area behavior, conflict states, and focus/keyboard behavior.
+Do not test or use 1024×768, 768×1024, 375×812 or 320×568 as an acceptance requirement until those four desktop core surfaces pass. Those sizes remain deferred work, not cancelled scope.
+
+At 1440, check information hierarchy, table scroll/sticky ownership, toolbar density, text truncation, Inspector width/open lifecycle, Review decision affordances, conflict states and focus/keyboard behavior. A shadcn import, successful build or absence of document-level horizontal scroll does not promote a screen to visual PASS.

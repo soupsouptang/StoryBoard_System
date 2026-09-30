@@ -12,6 +12,14 @@
 
 ---
 
+## 0. User correction: reconstruct the accepted product, not a new UI
+
+The 2026-09-30 user correction takes precedence: the current UI has missing functionality and an oversimplified design that drifted from the agreed plan, appearance and copy. shadcn is the implementation foundation, not permission to invent replacement screens or discard the accepted visual hierarchy.
+
+Preserve the original product's capabilities, wording, typography, media emphasis, spatial relationships and accepted interactions while replacing primitives. Do not treat a neutral palette, component import, successful build or cleaner screenshot as feature parity. Every module needs an explicit capability/entry/copy/layout/consumer gap inventory. Follow section 0.1 of `FRAMEFORGE_COMPONENT_LIBRARY_CODEX_MASTER.md` for the full audit and retirement contract.
+
+The user's current small-slice workflow skips tests before immediate upload. Record untested work honestly; upload/merge does not promote visual acceptance or cutover. Existing automation is not disabled by that instruction.
+
 ## 1. Two baselines, two different jobs
 
 FRAMEFORGE intentionally uses two independent baselines:
