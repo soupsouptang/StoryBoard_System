@@ -16,8 +16,8 @@ Status vocabulary:
 ## 1. Project Hub & Workspace Navigation
 | Capability | Baseline | VNext target | Status | Gap / evidence |
 | :--- | :--- | :--- | :--- | :--- |
-| Project Cover Fallback | Present | Present | INTEGRATED_NOT_CUT_OVER | Monogram + deterministic gradient is consumed by `/productions`; real media hydration is not yet available in V-API. |
-| Project Cover Media | Present | Present | IMPLEMENTED_NOT_INTEGRATED | V-API now derives `cover_media_id` from the earliest active Shot's first linked image asset, matching the Legacy read-model rule. Canonical media-byte resolver and real V-Web image consumption are still missing. |
+| Project Cover Fallback | Present | Present | INTEGRATED_NOT_CUT_OVER | Monogram + deterministic gradient remains visible in `/productions` when cover media is absent or unavailable. |
+| Project Cover Media | Present | Present | INTEGRATED_NOT_CUT_OVER | V-API derives `cover_media_id` from the earliest active Shot's first linked image asset; V-Web Project Hub loads its authenticated image bytes. Synthetic browser QA passed at 1440/1024/768/375/320; durable storage and copied-media migration remain. |
 | Project Entry | Project list → selected workspace | Same | VERIFIED | `/production/[id]` now redirects to `/production/[id]/shots`; the unauthorized feature-card overview has been removed from the runtime path. |
 | Workspace IA: Narration | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |
 | Workspace IA: Moodboard | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |

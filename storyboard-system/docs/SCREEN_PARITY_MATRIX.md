@@ -17,7 +17,7 @@ Status vocabulary:
 | Baseline Screen | VNext Route | Status | Notes |
 | :--- | :--- | :--- | :--- |
 | /login | /login | INTEGRATED_NOT_CUT_OVER | Real auth UI exists, but full visual/product parity and runtime cutover evidence are not sufficient for CUTOVER_READY. |
-| /projects | /productions | INTEGRATED_NOT_CUT_OVER | Real API consumer; monogram cover fallback restored. Real cover media and fresh visual QA remain. |
+| /projects | /productions | INTEGRATED_NOT_CUT_OVER | Authenticated cover media and monogram fallback render in synthetic browser QA at 1440/1024/768/375/320; 320 dark/light checked. Copied media and representative visual QA remain. |
 | /projects/[id] entry | /production/[id] | VERIFIED | Route is now a redirect to the selected Shot workspace; unauthorized feature-card overview is no longer the product path. |
 | /projects/[id]/shots | /production/[id]/shots | INTEGRATED_NOT_CUT_OVER | Real V-API consumer; selection/Inspector are decoupled, description/VO plus custom-field values are editable, custom-field create/edit/type-change/hide/archive/restore/purge is wired to the shadcn manager, and column manager/saved layouts plus method/department/status filtering, sorting and sequence/method grouping are live. Unsafe field-type changes that would silently rewrite stored Shot values are blocked; fresh rendered-browser QA remains. |
 | /projects/[id]/timeline | /production/[id]/timeline | IMPLEMENTED_NOT_INTEGRATED | V-Web implementation exists but remains below baseline timeline behavior. |

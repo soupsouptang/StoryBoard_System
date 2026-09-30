@@ -4,6 +4,7 @@
 
 - 数据库 URL 配对和 ProductionService 拆分已分别本地提交；数据库配置测试 2 项、Production/Review/保存视图相关测试 5 项通过。GitHub HTTPS 凭据未就绪，推送尚未完成。
 - Shot 图片/文字图框恢复切片已接 V-API Panel/Asset 与 V-Web 表、卡、墙；空 SQLite Alembic 升级到最新通过，隔离后端测试通过。媒体默认写入 `apps/api/media/`，可通过 `FRAMEFORGE_MEDIA_DIR` 指向持久目录；生产 cutover 前仍需对象存储或持久卷、旧媒体复制和引用/回滚核验。
+- 项目库现已消费 V-API 的 `cover_media_id` 和受权图片字节读取，缺图时维持原有 Monogram 回退；合成数据浏览器在 1440/1024/768/375/320 宽度验证图片、回退与无横向溢出。仍需持久媒体迁移。
 - `5e86a0b` 仍是功能基线，根 shadcn/ui 仍是视觉基线。其余表格高级功能、生产步骤、字段生命周期、Narration/Moodboard/Lighting 等尚未恢复，不得宣称整体对等。
 
 更新：2026-09-29。Git 根目录为 `referenced-chatgpt-conversation-this-is-an`；`storyboard-system` 仍是 Legacy 运行/迁移源，`apps/api`、`apps/web`、根 `packages/*` 是目标 owner。此表为当前协调账本，旧切片“本地验收”不代表目标架构 cutover。唯一 owner 和逐项门槛见 [CANONICAL_OWNER_MATRIX.md](CANONICAL_OWNER_MATRIX.md)。
@@ -63,7 +64,7 @@ Current implementation target: `master`. Product behavior reference: `5e86a0b`, 
 | Mobile Shot table | table owns horizontal scroll, first columns are sticky, Inspector overlays on narrow widths, `100dvh`/safe-area added | BLOCKED_VISUAL | real 1440/1024/768/375/320 rendered inspection |
 | Presence | V-Web TopBar consumer disconnected again | BLOCKED | authenticated WS + Redis TTL/pubsub + multi-worker before reconnecting UI |
 | Project entry | unauthorized feature-card overview replaced by redirect to selected Shot workspace | VERIFIED | keep IA aligned while recovering remaining baseline capabilities |
-| Project cover | deterministic monogram/gradient fallback only; no fake media URL | INTEGRATED_NOT_CUT_OVER | canonical cover media read model + media resolver |
+| Project cover | authenticated media bytes now render from the V-API cover read model, with deterministic monogram fallback; synthetic browser QA passed at 1440/1024/768/375/320 | INTEGRATED_NOT_CUT_OVER | durable media migration and copied-data verification |
 | Shot Trash | soft delete/list/restore/purge flow through `ShotService`; trash/restore advance revision, lifecycle mutations emit audit rows, and UI keeps purge explicitly irreversible | INTEGRATED_NOT_CUT_OVER | immutable history and any real retention policy before further promotion |
 | Visual warning state | shared warning tokens and Tailwind mapping restored | IMPLEMENTED_NOT_INTEGRATED | verify conflict/dirty states in light/dark browser renders |
 
@@ -79,7 +80,7 @@ Do not begin Narration, Moodboard, Lighting, or wider product recovery until thi
 
 | Slice | Current evidence | Status | Next gate |
 | --- | --- | --- | --- |
-| Project Hub hierarchy | Real deterministic cover fallback remains; mobile/desktop cards now preserve compact cover hierarchy and accessible open affordance | INTEGRATED_NOT_CUT_OVER | real cover-media resolver plus fresh dark/light browser comparison |
+| Project Hub hierarchy | Authenticated cover media and deterministic fallback render in compact mobile/desktop cards; synthetic browser QA covered 1440/1024/768/375/320 and 320 dark/light | INTEGRATED_NOT_CUT_OVER | copied-data media validation and any visual issues found with representative images |
 | Brand / utility controls | Login, Hub and Workspace now share the Film mark plus Lucide Sun/Moon theme semantics; locale controls use the same target-language labels | INTEGRATED_NOT_CUT_OVER | rendered dark/light verification; do not treat source parity as visual acceptance |
 | Shot selection + table toolbar | Selection stays separate from Inspector; Shift range, Ctrl/Cmd toggle, explicit Details action, real search/filter/sort and atomic bulk toolbar coexist on the canonical page | INTEGRATED_NOT_CUT_OVER | browser keyboard/pointer regression and conflict-path QA |
 | Column visibility | Root `@frameforge/ui` now exports a Radix Popover consumed by a real Shot Table column manager; visibility persists per production/browser | INTEGRATED_NOT_CUT_OVER | resize/reorder, server saved-view semantics, archived/purged custom-field lifecycle and context menus remain |

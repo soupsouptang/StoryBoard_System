@@ -1,13 +1,35 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { apiImageBlob } from '@/lib/api-client';
 
 interface ProjectCoverProps {
   name: string;
+  mediaId?: string | null;
   className?: string;
 }
 
-export function ProjectCover({ name, className = '' }: ProjectCoverProps) {
+export function ProjectCover({ name, mediaId, className = '' }: ProjectCoverProps) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    setImageUrl(null);
+    if (!mediaId) return;
+    const controller = new AbortController();
+    let objectUrl: string | null = null;
+    void apiImageBlob(mediaId, controller.signal)
+      .then(blob => {
+        if (controller.signal.aborted) return;
+        objectUrl = URL.createObjectURL(blob);
+        setImageUrl(objectUrl);
+      })
+      .catch(() => { if (!controller.signal.aborted) setImageUrl(null); });
+    return () => {
+      controller.abort();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [mediaId]);
+
   const safeName = name || '';
   const isCJK = /[\u4e00-\u9fff]/.test(safeName);
   const mono = safeName
@@ -29,6 +51,7 @@ export function ProjectCover({ name, className = '' }: ProjectCoverProps) {
       style={bgStyle}
       aria-hidden="true"
     >
+      {imageUrl && <img src={imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" onError={() => setImageUrl(null)} />}
       <div
         className="pointer-events-none absolute inset-0 z-10"
         style={{
