@@ -67,11 +67,12 @@ function getCommentReferences(shot: {
   name?: string | null;
   display_number: string;
 }): CommentReference[] {
-  return [
+  const references: CommentReference[] = [
     { field: 'description', label: COMMENT_REFERENCE_LABELS.description, text: shot.description || '' },
     { field: 'voiceover', label: COMMENT_REFERENCE_LABELS.voiceover, text: shot.voice_over || '' },
     { field: 'name', label: COMMENT_REFERENCE_LABELS.name, text: shot.name || `SHOT ${shot.display_number}` }
-  ].filter(reference => Boolean(reference.text.trim()));
+  ];
+  return references.filter(reference => Boolean(reference.text.trim()));
 }
 
 function commentDraftMatches(left: CommentDraft, right: CommentDraft) {
