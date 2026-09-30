@@ -98,7 +98,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(
             ["field_definition_id"],
             ["custom_field_definitions.id"],
-            name="fk_shot_custom_field_values_field_definition_id_custom_field_definitions",
+            name=op.f("fk_shot_custom_field_values_field_definition_id_custom_field_definitions"),
             ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id", name="pk_shot_custom_field_values"),
