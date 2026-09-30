@@ -2,39 +2,48 @@
 
 import { Button, Card, Field, Icons, Input, Select } from '@frameforge/ui';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { useProduction } from '@/lib/hooks/useProduction';
 import { apiClient } from '@/lib/api-client';
 
 export default function SettingsPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const id = typeof params?.id === 'string' ? params.id : '';
 
   const { data: production } = useProduction(id);
 
-  const [name, setName] = useState(production?.name || '');
-  const [code, setCode] = useState(production?.code || '');
-  const [fps, setFps] = useState(production?.fps_num || 25);
-  const [aspectRatio, setAspectRatio] = useState(production?.aspect_ratio || '16:9');
+  const [draft, setDraft] = useState<{
+    name?: string;
+    code?: string;
+    fps_num?: number;
+    aspect_ratio?: string;
+  }>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => setDraft({}), [id]);
 
   if (!production) return null;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSaving || isDeleting) return;
+    const changes = Object.fromEntries(
+      Object.entries(draft).filter(([key, value]) => value !== production[key as keyof typeof production])
+    );
+    if (!Object.keys(changes).length) return;
     try {
       setIsSaving(true);
       await apiClient(`/api/v1/productions/${id}`, {
         method: 'PATCH',
-        json: {
-          name,
-          code,
-          fps_num: fps,
-          aspect_ratio: aspectRatio
-        }
+        json: changes
       });
+      await queryClient.invalidateQueries({ queryKey: ['production', id] });
+      setDraft({});
       alert('项目设置已成功保存！');
     } catch (err: any) {
       alert(err.message || '保存设置失败');
@@ -44,9 +53,17 @@ export default function SettingsPage() {
   };
 
   const handleDelete = async () => {
+    if (isSaving || isDeleting) return;
     if (confirm(`确认归档/删除项目 "${production.name}" 吗？该操作不可逆。`)) {
-      await apiClient(`/api/v1/productions/${id}`, { method: 'DELETE' });
-      router.push('/productions');
+      try {
+        setIsDeleting(true);
+        await apiClient(`/api/v1/productions/${id}`, { method: 'DELETE' });
+        router.push('/productions');
+      } catch (err) {
+        alert(err instanceof Error ? err.message : '删除项目失败');
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -67,16 +84,19 @@ export default function SettingsPage() {
             <Field label="项目全称">
               <Input
                 type="text"
-                value={name || production.name}
-                onChange={e => setName(e.target.value)}
+                required
+                disabled={isSaving || isDeleting}
+                value={draft.name ?? production.name}
+                onChange={e => setDraft(current => ({ ...current, name: e.target.value }))}
               />
             </Field>
 
             <Field label="项目代码 (Code)">
               <Input
                 type="text"
-                value={code || production.code}
-                onChange={e => setCode(e.target.value)}
+                disabled={isSaving || isDeleting}
+                value={draft.code ?? production.code}
+                onChange={e => setDraft(current => ({ ...current, code: e.target.value }))}
                 className="font-mono uppercase"
               />
             </Field>
@@ -91,8 +111,9 @@ export default function SettingsPage() {
               <span>标准帧率 (FPS)</span>
               <Select
                 label="标准帧率 (FPS)"
-                value={String(fps)}
-                onChange={value => setFps(Number(value))}
+                disabled={isSaving || isDeleting}
+                value={String(draft.fps_num ?? production.fps_num)}
+                onChange={value => setDraft(current => ({ ...current, fps_num: Number(value) }))}
                 options={[
                   { value: '24', label: '24 FPS (电影标准)' },
                   { value: '25', label: '25 FPS (欧洲/国内广播)' },
@@ -107,8 +128,9 @@ export default function SettingsPage() {
               <span>画幅比例 (Aspect Ratio)</span>
               <Select
                 label="画幅比例 (Aspect Ratio)"
-                value={aspectRatio}
-                onChange={setAspectRatio}
+                disabled={isSaving || isDeleting}
+                value={draft.aspect_ratio ?? production.aspect_ratio}
+                onChange={value => setDraft(current => ({ ...current, aspect_ratio: value }))}
                 options={[
                   { value: '16:9', label: '16:9 (1920×1080 / 4K UHD)' },
                   { value: '2.39:1', label: '2.39:1 (宽银幕 Anamorphic)' },
@@ -123,7 +145,7 @@ export default function SettingsPage() {
         <div className="flex items-center justify-end gap-3 pt-4">
           <Button
             type="submit"
-            disabled={isSaving}
+            disabled={isSaving || isDeleting}
           >
             <Icons.Check className="h-4 w-4" />
             {isSaving ? '保存中…' : '保存设置'}
@@ -135,13 +157,14 @@ export default function SettingsPage() {
       <Card className="border-destructive/30 bg-destructive/5 p-6 space-y-4 text-xs">
         <h3 className="text-sm font-bold text-destructive">危险操作区 (Danger Zone)</h3>
         <p className="text-muted-foreground">
-          归档或删除项目后，所有镜头及关联资产将执行软删除标记。
+          归档或删除后，项目将从项目列表中移除，关联镜头和素材数据仍保留。
         </p>
         <Button
           variant="destructive"
+          disabled={isDeleting || isSaving}
           onClick={handleDelete}
         >
-          归档并删除本制作项目
+          {isDeleting ? '删除中…' : '归档并删除本制作项目'}
         </Button>
       </Card>
     </div>

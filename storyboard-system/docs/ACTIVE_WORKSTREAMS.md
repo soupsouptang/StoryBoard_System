@@ -2,10 +2,18 @@
 
 ## 2026-09-30 增量
 
-- 数据库 URL 配对和 ProductionService 拆分已分别本地提交；数据库配置测试 2 项、Production/Review/保存视图相关测试 5 项通过。GitHub HTTPS 凭据未就绪，推送尚未完成。
+- 数据库 URL 配对、ProductionService/AuthService 拆分、镜头图片/文字图框、项目封面、项目起始时码和 Alembic head 合并均已上传；GitHub 写权限已恢复。`9611be3` 的 CI、Regression Guard 与 PostgreSQL 空库升级通过，实际数据副本迁移仍未完成。
 - Shot 图片/文字图框恢复切片已接 V-API Panel/Asset 与 V-Web 表、卡、墙；空 SQLite Alembic 升级到最新通过，隔离后端测试通过。媒体默认写入 `apps/api/media/`，可通过 `FRAMEFORGE_MEDIA_DIR` 指向持久目录；生产 cutover 前仍需对象存储或持久卷、旧媒体复制和引用/回滚核验。
 - 项目库现已消费 V-API 的 `cover_media_id` 和受权图片字节读取，缺图时维持原有 Monogram 回退；合成数据浏览器在 1440/1024/768/375/320 宽度验证图片、回退与无横向溢出。仍需持久媒体迁移。
 - `5e86a0b` 仍是功能基线，根 shadcn/ui 仍是视觉基线。其余表格高级功能、生产步骤、字段生命周期、Narration/Moodboard/Lighting 等尚未恢复，不得宣称整体对等。
+
+## 2026-10-01 当前 UI 修复
+
+最新 UI 文档与 Review 回复/引用、Shot Table 新建镜头入口已整合；视觉证据保留为 `BLOCKED_VISUAL`，先验收 1440 桌面四个核心面。当前用户要求同步视觉检查，并核对所有 Markdown 要求、组件加载、字体、图标及入口到后端/基线的对应。Luna 会话按互不重叠文件实施，主会话审查后按模块上传。
+
+| 模块 | 已修复与代码检查 | 视觉/功能验收 |
+| --- | --- | --- |
+| 项目设置草稿 | 直接以服务端值显示，只 PATCH 实际修改字段；允许清空代码，保存后刷新缓存；保存/删除期间防重入，删除失败显示错误。Web TypeScript 检查通过 | 视觉待验收；分数帧率、目标时长、起始时码等完整设置基线仍未齐 |
 
 更新：2026-09-29。Git 根目录为 `referenced-chatgpt-conversation-this-is-an`；`storyboard-system` 仍是 Legacy 运行/迁移源，`apps/api`、`apps/web`、根 `packages/*` 是目标 owner。此表为当前协调账本，旧切片“本地验收”不代表目标架构 cutover。唯一 owner 和逐项门槛见 [CANONICAL_OWNER_MATRIX.md](CANONICAL_OWNER_MATRIX.md)。
 | 轨道 | 会话 / 执行者 | 独占范围 | 本轮完成门槛 | 状态 |
