@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/authStore';
-import { Button, Field, Icons, Input, Select } from '@frameforge/ui';
+import { Button, Field, Icons, Input } from '@frameforge/ui';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,7 +14,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [roleName, setRoleName] = useState('producer');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +33,7 @@ export default function LoginPage() {
       } else {
         const res = await apiClient<{ access_token: string; user: any }>('/api/v1/auth/register', {
           method: 'POST',
-          json: { email, password, display_name: displayName, role_name: roleName }
+          json: { email, password, display_name: displayName }
         });
         setAuth(res.user, res.access_token);
         router.push('/productions');
@@ -139,25 +138,7 @@ export default function LoginPage() {
                   placeholder="例如：王摄影 / 李剪辑"
                 />
               </Field>
-              <div className="grid min-w-0 gap-2 text-sm font-medium text-foreground">
-                <span>管线职责角色</span>
-                <Select
-                  label="管线职责角色"
-                  name="role_name"
-                  value={roleName}
-                  onChange={setRoleName}
-                  options={[
-                    { value: 'producer', label: 'Producer 制片管理' },
-                    { value: 'director', label: 'Director 导演/分镜' },
-                    { value: 'camera', label: 'Camera 摄影/实拍' },
-                    { value: 'art', label: 'Art 美术/道具' },
-                    { value: 'motion', label: 'Motion 包装/动态' },
-                    { value: 'vfx', label: 'VFX 视效/合成' },
-                    { value: 'editor', label: 'Editor 剪辑/DIT' },
-                    { value: 'reviewer', label: 'Reviewer 审片审批' }
-                  ]}
-                />
-              </div>
+              <p className="text-xs text-muted-foreground">新账号注册后默认为只读权限。</p>
             </>
           )}
 
