@@ -2,12 +2,14 @@
 
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Button, Input, TextArea, Icons, Select, Checkbox, Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from '@frameforge/ui';
-import type { Shot, Production } from '@frameforge/types';
+import type { Shot, Production, ProductionMethod } from '@frameforge/types';
 import { framesToTimecode, framesToSeconds } from '@frameforge/timecode';
 import { useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/lib/api-client';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useUpdateShot, useDeleteShot } from '@/lib/hooks/useProduction';
+
+const METHOD_OPTIONS: { value: ProductionMethod; label: string }[] = [ { value: "live", label: "实拍 (LIVE SHOOT)" }, { value: "stock", label: "购买素材 (STOCK FOOTAGE)" }, { value: "client", label: "客户素材 (CLIENT ASSET)" }, { value: "archive", label: "历史资料 (ARCHIVE)" }, { value: "still", label: "静帧 (STILL FRAME)" }, { value: "ae", label: "AE合成包装 (AE COMP)" }, { value: "mg", label: "动效设计 (MOTION GRAPHICS)" }, { value: "three_d", label: "3D三维制作 (3D ANIMATION)" }, { value: "vfx", label: "视效特效 (VFX SHOT)" }, { value: "type", label: "纯文字字卡 (TITLE CARD)" } ];
 
 interface ShotInspectorProps {
   shot: Shot | null;
@@ -27,7 +29,7 @@ function editableShotValues(shot: Shot): Partial<Shot> {
     name: shot.name ?? '', display_number: shot.display_number,
     description: shot.description ?? '', panel_frame: shot.panel_frame ?? '', voice_over: shot.voice_over ?? '',
     dialogue: shot.dialogue ?? '', subtitle: shot.subtitle ?? '',
-    director_notes: shot.director_notes ?? '', primary_method: shot.primary_method,
+    director_notes: shot.director_notes ?? '', primary_method: shot.primary_method, secondary_methods: shot.secondary_methods ?? [],
     department: shot.department, owner_id: shot.owner_id ?? '',
     status: shot.status, duration_frames: shot.duration_frames,
     timing_locked: shot.timing_locked, shot_size: shot.shot_size ?? null,
@@ -459,9 +461,27 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
                 label="主要制作方式"
                 value={formData.primary_method || 'live'}
                 onChange={value => handleFieldChange('primary_method', value)}
-                options={[ { value: "live", label: "实拍 (LIVE SHOOT)" }, { value: "stock", label: "购买素材 (STOCK FOOTAGE)" }, { value: "client", label: "客户素材 (CLIENT ASSET)" }, { value: "archive", label: "历史资料 (ARCHIVE)" }, { value: "still", label: "静帧 (STILL FRAME)" }, { value: "ae", label: "AE合成包装 (AE COMP)" }, { value: "mg", label: "动效设计 (MOTION GRAPHICS)" }, { value: "three_d", label: "3D三维制作 (3D ANIMATION)" }, { value: "vfx", label: "视效特效 (VFX SHOT)" }, { value: "type", label: "纯文字字卡 (TITLE CARD)" } ]}
+                options={METHOD_OPTIONS}
               />
             </div>
+
+            <fieldset className="space-y-2">
+              <legend className="font-medium text-muted-foreground">辅助制作方式（可多选）</legend>
+              <div className="grid grid-cols-2 gap-2">
+                {METHOD_OPTIONS.map(option => (
+                  <label key={option.value} className="flex items-center gap-2 text-foreground">
+                    <Checkbox
+                      checked={(formData.secondary_methods || []).includes(option.value)}
+                      onCheckedChange={checked => handleFieldChange('secondary_methods', checked === true
+                        ? [...new Set([...(formData.secondary_methods || []), option.value])]
+                        : (formData.secondary_methods || []).filter(method => method !== option.value))}
+                      aria-label={`辅助制作方式：${option.label}`}
+                    />
+                    <span className="min-w-0 truncate">{option.label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
 
             <div className="grid grid-cols-2 gap-3">
               <div>

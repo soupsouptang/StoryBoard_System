@@ -32,6 +32,11 @@ export function NavRail({ productionId }: NavRailProps) {
       label: t('timeline')
     },
     {
+      href: `/production/${productionId}/methods`,
+      icon: Icons.Layers,
+      label: t('methodGroups')
+    },
+    {
       href: `/production/${productionId}/assets`,
       icon: Icons.Images,
       label: t('assets')

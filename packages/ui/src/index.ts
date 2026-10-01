@@ -25,7 +25,7 @@ export { cn } from './lib/utils';
 import {
   AlertTriangle, Archive, ArrowRight, ArrowUpDown, Check, ChevronLeft, ChevronRight,
   CircleUserRound, Clapperboard, Clock, Clock3, Columns3, Copy, Download, Filter,
-  Eye, EyeOff, FileDown, Film, GripVertical, Image, Images, LayoutGrid, Lightbulb, ListVideo,
+  Eye, EyeOff, FileDown, Film, GripVertical, Image, Images, Layers, LayoutGrid, Lightbulb, ListVideo,
   Lock, LockOpen, MessageSquare, Mic, Moon, Palette, PanelRightOpen, Pause, Play, Plus,
   RefreshCw, Search, Settings, SlidersHorizontal, Sun, Table2, Trash2, TriangleAlert, Undo2, X
 } from 'lucide-react';
@@ -34,7 +34,7 @@ import {
 export const Icons = {
   AlertTriangle, Archive, ArrowRight, ArrowUpDown, Check, ChevronLeft, ChevronRight,
   CircleUserRound, Clapperboard, Clock, Clock3, Columns3, Copy, Download, Filter,
-  Eye, EyeOff, FileDown, Film, GripVertical, Image, Images, LayoutGrid, Lightbulb, ListVideo,
+  Eye, EyeOff, FileDown, Film, GripVertical, Image, Images, Layers, LayoutGrid, Lightbulb, ListVideo,
   Lock, LockOpen, MessageSquare, Mic, Moon, Palette, PanelRightOpen, Pause, Play, Plus,
   RefreshCw, Search, Settings, SlidersHorizontal, Sun, Table2, Trash2, TriangleAlert, Undo2, X
 };

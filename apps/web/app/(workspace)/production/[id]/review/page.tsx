@@ -39,7 +39,7 @@ import {
 } from '@/lib/hooks/useVersions';
 import { StatusBadge } from '@/components/shot/StatusBadge';
 import { MethodBadge } from '@/components/shot/MethodBadge';
-import { shotMovementLabel } from '@/lib/shot-display';
+import { shotMovementLabel, shotMethodValues } from '@/lib/shot-display';
 import { useAuthStore } from '@/stores/authStore';
 
 type CommentReferenceField = 'description' | 'voiceover' | 'name';
@@ -491,7 +491,7 @@ export default function ReviewPage() {
               </span>
               <div className="flex items-center gap-2">
                 <MethodBadge method={currentShot.primary_method} />
-                {(currentShot.secondary_methods || []).filter(method => method !== currentShot.primary_method).map(method => <MethodBadge key={method} method={method} />)}
+                {shotMethodValues(currentShot).filter(method => method !== currentShot.primary_method).map(method => <MethodBadge key={method} method={method} />)}
                 <StatusBadge status={currentShot.status} />
               </div>
             </div>

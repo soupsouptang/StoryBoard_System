@@ -36,6 +36,7 @@ function load(file, dependencies) {
 }
 const { useWorkspaceStore: store } = load('apps/web/stores/useWorkspaceStore.ts', {});
 class ApiError extends Error {}
+let lastSave;
 let resolveSave;
 let rejectSave;
 let deleteFails = false;
@@ -48,7 +49,7 @@ const { ShotInspector } = load('apps/web/components/shot/ShotInspector.tsx', {
   '@tanstack/react-query': { useQueryClient: () => ({ invalidateQueries: async () => {} }) },
   '@/lib/api-client': { ApiError }, '@/stores/useWorkspaceStore': { useWorkspaceStore: store },
   '@/lib/hooks/useProduction': {
-    useUpdateShot: () => ({ mutateAsync: () => new Promise((resolve, reject) => { resolveSave = resolve; rejectSave = reject; }) }),
+    useUpdateShot: () => ({ mutateAsync: request => new Promise((resolve, reject) => { lastSave = request; resolveSave = resolve; rejectSave = reject; }) }),
     useDeleteShot: () => ({ mutateAsync: async id => { deleted.push(id); if (deleteFails) throw new Error('Synthetic delete failed'); } })
   }
 });
@@ -116,5 +117,13 @@ const edit = value => input().props.onChange({ target: { value } });
   await successfulDelete; render(a);
   assert.equal(store.getState().inspectedShotId, 'A');
   assert.equal(input().props.value, 'A survives delete');
-  console.log('Inspector synthetic save/close/delete regression passed');
+  button('管线与制作').props.onClick(); render(a);
+  const auxiliaryAE = () => find(node => node.type === 'Checkbox' && node.props['aria-label'].startsWith('辅助制作方式：AE'));
+  auxiliaryAE().props.onCheckedChange(true); render(a);
+  assert.equal(auxiliaryAE().props.checked, true);
+  const methodSave = button('保存').props.onClick();
+  assert.equal(lastSave.id, 'A');
+  assert.equal(JSON.stringify(lastSave.changes.secondary_methods), '["ae"]');
+  resolveSave({ ...a, name: 'A survives delete', secondary_methods: ['ae'], revision: 5 }); await methodSave;
+  console.log('Inspector synthetic save/close/delete and secondary-method regression passed');
 })().catch(error => { console.error(error); process.exitCode = 1; });

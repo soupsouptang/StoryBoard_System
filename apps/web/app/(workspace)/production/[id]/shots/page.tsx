@@ -25,7 +25,7 @@ import {
   type ShotTableContextTarget
 } from '@/components/shot/ShotTableContextMenu';
 import { BulkActionToolbar } from '@/components/storyboard/BulkActionToolbar';
-import { shotMovementLabel } from '@/lib/shot-display';
+import { shotMovementLabel, shotMethodValues, groupShotsByMethod } from '@/lib/shot-display';
 import {
   DEFAULT_SHOT_TABLE_COLUMN_ORDER,
   SHOT_TABLE_COLUMN_LABELS,
@@ -61,7 +61,7 @@ function shotColumnValue(
     case 'display_number':
       return shot.display_number || '';
     case 'primary_method':
-      return shot.primary_method || '';
+      return shotMethodValues(shot).join(' / ');
     case 'panel_image':
       return shot.panels?.some(panel => panel.asset_id) ? 1 : 0;
     case 'shot_size':
@@ -475,7 +475,7 @@ export default function ShotListPage() {
         if (!builtInMatch && !customMatch) return false;
       }
 
-      if (filters.primaryMethod !== 'all' && item.primary_method !== filters.primaryMethod) return false;
+      if (filters.primaryMethod !== 'all' && !shotMethodValues(item).includes(filters.primaryMethod)) return false;
       if (filters.department !== 'all' && item.department !== filters.department) return false;
       if (filters.status !== 'all' && item.status !== filters.status) return false;
       return true;
@@ -504,18 +504,14 @@ export default function ShotListPage() {
       return [{ key: 'all', label: '', shots: visibleShots }];
     }
 
+    if (groupMode === 'method') {
+      return Array.from(groupShotsByMethod(visibleShots), ([method, shots]) => ({ key: `method:${method}`, label: method.toUpperCase(), shots }));
+    }
+
     const groups = new Map<string, { key: string; label: string; shots: Shot[] }>();
     for (const shot of visibleShots) {
-      const key =
-        groupMode === 'sequence'
-          ? `sequence:${shot.sequence_id || 'unassigned'}`
-          : `method:${shot.primary_method || 'unassigned'}`;
-      const label =
-        groupMode === 'sequence'
-          ? shot.sequence_id
-            ? `场次 ${shot.sequence_id.slice(0, 8)}`
-            : '未分场镜头'
-          : shot.primary_method || '未指定制作方式';
+      const key = `sequence:${shot.sequence_id || 'unassigned'}`;
+      const label = shot.sequence_id ? `场次 ${shot.sequence_id.slice(0, 8)}` : '未分场镜头';
 
       const existing = groups.get(key);
       if (existing) {
@@ -527,7 +523,7 @@ export default function ShotListPage() {
     return Array.from(groups.values());
   }, [visibleShots, groupMode]);
 
-  const visibleShotIds = shotGroups.flatMap(group => group.shots.map(item => item.id));
+  const visibleShotIds = Array.from(new Set(shotGroups.flatMap(group => group.shots.map(item => item.id))));
   const visibleColumns = tablePresentation.columnOrder.filter(
     column => !tablePresentation.hiddenColumns.includes(column)
   );
@@ -1164,7 +1160,7 @@ export default function ShotListPage() {
                           isSelected ? 'bg-accent' : 'bg-card group-hover:bg-accent'
                         }`}
                       >
-                        <MethodBadge method={shot.primary_method} size="sm" />
+                        <div className="flex flex-wrap gap-1">{shotMethodValues(shot).map(method => <MethodBadge key={method} method={method} size="sm" />)}</div>
                       </td>
 
                       {visibleColumns.map(column => {

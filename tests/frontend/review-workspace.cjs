@@ -38,6 +38,10 @@ versionHooks.useCreateShotVersion = id => ({ isPending: pending, mutateAsync: as
   created.push({ id, args });
   return { id: 'v1' };
 } });
+const shotDisplay = { exports: {} };
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('apps/web/lib/shot-display.ts', 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }
+}).outputText, { module: shotDisplay, exports: shotDisplay.exports });
 const dependencies = {
   react: React, '@frameforge/ui': ui, 'next/navigation': { useParams: () => ({ id: 'synthetic' }) },
   '@/lib/hooks/useProduction': { useProduction: () => ({ data: { id: 'synthetic', fps_num: 24, fps_den: 1, start_timecode_frames: 86400 } }), useShots: () => ({ data: shots }) },
@@ -46,7 +50,7 @@ const dependencies = {
   '@/components/shot/ShotPanelImage': { ShotPanelImage: 'ShotPanelImage' },
   '@/components/shot/StatusBadge': { StatusBadge: 'StatusBadge' },
   '@/components/shot/MethodBadge': { MethodBadge: 'MethodBadge' },
-  '@/lib/shot-display': { shotMovementLabel: () => '固定' }
+  '@/lib/shot-display': shotDisplay.exports
 };
 const moduleObject = { exports: {} };
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('apps/web/app/(workspace)/production/[id]/review/page.tsx', 'utf8'), {
