@@ -15,6 +15,7 @@
 | --- | --- | --- |
 | 项目设置草稿 | 直接以服务端值显示，只 PATCH 实际修改字段；允许清空代码，保存后刷新缓存；保存/删除期间防重入，删除失败显示错误。Web TypeScript 检查通过 | 视觉待验收；分数帧率、目标时长、起始时码等完整设置基线仍未齐 |
 | Shot 写权限 | 8 个标准写命令统一检查真实角色权限，导入/版本调用传递 actor；审片专用命令仅允许授权状态转换。隔离合成 API 与服务检查 23 项通过 | INTEGRATED_NOT_CUT_OVER；不代表完整项目权限与数据迁移验收 |
+| Shot 右键菜单 | 复用 ShotTableContextMenu；接通单元格复制、换行偏好/保存视图、自定义字段隐藏/归档、新建与废纸篓入口、批量删除确认与失败处理；合成菜单回归、Web typecheck 通过 | BLOCKED_VISUAL；整镜头剪切/复制/粘贴、原子相对插入、核心列归档合同仍待补齐 |
 | 根 UI / Tailwind 4 | 官方 New York v4、default h9、OKLCH neutral、字体权重及 Select/Dialog 兼容；`237c4a6` 已上传。UI 包检查、Web typecheck/build 通过 | BLOCKED_VISUAL；保持原 Shell 与业务布局，未标视觉通过 |
 | Inspector 草稿安全 | 按 Shot ID 保留草稿；保存期间切换、失败保留、关闭确认、删除确认及工作面快捷键统一；合成回归与 Web typecheck 通过 | BLOCKED_VISUAL；全字段/多 Panel 对等仍未齐 |
 | VO 帧分配 | 最低帧数与锁定帧先保留，剩余帧按最大余数分配；可行目标总帧精确，不可行目标明确保留超额；timecode build 与合成回归通过 | 算法检查通过；弹窗真实交互另验，非数据库 cutover |

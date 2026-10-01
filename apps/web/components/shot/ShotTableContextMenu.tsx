@@ -37,6 +37,15 @@ export type ShotTableContextTarget =
       column: ShotTableContextColumnKey;
     }
   | {
+      kind: 'custom-column';
+      x: number;
+      y: number;
+      returnFocus: HTMLElement | null;
+      fieldId: string;
+      revision: number;
+      label: string;
+    }
+  | {
       kind: 'row';
       x: number;
       y: number;
@@ -45,6 +54,8 @@ export type ShotTableContextTarget =
       shotIds: string[];
       displayNumber: string;
       name?: string | null;
+      cellValue?: string;
+      cellLabel?: string;
     };
 
 interface ShotTableContextMenuProps {
@@ -55,6 +66,12 @@ interface ShotTableContextMenuProps {
   onOpenChange: (open: boolean) => void;
   onOpenInspector: (shotId: string) => void;
   onClearSelection: () => void;
+  onCopyCell: (value: string) => void;
+  onOpenTrash: () => void;
+  onNewShot: () => void;
+  onCustomFieldState: (id: string, revision: number, state: 'hidden' | 'removed') => void;
+  wrappedColumns: ShotTableColumnKey[];
+  onToggleWrap: (column: ShotTableColumnKey) => void;
   onSort: (column: ShotTableContextColumnKey, direction: 'asc' | 'desc') => void;
   onClearSort: () => void;
   onAutoFitColumn: (column: ShotTableColumnKey) => void;
@@ -87,6 +104,12 @@ export function ShotTableContextMenu({
   onOpenChange,
   onOpenInspector,
   onClearSelection,
+  onCopyCell,
+  onOpenTrash,
+  onNewShot,
+  onCustomFieldState,
+  wrappedColumns,
+  onToggleWrap,
   onSort,
   onClearSort,
   onAutoFitColumn,
@@ -113,7 +136,7 @@ export function ShotTableContextMenu({
   };
 
   const confirmTrash = async () => {
-    if (!pendingTrash) return;
+    if (!pendingTrash || bulkTrash.isPending) return;
     setActionError(null);
     try {
       await bulkTrash.mutateAsync(pendingTrash.shotIds);
@@ -206,6 +229,11 @@ export function ShotTableContextMenu({
                     <Icons.ArrowUpDown className="mr-2 h-4 w-4 rotate-90" />
                     按内容自动列宽
                   </DropdownMenuItem>
+                  {['description', 'panel_frame', 'voice_over', 'camera_movement'].includes(target.column) && (
+                    <DropdownMenuItem onSelect={() => onToggleWrap(target.column as ShotTableColumnKey)}>
+                      {wrappedColumns.includes(target.column as ShotTableColumnKey) ? '关闭文本换行' : '开启文本换行'}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     onSelect={() => onHideColumn(target.column as ShotTableColumnKey)}
                   >
@@ -214,6 +242,18 @@ export function ShotTableContextMenu({
                   </DropdownMenuItem>
                 </>
               )}
+            </>
+          )}
+
+          {target?.kind === 'custom-column' && (
+            <>
+              <DropdownMenuLabel>列属性 · {target.label}</DropdownMenuLabel>
+              <DropdownMenuItem onSelect={() => onCustomFieldState(target.fieldId, target.revision, 'hidden')}>
+                隐藏此列（可恢复）
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onCustomFieldState(target.fieldId, target.revision, 'removed')}>
+                归档此列（可恢复）
+              </DropdownMenuItem>
             </>
           )}
 
@@ -230,8 +270,15 @@ export function ShotTableContextMenu({
                   onSelect={() => onOpenInspector(target.shotId)}
                 >
                   <Icons.PanelRightOpen className="mr-2 h-4 w-4" />
-                  打开镜头详情
+                  编辑镜头 / 制作方式
                   <DropdownMenuShortcut>Enter</DropdownMenuShortcut>
+                </DropdownMenuItem>
+              )}
+
+              {target.cellValue !== undefined && (
+                <DropdownMenuItem onSelect={() => onCopyCell(target.cellValue!)}>
+                  <Icons.Copy className="mr-2 h-4 w-4" />
+                  复制{target.cellLabel || '单元格'}文本
                 </DropdownMenuItem>
               )}
 
@@ -261,6 +308,13 @@ export function ShotTableContextMenu({
               </DropdownMenuItem>
             </>
           )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={onNewShot}>
+            <Icons.Plus className="mr-2 h-4 w-4" />新建镜头…
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={onOpenTrash}>
+            <Icons.Trash2 className="mr-2 h-4 w-4" />打开废纸篓 / 恢复镜头…
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -275,6 +329,10 @@ export function ShotTableContextMenu({
       >
         <DialogContent
           className="max-w-md"
+          onCloseAutoFocus={event => {
+            event.preventDefault();
+            returnFocusRef.current?.focus({ preventScroll: true });
+          }}
           onEscapeKeyDown={event => {
             if (bulkTrash.isPending) event.preventDefault();
           }}
