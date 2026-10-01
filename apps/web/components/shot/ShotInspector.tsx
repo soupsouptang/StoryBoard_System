@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Button, Input, TextArea, Icons, Select, Checkbox } from '@frameforge/ui';
+import React, { useLayoutEffect, useRef, useState } from 'react';
+import { Button, Input, TextArea, Icons, Select, Checkbox, Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from '@frameforge/ui';
 import type { Shot, Production } from '@frameforge/types';
 import { framesToTimecode, framesToSeconds } from '@frameforge/timecode';
 import { useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/lib/api-client';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useUpdateShot, useDeleteShot } from '@/lib/hooks/useProduction';
-import { MethodBadge } from './MethodBadge';
 
 interface ShotInspectorProps {
   shot: Shot | null;
@@ -16,7 +15,12 @@ interface ShotInspectorProps {
   onClose: () => void;
 }
 
-type ShotDraft = { form: Partial<Shot>; snapshot: Partial<Shot>; changes: Partial<Shot>; revision: number };
+type ShotDraft = {
+  form: Partial<Shot>; snapshot: Partial<Shot>; changes: Partial<Shot>; revision: number;
+  status: 'idle' | 'saving' | 'saved' | 'conflict' | 'error';
+  error: string | null;
+  conflict: { server_revision?: number; client_revision?: number } | null;
+};
 
 function editableShotValues(shot: Shot): Partial<Shot> {
   return {
@@ -39,140 +43,156 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
   const updateShot = useUpdateShot(production.id);
   const deleteShot = useDeleteShot(production.id);
 
-  const [formData, setFormData] = useState<Partial<Shot>>({});
-  const [serverSnapshot, setServerSnapshot] = useState<Partial<Shot>>({});
-  const [changedFields, setChangedFields] = useState<Partial<Shot>>({});
-  const [baseRevision, setBaseRevision] = useState(0);
+  const draftsRef = useRef(new Map<string, ShotDraft>());
+  const currentShotIdRef = useRef(shot?.id ?? null);
+  const [draft, setDraft] = useState<ShotDraft>({
+    form: {}, snapshot: {}, changes: {}, revision: 0, status: 'idle', error: null, conflict: null
+  });
+  const { form: formData, changes: changedFields, status: saveStatus, error: errorMessage, conflict: conflictDetails } = draft;
   const isDirty = Object.keys(changedFields).length > 0;
   const [showClosePrompt, setShowClosePrompt] = useState(false);
-  const currentShotIdRef = useRef<string | null>(null);
-  const draftsRef = useRef(new Map<string, ShotDraft>());
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'conflict' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [conflictDetails, setConflictDetails] = useState<{ server_revision?: number; client_revision?: number } | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deletePending, setDeletePending] = useState(false);
+  const deletePendingRef = useRef(false);
   const [activeTab, setActiveTab] = useState<'creative' | 'camera' | 'pipeline' | 'timing'>('creative');
 
-  useEffect(() => {
+  const writeDraft = (id: string, next: ShotDraft) => {
+    draftsRef.current.set(id, next);
+    if (currentShotIdRef.current === id) setDraft(next);
+    else setDraft(current => ({ ...current }));
+  };
+
+  useLayoutEffect(() => {
+    currentShotIdRef.current = shot?.id ?? null;
     if (!shot) return;
     const values = editableShotValues(shot);
-
-    if (currentShotIdRef.current === shot.id && isDirty) {
-      if (saveStatus === 'conflict' && shot.revision !== baseRevision) {
-        const nextChanges: Partial<Shot> = { ...changedFields };
-        for (const [key, value] of Object.entries(nextChanges)) {
-          const field = key as keyof Shot;
-          if (Object.is(value, values[field])) {
-            delete (nextChanges as Record<string, unknown>)[key];
-          }
+    const saved = draftsRef.current.get(shot.id);
+    if (saved && (Object.keys(saved.changes).length || saved.status === 'saving')) {
+      if (saved.status === 'conflict' && shot.revision !== saved.revision) {
+        const changes = { ...saved.changes };
+        for (const [key, value] of Object.entries(changes)) {
+          if (Object.is(value, values[key as keyof Shot])) delete (changes as Record<string, unknown>)[key];
         }
-
-        setServerSnapshot(values);
-        setChangedFields(nextChanges);
-        setFormData({ ...values, ...nextChanges });
-        setBaseRevision(shot.revision);
-        setSaveStatus('idle');
-        setErrorMessage(null);
-        setConflictDetails(null);
-      }
-      return;
-    }
-    if (currentShotIdRef.current && currentShotIdRef.current !== shot.id && isDirty) {
-      draftsRef.current.set(currentShotIdRef.current, {
-        form: formData, snapshot: serverSnapshot, changes: changedFields, revision: baseRevision
-      });
-    }
-    const savedDraft = currentShotIdRef.current === shot.id ? undefined : draftsRef.current.get(shot.id);
-    currentShotIdRef.current = shot.id;
-    if (savedDraft) {
-      setFormData(savedDraft.form);
-      setServerSnapshot(savedDraft.snapshot);
-      setChangedFields(savedDraft.changes);
-      setBaseRevision(savedDraft.revision);
+        writeDraft(shot.id, { form: { ...values, ...changes }, snapshot: values, changes,
+          revision: shot.revision, status: 'idle', error: null, conflict: null });
+      } else setDraft(saved);
     } else {
-      setFormData(values);
-      setServerSnapshot(values);
-      setChangedFields({});
-      setBaseRevision(shot.revision);
+      writeDraft(shot.id, { form: values, snapshot: values, changes: {}, revision: shot.revision,
+        status: saved?.status === 'saved' ? 'saved' : 'idle', error: null, conflict: null });
     }
-      setSaveStatus('idle');
-      setErrorMessage(null);
-      setConflictDetails(null);
+    setConfirmDelete(null);
   }, [shot]);
+
+  useLayoutEffect(() => {
+    const guard = () => {
+      if (deletePendingRef.current || [...draftsRef.current.values()].some(entry =>
+        Object.keys(entry.changes).length > 0 || entry.status === 'saving')) {
+        setShowClosePrompt(true);
+        return false;
+      }
+      return true;
+    };
+    useWorkspaceStore.getState().setInspectorCloseGuard(guard);
+    return () => {
+      if (useWorkspaceStore.getState().inspectorCloseGuard === guard) {
+        useWorkspaceStore.getState().setInspectorCloseGuard(null);
+      }
+    };
+  }, []);
+
+  // Escape uses the same guard as the toolbar and parent overlay.
+  useLayoutEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const toggle = event.key.toLowerCase() === 'i' && !event.ctrlKey && !event.metaKey && !event.altKey &&
+        !(event.target as HTMLElement)?.closest('input, textarea, select, [contenteditable="true"]');
+      if ((event.key !== 'Escape' && !toggle) || event.defaultPrevented || showClosePrompt || confirmDelete ||
+        (event.target as HTMLElement)?.closest('[role="dialog"], [role="listbox"], [role="menu"]')) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      useWorkspaceStore.getState().closeInspector();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [showClosePrompt, confirmDelete]);
 
   if (!shot) return null;
 
   const fps = production.fps_num / (production.fps_den || 1);
-  const durationSec = framesToSeconds(formData.duration_frames || shot.duration_frames, fps).toFixed(2);
-  const timecode = framesToTimecode(formData.duration_frames || shot.duration_frames, fps, production.drop_frame);
+  const durationSec = framesToSeconds(formData.duration_frames ?? shot.duration_frames, fps).toFixed(2);
+  const timecode = framesToTimecode(formData.duration_frames ?? shot.duration_frames, fps, production.drop_frame);
+  const anyPending = deletePending || [...draftsRef.current.values()].some(entry => entry.status === 'saving');
 
   const handleFieldChange = (field: keyof Shot, value: unknown) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    setChangedFields(prev => {
-      const next = { ...prev };
-      if (Object.is(value, serverSnapshot[field])) delete (next as Record<string, unknown>)[field];
-      else (next as Record<string, unknown>)[field] = value;
-      return next;
-    });
-    if (saveStatus !== 'idle') setSaveStatus('idle');
+    const current = draftsRef.current.get(shot.id)!;
+    const changes = { ...current.changes };
+    if (Object.is(value, current.snapshot[field])) delete (changes as Record<string, unknown>)[field];
+    else (changes as Record<string, unknown>)[field] = value;
+    writeDraft(shot.id, { ...current, form: { ...current.form, [field]: value }, changes,
+      status: current.status === 'saving' ? 'saving' : 'idle' });
   };
 
   const handleSave = async () => {
-    if (!Object.keys(changedFields).length || !shot) return;
+    const id = shot.id;
+    const submitted = draftsRef.current.get(id)!;
+    if (!Object.keys(submitted.changes).length || submitted.status === 'saving' || deletePendingRef.current) return;
+    writeDraft(id, { ...submitted, status: 'saving', error: null, conflict: null });
     try {
-      setSaveStatus('saving');
-      setErrorMessage(null);
-      setConflictDetails(null);
-      const savedShot = await updateShot.mutateAsync({
-        id: shot.id,
-        revision: baseRevision,
-        changes: changedFields
-      });
+      const savedShot = await updateShot.mutateAsync({ id, revision: submitted.revision, changes: submitted.changes });
       const values = editableShotValues(savedShot);
-      setFormData(values);
-      setServerSnapshot(values);
-      setChangedFields({});
-      setBaseRevision(savedShot.revision);
-      draftsRef.current.delete(shot.id);
-      setSaveStatus('saved');
-    } catch (err: unknown) {
-      if (err instanceof ApiError && (err.status === 409 || err.code === 'SHOT_REVISION_CONFLICT')) {
-        setSaveStatus('conflict');
-        const details = err.details as { server_revision?: number; client_revision?: number } | undefined;
-        setConflictDetails(details || null);
-        setErrorMessage(err.message || '并发版本冲突：该镜头已被其他协作者修改。');
-      } else {
-        setSaveStatus('error');
-        setErrorMessage(err instanceof Error ? err.message : '保存镜头失败，请重试');
+      const latest = draftsRef.current.get(id)!;
+      const changes: Partial<Shot> = {};
+      for (const key of Object.keys(values)) {
+        const field = key as keyof Shot;
+        if (!Object.is(latest.form[field], submitted.form[field]) && !Object.is(latest.form[field], values[field])) {
+          (changes as Record<string, unknown>)[key] = latest.form[field];
+        }
       }
+      writeDraft(id, { form: { ...values, ...changes }, snapshot: values, changes,
+        revision: savedShot.revision, status: Object.keys(changes).length ? 'idle' : 'saved', error: null, conflict: null });
+    } catch (err: unknown) {
+      const conflict = err instanceof ApiError && (err.status === 409 || err.code === 'SHOT_REVISION_CONFLICT');
+      writeDraft(id, { ...draftsRef.current.get(id)!, status: conflict ? 'conflict' : 'error',
+        conflict: conflict ? (err.details as ShotDraft['conflict']) ?? null : null,
+        error: err instanceof Error ? err.message : '保存镜头失败，请重试' });
     }
   };
 
   const handleRefetch = async () => {
     await queryClient.invalidateQueries({ queryKey: ['shots', production.id] });
-    // When the server revision changes, the effect above rebases the preserved draft.
   };
 
   const handleDiscard = () => {
+    if (saveStatus === 'saving') return;
     const values = editableShotValues(shot);
-    setFormData(values);
-    setServerSnapshot(values);
-    setChangedFields({});
-    setBaseRevision(shot.revision);
-    draftsRef.current.delete(shot.id);
-    setSaveStatus('idle');
-    setErrorMessage(null);
-    setShowClosePrompt(false);
+    writeDraft(shot.id, { form: values, snapshot: values, changes: {}, revision: shot.revision,
+      status: 'idle', error: null, conflict: null });
   };
 
-  const handleClose = () => {
-    if (isDirty) setShowClosePrompt(true);
-    else onClose();
-  };
+  const handleClose = () => useWorkspaceStore.getState().closeInspector();
 
   const handleDelete = async () => {
-    await deleteShot.mutateAsync(shot.id);
-    onClose();
+    const id = confirmDelete;
+    if (!id || id !== shot.id || deletePendingRef.current || anyPending) return;
+    deletePendingRef.current = true;
+    setDeletePending(true);
+    try {
+      await deleteShot.mutateAsync(id);
+      draftsRef.current.delete(id);
+      setConfirmDelete(null);
+      // A switched target and its draft must survive acknowledgement of this delete.
+      if (currentShotIdRef.current === id) {
+        deletePendingRef.current = false;
+        const otherDraft = [...draftsRef.current].find(([, entry]) => Object.keys(entry.changes).length > 0);
+        if (otherDraft) useWorkspaceStore.getState().openInspector(otherDraft[0]);
+        else useWorkspaceStore.getState().closeInspector();
+      }
+    } catch (err: unknown) {
+      const current = draftsRef.current.get(id);
+      if (current) writeDraft(id, { ...current, status: 'error', error: err instanceof Error ? err.message : '删除镜头失败，请重试' });
+    } finally {
+      deletePendingRef.current = false;
+      setDeletePending(false);
+    }
   };
 
   return (
@@ -202,7 +222,7 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
             variant="default"
             size="sm"
             onClick={handleSave}
-            disabled={saveStatus === 'saving' || (!isDirty && saveStatus !== 'conflict')}
+            disabled={saveStatus === 'saving' || deletePending || !isDirty}
             className="gap-1 text-xs"
           >
             <Icons.Check className="h-3.5 w-3.5" />
@@ -220,15 +240,22 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
         </div>
       </div>
 
-      {showClosePrompt && (
-        <div role="alertdialog" aria-label="未保存的镜头修改" className="mx-4 mt-3 rounded border border-warning/40 bg-warning/10 p-3 text-xs">
-          <p className="font-medium">此镜头有未保存的修改。</p>
-          <div className="mt-2 flex gap-2">
+      <Dialog open={showClosePrompt} onOpenChange={setShowClosePrompt}>
+        <DialogContent>
+          <DialogTitle>未保存的镜头修改</DialogTitle>
+          <DialogDescription>
+            {anyPending ? '镜头操作进行中，请等待完成后再关闭。' : '详情中有未保存的镜头草稿（包括已切换的镜头）。关闭会放弃这些修改。'}
+          </DialogDescription>
+          <DialogFooter>
             <Button size="sm" onClick={() => setShowClosePrompt(false)}>继续编辑</Button>
-            <Button size="sm" variant="outline" onClick={() => { handleDiscard(); onClose(); }}>放弃修改并关闭</Button>
-          </div>
-        </div>
-      )}
+            <Button size="sm" variant="outline" disabled={anyPending} onClick={() => {
+              draftsRef.current.clear();
+              setShowClosePrompt(false);
+              onClose();
+            }}>放弃所有草稿并关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Revision Conflict Banner (409) */}
       {saveStatus === 'conflict' && (
@@ -259,7 +286,7 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
       {saveStatus === 'error' && errorMessage && (
         <div role="alert" className="mx-4 mt-3 rounded border border-destructive/40 bg-destructive/10 p-2.5 text-xs text-destructive flex items-center justify-between">
           <span className="line-clamp-2">{errorMessage}</span>
-          <Button variant="ghost" size="icon" onClick={() => setErrorMessage(null)} className="h-5 w-5 text-destructive shrink-0">
+          <Button variant="ghost" size="icon" onClick={() => writeDraft(shot.id, { ...draft, error: null })} aria-label="关闭错误提示" className="h-5 w-5 text-destructive shrink-0">
             <Icons.X className="h-3 w-3" />
           </Button>
         </div>
@@ -534,12 +561,13 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
       </div>
 
       <div className="border-t border-border p-4 bg-background/60">
-        {confirmDelete ? (
+        {confirmDelete === shot.id ? (
           <div className="flex items-center gap-2">
             <Button
               variant="destructive"
               size="sm"
               onClick={handleDelete}
+              disabled={anyPending}
               className="flex-1 text-xs"
             >
               确认移至废纸篓
@@ -547,7 +575,7 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setConfirmDelete(false)}
+              onClick={() => setConfirmDelete(null)}
               className="text-xs"
             >
               取消
@@ -557,7 +585,8 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => setConfirmDelete(true)}
+            onClick={() => setConfirmDelete(shot.id)}
+            disabled={anyPending}
             className="w-full gap-2 text-xs"
           >
             <Icons.Trash2 className="h-4 w-4" />

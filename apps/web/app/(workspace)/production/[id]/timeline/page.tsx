@@ -28,7 +28,8 @@ export default function TimelinePage() {
     inspectedShotId,
     isInspectorOpen,
     openInspector,
-    closeInspector
+    closeInspector,
+    toggleInspector
   } = useWorkspaceStore();
 
   const inspectedShot = shots.find(s => s.id === inspectedShotId) || null;
@@ -36,6 +37,22 @@ export default function TimelinePage() {
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const fps = production ? production.fps_num / (production.fps_den || 1) : 24;
   const totalFrames = shots.reduce((acc, s) => acc + (s.duration_frames || 0), 0);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey ||
+        (event.target as HTMLElement)?.closest('input, textarea, select, [contenteditable="true"], [role="dialog"], [role="listbox"], [role="menu"]')) return;
+      if (event.key.toLowerCase() === 'i') {
+        event.preventDefault();
+        toggleInspector();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        closeInspector();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [closeInspector, toggleInspector]);
 
   // Playhead animation
   useEffect(() => {

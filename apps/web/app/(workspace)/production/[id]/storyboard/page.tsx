@@ -121,14 +121,17 @@ export default function StoryboardPage() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't capture when typing in inputs/textareas
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
+      if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey ||
+        (e.target as HTMLElement)?.closest('input, textarea, select, [contenteditable="true"], [role="dialog"], [role="listbox"], [role="menu"]')) {
         return;
       }
 
       if (e.key === 'Escape') {
+        e.preventDefault();
         clearSelection();
         closeInspector();
       } else if (e.key === 'i' || e.key === 'I') {
+        e.preventDefault();
         toggleInspector();
       }
     };

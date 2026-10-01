@@ -14,6 +14,8 @@
 | 模块 | 已修复与代码检查 | 视觉/功能验收 |
 | --- | --- | --- |
 | 项目设置草稿 | 直接以服务端值显示，只 PATCH 实际修改字段；允许清空代码，保存后刷新缓存；保存/删除期间防重入，删除失败显示错误。Web TypeScript 检查通过 | 视觉待验收；分数帧率、目标时长、起始时码等完整设置基线仍未齐 |
+| 根 UI / Tailwind 4 | 官方 New York v4、default h9、OKLCH neutral、字体权重及 Select/Dialog 兼容；`237c4a6` 已上传。UI 包检查、Web typecheck/build 通过 | BLOCKED_VISUAL；保持原 Shell 与业务布局，未标视觉通过 |
+| Inspector 草稿安全 | 按 Shot ID 保留草稿；保存期间切换、失败保留、关闭确认、删除确认及工作面快捷键统一；合成回归与 Web typecheck 通过 | BLOCKED_VISUAL；全字段/多 Panel 对等仍未齐 |
 
 更新：2026-09-29。Git 根目录为 `referenced-chatgpt-conversation-this-is-an`；`storyboard-system` 仍是 Legacy 运行/迁移源，`apps/api`、`apps/web`、根 `packages/*` 是目标 owner。此表为当前协调账本，旧切片“本地验收”不代表目标架构 cutover。唯一 owner 和逐项门槛见 [CANONICAL_OWNER_MATRIX.md](CANONICAL_OWNER_MATRIX.md)。
 | 轨道 | 会话 / 执行者 | 独占范围 | 本轮完成门槛 | 状态 |

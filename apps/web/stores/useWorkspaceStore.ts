@@ -36,6 +36,8 @@ interface WorkspaceState {
   selectAllShots: (allIds: string[]) => void;
   clearSelection: () => void;
   openInspector: (shotId: string) => void;
+  inspectorCloseGuard: (() => boolean) | null;
+  setInspectorCloseGuard: (guard: (() => boolean) | null) => void;
   closeInspector: () => void;
   toggleInspector: () => void;
   setVOTimingModalOpen: (open: boolean) => void;
@@ -62,6 +64,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   lastSelectedId: null,
   inspectedShotId: null,
   isInspectorOpen: false,
+  inspectorCloseGuard: null,
   isVOTimingModalOpen: false,
   isNewShotModalOpen: false,
   isImportModalOpen: false,
@@ -109,12 +112,16 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   clearSelection: () => set({ selectedShotIds: [], lastSelectedId: null }),
 
   openInspector: shotId => set({ inspectedShotId: shotId, isInspectorOpen: true }),
-  closeInspector: () => set({ inspectedShotId: null, isInspectorOpen: false }),
-  toggleInspector: () =>
-    set(state => ({
-      isInspectorOpen: !state.isInspectorOpen,
-      inspectedShotId: !state.isInspectorOpen && state.selectedShotIds.length > 0 ? state.selectedShotIds[0] : state.inspectedShotId
-    })),
+  setInspectorCloseGuard: inspectorCloseGuard => set({ inspectorCloseGuard }),
+  closeInspector: () => {
+    if (get().inspectorCloseGuard?.() === false) return;
+    set({ inspectedShotId: null, isInspectorOpen: false });
+  },
+  toggleInspector: () => {
+    const state = get();
+    if (state.isInspectorOpen) state.closeInspector();
+    else if (state.selectedShotIds[0]) state.openInspector(state.selectedShotIds[0]);
+  },
 
   setVOTimingModalOpen: isVOTimingModalOpen => set({ isVOTimingModalOpen }),
   setNewShotModalOpen: isNewShotModalOpen => set({ isNewShotModalOpen }),
