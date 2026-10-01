@@ -388,11 +388,14 @@ class ShotService:
         for index, item in enumerate(target_items):
             shot = shots[item.id]
             target_sort_index = float((index + 1) * 1000)
-            if shot.sort_index == target_sort_index:
+            target_number = f"{index + 1:03d}"
+            if shot.sort_index == target_sort_index and shot.display_number == target_number:
                 unchanged_count += 1
                 continue
 
             previous_sort_index = shot.sort_index
+            previous_number = shot.display_number
+            shot.display_number = target_number
             shot.sort_index = target_sort_index
             shot.revision += 1
             shot.updated_at = now
@@ -405,6 +408,8 @@ class ShotService:
                 metadata={
                     "revision": shot.revision,
                     "previous_sort_index": previous_sort_index,
+                    "previous_display_number": previous_number,
+                    "display_number": target_number,
                     "sort_index": target_sort_index,
                 },
             )

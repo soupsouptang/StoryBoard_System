@@ -62,7 +62,7 @@ const key = (key, nativeEvent = {}) => input().props.onKeyDown({ key, nativeEven
 const settle = async () => { await new Promise(resolve => setImmediate(resolve)); render(); };
 (async () => {
   render();
-  assert.equal(tree.children[0].children[0], props.placeholder, 'Empty values retain the editing hint');
+  assert.equal(tree.children[0].children[0].children[0], props.placeholder, 'Empty values retain the editing hint');
   props.value = 0; render();
   assert.equal(tree.children[0].children[0], 0, 'Numeric zero is a value');
   props.value = ''; render();
@@ -96,6 +96,12 @@ const settle = async () => { await new Promise(resolve => setImmediate(resolve))
   input().props.onChange({ target: { value: '待放弃' } }); render();
   key('Enter'); rejectSave(new Error('Synthetic failure')); await settle();
   button('放弃输入').props.onClick(); render();
+  assert.equal(input(), undefined);
+  tree.props.onDoubleClick({ stopPropagation() {} }); render();
+  input().props.onChange({ target: { value: 'Esc 丢弃草稿' } }); render();
+  const staleInput = input(); const requestCount = requests.length;
+  key('Escape'); staleInput.props.onBlur(); render();
+  assert.equal(requests.length, requestCount, 'Escape then blur cannot save the discarded input');
   assert.equal(input(), undefined);
   console.log('Inline cell draft, conflict, IME, event propagation and single-submit checks passed');
 })().catch(error => { console.error(error); process.exitCode = 1; });

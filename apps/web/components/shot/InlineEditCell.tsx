@@ -14,6 +14,7 @@ interface InlineEditCellProps {
   placeholder?: React.ReactNode;
   className?: string;
   type?: 'text' | 'number';
+  required?: boolean;
 }
 
 export function InlineEditCell({
@@ -23,7 +24,8 @@ export function InlineEditCell({
   value,
   placeholder,
   className = '',
-  type = 'text'
+  type = 'text',
+  required = false
 }: InlineEditCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
@@ -35,6 +37,7 @@ export function InlineEditCell({
   const inputRef = useRef<HTMLInputElement>(null);
   const isComposingRef = useRef(false);
   const savingRef = useRef(false);
+  const cancelledRef = useRef(false);
   const updateShot = useUpdateShot(productionId);
 
   useEffect(() => {
@@ -56,6 +59,7 @@ export function InlineEditCell({
 
   const handleDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent opening the inspector
+    cancelledRef.current = false;
     setEditValue(value !== null && value !== undefined ? String(value) : '');
     setSaveError(null);
     setHasConflict(false);
@@ -64,7 +68,8 @@ export function InlineEditCell({
   };
 
   const saveChange = async () => {
-    if (!isEditing || savingRef.current || hasConflict) return;
+    if (!isEditing || savingRef.current || hasConflict || cancelledRef.current) return;
+    if (required && !editValue.trim()) { setSaveError('此项必填，请输入内容。'); return; }
     
     let finalValue: string | number | null = editValue;
     if (type === 'number') {
@@ -115,6 +120,7 @@ export function InlineEditCell({
       void saveChange();
     } else if (e.key === 'Escape') {
       e.preventDefault();
+      cancelledRef.current = true;
       setIsEditing(false);
     }
   };
@@ -160,7 +166,7 @@ export function InlineEditCell({
       className={`cursor-text rounded px-1.5 py-0.5 -mx-1.5 transition-colors hover:bg-muted ${className} ${isSaving ? 'opacity-50' : ''}`}
       title="双击编辑"
     >
-      <div className="line-clamp-1">{value !== null && value !== '' ? value : placeholder || <span className="text-muted-foreground italic">空</span>}</div>
+      <div className="line-clamp-1">{value !== null && value !== '' ? value : <span className={required ? 'text-[#FF0082]' : 'text-muted-foreground italic'}>{placeholder || (required ? '请输入内容（必填）' : '空')}</span>}</div>
     </div>
   );
 }

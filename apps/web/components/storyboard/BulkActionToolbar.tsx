@@ -11,8 +11,8 @@ interface BulkActionToolbarProps {
   allShotIds: string[];
 }
 
-export function BulkActionToolbar({ production, allShotIds }: BulkActionToolbarProps) {
-  const { selectedShotIds, clearSelection, selectAllShots } = useWorkspaceStore();
+export function BulkActionToolbar({ production }: BulkActionToolbarProps) {
+  const { selectedShotIds, clearSelection } = useWorkspaceStore();
   const bulkUpdate = useBulkUpdateShots(production.id);
   const bulkTrash = useBulkTrashShots(production.id);
 
@@ -25,8 +25,7 @@ export function BulkActionToolbar({ production, allShotIds }: BulkActionToolbarP
   if (selectedShotIds.length === 0) return null;
 
   const isBusy = bulkUpdate.isPending || bulkTrash.isPending;
-  const allCurrentResultsSelected =
-    allShotIds.length > 0 && allShotIds.every(id => selectedShotIds.includes(id));
+
 
   const applyBulkUpdate = async (
     updates: Record<string, unknown>,
@@ -66,7 +65,7 @@ export function BulkActionToolbar({ production, allShotIds }: BulkActionToolbarP
         <span className="font-medium text-foreground">点击要修改的列标题或单元格</span>
       </div>
 
-      <div className="flex min-w-[240px] flex-1 flex-wrap items-center gap-2">
+      <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto">
         <Select
           label="批量设置制作方式"
           value={selectedMethod}
@@ -138,29 +137,7 @@ export function BulkActionToolbar({ production, allShotIds }: BulkActionToolbarP
       </div>
 
       <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5 border-l border-border pl-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={isBusy || allCurrentResultsSelected || allShotIds.length === 0}
-          onClick={() => selectAllShots(allShotIds)}
-          className="h-8 text-xs"
-        >
-          全选当前结果
-        </Button>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={isBusy}
-          onClick={() => {
-            setConfirmingTrash(false);
-            setActionError(null);
-            clearSelection();
-          }}
-          className="h-8 text-xs text-muted-foreground"
-        >
-          取消选择
-        </Button>
 
         {confirmingTrash ? (
           <>
@@ -196,6 +173,19 @@ export function BulkActionToolbar({ production, allShotIds }: BulkActionToolbarP
             删除<span className="inline-block w-[2ch] text-center font-mono tabular-nums">{Math.min(selectedShotIds.length, 99)}</span><span className="inline-block w-[1em] text-center">{selectedShotIds.length > 99 ? '+' : '个'}</span>镜头
           </Button>
         )}
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={isBusy}
+          onClick={() => {
+            setConfirmingTrash(false);
+            setActionError(null);
+            clearSelection();
+          }}
+          className="h-8 text-xs text-muted-foreground"
+        >
+          取消选择
+        </Button>
       </div>
 
       {actionError && (

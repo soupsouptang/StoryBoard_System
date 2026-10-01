@@ -1,87 +1,51 @@
-export type ShotTableColumnKey =
-  | 'panel_image'
-  | 'shot_size'
-  | 'lens_mm'
-  | 'camera_movement'
-  | 'description'
-  | 'panel_frame'
-  | 'voice_over'
-  | 'duration_frames'
-  | 'department'
-  | 'owner_id'
-  | 'status';
-
-export type ShotTableRowHeight = 'compact' | 'standard' | 'comfortable' | 'auto';
-
-export const DEFAULT_SHOT_TABLE_COLUMN_ORDER: ShotTableColumnKey[] = [
-  'panel_image',
-  'shot_size',
-  'lens_mm',
-  'camera_movement',
-  'description',
-  'panel_frame',
-  'voice_over',
-  'duration_frames',
-  'department',
-  'owner_id',
-  'status'
-];
-
-export const SHOT_TABLE_COLUMN_LABELS: Record<ShotTableColumnKey, string> = {
+export const SHOT_TABLE_COLUMN_LABELS = {
   panel_image: '分镜画面',
+  shot_reference: '镜头',
+  tc_in: '时码 TC',
+  duration_frames: '时长',
+  name: '镜头标题',
+  sequence_id: '篇章',
+  location: '场景/地点',
   shot_size: '景别',
   lens_mm: '焦段',
-  camera_movement: '机位运镜',
-  description: '画面内容与构图',
-  panel_frame: '分镜图框',
+  camera_movement: '运镜',
+  camera_angle: '机位角度',
+  description: '画面描述',
   voice_over: '对应旁白',
-  duration_frames: '时长 / 帧数',
-  department: '部门',
+  primary_method: '制作方式',
+  status: '状态',
+  department: '责任部门',
+  int_ext: '内外景',
+  day_night: '日夜',
+  dialogue_character: '对白角色',
+  performance: '表演提示',
+  dialogue: '对白',
+  edit_transition: '剪辑/转场',
+  notes: '备注',
+  action: '动作',
+  original_number: '原镜号',
+  feasibility: '可行性',
+  replacement: '建议替换内容',
+  original_description: '原描述',
+  panel_frame: '分镜图框',
+  movement_reference: '机位/运镜',
+  execution_method: '执行方式',
   owner_id: '负责人',
-  status: '状态'
-};
+} as const;
 
-export const DEFAULT_SHOT_TABLE_COLUMN_WIDTHS: Record<ShotTableColumnKey, number> = {
-  panel_image: 128,
-  shot_size: 80,
-  lens_mm: 80,
-  camera_movement: 132,
-  description: 260,
-  panel_frame: 160,
-  voice_over: 240,
-  duration_frames: 126,
-  department: 104,
-  owner_id: 120,
-  status: 112
-};
+export type ShotTableColumnKey = keyof typeof SHOT_TABLE_COLUMN_LABELS;
+export type ShotTableRowHeight = 'compact' | 'standard' | 'comfortable' | 'auto';
 
-const SHOT_TABLE_COLUMN_MIN_WIDTHS: Record<ShotTableColumnKey, number> = {
-  panel_image: 112,
-  shot_size: 72,
-  lens_mm: 72,
-  camera_movement: 96,
-  description: 160,
-  panel_frame: 120,
-  voice_over: 160,
-  duration_frames: 108,
-  department: 88,
-  owner_id: 96,
-  status: 96
-};
+export const DEFAULT_SHOT_TABLE_COLUMN_ORDER = Object.keys(SHOT_TABLE_COLUMN_LABELS) as ShotTableColumnKey[];
 
-const SHOT_TABLE_COLUMN_MAX_WIDTHS: Record<ShotTableColumnKey, number> = {
-  panel_image: 240,
-  shot_size: 180,
-  lens_mm: 180,
-  camera_movement: 320,
-  description: 560,
-  panel_frame: 360,
-  voice_over: 560,
-  duration_frames: 240,
-  department: 280,
-  owner_id: 320,
-  status: 220
-};
+export const DEFAULT_SHOT_TABLE_COLUMN_WIDTHS = Object.fromEntries(DEFAULT_SHOT_TABLE_COLUMN_ORDER.map(column => [column,
+  column === 'panel_image' ? 128 : ['description', 'voice_over', 'original_description', 'replacement'].includes(column) ? 260 : column === 'tc_in' ? 132 : 112
+])) as Record<ShotTableColumnKey, number>;
+const SHOT_TABLE_COLUMN_MIN_WIDTHS = Object.fromEntries(DEFAULT_SHOT_TABLE_COLUMN_ORDER.map(column => [column, column === 'panel_image' ? 112 : 80])) as Record<ShotTableColumnKey, number>;
+const SHOT_TABLE_COLUMN_MAX_WIDTHS = Object.fromEntries(DEFAULT_SHOT_TABLE_COLUMN_ORDER.map(column => [column, 560])) as Record<ShotTableColumnKey, number>;
+
+// These headings are confirmed; their domain mapping is deferred to the database review.
+export const PENDING_SHOT_TABLE_COLUMNS = new Set<ShotTableColumnKey>(['shot_reference', 'location', 'int_ext', 'day_night', 'dialogue_character', 'edit_transition', 'notes', 'original_number', 'feasibility', 'replacement', 'original_description', 'movement_reference', 'execution_method']);
 
 export interface ShotTablePresentationPreferences {
   version: 1;
@@ -106,6 +70,7 @@ export function clampShotTableColumnWidth(column: ShotTableColumnKey, width: num
 
 export function normalizeShotTableColumnOrder(value: unknown): ShotTableColumnKey[] {
   if (!Array.isArray(value)) return [...DEFAULT_SHOT_TABLE_COLUMN_ORDER];
+  if (!value.includes('tc_in')) return [...DEFAULT_SHOT_TABLE_COLUMN_ORDER];
   const requested = value.filter(
     (item): item is ShotTableColumnKey =>
       typeof item === 'string' && COLUMN_KEYS.has(item as ShotTableColumnKey)
@@ -129,7 +94,7 @@ export function defaultShotTablePresentationPreferences(): ShotTablePresentation
   return {
     version: 1,
     columnOrder: [...DEFAULT_SHOT_TABLE_COLUMN_ORDER],
-    hiddenColumns: [],
+    hiddenColumns: ['owner_id'],
     columnWidths: { ...DEFAULT_SHOT_TABLE_COLUMN_WIDTHS },
     rowHeight: 'standard'
   };
@@ -142,12 +107,13 @@ export function normalizeShotTablePresentationPreferences(
   if (!value || typeof value !== 'object' || Array.isArray(value)) return fallback;
 
   const parsed = value as Partial<ShotTablePresentationPreferences>;
-  const hiddenColumns = Array.isArray(parsed.hiddenColumns)
+  const hiddenColumns: ShotTableColumnKey[] = Array.isArray(parsed.hiddenColumns)
     ? parsed.hiddenColumns.filter(
         (item): item is ShotTableColumnKey =>
           typeof item === 'string' && COLUMN_KEYS.has(item as ShotTableColumnKey)
       )
-    : [];
+    : ['owner_id'];
+  if (!Array.isArray(parsed.columnOrder) || !parsed.columnOrder.includes('tc_in')) hiddenColumns.push('owner_id');
 
   const columnWidths = { ...DEFAULT_SHOT_TABLE_COLUMN_WIDTHS };
   if (parsed.columnWidths && typeof parsed.columnWidths === 'object') {

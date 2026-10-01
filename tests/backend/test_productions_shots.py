@@ -472,3 +472,26 @@ async def test_panel_frame_text_and_authenticated_image(tmp_path, monkeypatch):
         assert current.json()[0]["panels"][0]["asset_id"] == replaced.json()["asset_id"]
         cover = await client.get(f"/api/v1/productions/{production_id}", headers=headers)
         assert cover.json()["cover_media_id"] == replaced.json()["asset_id"]
+
+
+@pytest.mark.asyncio
+async def test_reorder_renumbers_without_changing_shot_identity():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        login = await client.post("/api/v1/auth/login", json={"email": "admin@company.internal", "password": settings.INITIAL_ADMIN_PASSWORD})
+        headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+        production = (await client.post("/api/v1/productions", headers=headers, json={"name": "Synthetic renumber check"})).json()
+        shots = []
+        for number in ["015", "099", "A3"]:
+            shots.append((await client.post(f"/api/v1/productions/{production['id']}/shots", headers=headers, json={"display_number": number, "name": number})).json())
+        target = [shots[2], shots[0], shots[1]]
+        req = {"production_id": production['id'], "base_order": [s['id'] for s in shots], "items": [{"id": s['id'], "revision": s['revision'], "sort_index": (i+1)*1000} for i,s in enumerate(target)]}
+        response = await client.post("/api/v1/shots/reorder", headers=headers, json=req)
+        assert response.status_code == 200
+        current = (await client.get(f"/api/v1/productions/{production['id']}/shots", headers=headers)).json()
+        assert [s['id'] for s in current] == [s['id'] for s in target]
+        assert [s['display_number'] for s in current] == ['001', '002', '003']
+        assert [s['name'] for s in current] == ['A3', '015', '099']
+        assert [s['panels'][0]['id'] for s in current] == [s['panels'][0]['id'] for s in target]
+        stale = await client.post("/api/v1/shots/reorder", headers=headers, json=req)
+        assert stale.status_code == 409
+        assert (await client.get(f"/api/v1/productions/{production['id']}/shots", headers=headers)).json() == current

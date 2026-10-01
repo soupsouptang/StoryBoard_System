@@ -175,11 +175,14 @@ export function useBulkUpdateShots(productionId: string) {
   });
 }
 
+export interface ReorderShotsInput { orderedShotIds: string[]; baseOrder: string[]; revisions: Record<string, number>; }
+
 export function useReorderShots(productionId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (orderedShotIds: string[]) => {
+    mutationFn: async (input: string[] | ReorderShotsInput) => {
+      const orderedShotIds = Array.isArray(input) ? input : input.orderedShotIds;
       const currentShots = queryClient.getQueryData<Shot[]>(['shots', productionId]) ?? [];
       const activeOrder = [...currentShots]
         .sort((a, b) => (a.sort_index - b.sort_index) || a.id.localeCompare(b.id))
@@ -193,22 +196,23 @@ export function useReorderShots(productionId: string) {
         throw new Error('重新排序必须包含当前项目的完整镜头集合，请刷新后重试。');
       }
 
-      const byId = new Map(currentShots.map(shot => [shot.id, shot]));
+      const baseOrder = Array.isArray(input) ? activeOrder : input.baseOrder;
+      const revisions = Array.isArray(input) ? Object.fromEntries(currentShots.map(shot => [shot.id, shot.revision])) : input.revisions;
 
       return apiClient('/api/v1/shots/reorder', {
         method: 'POST',
         json: {
           production_id: productionId,
-          base_order: activeOrder,
+          base_order: baseOrder,
           items: orderedShotIds.map((id, index) => ({
             id,
             sort_index: (index + 1) * 1000,
-            revision: byId.get(id)!.revision
+            revision: revisions[id]
           }))
         }
       });
     },
-    onSuccess: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['shots', productionId] });
       queryClient.invalidateQueries({ queryKey: ['production', productionId] });
     }
