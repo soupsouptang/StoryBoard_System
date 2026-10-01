@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button, Icons, NativeSelect } from '@frameforge/ui';
+import { Button, Icons, Select } from '@frameforge/ui';
 import type { Production } from '@frameforge/types';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useBulkTrashShots, useBulkUpdateShots } from '@/lib/hooks/useProduction';
@@ -57,7 +57,7 @@ export function BulkActionToolbar({ production, allShotIds }: BulkActionToolbarP
     <div
       role="toolbar"
       aria-label="镜头批量操作"
-      className="fixed bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] left-1/2 z-40 flex w-[calc(100vw-1rem)] max-w-5xl -translate-x-1/2 flex-wrap items-center gap-2 rounded-xl border border-ring/40 bg-card/95 px-3 py-2.5 text-xs shadow-2xl backdrop-blur-md md:px-4"
+      className="flex w-full shrink-0 flex-wrap items-center gap-2 border-b bg-muted/30 px-3 py-2.5 text-xs md:px-4"
     >
       <div className="flex shrink-0 items-center gap-2 border-r border-border pr-3">
         <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 font-mono text-[11px] font-bold text-accent-foreground">
@@ -67,74 +67,74 @@ export function BulkActionToolbar({ production, allShotIds }: BulkActionToolbarP
       </div>
 
       <div className="flex min-w-[240px] flex-1 flex-wrap items-center gap-2">
-        <NativeSelect
-          aria-label="批量设置制作方式"
+        <Select
+          label="批量设置制作方式"
           value={selectedMethod}
           disabled={isBusy}
-          onChange={e => {
-            const value = e.target.value;
+          onChange={value => {
             setSelectedMethod(value);
             if (value) void applyBulkUpdate({ primary_method: value }, () => setSelectedMethod(''));
           }}
-          className="h-8 min-w-[155px] flex-1 cursor-pointer md:flex-none"
-        >
-          <option value="">制作方式…</option>
-          <option value="live">实拍 (LIVE)</option>
-          <option value="stock">购买素材 (STOCK)</option>
-          <option value="client">客户素材 (CLIENT)</option>
-          <option value="archive">历史资料 (ARCHIVE)</option>
-          <option value="still">静帧 (STILL)</option>
-          <option value="ae">AE 合成</option>
-          <option value="mg">动效 (MG)</option>
-          <option value="three_d">3D 三维</option>
-          <option value="vfx">视效 (VFX)</option>
-          <option value="type">文字字卡</option>
-        </NativeSelect>
+          options={[
+            { value: '', label: '制作方式…' },
+            { value: 'live', label: '实拍 (LIVE)' },
+            { value: 'stock', label: '购买素材 (STOCK)' },
+            { value: 'client', label: '客户素材 (CLIENT)' },
+            { value: 'archive', label: '历史资料 (ARCHIVE)' },
+            { value: 'still', label: '静帧 (STILL)' },
+            { value: 'ae', label: 'AE 合成' },
+            { value: 'mg', label: '动效 (MG)' },
+            { value: 'three_d', label: '3D 三维' },
+            { value: 'vfx', label: '视效 (VFX)' },
+            { value: 'type', label: '文字字卡' },
+          ]}
+          className="w-[170px] min-w-0"
+        />
 
-        <NativeSelect
-          aria-label="批量设置制作状态"
+        <Select
+          label="批量设置制作状态"
           value={selectedStatus}
           disabled={isBusy}
-          onChange={e => {
-            const value = e.target.value;
+          onChange={value => {
             setSelectedStatus(value);
             if (value) void applyBulkUpdate({ status: value }, () => setSelectedStatus(''));
           }}
-          className="h-8 min-w-[155px] flex-1 cursor-pointer md:flex-none"
-        >
-          <option value="">制作状态…</option>
-          <option value="draft">规划中 (Draft)</option>
-          <option value="in_progress">制作中 (In Progress)</option>
-          <option value="review">待审片 (Review)</option>
-          <option value="changes_requested">需修改</option>
-          <option value="approved">已审批</option>
-          <option value="locked">已锁定</option>
-        </NativeSelect>
+          options={[
+            { value: '', label: '制作状态…' },
+            { value: 'draft', label: '规划中 (Draft)' },
+            { value: 'in_progress', label: '制作中 (In Progress)' },
+            { value: 'review', label: '待审片 (Review)' },
+            { value: 'changes_requested', label: '需修改' },
+            { value: 'approved', label: '已审批' },
+            { value: 'locked', label: '已锁定' },
+          ]}
+          className="w-[170px] min-w-0"
+        />
 
-        <NativeSelect
-          aria-label="批量设置责任部门"
+        <Select
+          label="批量设置责任部门"
           value={selectedDept}
           disabled={isBusy}
-          onChange={e => {
-            const value = e.target.value;
+          onChange={value => {
             setSelectedDept(value);
             if (value) void applyBulkUpdate({ department: value }, () => setSelectedDept(''));
           }}
-          className="h-8 min-w-[155px] flex-1 cursor-pointer md:flex-none"
-        >
-          <option value="">责任部门…</option>
-          <option value="camera">摄影组</option>
-          <option value="director">导演组</option>
-          <option value="production">制片组</option>
-          <option value="art">美术组</option>
-          <option value="stock">素材组</option>
-          <option value="editorial">剪辑组</option>
-          <option value="motion">动效组</option>
-          <option value="three_d">三维组</option>
-          <option value="vfx">视效组</option>
-          <option value="sound">声音组</option>
-          <option value="color">调色组</option>
-        </NativeSelect>
+          options={[
+            { value: '', label: '责任部门…' },
+            { value: 'camera', label: '摄影组' },
+            { value: 'director', label: '导演组' },
+            { value: 'production', label: '制片组' },
+            { value: 'art', label: '美术组' },
+            { value: 'stock', label: '素材组' },
+            { value: 'editorial', label: '剪辑组' },
+            { value: 'motion', label: '动效组' },
+            { value: 'three_d', label: '三维组' },
+            { value: 'vfx', label: '视效组' },
+            { value: 'sound', label: '声音组' },
+            { value: 'color', label: '调色组' },
+          ]}
+          className="w-[170px] min-w-0"
+        />
       </div>
 
       <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5 border-l border-border pl-3">

@@ -638,46 +638,39 @@ export default function ShotListPage() {
 
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
-      <div className="z-10 shrink-0 border-b border-border bg-card/90 px-3 py-2 sm:px-6 sm:py-2.5">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="z-10 shrink-0 space-y-3 border-b border-border bg-background px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-baseline gap-3">
+            <h1 className="text-lg font-semibold">镜头制作表</h1>
+            <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
+              显示 {visibleShots.length} / {shots.length}
+              {selectedShotIds.length > 0 && ` · 已选 ${selectedShotIds.length}`}
+            </span>
+          </div>
+          <Button onClick={() => setNewShotModalOpen(true)}>
+            <Icons.Plus aria-hidden="true" />新建镜头
+          </Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="镜头查询与工具">
           <div className="relative min-w-0 flex-1 basis-full sm:basis-64 sm:max-w-xs">
-            <Icons.Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Icons.Search aria-hidden="true" className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
               value={filters.searchQuery}
               onChange={event => setFilter('searchQuery', event.target.value)}
+              aria-label="搜索镜头"
               placeholder="搜索镜号、画面、旁白、负责人..."
               className="w-full min-w-0 pl-8"
             />
           </div>
 
-          <span className="whitespace-nowrap text-xs font-mono text-muted-foreground">
-            显示 <span className="font-bold text-foreground">{visibleShots.length}</span> / {shots.length}
-          </span>
-
-          {selectedShotIds.length > 0 && (
-            <span className="whitespace-nowrap rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-              已选 {selectedShotIds.length}
-            </span>
-          )}
-
-          <div className="ml-auto flex max-w-full items-center gap-1 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setNewShotModalOpen(true)}
-              className="h-8 px-3 text-xs font-semibold"
-            >
-              <Icons.Plus className="h-3.5 w-3.5" />
-              新建镜头
-            </Button>
-
+          <div className="flex min-w-0 flex-wrap items-center gap-1">
             <Button
               variant={showFilters || activeFilterCount > 0 || groupMode !== 'none' ? 'secondary' : 'ghost'}
               size="sm"
               onClick={() => setShowFilters(value => !value)}
               aria-expanded={showFilters}
-              className="h-8 text-xs"
+              className="shrink-0"
             >
               <Icons.Filter className="h-3.5 w-3.5" />
               筛选/分组{activeFilterCount ? ` · ${activeFilterCount}` : ''}
@@ -688,13 +681,13 @@ export default function ShotListPage() {
               size="sm"
               onClick={() => selectAllShots(visibleShotIds)}
               disabled={!visibleShotIds.length}
-              className="h-8 text-xs"
+              className="shrink-0"
             >
               全选可见
             </Button>
 
             {selectedShotIds.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={clearSelection} className="h-8 text-xs">
+              <Button variant="ghost" size="sm" onClick={clearSelection} className="shrink-0">
                 清除选择
               </Button>
             )}
@@ -704,7 +697,7 @@ export default function ShotListPage() {
               size="sm"
               disabled={selectedShotIds.length !== 1}
               onClick={() => selectedShotIds[0] && openInspector(selectedShotIds[0])}
-              className="h-8 text-xs"
+              className="shrink-0"
             >
               <Icons.PanelRightOpen className="h-3.5 w-3.5" />
               详情
@@ -741,7 +734,7 @@ export default function ShotListPage() {
               variant="ghost"
               size="sm"
               onClick={() => setIsTrashOpen(true)}
-              className="h-8 text-xs hover:text-foreground"
+              className="shrink-0"
             >
               <Icons.Trash2 className="h-3.5 w-3.5" />
               废纸篓
@@ -749,6 +742,11 @@ export default function ShotListPage() {
           </div>
         </div>
       </div>
+
+      <BulkActionToolbar
+        production={production}
+        allShotIds={visibleShotIds}
+      />
 
       {showFilters && (
         <div className="z-10 shrink-0 border-b border-border bg-background px-3 py-3 sm:px-6">
@@ -1380,11 +1378,6 @@ export default function ShotListPage() {
           <Button variant="ghost" size="sm" onClick={() => setClipboardMessage(null)}>关闭</Button>
         </div>
       )}
-
-      <BulkActionToolbar
-        production={production}
-        allShotIds={visibleShotIds}
-      />
 
       <NewShotModal
         production={production}
