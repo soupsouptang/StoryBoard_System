@@ -74,7 +74,7 @@ The accepted product baseline proves several useful **information-architecture**
 | Mobile workspace navigation | horizontal rail | `56px` |
 | Navigation rows | compact but readable | `36px`, `rounded-md`, no decorative shadow |
 | Inspector | explicit detail surface, separate from row selection | `380px` desktop target |
-| Project Hub | read-first project list with compact cover + metadata | max content width `1152px` |
+| Project Hub | full-row photographic cover, dark gradient, title/metadata left, edit/open right | max content width `1152px`; never replace with small thumbnail cards |
 | Shot Table | read-first dense production table | weak separators, sticky header, no boxed-cell visual noise |
 | Overlays | modal/menu/popover as temporary interaction surfaces | shared Radix/shadcn primitives only |
 | Review | comments/version/diff information density | shadcn cards/sections; behavior comes from functional baseline |
@@ -84,6 +84,19 @@ The Legacy version also confirms that professional density comes from hierarchy 
 ---
 
 ## 2026-10-01 explicit standards update
+
+### 2026-10-02 user amendments — higher priority than historical screenshots
+
+- Keep the project entrance as full-row image covers, including a readable fallback when no cover exists. The cover itself opens the project; editing remains a separate action.
+- Desktop navigation starts expanded. Desktop landscape acceptance comes first; mobile/narrow/zoom acceptance is deferred.
+- New projects show basic business columns only. Preset columns are manually added; further columns are custom. A preset catalog is not a mandate to display every column.
+- Column lifecycle has **delete** (recoverable, retaining snapshots) and **permanent delete** (explicit confirmation, purging current and historical business values). **Archive is removed**. Hiding changes presentation only. Internal technical IDs/revisions/permission fields stay invisible.
+- Support custom and automatic **column width** and **row height**. There is no editable “column height”. Project view configuration is shared with all authorized users, with server revision/conflict handling; local browser storage is a cache, not the source of truth.
+- Hide the entire review-marker/comment column when no review markers exist. Restore it when annotations exist; do not reserve an empty marker column.
+- Design animation for every applicable interaction and state; do not add a Reduced motion mode. The detailed animation matrix in the current feature/UI plan supersedes the historical restrained-motion proposal. Animations must not delay edits, pointer tracking, saving or focus handling.
+- Remove the standalone duplicate-shot action. Copy/paste uses Ctrl/Cmd+C and Ctrl/Cmd+V; the context menu contains **向上粘贴** (before target) and **向下粘贴** (after target). Ctrl/Cmd+V defaults to downward paste. Inputs keep native text clipboard behavior; domain paste preserves selected-shot order and creates new internal IDs.
+- Follow [the complete feature/UI plan](FEATURE_UI_PLAN_2026-10-02.md) and [database/migration plan](UI_DATABASE_PLAN_2026-10-02.md). A written target is not evidence of implementation.
+
 
 The active user requests official latest Tailwind 4 and New York default h9. This supersedes historical Tailwind 3 / 40px control guidance. The root package now adopts the official New York v4 neutral OKLCH theme, 0.625rem radius, default 36px controls, 32px small and 40px large Button variants. Shell dimensions and functional/layout relationships remain unchanged. Fonts remain the approved Satoshi/Sarasa stack; bundled font weights are documented in `packages/ui/README.md`. Select empty-domain and controlled Dialog focus adapters preserve existing consumers. Package checks, Web typecheck and build pass; rendered acceptance remains BLOCKED_VISUAL.
 
@@ -372,7 +385,7 @@ Visual rules:
 
 ## 11. Motion baseline
 
-Motion communicates state only.
+Motion is part of the accepted interaction design: animate applicable controls, surfaces, view/layout changes and progress states using the shared motion tokens.
 
 Allowed examples:
 
@@ -390,7 +403,7 @@ Rules:
 - larger panel/view changes may be modestly longer only with evidence;
 - no decorative infinite sheen on primary buttons;
 - no motion may retain pointer-active invisible layers;
-- honor `prefers-reduced-motion`.
+- do not add Reduced motion product mode; follow the 2026-10-02 explicit animation requirement and the current feature/UI animation matrix.
 
 ---
 
@@ -455,7 +468,7 @@ Check:
 - Dialog focus trap/return;
 - Popover/Dropdown collision;
 - dark/light hierarchy;
-- reduced motion;
+- animated control/view transitions and interrupted/repeated interactions;
 - empty/loading/error states.
 
 If browser evidence does not exist, status remains `BLOCKED_VISUAL` or `INTEGRATED_NOT_CUT_OVER`.
