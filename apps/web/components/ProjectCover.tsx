@@ -7,9 +7,10 @@ interface ProjectCoverProps {
   name: string;
   mediaId?: string | null;
   className?: string;
+  presentation?: 'thumbnail' | 'banner';
 }
 
-export function ProjectCover({ name, mediaId, className = '' }: ProjectCoverProps) {
+export function ProjectCover({ name, mediaId, className = '', presentation = 'thumbnail' }: ProjectCoverProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,26 +42,24 @@ export function ProjectCover({ name, mediaId, className = '' }: ProjectCoverProp
     hue = (hue * 31 + safeName.charCodeAt(i)) % 360;
   }
 
-  const bgStyle: React.CSSProperties = {
-    background: `linear-gradient(135deg, hsl(${hue} 30% 25%), hsl(${(hue + 26) % 360} 36% 15%))`
-  };
-
   return (
     <div
-      className={`relative grid shrink-0 place-items-center overflow-hidden rounded-lg ${className || 'h-[56px] w-[96px]'}`}
-      style={bgStyle}
+      className={`grid place-items-center overflow-hidden ${presentation === 'banner' ? 'pointer-events-none absolute inset-0 bg-neutral-950' : 'relative shrink-0 rounded-lg'} ${className || (presentation === 'thumbnail' ? 'h-[56px] w-[96px]' : '')}`}
+      style={presentation === 'thumbnail' ? { background: `linear-gradient(135deg, hsl(${hue} 30% 25%), hsl(${(hue + 26) % 360} 36% 15%))` } : undefined}
       aria-hidden="true"
     >
       {imageUrl && <img src={imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" onError={() => setImageUrl(null)} />}
       <div
-        className="pointer-events-none absolute inset-0 z-10"
+        className="pointer-events-none absolute inset-0"
         style={{
-          background: 'linear-gradient(90deg, transparent 62%, var(--card) 128%)'
+          background: presentation === 'banner'
+            ? 'linear-gradient(90deg, rgba(0,0,0,.76) 0%, rgba(0,0,0,.48) 48%, rgba(0,0,0,.82) 100%)'
+            : 'linear-gradient(90deg, transparent 62%, var(--card) 128%)'
         }}
       />
-      <span className="relative z-0 text-base font-semibold leading-none tracking-[0.04em] text-white/80">
+      {presentation === 'thumbnail' && <span className="relative z-0 text-base font-semibold leading-none tracking-[0.04em] text-white/80">
         {mono}
-      </span>
+      </span>}
     </div>
   );
 }

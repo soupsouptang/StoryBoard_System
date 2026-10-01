@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/authStore';
 import type { Production } from '@frameforge/types';
@@ -14,8 +14,7 @@ import { ProjectCover } from '@/components/ProjectCover';
 import { TopBar } from '@/components/app-shell/TopBar';
 
 export default function ProductionsPage() {
-  const router = useRouter();
-  const { t } = useAuthStore();
+  const { t, locale } = useAuthStore();
 
   const [productions, setProductions] = useState<Production[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +22,21 @@ export default function ProductionsPage() {
   const [showModal, setShowModal] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
+  const [search, setSearch] = useState('');
+
+  const visibleProductions = productions.filter(prod =>
+    `${prod.name} ${prod.code}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())
+  );
+  const productionTypes: Record<string, string> = { corporate: '宣传片', documentary: '纪录片', tvc: 'TVC 广告', film: '电影', short: '短片' };
+  const durationLabel = (prod: Production) => {
+    if (prod.total_duration_frames == null || prod.fps_num <= 0 || prod.fps_den <= 0) return '时长待定';
+    const seconds = Math.round(prod.total_duration_frames * prod.fps_den / prod.fps_num);
+    return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+  };
+  const updatedLabel = (value: string) => {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '更新时间未知' : new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
+  };
 
   // New production form
   const [name, setName] = useState('');
@@ -106,6 +120,14 @@ export default function ProductionsPage() {
           </Button>
         </div>
 
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <p className="text-xs text-muted-foreground" aria-live="polite">{search.trim() ? `搜索结果（${visibleProductions.length} / ${productions.length}）` : `项目（${productions.length}）`}</p>
+          <div className="relative w-72">
+            <Icons.Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input aria-label="搜索项目" placeholder="搜索项目名称、代码…" value={search} onChange={event => setSearch(event.target.value)} className="pl-9" />
+          </div>
+        </div>
+
         {loading ? (
           <div className="py-20 text-center text-xs font-mono text-muted-foreground">
             正在载入项目库...
@@ -125,36 +147,42 @@ export default function ProductionsPage() {
               {t('newProduction')}
             </Button>
           </div>
+        ) : visibleProductions.length === 0 ? (
+          <div className="rounded-xl border border-dashed p-12 text-center">
+            <p className="mb-4 text-sm text-muted-foreground">没有匹配的项目</p>
+            <Button variant="outline" size="sm" onClick={() => setSearch('')}>清除搜索</Button>
+          </div>
         ) : (
-          <div className="space-y-2">
-            {productions.map(prod => (
+          <div className="space-y-3">
+            {visibleProductions.map(prod => (
               <Card
                 key={prod.id}
-                onClick={() => router.push(`/production/${prod.id}/shots`)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    router.push(`/production/${prod.id}/shots`);
-                  }
-                }}
-                className="group flex min-h-[90px] flex-row cursor-pointer items-center gap-3 p-3 transition hover:bg-accent/40 sm:gap-4 sm:p-4"
+                className="group relative isolate min-h-28 flex-row items-center gap-5 overflow-hidden px-6 py-5 text-white shadow-none transition-colors duration-[var(--ff-motion-fast)] hover:border-ring motion-reduce:transition-none"
               >
-                <ProjectCover name={prod.name} mediaId={prod.cover_media_id} className="h-12 w-[72px] sm:h-[56px] sm:w-24" />
-                <div className="min-w-0 flex-1 space-y-1.5">
+                <Link href={`/production/${prod.id}/shots`} aria-label={`打开项目封面：${prod.name}`} className="absolute inset-0 z-10 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset" />
+                <ProjectCover name={prod.name} mediaId={prod.cover_media_id} presentation="banner" />
+                <div className="pointer-events-none relative min-w-0 flex-1 space-y-2">
                   <div className="flex min-w-0 items-center gap-2">
-                    <h3 className="min-w-0 flex-1 truncate text-sm font-bold tracking-tight text-foreground sm:text-base">{prod.name}</h3>
-                    {prod.code && <Badge variant="outline" className="hidden shrink-0 font-mono text-[10px] sm:inline-flex">{prod.code}</Badge>}
+                    <h3 className="min-w-0 truncate text-base font-semibold tracking-tight">{prod.name}</h3>
+                    {prod.code && <Badge variant="outline" className="shrink-0 border-white/20 text-[10px] text-white/80">{prod.code}</Badge>}
                   </div>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono text-muted-foreground">
-                    <span className="uppercase">{prod.template_type}</span>
-                    <span>{prod.fps_num} FPS</span>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/75">
+                    <span>{productionTypes[prod.template_type] || prod.template_type}</span>
+                    <span>{prod.shot_count ?? 0} 镜头</span>
+                    <span className="tabular-nums">{durationLabel(prod)}</span>
+                    <span>{prod.fps_den > 0 ? Number((prod.fps_num / prod.fps_den).toFixed(3)) : prod.fps_num} fps</span>
                     <span>{prod.aspect_ratio}</span>
-                    <span>{prod.shot_count ?? 0} SHOTS</span>
                   </div>
                 </div>
-                <span className="shrink-0 text-xs font-medium text-primary opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">进入 →</span>
+                <div className="relative z-20 flex shrink-0 items-center gap-3">
+                  <time dateTime={prod.updated_at} className="mr-1 text-xs tabular-nums text-white/70">{updatedLabel(prod.updated_at)}</time>
+                  <Button asChild variant="ghost" size="icon" className="text-white/80 hover:bg-white/10 hover:text-white">
+                    <Link href={`/production/${prod.id}/settings`} aria-label={`编辑项目：${prod.name}`}><Icons.Pencil aria-hidden="true" /></Link>
+                  </Button>
+                  <Button asChild variant="ghost" size="sm" className="text-white hover:bg-white/10 hover:text-white">
+                    <Link href={`/production/${prod.id}/shots`} aria-label={`打开项目：${prod.name}`}>打开 <Icons.ArrowRight aria-hidden="true" /></Link>
+                  </Button>
+                </div>
               </Card>
             ))}
           </div>

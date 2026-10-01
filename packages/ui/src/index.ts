@@ -26,7 +26,7 @@ import {
   AlertTriangle, Archive, ChartNoAxesCombined, ArrowRight, ArrowUpDown, Check, ChevronLeft, ChevronRight,
   CircleUserRound, Clapperboard, Clock, Clock3, Columns3, Copy, Download, Filter,
   Eye, EyeOff, FileDown, Film, GripVertical, Image, Images, Layers, LayoutGrid, Lightbulb, ListVideo,
-  Lock, LockOpen, MessageSquare, Mic, Moon, Palette, PanelRightOpen, Pause, Play, Plus,
+  Lock, LockOpen, MessageSquare, Mic, Moon, Palette, PanelRightOpen, Pause, Pencil, Play, Plus,
   RefreshCw, Search, Settings, SlidersHorizontal, Sun, Table2, Trash2, TriangleAlert, Undo2, X
 } from 'lucide-react';
 
@@ -35,7 +35,7 @@ export const Icons = {
   AlertTriangle, Archive, ChartNoAxesCombined, ArrowRight, ArrowUpDown, Check, ChevronLeft, ChevronRight,
   CircleUserRound, Clapperboard, Clock, Clock3, Columns3, Copy, Download, Filter,
   Eye, EyeOff, FileDown, Film, GripVertical, Image, Images, Layers, LayoutGrid, Lightbulb, ListVideo,
-  Lock, LockOpen, MessageSquare, Mic, Moon, Palette, PanelRightOpen, Pause, Play, Plus,
+  Lock, LockOpen, MessageSquare, Mic, Moon, Palette, PanelRightOpen, Pause, Pencil, Play, Plus,
   RefreshCw, Search, Settings, SlidersHorizontal, Sun, Table2, Trash2, TriangleAlert, Undo2, X
 };
 
