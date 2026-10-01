@@ -52,6 +52,11 @@ export function NavRail({ productionId }: NavRailProps) {
       label: t('deliverables')
     },
     {
+      href: `/production/${productionId}/overview`,
+      icon: Icons.ChartNoAxesCombined,
+      label: t('overview')
+    },
+    {
       href: `/production/${productionId}/settings`,
       icon: Icons.Settings,
       label: t('settings')
