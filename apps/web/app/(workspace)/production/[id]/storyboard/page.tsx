@@ -2,8 +2,8 @@
 
 import { Icons } from '@frameforge/ui';
 
-import React, { useMemo, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import React, { Suspense, useMemo, useEffect } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import type { Sequence, Shot } from '@frameforge/types';
 import { useProduction, useShots } from '@/lib/hooks/useProduction';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
@@ -15,16 +15,24 @@ import { BulkActionToolbar } from '@/components/storyboard/BulkActionToolbar';
 import { VOTimingModal } from '@/components/storyboard/VOTimingModal';
 import { NewShotModal } from '@/components/storyboard/NewShotModal';
 import { ImportModal } from '@/components/storyboard/ImportModal';
+import { useCustomFields, useCustomFieldValues } from '@/lib/hooks/useCustomFields';
 
 export default function StoryboardPage() {
+  return <Suspense fallback={null}><StoryboardWorkspace /></Suspense>;
+}
+
+function StoryboardWorkspace() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const activeView = searchParams.get('view') === 'wall' ? 'wall' : 'cards';
   const id = typeof params?.id === 'string' ? params.id : '';
 
   const { data: production } = useProduction(id);
   const { data: shots = [], isLoading } = useShots(id);
+  const { data: fields = [] } = useCustomFields(id);
+  const { data: fieldValues } = useCustomFieldValues(id);
 
   const {
-    viewMode,
     filters,
     selectedShotIds,
     selectShot,
@@ -95,6 +103,9 @@ export default function StoryboardPage() {
       if (filters.status !== 'all' && (s.status || '').toLowerCase() !== filters.status.toLowerCase()) {
         return false;
       }
+      if (filters.department !== 'all' && s.department !== filters.department) return false;
+      if (filters.timingLocked !== null && s.timing_locked !== filters.timingLocked) return false;
+      if (filters.vfxRequired !== null && s.vfx_required !== filters.vfxRequired) return false;
       if (filters.searchQuery) {
         const q = filters.searchQuery.toLowerCase();
         const matchNum = (s.display_number || '').toLowerCase().includes(q);
@@ -162,6 +173,7 @@ export default function StoryboardPage() {
         sequences={sequences}
         shots={enrichedShots}
         filteredShots={filteredShots}
+        activeView={activeView}
       />
 
       {/* Main View Area + Inspector Split */}
@@ -173,7 +185,7 @@ export default function StoryboardPage() {
               <Icons.Film className="animate-spin h-5 w-5 mr-2 text-foreground" />
               正在载入分镜画面...
             </div>
-          ) : viewMode === 'wall' ? (
+          ) : activeView === 'wall' ? (
             <WallView
               production={production}
               shots={filteredShots}
@@ -185,6 +197,9 @@ export default function StoryboardPage() {
               production={production}
               sequences={sequences}
               shots={filteredShots}
+              allShots={enrichedShots}
+              fields={fields}
+              customValues={fieldValues?.values}
               onSelectShot={handleSelectShot}
               onInspectShot={handleInspectShot}
             />

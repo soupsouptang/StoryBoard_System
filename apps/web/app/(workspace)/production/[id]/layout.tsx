@@ -1,13 +1,13 @@
 'use client';
 
-import { Button, Icons } from '@frameforge/ui';
+import { Badge, Button, Icons } from '@frameforge/ui';
 
 import React from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useProduction } from '@/lib/hooks/useProduction';
 import { TopBar } from '@/components/app-shell/TopBar';
 import { NavRail } from '@/components/app-shell/NavRail';
-import { PresenceSync } from '@/components/PresenceSync';
 
 export default function ProductionLayout({
   children
@@ -58,7 +58,6 @@ export default function ProductionLayout({
     <div className="flex h-screen h-[100dvh] w-screen flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)] select-none">
       {/* Top Header */}
       <TopBar production={production} />
-      {/* <PresenceSync /> */}
 
       {/* Main Workspace Frame */}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
@@ -66,8 +65,16 @@ export default function ProductionLayout({
         <NavRail productionId={production.id} />
 
         {/* Dynamic Route Content */}
-        <main className="relative min-h-0 min-w-0 flex-1 overflow-y-auto bg-background">
-          {children}
+        <main className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
+          <div aria-label="项目信息" className="flex min-h-11 shrink-0 flex-wrap items-center justify-between gap-2 border-b px-4 py-1">
+            <div className="flex min-w-0 flex-wrap items-center gap-3">
+              {production.code && <Badge variant="outline" className="shrink-0">{production.code}</Badge>}
+              <h1 className="truncate text-sm font-semibold">{production.name}</h1>
+              <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{production.shot_count ?? 0} 镜头 · {Number((production.fps_num / (production.fps_den || 1)).toFixed(3))} fps · {production.aspect_ratio}</span>
+            </div>
+            <Button asChild variant="ghost" size="sm"><Link href={`/production/${production.id}/settings`}><Icons.Settings aria-hidden="true" />项目设置</Link></Button>
+          </div>
+          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">{children}</div>
         </main>
       </div>
     </div>

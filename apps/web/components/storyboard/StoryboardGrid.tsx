@@ -1,16 +1,21 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Icons } from '@frameforge/ui';
 import type { Production, Sequence, Shot } from '@frameforge/types';
 import { framesToSeconds } from '@frameforge/timecode';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
+import { useReorderShots } from '@/lib/hooks/useProduction';
+import type { CustomFieldDefinition } from '@/lib/hooks/useCustomFields';
 import { ShotCard } from './ShotCard';
 
 interface StoryboardGridProps {
   production: Production;
   sequences: Sequence[];
   shots: Shot[];
+  allShots?: Shot[];
+  fields?: CustomFieldDefinition[];
+  customValues?: Record<string, Record<string, unknown>>;
   onSelectShot: (id: string, e: React.MouseEvent) => void;
   onInspectShot: (id: string) => void;
 }
@@ -19,10 +24,17 @@ export function StoryboardGrid({
   production,
   sequences,
   shots,
+  allShots,
+  fields,
+  customValues,
   onSelectShot,
   onInspectShot
 }: StoryboardGridProps) {
   const { selectedShotIds, groupBySequence, cardSize, filters } = useWorkspaceStore();
+  const [draggedShotId, setDraggedShotId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const [reorderError, setReorderError] = useState<string | null>(null);
+  const reorderShots = useReorderShots(production.id);
   const fps = production.fps_num / (production.fps_den || 1);
 
   const gridColsClass =
@@ -32,7 +44,79 @@ export function StoryboardGrid({
       ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6'
       : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4';
 
-  const allIds = shots.map(s => s.id);
+  const canonicalShots = allShots ?? shots;
+  const canonicalOrder = canonicalShots.map(shot => shot.id);
+  const filtersAreClear = !filters.searchQuery.trim() && filters.sequenceId === 'all' &&
+    filters.primaryMethod === 'all' && filters.department === 'all' && filters.status === 'all' &&
+    filters.timingLocked === null && filters.vfxRequired === null;
+  const canReorder = Boolean(allShots) && !groupBySequence && filtersAreClear && shots.length > 1 &&
+    shots.length === canonicalShots.length && shots.every((shot, index) => shot.id === canonicalShots[index]?.id);
+
+  const moveShot = async (shotId: string, direction: -1 | 1) => {
+    if (!canReorder || reorderShots.isPending) return;
+    const index = canonicalOrder.indexOf(shotId);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= canonicalOrder.length) return;
+    const nextOrder = [...canonicalOrder];
+    [nextOrder[index], nextOrder[target]] = [nextOrder[target], nextOrder[index]];
+    setReorderError(null);
+    try {
+      await reorderShots.mutateAsync(nextOrder);
+    } catch (error) {
+      setReorderError(error instanceof Error ? error.message : '镜头排序失败，请重试');
+    }
+  };
+
+  const renderShot = (shot: Shot) => (
+    <ShotCard
+      key={shot.id}
+      shot={shot}
+      production={production}
+      isSelected={selectedShotIds.includes(shot.id)}
+      onSelect={event => onSelectShot(shot.id, event)}
+      onInspect={() => onInspectShot(shot.id)}
+      fields={fields}
+      customValues={customValues?.[shot.id]}
+      canReorder={canReorder && !reorderShots.isPending}
+      isDragging={draggedShotId === shot.id}
+      isDropTarget={dropTargetId === shot.id && draggedShotId !== shot.id}
+      onMove={direction => moveShot(shot.id, direction)}
+      onDragStart={event => {
+        event.stopPropagation();
+        setDraggedShotId(shot.id);
+        setDropTargetId(null);
+        setReorderError(null);
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', shot.id);
+      }}
+      onDragEnd={() => {
+        setDraggedShotId(null);
+        setDropTargetId(null);
+      }}
+      onDragOver={event => {
+        if (!canReorder || reorderShots.isPending || !draggedShotId) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+        setDropTargetId(shot.id);
+      }}
+      onDrop={event => {
+        if (!canReorder || reorderShots.isPending || !draggedShotId || draggedShotId === shot.id) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const sourceId = draggedShotId;
+        const nextOrder = canonicalOrder.filter(id => id !== sourceId);
+        const targetIndex = nextOrder.indexOf(shot.id);
+        if (targetIndex < 0) return;
+        nextOrder.splice(targetIndex, 0, sourceId);
+        setDraggedShotId(null);
+        setDropTargetId(null);
+        setReorderError(null);
+        void reorderShots.mutateAsync(nextOrder).catch(error => {
+          setReorderError(error instanceof Error ? error.message : '镜头排序失败，请重试');
+        });
+      }}
+    />
+  );
 
   if (shots.length === 0) {
     return (
@@ -48,6 +132,7 @@ export function StoryboardGrid({
   if (groupBySequence && filters.sequenceId === 'all' && sequences.length > 0) {
     return (
       <div className="p-6 space-y-8">
+        {reorderError && <p role="alert" className="text-sm text-destructive">{reorderError}</p>}
         {sequences.map(seq => {
           const seqShots = shots.filter(s => s.sequence_id === seq.id);
           if (seqShots.length === 0) return null;
@@ -75,16 +160,7 @@ export function StoryboardGrid({
 
               {/* Grid of Shots */}
               <div className={`grid ${gridColsClass}`}>
-                {seqShots.map(shot => (
-                  <ShotCard
-                    key={shot.id}
-                    shot={shot}
-                    production={production}
-                    isSelected={selectedShotIds.includes(shot.id)}
-                    onSelect={e => onSelectShot(shot.id, e)}
-                    onInspect={() => onInspectShot(shot.id)}
-                  />
-                ))}
+                {seqShots.map(renderShot)}
               </div>
             </div>
           );
@@ -97,18 +173,7 @@ export function StoryboardGrid({
               <h3 className="text-sm font-bold text-muted-foreground">未归类篇章镜头</h3>
             </div>
             <div className={`grid ${gridColsClass}`}>
-              {shots
-                .filter(s => !s.sequence_id || !sequences.some(seq => seq.id === s.sequence_id))
-                .map(shot => (
-                  <ShotCard
-                    key={shot.id}
-                    shot={shot}
-                    production={production}
-                    isSelected={selectedShotIds.includes(shot.id)}
-                    onSelect={e => onSelectShot(shot.id, e)}
-                    onInspect={() => onInspectShot(shot.id)}
-                  />
-                ))}
+              {shots.filter(s => !s.sequence_id || !sequences.some(seq => seq.id === s.sequence_id)).map(renderShot)}
             </div>
           </div>
         )}
@@ -118,17 +183,9 @@ export function StoryboardGrid({
 
   // Flat Grid
   return (
-    <div className={`grid ${gridColsClass} p-6`}>
-      {shots.map(shot => (
-        <ShotCard
-          key={shot.id}
-          shot={shot}
-          production={production}
-          isSelected={selectedShotIds.includes(shot.id)}
-          onSelect={e => onSelectShot(shot.id, e)}
-          onInspect={() => onInspectShot(shot.id)}
-        />
-      ))}
+    <div className="p-6">
+      {reorderError && <p role="alert" className="mb-3 text-sm text-destructive">{reorderError}</p>}
+      <div className={`grid ${gridColsClass}`}>{shots.map(renderShot)}</div>
     </div>
   );
 }

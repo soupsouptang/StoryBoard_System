@@ -9,6 +9,7 @@ import { framesToTimecode, framesToSeconds } from '@frameforge/timecode';
 import { useProduction, useShots } from '@/lib/hooks/useProduction';
 import { getMethodStyle } from '@/lib/media-resolver';
 import { ShotInspector } from '@/components/shot/ShotInspector';
+import { ShotViewNavigation } from '@/components/shot/ShotViewNavigation';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 
 export default function TimelinePage() {
@@ -99,6 +100,9 @@ export default function TimelinePage() {
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
+      <div className="shrink-0 border-b border-border px-4 py-3">
+        <ShotViewNavigation productionId={production.id} active="timeline" count={shots.length} />
+      </div>
       {/* Timeline Controls & Monitor Split */}
       <div className="flex flex-1 border-b border-border bg-background overflow-hidden">
         {/* Left: Video Animatic Preview Monitor */}

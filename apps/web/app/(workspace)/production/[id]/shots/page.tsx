@@ -15,6 +15,7 @@ import { ShotTrashModal } from '@/components/shot/ShotTrashModal';
 import { InlineEditCell } from '@/components/shot/InlineEditCell';
 import { CustomFieldCell } from '@/components/shot/CustomFieldCell';
 import { ShotImageCell } from '@/components/shot/ShotImageCell';
+import { ShotViewNavigation } from '@/components/shot/ShotViewNavigation';
 import { ShotColumnManager } from '@/components/shot/ShotColumnManager';
 import { ShotCustomFieldManager } from '@/components/shot/ShotCustomFieldManager';
 import { ShotSavedViews } from '@/components/shot/ShotSavedViews';
@@ -641,7 +642,7 @@ export default function ShotListPage() {
       <div className="z-10 shrink-0 space-y-3 border-b border-border bg-background px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-baseline gap-3">
-            <h1 className="text-lg font-semibold">镜头制作表</h1>
+            <ShotViewNavigation productionId={production.id} active="table" count={shots.length} />
             <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
               显示 {visibleShots.length} / {shots.length}
               {selectedShotIds.length > 0 && ` · 已选 ${selectedShotIds.length}`}
