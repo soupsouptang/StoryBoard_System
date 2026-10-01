@@ -65,11 +65,6 @@ docker compose up -d
 python storyboard-system/server.py
 ```
 
-### 默认登录凭证
-* **管理员邮箱**: `admin@company.internal`
-* **管理员密码**: `FrameForge2026!Admin`
-* **预载示范项目**: 测试样例。
-
 ---
 
 ## 🧪 自动化测试验证
