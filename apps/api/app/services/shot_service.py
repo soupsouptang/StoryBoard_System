@@ -7,6 +7,7 @@ from app.core.exceptions import DomainError, NotFoundError, ConflictError
 from app.models.collaboration import AuditLog
 from app.models.production import Production
 from app.models.shot import Panel, Shot
+from app.models.user import User
 from app.schemas.shot import BulkUpdateShotsRequest, ShotCreate, ShotPatch, ShotReorderRequest
 
 class ShotService:
@@ -31,6 +32,17 @@ class ShotService:
     })
 
     @staticmethod
+    def _has_permission(user: User, permission: str) -> bool:
+        permissions = getattr(getattr(user, "role", None), "permissions", None) or {}
+        return bool(permissions.get("*") or permissions.get(permission))
+
+    @staticmethod
+    def _require_write(user: User) -> None:
+        if ShotService._has_permission(user, "shot.write"):
+            return
+        raise DomainError("当前账号没有修改镜头的权限", code="FORBIDDEN")
+
+    @staticmethod
     def _audit_shot_mutation(
         db: AsyncSession,
         *,
@@ -48,7 +60,8 @@ class ShotService:
         ))
 
     @staticmethod
-    async def create_shot(db: AsyncSession, production_id: str, req: ShotCreate, user_id: str) -> Shot:
+    async def create_shot(db: AsyncSession, production_id: str, req: ShotCreate, user: User) -> Shot:
+        ShotService._require_write(user)
         p_res = await db.execute(select(Production).where(Production.id == production_id, Production.deleted_at.is_(None)))
         if not p_res.scalar_one_or_none():
             raise NotFoundError("项目不存在")
@@ -90,7 +103,7 @@ class ShotService:
             owner_id=req.owner_id,
             status=req.status,
             revision=1,
-            created_by=user_id
+            created_by=user.id
         )
         db.add(shot)
 
@@ -104,7 +117,7 @@ class ShotService:
         shot.panels.append(panel)
         ShotService._audit_shot_mutation(
             db,
-            user_id=user_id,
+            user_id=user.id,
             action="shot.create",
             shot_id=shot.id,
             metadata={"revision": shot.revision, "production_id": production_id},
@@ -113,11 +126,39 @@ class ShotService:
         return shot
 
     @staticmethod
-    async def patch_shot(db: AsyncSession, shot_id: str, req: ShotPatch, user_id: str) -> Shot:
+    async def patch_shot(db: AsyncSession, shot_id: str, req: ShotPatch, user: User) -> Shot:
+        ShotService._require_write(user)
+        return await ShotService._patch_shot(db, shot_id, req, user)
+
+    @staticmethod
+    async def patch_review_status(db: AsyncSession, shot_id: str, req: ShotPatch, user: User) -> Shot:
+        next_status = req.changes.get("status") if set(req.changes) == {"status"} else None
+        if (
+            next_status not in {"approved", "changes_requested"}
+            or not ShotService._has_permission(user, "review.approve")
+        ):
+            raise DomainError("当前账号没有审片决策权限", code="FORBIDDEN")
+        return await ShotService._patch_shot(db, shot_id, req, user, review_only=True)
+
+    @staticmethod
+    async def _patch_shot(
+        db: AsyncSession,
+        shot_id: str,
+        req: ShotPatch,
+        user: User,
+        *,
+        review_only: bool = False,
+    ) -> Shot:
         result = await db.execute(select(Shot).options(selectinload(Shot.panels)).where(Shot.id == shot_id, Shot.deleted_at.is_(None)))
         shot = result.scalar_one_or_none()
         if not shot:
             raise NotFoundError("镜头不存在")
+
+        if review_only:
+            if shot.status != "review":
+                raise DomainError("当前状态不允许执行审片决策", code="INVALID_REVIEW_TRANSITION")
+        else:
+            ShotService._require_write(user)
 
         if shot.revision != req.revision:
             raise ConflictError(
@@ -141,7 +182,7 @@ class ShotService:
             shot.updated_at = datetime.now(timezone.utc)
             ShotService._audit_shot_mutation(
                 db,
-                user_id=user_id,
+                user_id=user.id,
                 action="shot.patch",
                 shot_id=shot.id,
                 metadata={"changed_fields": changed_fields, "revision": shot.revision},
@@ -151,8 +192,9 @@ class ShotService:
         return shot
 
     @staticmethod
-    async def trash_shot(db: AsyncSession, shot_id: str, user_id: str) -> bool:
+    async def trash_shot(db: AsyncSession, shot_id: str, user: User) -> bool:
         """Soft-delete an active shot. Already-missing/deleted shots stay idempotent."""
+        ShotService._require_write(user)
         result = await db.execute(select(Shot).where(Shot.id == shot_id, Shot.deleted_at.is_(None)))
         shot = result.scalar_one_or_none()
         if not shot:
@@ -163,7 +205,7 @@ class ShotService:
         shot.revision += 1
         ShotService._audit_shot_mutation(
             db,
-            user_id=user_id,
+            user_id=user.id,
             action="shot.trash",
             shot_id=shot.id,
             metadata={"revision": shot.revision},
@@ -172,8 +214,9 @@ class ShotService:
         return True
 
     @staticmethod
-    async def restore_shot(db: AsyncSession, shot_id: str, user_id: str) -> Shot:
+    async def restore_shot(db: AsyncSession, shot_id: str, user: User) -> Shot:
         """Restore a trashed shot and advance the authoritative revision exactly once."""
+        ShotService._require_write(user)
         result = await db.execute(select(Shot).where(Shot.id == shot_id, Shot.deleted_at.is_not(None)))
         shot = result.scalar_one_or_none()
         if not shot:
@@ -184,7 +227,7 @@ class ShotService:
         shot.updated_at = datetime.now(timezone.utc)
         ShotService._audit_shot_mutation(
             db,
-            user_id=user_id,
+            user_id=user.id,
             action="shot.restore",
             shot_id=shot.id,
             metadata={"revision": shot.revision},
@@ -193,8 +236,9 @@ class ShotService:
         return shot
 
     @staticmethod
-    async def purge_shot(db: AsyncSession, shot_id: str, user_id: str) -> bool:
+    async def purge_shot(db: AsyncSession, shot_id: str, user: User) -> bool:
         """Permanently delete a shot only when it is already in Trash."""
+        ShotService._require_write(user)
         result = await db.execute(select(Shot).where(Shot.id == shot_id, Shot.deleted_at.is_not(None)))
         shot = result.scalar_one_or_none()
         if not shot:
@@ -202,7 +246,7 @@ class ShotService:
 
         ShotService._audit_shot_mutation(
             db,
-            user_id=user_id,
+            user_id=user.id,
             action="shot.purge",
             shot_id=shot.id,
             metadata={"production_id": shot.production_id, "revision": shot.revision},
@@ -216,13 +260,14 @@ class ShotService:
         db: AsyncSession,
         production_id: str,
         shot_ids: list[str],
-        user_id: str,
+        user: User,
     ) -> dict[str, int | bool]:
         """Idempotently move selected shots from one production into Trash.
 
         The full selection is scope-validated before mutation so a stale or
         cross-production selection cannot leave a partially deleted batch.
         """
+        ShotService._require_write(user)
         unique_ids = list(dict.fromkeys(shot_ids))[:10000]
         if not unique_ids:
             raise DomainError("未选择镜头", code="VALIDATION_ERROR")
@@ -258,7 +303,7 @@ class ShotService:
             moved_count += 1
             ShotService._audit_shot_mutation(
                 db,
-                user_id=user_id,
+                user_id=user.id,
                 action="shot.trash",
                 shot_id=shot.id,
                 metadata={"revision": shot.revision, "bulk": True},
@@ -277,7 +322,7 @@ class ShotService:
     async def reorder_shots(
         db: AsyncSession,
         req: ShotReorderRequest,
-        user_id: str,
+        user: User,
     ) -> dict[str, int | bool]:
         """Atomically reorder the complete active shot set for one production.
 
@@ -286,6 +331,7 @@ class ShotService:
         both the complete target order and the exact base order the client saw.
         """
 
+        ShotService._require_write(user)
         result = await db.execute(
             select(Shot).where(
                 Shot.production_id == req.production_id,
@@ -353,7 +399,7 @@ class ShotService:
             reordered_count += 1
             ShotService._audit_shot_mutation(
                 db,
-                user_id=user_id,
+                user_id=user.id,
                 action="shot.reorder",
                 shot_id=shot.id,
                 metadata={
@@ -376,7 +422,7 @@ class ShotService:
     async def bulk_update_shots(
         db: AsyncSession,
         req: BulkUpdateShotsRequest,
-        user_id: str,
+        user: User,
     ) -> dict[str, int | bool]:
         """Apply an atomic revision-aware bulk patch.
 
@@ -384,6 +430,7 @@ class ShotService:
         All revisions are validated before any entity is mutated, so a stale
         row fails the whole request instead of partially applying a batch.
         """
+        ShotService._require_write(user)
         shot_ids = list(dict.fromkeys(req.shot_ids))
         if not shot_ids:
             return {"ok": True, "updated_count": 0, "unchanged_count": 0}
@@ -451,7 +498,7 @@ class ShotService:
             updated_count += 1
             ShotService._audit_shot_mutation(
                 db,
-                user_id=user_id,
+                user_id=user.id,
                 action="shot.bulk_patch",
                 shot_id=shot.id,
                 metadata={

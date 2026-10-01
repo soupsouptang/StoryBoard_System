@@ -27,6 +27,12 @@ from app.core.exceptions import DomainError, NotFoundError, ConflictError
 router = APIRouter(tags=["Shots"])
 
 
+def _domain_http(error: DomainError) -> HTTPException:
+    code = getattr(error, "code", "DOMAIN_ERROR")
+    status_code = status.HTTP_403_FORBIDDEN if code == "FORBIDDEN" else status.HTTP_400_BAD_REQUEST
+    return HTTPException(status_code=status_code, detail={"code": code, "message": str(error)})
+
+
 @router.get("/productions/{production_id}/shots", response_model=list[ShotOut])
 async def list_production_shots(
     production_id: str,
@@ -63,12 +69,12 @@ async def create_shot(
     current_user: User = Depends(get_current_user)
 ):
     try:
-        shot = await ShotService.create_shot(db, production_id, req, current_user.id)
+        shot = await ShotService.create_shot(db, production_id, req, current_user)
         return shot
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": e.message})
     except DomainError as e:
-        raise HTTPException(status_code=400, detail={"code": e.code, "message": e.message})
+        raise _domain_http(e)
 
 
 @router.patch("/shots/{id}", response_model=ShotOut)
@@ -79,14 +85,14 @@ async def patch_shot(
     current_user: User = Depends(get_current_user)
 ):
     try:
-        shot = await ShotService.patch_shot(db, id, req, current_user.id)
+        shot = await ShotService.patch_shot(db, id, req, current_user)
         return shot
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail={"code": "NOT_FOUND", "message": e.message})
     except ConflictError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"code": "SHOT_REVISION_CONFLICT", "message": e.message, "details": e.details})
     except DomainError as e:
-        raise HTTPException(status_code=400, detail={"code": e.code, "message": e.message})
+        raise _domain_http(e)
 
 
 @router.delete("/shots/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -95,7 +101,10 @@ async def delete_shot(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    await ShotService.trash_shot(db, id, current_user.id)
+    try:
+        await ShotService.trash_shot(db, id, current_user)
+    except DomainError as e:
+        raise _domain_http(e)
     return None
 
 
@@ -107,10 +116,12 @@ async def restore_shot(
 ) -> dict:
     """Restore a soft-deleted shot."""
     try:
-        shot = await ShotService.restore_shot(db, id, current_user.id)
+        shot = await ShotService.restore_shot(db, id, current_user)
         return {"ok": True, "id": shot.id, "revision": shot.revision}
     except NotFoundError as e:
         raise HTTPException(status_code=404, detail={"code": e.code, "message": e.message})
+    except DomainError as e:
+        raise _domain_http(e)
 
 
 @router.delete("/shots/{id}/purge", status_code=status.HTTP_204_NO_CONTENT)
@@ -120,7 +131,10 @@ async def purge_shot(
     current_user: User = Depends(get_current_user)
 ):
     """Permanently delete a shot that is already in Trash."""
-    await ShotService.purge_shot(db, id, current_user.id)
+    try:
+        await ShotService.purge_shot(db, id, current_user)
+    except DomainError as e:
+        raise _domain_http(e)
     return None
 
 
@@ -133,7 +147,7 @@ async def bulk_trash_shots(
 ):
     """Atomically move a project-scoped shot selection into Trash."""
     try:
-        return await ShotService.bulk_trash_shots(db, production_id, req.shot_ids, current_user.id)
+        return await ShotService.bulk_trash_shots(db, production_id, req.shot_ids, current_user)
     except ConflictError as e:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -144,10 +158,7 @@ async def bulk_trash_shots(
             },
         )
     except DomainError as e:
-        raise HTTPException(
-            status_code=400,
-            detail={"code": e.code, "message": e.message},
-        )
+        raise _domain_http(e)
 
 
 @router.get("/productions/{production_id}/shots/trash", response_model=list[dict])
@@ -184,7 +195,7 @@ async def reorder_shots(
 ):
     """Revision-aware atomic numeric reorder through the canonical ShotService."""
     try:
-        return await ShotService.reorder_shots(db, req, current_user.id)
+        return await ShotService.reorder_shots(db, req, current_user)
     except NotFoundError as e:
         raise HTTPException(
             status_code=404,
@@ -200,10 +211,7 @@ async def reorder_shots(
             },
         )
     except DomainError as e:
-        raise HTTPException(
-            status_code=400,
-            detail={"code": e.code, "message": e.message},
-        )
+        raise _domain_http(e)
 
 
 @router.post("/shots/bulk-update", status_code=status.HTTP_200_OK)
@@ -214,7 +222,7 @@ async def bulk_update_shots(
 ):
     """Revision-aware atomic bulk update through the canonical ShotService."""
     try:
-        return await ShotService.bulk_update_shots(db, req, current_user.id)
+        return await ShotService.bulk_update_shots(db, req, current_user)
     except NotFoundError as e:
         raise HTTPException(
             status_code=404,
@@ -230,7 +238,4 @@ async def bulk_update_shots(
             },
         )
     except DomainError as e:
-        raise HTTPException(
-            status_code=400,
-            detail={"code": e.code, "message": e.message},
-        )
+        raise _domain_http(e)

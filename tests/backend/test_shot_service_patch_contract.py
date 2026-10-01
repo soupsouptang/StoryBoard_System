@@ -44,6 +44,7 @@ class _Shot:
         self.revision = revision
         self.name = "Original"
         self.department = department
+        self.status = "draft"
         self.panels = []
 
 
@@ -123,7 +124,12 @@ def _service_class():
         node for node in module.body
         if isinstance(node, ast.ClassDef) and node.name == "ShotService"
     )
-    isolated = ast.fix_missing_locations(ast.Module(body=[service_node], type_ignores=[]))
+    future_annotations = ast.ImportFrom(
+        module="__future__", names=[ast.alias(name="annotations")], level=0
+    )
+    isolated = ast.fix_missing_locations(
+        ast.Module(body=[future_annotations, service_node], type_ignores=[])
+    )
     namespace = {
         "AsyncSession": object,
         "ShotCreate": object,
@@ -131,6 +137,7 @@ def _service_class():
         "ShotReorderRequest": object,
         "BulkUpdateShotsRequest": object,
         "Shot": _Shot,
+        "User": object,
         "AuditLog": _AuditLog,
         "select": lambda model: _Select(),
         "selectinload": lambda relationship: relationship,
@@ -145,6 +152,10 @@ def _service_class():
 
 
 class ShotServiceMutationContractTest(unittest.TestCase):
+    @staticmethod
+    def actor(user_id="editor-1", permissions=None):
+        return SimpleNamespace(id=user_id, role=SimpleNamespace(permissions=permissions or {"*": True}))
+
     def test_system_owned_fields_and_relationships_cannot_be_patched(self):
         shot = _Shot()
         db = _Session(shot)
@@ -160,7 +171,7 @@ class ShotServiceMutationContractTest(unittest.TestCase):
             "revision": 99,
             "panels": ["forged"],
         })
-        result = asyncio.run(_service_class().patch_shot(db, shot.id, request, "editor-1"))
+        result = asyncio.run(_service_class().patch_shot(db, shot.id, request, self.actor()))
         self.assertIs(result, shot)
         self.assertEqual((shot.id, shot.production_id, shot.created_by),
                          ("shot-1", "production-1", "creator-1"))
@@ -173,17 +184,47 @@ class ShotServiceMutationContractTest(unittest.TestCase):
         shot = _Shot()
         db = _Session(shot)
         request = SimpleNamespace(revision=3, changes={"name": "Original"})
-        result = asyncio.run(_service_class().patch_shot(db, shot.id, request, "editor-1"))
+        result = asyncio.run(_service_class().patch_shot(db, shot.id, request, self.actor()))
         self.assertIs(result, shot)
         self.assertEqual(shot.revision, 3)
         self.assertEqual(db.flush_count, 0)
+
+    def test_readonly_actor_is_rejected_at_service_boundary(self):
+        shot = _Shot()
+        db = _Session(shot)
+        request = SimpleNamespace(revision=3, changes={"name": "Unauthorized"})
+        readonly = self.actor("reader-1", {"shot.read": True})
+
+        with self.assertRaises(_DomainError) as error:
+            asyncio.run(_service_class().patch_shot(db, shot.id, request, readonly))
+
+        self.assertEqual(error.exception.code, "FORBIDDEN")
+        self.assertEqual((shot.name, shot.revision, db.flush_count), ("Original", 3, 0))
+
+    def test_review_approver_cannot_use_general_patch_command(self):
+        shot = _Shot()
+        shot.status = "review"
+        db = _Session(shot)
+        reviewer = self.actor("reviewer-1", {"review.approve": True})
+        service = _service_class()
+        with self.assertRaises(_DomainError) as error:
+            asyncio.run(service.patch_shot(
+                db, shot.id, SimpleNamespace(revision=3, changes={"status": "approved"}), reviewer
+            ))
+        self.assertEqual(error.exception.code, "FORBIDDEN")
+        self.assertEqual((shot.status, shot.revision, db.flush_count), ("review", 3, 0))
+        with self.assertRaises(_DomainError) as error:
+            asyncio.run(service.patch_shot(
+                db, shot.id, SimpleNamespace(revision=3, changes={"name": "Denied"}), reviewer
+            ))
+        self.assertEqual(error.exception.code, "FORBIDDEN")
 
     def test_editable_field_increments_revision_once_and_stale_edit_conflicts(self):
         shot = _Shot()
         db = _Session(shot)
         service = _service_class()
         request = SimpleNamespace(revision=3, changes={"name": "Revised", "created_by": "attacker"})
-        result = asyncio.run(service.patch_shot(db, shot.id, request, "editor-1"))
+        result = asyncio.run(service.patch_shot(db, shot.id, request, self.actor()))
         self.assertIs(result, shot)
         self.assertEqual((shot.name, shot.created_by, shot.revision), ("Revised", "creator-1", 4))
         self.assertEqual(db.flush_count, 1)
@@ -191,7 +232,7 @@ class ShotServiceMutationContractTest(unittest.TestCase):
         self.assertEqual(db.added[0].action, "shot.patch")
         self.assertEqual(db.added[0].metadata_json["changed_fields"], ["name"])
         with self.assertRaises(_ConflictError) as conflict:
-            asyncio.run(service.patch_shot(db, shot.id, request, "editor-2"))
+            asyncio.run(service.patch_shot(db, shot.id, request, self.actor("editor-2")))
         self.assertEqual(
             conflict.exception.details,
             {"server_revision": 4, "client_revision": 3},
@@ -212,7 +253,7 @@ class ShotServiceMutationContractTest(unittest.TestCase):
             revisions={},
         )
         with self.assertRaises(_DomainError) as error:
-            asyncio.run(service.bulk_update_shots(db, missing_revisions, "editor-1"))
+            asyncio.run(service.bulk_update_shots(db, missing_revisions, self.actor()))
         self.assertEqual(error.exception.code, "BULK_REVISION_REQUIRED")
 
         request = SimpleNamespace(
@@ -220,7 +261,7 @@ class ShotServiceMutationContractTest(unittest.TestCase):
             updates={"department": "art"},
             revisions={"shot-1": 3, "shot-2": 5},
         )
-        result = asyncio.run(service.bulk_update_shots(db, request, "editor-1"))
+        result = asyncio.run(service.bulk_update_shots(db, request, self.actor()))
         self.assertEqual(result, {"ok": True, "updated_count": 0, "unchanged_count": 2})
         self.assertEqual([shot.revision for shot in shots], [3, 5])
         self.assertEqual(db.flush_count, 0)
@@ -238,7 +279,7 @@ class ShotServiceMutationContractTest(unittest.TestCase):
         )
 
         with self.assertRaises(_ConflictError) as conflict:
-            asyncio.run(_service_class().bulk_update_shots(db, request, "editor-1"))
+            asyncio.run(_service_class().bulk_update_shots(db, request, self.actor()))
 
         self.assertEqual(
             conflict.exception.details,
@@ -260,7 +301,7 @@ class ShotServiceMutationContractTest(unittest.TestCase):
             revisions={"shot-1": 3, "shot-2": 5},
         )
 
-        result = asyncio.run(_service_class().bulk_update_shots(db, request, "editor-1"))
+        result = asyncio.run(_service_class().bulk_update_shots(db, request, self.actor()))
 
         self.assertEqual(result, {"ok": True, "updated_count": 2, "unchanged_count": 0})
         self.assertEqual([shot.department for shot in shots], ["art", "art"])
@@ -282,7 +323,7 @@ class ShotServiceMutationContractTest(unittest.TestCase):
             ],
         )
 
-        result = asyncio.run(_service_class().reorder_shots(db, request, "editor-1"))
+        result = asyncio.run(_service_class().reorder_shots(db, request, self.actor()))
 
         self.assertEqual(result, {"ok": True, "reordered_count": 0, "unchanged_count": 2})
         self.assertEqual([shot.revision for shot in shots], [3, 5])
@@ -303,7 +344,7 @@ class ShotServiceMutationContractTest(unittest.TestCase):
         )
 
         with self.assertRaises(_ConflictError) as conflict:
-            asyncio.run(_service_class().reorder_shots(db, request, "editor-1"))
+            asyncio.run(_service_class().reorder_shots(db, request, self.actor()))
 
         self.assertEqual(
             conflict.exception.details,
@@ -327,7 +368,7 @@ class ShotServiceMutationContractTest(unittest.TestCase):
             ],
         )
 
-        result = asyncio.run(_service_class().reorder_shots(db, request, "editor-1"))
+        result = asyncio.run(_service_class().reorder_shots(db, request, self.actor()))
 
         self.assertEqual(result, {"ok": True, "reordered_count": 2, "unchanged_count": 0})
         self.assertEqual([shot.sort_index for shot in shots], [2000.0, 1000.0])
@@ -347,7 +388,7 @@ class ShotServiceMutationContractTest(unittest.TestCase):
         )
 
         with self.assertRaises(_ConflictError):
-            asyncio.run(_service_class().reorder_shots(db, request, "editor-1"))
+            asyncio.run(_service_class().reorder_shots(db, request, self.actor()))
 
         self.assertEqual([shot.sort_index for shot in shots], [1000.0, 2000.0])
         self.assertEqual([shot.revision for shot in shots], [3, 5])

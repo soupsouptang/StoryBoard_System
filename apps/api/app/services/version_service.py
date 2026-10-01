@@ -353,7 +353,7 @@ class VersionService:
             db,
             shot.id,
             ShotPatch(revision=req.revision, changes=changes),
-            user.id,
+            user,
         )
 
         VersionService._audit(
@@ -477,7 +477,7 @@ class VersionService:
             db,
             shot.id,
             ShotPatch(revision=req.revision, changes=changes),
-            user.id,
+            user,
         )
 
         VersionService._audit(

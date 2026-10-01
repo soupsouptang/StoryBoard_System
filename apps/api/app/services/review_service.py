@@ -297,11 +297,13 @@ class ReviewService:
         next_status, action_label = ReviewService.DECISION_STATES[req.action]
         previous_status = shot.status
 
-        saved = await ShotService.patch_shot(
+        patch_review_status = req.action in {"approve", "request_changes"}
+        patch_command = ShotService.patch_review_status if patch_review_status else ShotService.patch_shot
+        saved = await patch_command(
             db,
             shot_id,
             ShotPatch(revision=req.revision, changes={"status": next_status}),
-            user.id,
+            user,
         )
 
         if previous_status == next_status:

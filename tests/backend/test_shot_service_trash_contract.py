@@ -92,7 +92,12 @@ def _service_class():
     source = Path(__file__).resolve().parents[2] / "apps" / "api" / "app" / "services" / "shot_service.py"
     module = ast.parse(source.read_text(encoding="utf-8"), filename=str(source))
     service_node = next(node for node in module.body if isinstance(node, ast.ClassDef) and node.name == "ShotService")
-    isolated = ast.fix_missing_locations(ast.Module(body=[service_node], type_ignores=[]))
+    future_annotations = ast.ImportFrom(
+        module="__future__", names=[ast.alias(name="annotations")], level=0
+    )
+    isolated = ast.fix_missing_locations(
+        ast.Module(body=[future_annotations, service_node], type_ignores=[])
+    )
     namespace = {
         "AsyncSession": object,
         "ShotCreate": object,
@@ -100,6 +105,7 @@ def _service_class():
         "ShotReorderRequest": object,
         "BulkUpdateShotsRequest": object,
         "Shot": _Shot,
+        "User": object,
         "AuditLog": _AuditLog,
         "select": lambda model: _Select(),
         "NotFoundError": LookupError,
@@ -113,6 +119,10 @@ def _service_class():
 
 
 class ShotServiceTrashContractTest(unittest.TestCase):
+    @staticmethod
+    def actor(user_id="editor-1"):
+        return SimpleNamespace(id=user_id, role=SimpleNamespace(permissions={"*": True}))
+
     def test_bulk_trash_is_atomic_scope_checked_and_idempotent(self):
         service = _service_class()
         active = _Shot("shot-a", "production-1")
@@ -124,7 +134,7 @@ class ShotServiceTrashContractTest(unittest.TestCase):
                 db,
                 "production-1",
                 ["shot-a", "shot-b", "shot-a"],
-                "editor-1",
+                self.actor(),
             )
         )
 
@@ -147,7 +157,7 @@ class ShotServiceTrashContractTest(unittest.TestCase):
                     scoped_db,
                     "production-1",
                     ["shot-a", "shot-c"],
-                    "editor-1",
+                    self.actor(),
                 )
             )
 
@@ -159,14 +169,14 @@ class ShotServiceTrashContractTest(unittest.TestCase):
         shot = _Shot("shot-a", "production-1", deleted=True)
         db = _Session([shot])
 
-        restored = asyncio.run(service.restore_shot(db, shot.id, "editor-1"))
+        restored = asyncio.run(service.restore_shot(db, shot.id, self.actor()))
         self.assertIs(restored, shot)
         self.assertIsNone(shot.deleted_at)
         self.assertEqual(shot.revision, 3)
         self.assertEqual(db.added[-1].action, "shot.restore")
 
         shot.deleted_at = datetime(2026, 1, 2, tzinfo=timezone.utc)
-        self.assertTrue(asyncio.run(service.purge_shot(db, shot.id, "editor-1")))
+        self.assertTrue(asyncio.run(service.purge_shot(db, shot.id, self.actor())))
         self.assertEqual(db.delete_count, 1)
         self.assertEqual(db.added[-1].action, "shot.purge")
 

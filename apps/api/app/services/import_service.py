@@ -99,6 +99,6 @@ class ImportService:
                 department=values.get("department", "camera"),
                 owner_id=values.get("owner_id", ""),
                 director_notes=values.get("director_notes", ""),
-            ), user.id)
+            ), user)
             imported_count += 1
         return {"ok": True, "imported_count": imported_count}

@@ -1,4 +1,5 @@
 """Pytest Suite for Productions, Shots, Soft Delete, Reordering, and Revision Conflicts."""
+import asyncio
 import os
 import sys
 from datetime import datetime
@@ -14,7 +15,9 @@ from app.core.config import settings
 from app.core.database import Base, async_engine, AsyncSessionLocal
 from app.models.asset import Asset, ShotAssetLink
 from app.models.collaboration import AuditLog
+from app.models.user import Role, User
 from app.api.v1 import panel_media
+from app.core.security import get_password_hash
 from app.services.seed import seed_database
 
 
@@ -139,6 +142,152 @@ async def test_production_and_shot_pipeline():
         trash_after_purge = await client.get(f"/api/v1/productions/{pid}/shots/trash", headers=headers)
         assert trash_after_purge.status_code == 200
         assert trash_after_purge.json() == []
+
+
+@pytest.mark.asyncio
+async def test_readonly_role_cannot_mutate_shots_through_any_write_route():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        admin = await client.post("/api/v1/auth/login", json={
+            "email": "admin@company.internal",
+            "password": settings.INITIAL_ADMIN_PASSWORD,
+        })
+        admin_headers = {"Authorization": f"Bearer {admin.json()['access_token']}"}
+        readonly = await client.post("/api/v1/auth/register", json={
+            "email": "shot-reader@example.com",
+            "password": "test-password",
+            "role_name": "readonly",
+        })
+        assert readonly.status_code == 201
+        readonly_headers = {"Authorization": f"Bearer {readonly.json()['access_token']}"}
+
+        production = await client.post(
+            "/api/v1/productions", headers=admin_headers, json={"name": "Shot Write Permission"}
+        )
+        production_id = production.json()["id"]
+        created = await client.post(
+            f"/api/v1/productions/{production_id}/shots",
+            headers=admin_headers,
+            json={"display_number": "001", "name": "Protected", "duration_frames": 24},
+        )
+        shot = created.json()
+        shot_id = shot["id"]
+
+        requests = [
+            client.post(
+                f"/api/v1/productions/{production_id}/shots",
+                headers=readonly_headers,
+                json={"display_number": "002", "name": "Denied"},
+            ),
+            client.patch(
+                f"/api/v1/shots/{shot_id}",
+                headers=readonly_headers,
+                json={"revision": shot["revision"], "changes": {"name": "Denied"}},
+            ),
+            client.delete(f"/api/v1/shots/{shot_id}", headers=readonly_headers),
+            client.post(f"/api/v1/shots/{shot_id}/restore", headers=readonly_headers),
+            client.delete(f"/api/v1/shots/{shot_id}/purge", headers=readonly_headers),
+            client.post(
+                f"/api/v1/productions/{production_id}/shots/bulk-trash",
+                headers=readonly_headers,
+                json={"shot_ids": [shot_id]},
+            ),
+            client.post(
+                "/api/v1/shots/reorder",
+                headers=readonly_headers,
+                json={"production_id": production_id, "base_order": [shot_id],
+                      "items": [{"id": shot_id, "sort_index": 1000, "revision": shot["revision"]}]},
+            ),
+            client.post(
+                "/api/v1/shots/bulk-update",
+                headers=readonly_headers,
+                json={"shot_ids": [shot_id], "updates": {"department": "art"},
+                      "revisions": {shot_id: shot["revision"]}},
+            ),
+        ]
+        responses = await asyncio.gather(*requests)
+        assert [response.status_code for response in responses] == [403] * 8
+
+        current = await client.get(
+            f"/api/v1/productions/{production_id}/shots", headers=admin_headers
+        )
+        assert len(current.json()) == 1
+        assert current.json()[0]["name"] == "Protected"
+
+
+@pytest.mark.asyncio
+async def test_review_approver_decision_uses_canonical_revision_and_audit_flow():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        admin = await client.post("/api/v1/auth/login", json={
+            "email": "admin@company.internal",
+            "password": settings.INITIAL_ADMIN_PASSWORD,
+        })
+        admin_headers = {"Authorization": f"Bearer {admin.json()['access_token']}"}
+        production = await client.post(
+            "/api/v1/productions", headers=admin_headers, json={"name": "Review Approval Permission"}
+        )
+        production_id = production.json()["id"]
+        created = await client.post(
+            f"/api/v1/productions/{production_id}/shots",
+            headers=admin_headers,
+            json={"display_number": "001", "name": "Review Target", "duration_frames": 24},
+        )
+        shot_id = created.json()["id"]
+        submitted = await client.patch(
+            f"/api/v1/shots/{shot_id}",
+            headers=admin_headers,
+            json={"revision": 1, "changes": {"status": "review"}},
+        )
+        assert submitted.status_code == 200
+        assert submitted.json()["revision"] == 2
+
+        async with AsyncSessionLocal() as session:
+            reviewer_role = Role(name="reviewer_only", permissions={"review.approve": True})
+            session.add(reviewer_role)
+            await session.flush()
+            session.add(User(
+                email="reviewer-only@example.com",
+                display_name="Reviewer",
+                password_hash=get_password_hash("review-password"),
+                role_id=reviewer_role.id,
+                is_active=True,
+            ))
+            await session.commit()
+
+        login = await client.post("/api/v1/auth/login", json={
+            "email": "reviewer-only@example.com", "password": "review-password",
+        })
+        assert login.status_code == 200
+        reviewer_headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+
+        direct_patch = await client.patch(
+            f"/api/v1/shots/{shot_id}",
+            headers=reviewer_headers,
+            json={"revision": 2, "changes": {"status": "approved"}},
+        )
+        assert direct_patch.status_code == 403
+
+        decision = await client.post(
+            f"/api/v1/shots/{shot_id}/review-decisions",
+            headers=reviewer_headers,
+            json={"revision": 2, "action": "approve", "version_id": None},
+        )
+        assert decision.status_code == 200
+        assert decision.json()["revision"] == 3
+        assert decision.json()["status"] == "approved"
+        assert decision.json()["decision"]["action_label"] == "同意意见"
+
+        decisions = await client.get(
+            f"/api/v1/shots/{shot_id}/review-decisions", headers=reviewer_headers
+        )
+        assert [item["action_label"] for item in decisions.json()] == ["同意意见"]
+        async with AsyncSessionLocal() as session:
+            actions = (await session.execute(
+                select(AuditLog.action).where(
+                    AuditLog.action.in_(["shot.patch", "review.decision"]),
+                )
+            )).scalars().all()
+        assert "shot.patch" in actions
+        assert "review.decision" in actions
 
 
 @pytest.mark.asyncio
