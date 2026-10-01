@@ -9,7 +9,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.api.v1.deps import get_current_user
-from app.core.database import get_db
+from app.core.database import db_session
 from app.models.production import Production
 from app.models.shot import Panel, ProductionStep, Shot
 from app.models.user import User
@@ -40,7 +40,7 @@ async def list_production_shots(
     primary_method: Optional[str] = Query(None),
     department: Optional[str] = Query(None),
     status_filter: Optional[str] = Query(None),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     query = (
@@ -65,7 +65,7 @@ async def list_production_shots(
 async def create_shot(
     production_id: str,
     req: ShotCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     try:
@@ -81,7 +81,7 @@ async def create_shot(
 async def patch_shot(
     id: str,
     req: ShotPatch,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     try:
@@ -98,7 +98,7 @@ async def patch_shot(
 @router.delete("/shots/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_shot(
     id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     try:
@@ -111,7 +111,7 @@ async def delete_shot(
 @router.post("/shots/{id}/restore", status_code=status.HTTP_200_OK)
 async def restore_shot(
     id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ) -> dict:
     """Restore a soft-deleted shot."""
@@ -127,7 +127,7 @@ async def restore_shot(
 @router.delete("/shots/{id}/purge", status_code=status.HTTP_204_NO_CONTENT)
 async def purge_shot(
     id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     """Permanently delete a shot that is already in Trash."""
@@ -142,7 +142,7 @@ async def purge_shot(
 async def bulk_trash_shots(
     production_id: str,
     req: BulkTrashShotsRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     """Atomically move a project-scoped shot selection into Trash."""
@@ -164,7 +164,7 @@ async def bulk_trash_shots(
 @router.get("/productions/{production_id}/shots/trash", response_model=list[dict])
 async def list_trash_shots(
     production_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     """List soft-deleted shots for a production. Retention cleanup is not implemented here."""
@@ -190,7 +190,7 @@ async def list_trash_shots(
 @router.post("/shots/reorder", status_code=status.HTTP_200_OK)
 async def reorder_shots(
     req: ShotReorderRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     """Revision-aware atomic numeric reorder through the canonical ShotService."""
@@ -217,7 +217,7 @@ async def reorder_shots(
 @router.post("/shots/bulk-update", status_code=status.HTTP_200_OK)
 async def bulk_update_shots(
     req: BulkUpdateShotsRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     """Revision-aware atomic bulk update through the canonical ShotService."""

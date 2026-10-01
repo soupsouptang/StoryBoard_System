@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1.deps import get_current_user
-from app.core.database import get_db
+from app.core.database import db_session
 from app.core.exceptions import DomainError
 from app.core.security import create_access_token
 from app.models.user import User
@@ -25,7 +25,7 @@ def _auth_error(error: DomainError) -> HTTPException:
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
+async def login(req: LoginRequest, db: AsyncSession = db_session):
     try:
         user = await AuthService.authenticate(db, req.email, req.password)
     except DomainError as error:
@@ -40,7 +40,7 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
+async def register(req: RegisterRequest, db: AsyncSession = db_session):
     try:
         user = await AuthService.register(db, req)
     except DomainError as error:

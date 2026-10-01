@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.database import get_db
+from app.core.database import db_session
 from app.core.security import decode_access_token
 from app.models.user import User
 
@@ -15,7 +15,7 @@ security_scheme = HTTPBearer(auto_error=False)
 
 async def get_current_user(
     auth_header: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = db_session
 ) -> User:
     if not auth_header or not auth_header.credentials:
         raise HTTPException(

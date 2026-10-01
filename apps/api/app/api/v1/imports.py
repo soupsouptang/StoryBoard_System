@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_current_user
-from app.core.database import get_db
+from app.core.database import db_session
 from app.core.exceptions import DomainError, NotFoundError
 from app.models.user import User
 from app.services.importer import map_headers, parse_table
@@ -32,7 +32,7 @@ class ImportCommitRequest(BaseModel):
 async def preview_table_import(
     production_id: str,
     req: ImportPreviewRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     """Parse uploaded Excel/CSV file, match headers, and return preview sample."""
@@ -70,7 +70,7 @@ async def preview_table_import(
 async def commit_table_import(
     production_id: str,
     req: ImportCommitRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     """Commit mapped Excel/CSV rows through the standard Shot command."""

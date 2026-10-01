@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_current_user
-from app.core.database import get_db
+from app.core.database import db_session
 from app.models.collaboration import Share
 from app.models.production import Production
 from app.models.shot import Shot
@@ -30,7 +30,7 @@ class PublishShareRequest(BaseModel):
 async def publish_production_share(
     production_id: str,
     req: PublishShareRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     """Publish an anonymous read-only snapshot with an unguessable token."""
@@ -109,7 +109,7 @@ async def publish_production_share(
 @router.get("/share/{token}")
 async def get_shared_snapshot(
     token: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = db_session
 ):
     """Anonymous public endpoint to fetch published frozen storyboard snapshot."""
     res = await db.execute(select(Share).where(Share.token_hash == token, Share.revoked_at.is_(None)))
@@ -127,7 +127,7 @@ async def get_shared_snapshot(
 @router.delete("/productions/{production_id}/share", status_code=status.HTTP_204_NO_CONTENT)
 async def revoke_production_share(
     production_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     """Revoke all active share links for a production."""

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_current_user
-from app.core.database import get_db
+from app.core.database import db_session
 from app.core.exceptions import NotFoundError
 from app.models.user import User
 from app.schemas.production import ProductionCreate, ProductionOut, ProductionUpdate
@@ -33,7 +33,7 @@ def _output(production, count=0, duration=0, cover_media_id=None) -> ProductionO
 
 @router.get("", response_model=list[ProductionOut])
 async def list_productions(
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     rows = await ProductionService.list_productions(db)
@@ -43,7 +43,7 @@ async def list_productions(
 @router.post("", response_model=ProductionOut, status_code=status.HTTP_201_CREATED)
 async def create_production(
     req: ProductionCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     _require_write(current_user)
@@ -54,7 +54,7 @@ async def create_production(
 @router.get("/{id}", response_model=ProductionOut)
 async def get_production(
     id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -67,7 +67,7 @@ async def get_production(
 async def update_production(
     id: str,
     req: ProductionUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     _require_write(current_user)
@@ -81,7 +81,7 @@ async def update_production(
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_production(
     id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     _require_write(current_user)

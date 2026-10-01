@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_current_user
-from app.core.database import get_db
+from app.core.database import db_session
 from app.core.exceptions import ConflictError, DomainError, NotFoundError
 from app.models.user import User
 from app.schemas.version import (
@@ -70,7 +70,7 @@ def _version_dict(version) -> dict:
 @router.get("/shots/{shot_id}/versions", response_model=list[ShotVersionOut])
 async def list_shot_versions(
     shot_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -88,7 +88,7 @@ async def list_shot_versions(
 async def create_shot_version(
     shot_id: str,
     req: ShotVersionCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -106,7 +106,7 @@ async def create_shot_version(
 async def create_shot_branch(
     shot_id: str,
     req: ShotBranchCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -119,7 +119,7 @@ async def create_shot_branch(
 @router.get("/versions/{version_id}", response_model=ShotVersionDetailOut)
 async def get_shot_version(
     version_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -138,7 +138,7 @@ async def get_shot_version(
 )
 async def compare_shot_version(
     version_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -154,7 +154,7 @@ async def compare_shot_version(
 @router.post("/versions/{version_id}/accept", response_model=ShotVersionOut)
 async def accept_shot_version(
     version_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -171,7 +171,7 @@ async def accept_shot_version(
 async def restore_shot_version(
     version_id: str,
     req: ShotVersionRestore,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -186,7 +186,7 @@ async def restore_shot_version(
 async def merge_shot_version(
     version_id: str,
     req: ShotVersionMerge,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:

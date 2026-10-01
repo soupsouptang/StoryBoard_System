@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_current_user
-from app.core.database import get_db
+from app.core.database import db_session
 from app.models.production import Production
 from app.models.shot import Shot
 from app.models.user import User
@@ -26,7 +26,7 @@ router = APIRouter(prefix="/productions/{production_id}/export", tags=["Exports"
 @router.get("/edl")
 async def export_edl(
     production_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     """Export CMX 3600 EDL for DaVinci Resolve / Premiere Pro."""
@@ -55,7 +55,7 @@ async def export_edl(
 @router.get("/otio")
 async def export_otio(
     production_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     """Export OpenTimelineIO (.otio) JSON document."""
@@ -85,7 +85,7 @@ async def export_otio(
 @router.get("/srt")
 async def export_srt(
     production_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     """Export SubRip (.srt) subtitle cues aligned with shot timecodes."""
@@ -120,7 +120,7 @@ async def export_srt(
 @router.get("/csv")
 async def export_csv(
     production_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user)
 ):
     """Export Excel-compatible UTF-8 CSV with all production metadata."""

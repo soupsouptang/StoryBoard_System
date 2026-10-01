@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_current_user
-from app.core.database import get_db
+from app.core.database import db_session
 from app.core.exceptions import ConflictError, DomainError, NotFoundError
 from app.models.user import User
 from app.schemas.review import (
@@ -83,7 +83,7 @@ def _decision_dict(decision) -> dict:
 @router.get("/shots/{shot_id}/comments", response_model=list[ReviewCommentOut])
 async def list_shot_comments(
     shot_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -100,7 +100,7 @@ async def list_shot_comments(
 async def create_shot_comment(
     shot_id: str,
     req: ReviewCommentCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -117,7 +117,7 @@ async def create_shot_comment(
 async def update_comment(
     comment_id: str,
     req: ReviewCommentUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -134,7 +134,7 @@ async def update_comment(
 async def resolve_comment(
     comment_id: str,
     req: ReviewCommentResolve,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -148,7 +148,7 @@ async def resolve_comment(
 @router.delete("/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_comment(
     comment_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -161,7 +161,7 @@ async def delete_comment(
 @router.get("/shots/{shot_id}/review-decisions", response_model=list[ReviewDecisionOut])
 async def list_review_decisions(
     shot_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -179,7 +179,7 @@ async def list_review_decisions(
 async def apply_review_decision(
     shot_id: str,
     req: ReviewDecisionCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:

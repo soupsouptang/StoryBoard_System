@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_current_user
-from app.core.database import get_db
+from app.core.database import db_session
 from app.core.exceptions import ConflictError, DomainError, NotFoundError
 from app.models.user import User
 from app.schemas.saved_view import SavedViewCreate, SavedViewOut, SavedViewUpdate
@@ -43,7 +43,7 @@ def _http(error: DomainError) -> HTTPException:
 @router.get("", response_model=list[SavedViewOut])
 async def list_saved_views(
     production_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -56,7 +56,7 @@ async def list_saved_views(
 async def create_saved_view(
     production_id: str,
     req: SavedViewCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -70,7 +70,7 @@ async def update_saved_view(
     production_id: str,
     view_id: str,
     req: SavedViewUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
@@ -89,7 +89,7 @@ async def update_saved_view(
 async def delete_saved_view(
     production_id: str,
     view_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
