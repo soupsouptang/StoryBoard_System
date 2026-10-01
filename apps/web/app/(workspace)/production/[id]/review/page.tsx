@@ -26,6 +26,8 @@ import {
   useUpdateReviewComment
 } from '@/lib/hooks/useReview';
 import type { ReviewComment } from '@/lib/hooks/useReview';
+import { ShotPanelImage } from '@/components/shot/ShotPanelImage';
+import { framesToTimecode } from '@frameforge/timecode';
 import {
   useAcceptShotVersion,
   useCreateShotBranch,
@@ -100,8 +102,10 @@ export default function ReviewPage() {
   const { data: production } = useProduction(productionId);
   const { data: shots = [], isLoading } = useShots(productionId);
   const { user } = useAuthStore();
+  const canWriteShot = Boolean(user?.role?.permissions?.['*'] || user?.role?.permissions?.['shot.write']);
 
-  const [activeShotIndex, setActiveShotIndex] = useState(0);
+  const [activeShotId, setActiveShotId] = useState<string | null>(null);
+  const [reviewTab, setReviewTab] = useState<'comments' | 'versions'>('comments');
   const [commentDrafts, setCommentDrafts] = useState<Record<string, CommentDraft>>({});
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
@@ -113,12 +117,10 @@ export default function ReviewPage() {
   const [branchName, setBranchName] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (activeShotIndex >= shots.length) setActiveShotIndex(0);
-  }, [activeShotIndex, shots.length]);
-
-  const currentShot = shots[activeShotIndex] || shots[0];
+  const currentShot = shots.find(shot => shot.id === activeShotId) || shots[0];
   const shotId = currentShot?.id || '';
+  const fps = production ? production.fps_num / (production.fps_den || 1) : 24;
+  const currentStartFrame = (production?.start_timecode_frames || 0) + shots.slice(0, Math.max(0, shots.findIndex(shot => shot.id === shotId))).reduce((total, shot) => total + shot.duration_frames, 0);
   const commentReferences = currentShot ? getCommentReferences(currentShot) : [];
   const initialCommentDraft: CommentDraft = {
     body: '',
@@ -142,6 +144,10 @@ export default function ReviewPage() {
   const acceptVersion = useAcceptShotVersion(shotId);
   const restoreVersion = useRestoreShotVersion(productionId, shotId);
   const mergeVersion = useMergeShotVersion(productionId, shotId);
+  const mutationPending = createComment.isPending || updateComment.isPending ||
+    resolveComment.isPending || deleteComment.isPending || createVersion.isPending ||
+    createBranch.isPending || acceptVersion.isPending || restoreVersion.isPending ||
+    mergeVersion.isPending;
 
   const updateCommentDraft = (update: (draft: CommentDraft) => CommentDraft) => {
     setCommentDrafts(previous => ({
@@ -162,10 +168,12 @@ export default function ReviewPage() {
   }, [shotId]);
 
   const handleCreateVersion = async () => {
+    if (mutationPending || !canWriteShot) return;
     setActionError(null);
     try {
       const version = await createVersion.mutateAsync({});
       setSelectedVersionId(version.id);
+      setReviewTab('versions');
     } catch (error) {
       setActionError(error instanceof Error ? error.message : '保存版本失败');
     }
@@ -408,7 +416,9 @@ export default function ReviewPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => resolveComment.mutate({ id: comment.id, resolved: !comment.is_resolved })}
+              onClick={() => resolveComment.mutate({ id: comment.id, resolved: !comment.is_resolved }, {
+                onError: error => setActionError(error instanceof Error ? error.message : '更新批注失败')
+              })}
               disabled={resolveComment.isPending}
             >
               {comment.is_resolved ? '重新打开' : '标记已处理'}
@@ -429,7 +439,7 @@ export default function ReviewPage() {
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:flex-row">
-      <aside className="flex max-h-52 w-full shrink-0 flex-col border-b border-border bg-background lg:max-h-none lg:w-72 lg:border-b-0 lg:border-r">
+      <aside className="flex max-h-52 w-full shrink-0 flex-col border-b border-border bg-background lg:max-h-none lg:w-40 lg:border-b-0 lg:border-r">
         <div className="border-b border-border bg-card/60 p-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
             审片镜头队列 ({shots.length})
@@ -437,20 +447,25 @@ export default function ReviewPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto divide-y divide-border">
-          {shots.map((shot, index) => (
+          {shots.map(shot => (
             <button
               key={shot.id}
               type="button"
               onClick={() => {
-                setActiveShotIndex(index);
+                setActiveShotId(shot.id);
                 setActionError(null);
               }}
-              className={`flex w-full items-center justify-between gap-3 p-3 text-left text-xs transition-colors ${
-                index === activeShotIndex
+              className={`flex w-full flex-col items-stretch gap-2 p-3 text-left text-xs transition-colors ${
+                shot.id === shotId
                   ? 'bg-accent text-accent-foreground'
                   : 'text-foreground hover:bg-accent/70'
               }`}
+              disabled={mutationPending}
+              aria-current={shot.id === shotId ? 'true' : undefined}
             >
+              <span className="flex aspect-video items-center justify-center overflow-hidden rounded-md bg-muted/40">
+                <ShotPanelImage shot={shot} className="h-full w-full object-contain"><span className="text-xs text-muted-foreground">暂无画面</span></ShotPanelImage>
+              </span>
               <span className="min-w-0 space-y-0.5">
                 <span className="flex items-center gap-2 font-mono font-bold">
                   <span className="shrink-0">{shot.display_number}</span>
@@ -466,24 +481,31 @@ export default function ReviewPage() {
         </div>
       </aside>
 
-      <main className="min-h-0 flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8">
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
-          <Card className="flex aspect-video min-h-[280px] flex-col justify-between overflow-hidden p-6">
+      <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-background p-4">
+        <div className="grid min-h-full min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,35%)]">
+          <section aria-label="当前镜头画面与内容" className="min-w-0">
+          <Card className="gap-4 overflow-hidden p-4">
             <div className="flex items-center justify-between gap-3">
               <span className="font-mono text-sm font-bold text-foreground">
                 SHOT {currentShot.display_number}
               </span>
               <div className="flex items-center gap-2">
                 <MethodBadge method={currentShot.primary_method} />
+                {(currentShot.secondary_methods || []).filter(method => method !== currentShot.primary_method).map(method => <MethodBadge key={method} method={method} />)}
                 <StatusBadge status={currentShot.status} />
               </div>
             </div>
 
-            <div className="mx-auto max-w-2xl space-y-3 text-center">
+            <div className="flex aspect-video min-h-40 items-center justify-center overflow-hidden rounded-md border border-border bg-muted/30">
+              <ShotPanelImage shot={currentShot} className="h-full w-full object-contain">
+                <div className="text-center text-sm text-muted-foreground">暂无分镜画面</div>
+              </ShotPanelImage>
+            </div>
+            <div className="space-y-3">
               <h2 className="text-lg font-semibold text-foreground">
                 {currentShot.name || `镜头 ${currentShot.display_number}`}
               </h2>
-              <p className="text-sm leading-relaxed text-muted-foreground">
+              <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-muted-foreground">
                 {currentShot.description || '暂无画面描述'}
               </p>
               {currentShot.voice_over && (
@@ -494,30 +516,55 @@ export default function ReviewPage() {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-xs text-muted-foreground">
-              <span>
-                {currentShot.shot_size || '—'} · {currentShot.lens_mm ? `${currentShot.lens_mm}mm` : '—'} · {shotMovementLabel(currentShot)}
-              </span>
-              <span className="font-bold text-foreground">{currentShot.duration_frames} 帧</span>
-            </div>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-border pt-4 text-sm">
+              {[
+                ['TC IN', framesToTimecode(currentStartFrame, fps)],
+                ['TC OUT', framesToTimecode(currentStartFrame + currentShot.duration_frames, fps)],
+                ['时长', `${currentShot.duration_frames} 帧`],
+                ['景别', currentShot.shot_size], ['焦段', currentShot.lens_mm ? `${currentShot.lens_mm}mm` : null],
+                ['运镜', shotMovementLabel(currentShot)], ['机位角度', currentShot.camera_angle],
+                ['机位高度', currentShot.camera_height], ['摄影机', currentShot.camera],
+                ['传感器', currentShot.sensor], ['光圈', currentShot.aperture], ['快门', currentShot.shutter],
+                ['责任部门', currentShot.department], ['负责人', currentShot.owner_id]
+              ].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="mt-1 break-words">{value || '—'}</dd></div>)}
+            </dl>
           </Card>
 
-          <Card className="p-4">
+          </section>
+          <aside aria-label="当前镜头审阅" className="min-w-0 space-y-4">
+            <Card className="gap-3 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold">当前审阅状态</h3>
+                <StatusBadge status={currentShot.status} />
+              </div>
+              <p className="text-xs text-muted-foreground">提交当前镜头的版本快照，在版本中查看差异和评论。</p>
+              <Button variant="outline" size="sm" disabled={mutationPending || !canWriteShot} onClick={() => void handleCreateVersion()}>
+                {createVersion.isPending ? '提交中…' : '提交修订'}
+              </Button>
+              {actionError && <p role="alert" className="text-xs text-destructive">{actionError}</p>}
+              <details className="border-t border-border pt-3 text-xs">
+                <summary className="cursor-pointer font-medium">审阅记录（{decisions.length}）</summary>
+                {decisions.length === 0 ? <p className="mt-2 text-muted-foreground">暂无审阅记录。</p> : decisions.map(decision => (
+                  <div key={decision.id} className="mt-2 flex flex-wrap justify-between gap-2">
+                    <span>{decision.action_label}</span><time className="text-muted-foreground">{new Date(decision.created_at).toLocaleString()}</time>
+                  </div>
+                ))}
+              </details>
+            </Card>
+            <div role="group" aria-label="审阅内容" className="flex gap-1 rounded-md border border-border bg-muted p-1">
+              {(['comments', 'versions'] as const).map(tab => <Button key={tab} aria-pressed={reviewTab === tab} aria-controls={`review-${tab}`} variant={reviewTab === tab ? 'secondary' : 'ghost'} size="sm" className="flex-1" onClick={() => setReviewTab(tab)}>
+                {tab === 'comments' ? `评论 ${comments.length}` : `版本 / Before–After ${versions.length}`}
+              </Button>)}
+            </div>
+            {reviewTab === 'versions' && (
+          <Card id="review-versions" role="region" className="gap-3 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-foreground">版本与审阅基线</div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  版本是不可变的镜头字段快照；选择一个版本后，后续审片决策会显式绑定该版本。
+                  选择一个历史版本查看差异、分支或恢复当前镜头。
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void handleCreateVersion()}
-                disabled={createVersion.isPending}
-              >
-                {createVersion.isPending ? '保存中…' : '保存当前版本'}
-              </Button>
             </div>
 
             <div className="mt-3 space-y-2">
@@ -525,7 +572,7 @@ export default function ReviewPage() {
                 <div className="py-4 text-center text-xs text-muted-foreground">正在加载版本...</div>
               ) : versions.length === 0 ? (
                 <div className="rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-                  暂无版本快照。保存版本后可将审片决策绑定到明确版本。
+                  暂无版本快照。提交修订后可查看版本与当前镜头的差异。
                 </div>
               ) : (
                 versions.map(version => {
@@ -629,7 +676,7 @@ export default function ReviewPage() {
                   </div>
                 ) : selectedVersionCompare && versionChanges.length === 0 ? (
                   <div className="mt-3 rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-                    当前镜头与该版本在已迁移的镜头字段范围内没有差异。
+                    当前镜头与该版本没有字段差异。
                   </div>
                 ) : selectedVersionCompare ? (
                   <div className="mt-3 space-y-2">
@@ -665,47 +712,9 @@ export default function ReviewPage() {
             )}
           </Card>
 
-          <Card className="p-4">
-            <div>
-              <div className="text-sm font-semibold text-foreground">审片历史</div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                这里只读展示已写入的 revision-bound 审片记录；Review 页面不提供全局审批看板。
-              </div>
-            </div>
-
-            {actionError && (
-              <div role="alert" className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs text-destructive">
-                {actionError}
-              </div>
             )}
-
-            {decisions.length === 0 ? (
-              <div className="mt-3 rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-                暂无审片历史。
-              </div>
-            ) : (
-              <div className="mt-3 divide-y divide-border border-t border-border">
-                {decisions.map(decision => (
-                  <div
-                    key={decision.id}
-                    className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-xs"
-                  >
-                    <span className="text-foreground">
-                      {decision.action_label}
-                      <span className="ml-2 text-muted-foreground">
-                        {decision.previous_status} → {decision.next_status}
-                      </span>
-                    </span>
-                    <span className="font-mono text-muted-foreground">
-                      {new Date(decision.created_at).toLocaleString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
-
-          <Card className="p-5">
+            {reviewTab === 'comments' && (
+          <Card id="review-comments" role="region" className="gap-3 p-4">
             <div className="mb-4 flex items-center gap-2">
               <Icons.MessageSquare className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <h3 className="text-sm font-semibold text-foreground">
@@ -806,6 +815,8 @@ export default function ReviewPage() {
               </div>
             </form>
           </Card>
+            )}
+          </aside>
         </div>
       </main>
       <Dialog
@@ -894,7 +905,7 @@ export default function ReviewPage() {
         <DialogContent className="max-w-md">
           <DialogTitle>合并版本到当前镜头</DialogTitle>
           <DialogDescription>
-            该操作遵循功能基线的快照合并语义：先保存“合并前备份”，再把目标版本快照应用到当前镜头。它不是自动三方合并，并会校验当前 revision。
+            先保存“合并前备份”，再把所选版本应用到当前镜头。若镜头已被他人修改，操作会中止并提示冲突。
           </DialogDescription>
           <DialogFooter>
             <Button

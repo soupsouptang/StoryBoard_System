@@ -113,6 +113,7 @@ export interface User {
   email: string;
   display_name: string;
   role_id: string;
+  role?: Role | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
