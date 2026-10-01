@@ -88,7 +88,10 @@ export function useCreateShot(productionId: string) {
         json: newShot
       });
     },
-    onSuccess: () => {
+    onSuccess: savedShot => {
+      queryClient.setQueryData<Shot[]>(['shots', productionId], old =>
+        [...(old || []).filter(shot => shot.id !== savedShot.id), savedShot]
+      );
       queryClient.invalidateQueries({ queryKey: ['shots', productionId] });
       queryClient.invalidateQueries({ queryKey: ['production', productionId] });
     }

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Button, Icons } from '@frameforge/ui';
+import React, { useMemo, useRef, useState } from 'react';
+import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Icons, Select } from '@frameforge/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Production } from '@frameforge/types';
 import { apiClient } from '@/lib/api-client';
@@ -12,131 +12,158 @@ interface ImportModalProps {
   onClose: () => void;
 }
 
+type ImportMapping = Record<string, { col: number; raw_header: string; confidence: number; manual?: boolean }>;
+
+const IMPORT_FIELDS = [
+  ['number', '镜号'], ['name', '镜头标题'], ['description', '画面描述'],
+  ['voiceover', '对应旁白'], ['duration', '时长（秒）'], ['duration_frames', '帧数'],
+  ['shot_size', '景别'], ['lens_mm', '焦段'], ['movement', '机位/运镜'],
+  ['camera_angle', '机位角度'], ['primary_method', '制作方式'],
+  ['department', '责任部门'], ['owner_id', '负责人'], ['director_notes', '导演备注']
+] as const;
+
 export function ImportModal({ production, isOpen, onClose }: ImportModalProps) {
   const queryClient = useQueryClient();
-
+  const inputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
-  // Preview data
+  const [error, setError] = useState<string | null>(null);
+  const [importedCount, setImportedCount] = useState<number | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
-  const [mapping, setMapping] = useState<Record<string, { col: number; raw_header: string; confidence: number }>>({});
+  const [mapping, setMapping] = useState<ImportMapping>({});
   const [rawRows, setRawRows] = useState<string[][]>([]);
-  const [samplePreview, setSamplePreview] = useState<Record<string, string>[]>([]);
-  const [totalRows, setTotalRows] = useState(0);
+  const totalRows = rawRows.filter(row => row.some(cell => cell.trim())).length;
+  const samplePreview = useMemo(() => rawRows.slice(0, 10).map(row =>
+    Object.fromEntries(Object.entries(mapping).map(([field, info]) => [field, row[info.col] || '']))
+  ), [rawRows, mapping]);
 
-  if (!isOpen) return null;
+  const previewFile = async (selected: File) => {
+    if (isLoading) return;
+    setError(null);
+    if (!/\.(xlsx|csv)$/i.test(selected.name)) {
+      setError('请选择 .xlsx 或 .csv 文件；旧版 .xls 请先另存为 .xlsx。');
+      return;
+    }
+    setIsLoading(true);
+    setImportedCount(null);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error('读取文件失败，请重新选择文件。'));
+        reader.onabort = () => reject(new Error('文件读取已取消。'));
+        reader.readAsDataURL(selected);
+      });
+      const res = await apiClient<{ headers: string[]; mapping: ImportMapping; raw_rows: string[][] }>(
+        `/api/v1/productions/${production.id}/import-preview`, {
+          method: 'POST', json: { filename: selected.name, file_base64: dataUrl.split(',')[1] }
+        }
+      );
+      setFileName(selected.name);
+      setHeaders(res.headers);
+      setMapping(Object.fromEntries(Object.entries(res.mapping).filter(([field]) =>
+        IMPORT_FIELDS.some(([key]) => key === field)
+      )));
+      setRawRows(res.raw_rows);
+      setStep(2);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '解析表格失败');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (!selected) return;
-    setFile(selected);
-    setFileName(selected.name);
-
-    // Read and preview
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        setIsLoading(true);
-        const base64 = (reader.result as string).split(',')[1];
-        const res = await apiClient<any>(`/api/v1/productions/${production.id}/import-preview`, {
-          method: 'POST',
-          json: {
-            filename: selected.name,
-            file_base64: base64
-          }
-        });
-
-        setHeaders(res.headers || []);
-        setMapping(res.mapping || {});
-        setRawRows(res.raw_rows || []);
-        setSamplePreview(res.sample_preview || []);
-        setTotalRows(res.total_rows || 0);
-        setStep(2);
-      } catch (err: any) {
-        alert(err.message || '解析表格失败');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    reader.readAsDataURL(selected);
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = event.target.files?.[0];
+    event.target.value = '';
+    if (selected) void previewFile(selected);
   };
 
   const handleCommit = async () => {
+    if (isLoading || importedCount !== null || !totalRows || !Object.keys(mapping).length) return;
+    setIsLoading(true);
+    setError(null);
     try {
-      setIsLoading(true);
-      await apiClient(`/api/v1/productions/${production.id}/import-commit`, {
-        method: 'POST',
-        json: {
-          rows: rawRows,
-          mapping: mapping
+      const result = await apiClient<{ ok: boolean; imported_count: number }>(
+        `/api/v1/productions/${production.id}/import-commit`, {
+          method: 'POST', json: { rows: rawRows, mapping }
         }
-      });
+      );
+      if (!result.ok) throw new Error('导入未完成，请重试。');
+      setImportedCount(result.imported_count);
       await queryClient.invalidateQueries({ queryKey: ['shots', production.id] });
       await queryClient.invalidateQueries({ queryKey: ['production', production.id] });
-      alert(`成功导入 ${totalRows} 个分镜镜头！`);
-      onClose();
-      setStep(1);
-    } catch (err: any) {
-      alert(err.message || '导入失败');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '导入入库失败');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-      <div className="flex h-[80vh] w-full max-w-3xl flex-col rounded-xl border border-border bg-card shadow-2xl overflow-hidden text-xs">
-        {/* Header */}
-        <div className="flex h-[50px] items-center justify-between border-b border-border bg-background px-6">
-          <div className="flex items-center gap-2">
-            <Icons.Table2 className="h-4 w-4 text-foreground" />
-            <h3 className="text-sm font-bold text-foreground">导入分镜表</h3>
-          </div>
-
-          <Button variant="ghost" size="sm" onClick={onClose} aria-label="关闭导入" className="text-muted-foreground hover:text-foreground">
-            <Icons.X className="h-4 w-4" />
-          </Button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={open => { if (!open && !isLoading) onClose(); }}>
+      <DialogContent hideCloseButton={isLoading} className="flex h-[80dvh] max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl"
+        onOpenAutoFocus={() => {
+          if (importedCount !== null) {
+            setStep(1);
+            setMapping({});
+            setRawRows([]);
+            setFileName('');
+            setImportedCount(null);
+          }
+          setError(null);
+        }}
+      >
+        <DialogHeader className="shrink-0 border-b border-border p-6 pr-12">
+          <DialogTitle className="flex items-center gap-2">
+            <Icons.Table2 className="h-4 w-4" aria-hidden="true" />
+            智能导入分镜制作表 (Smart Table Importer)
+          </DialogTitle>
+          <DialogDescription className="sr-only">上传分镜表，核对识别表头并预览确认导入。</DialogDescription>
+        </DialogHeader>
 
         {/* Step Indicator */}
-        <div className="flex border-b border-border bg-background/50 px-6 py-2.5 text-muted-foreground font-mono text-[11px]">
+        <div className="flex shrink-0 flex-wrap gap-y-2 border-b border-border bg-muted/40 px-4 py-2.5 sm:px-6 text-muted-foreground font-mono text-[11px]">
           <span className={`mr-4 ${step === 1 ? 'text-foreground font-bold' : ''}`}>1. 上传表格文件</span>
-          <span className={`mr-4 ${step === 2 ? 'text-foreground font-bold' : ''}`}>2. 表头识别与核对</span>
-          <span className={`${step === 3 ? 'text-foreground font-bold' : ''}`}>3. 数据预览与确认导入</span>
+          <span className={`mr-4 ${step === 2 ? 'text-foreground font-bold' : ''}`}>2. 表头智能识别与核对</span>
+          <span className={`${step === 3 ? 'text-foreground font-bold' : ''}`}>3. 数据预览与确认入库</span>
         </div>
 
+        {error && <p role="alert" className="shrink-0 px-4 pt-3 text-sm text-destructive sm:px-6">{error}</p>}
+        {importedCount !== null && <p role="status" className="shrink-0 px-4 pt-3 text-sm sm:px-6">成功导入 {importedCount} 个分镜镜头。</p>}
+
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
           {step === 1 && (
-            <div className="flex flex-col items-center justify-center h-full border-2 border-dashed border-border rounded-xl p-12 text-center hover:border-ring transition">
+            <div
+              onDragOver={event => event.preventDefault()}
+              onDrop={event => {
+                event.preventDefault();
+                const selected = event.dataTransfer.files[0];
+                if (selected) void previewFile(selected);
+              }}
+              className="flex flex-col items-center justify-center min-h-full border-2 border-dashed border-border rounded-lg p-6 sm:p-12 text-center hover:border-ring transition">
               <Icons.FileDown className="h-12 w-12 text-foreground mb-4" />
               <h4 className="text-sm font-bold text-foreground mb-1">选择或拖放分镜制作表</h4>
               <p className="text-muted-foreground mb-6 max-w-sm leading-relaxed">
-                支持标准 Excel (.xlsx, .xls) 及 CSV 文件。自动识别多工作表及合并单元格。
+                支持 Excel (.xlsx) 首个工作表及 CSV 文件。上传后核对表头映射，再预览确认导入。
               </p>
-              <Button asChild variant="default" size="sm"><label className="cursor-pointer">
-                <span>浏览本地文件</span>
-                <input
-                  type="file"
-                  accept=".xlsx,.xls,.csv"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </label></Button>
+              <Button variant="default" size="sm" disabled={isLoading} onClick={() => inputRef.current?.click()}>
+                浏览本地文件
+              </Button>
+              <input ref={inputRef} type="file" accept=".xlsx,.csv" onChange={handleFileChange} hidden aria-label="分镜制作表文件" />
               {isLoading && <span className="mt-4 font-mono text-foreground">正在解析表格结构...</span>}
             </div>
           )}
 
           {step === 2 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-medium text-foreground">
-                  文件: <span className="font-mono text-foreground">{fileName}</span> (共识别 {totalRows} 行数据)
+                  文件: <span className="break-all font-mono text-foreground">{fileName}</span> (共识别 {totalRows} 行数据)
                 </span>
-                <span className="font-mono text-[11px] text-emerald-400">已匹配 {Object.keys(mapping).length} 个标准字段</span>
+                <span className="font-mono text-[11px] text-foreground">已匹配 {Object.keys(mapping).length} 个标准字段</span>
               </div>
 
               <div className="rounded-lg border border-border bg-background p-4 space-y-3">
@@ -146,15 +173,31 @@ export function ImportModal({ production, isOpen, onClose }: ImportModalProps) {
                   <span className="text-right">匹配置信度</span>
                 </div>
 
-                {Object.entries(mapping).map(([field, info]) => (
-                  <div key={field} className="grid grid-cols-3 gap-2 font-mono text-xs items-center">
-                    <span className="font-bold text-foreground">{field}</span>
-                    <span className="text-foreground truncate">[{info.col + 1}列] {info.raw_header}</span>
-                    <span className="text-right text-emerald-400 font-bold">
-                      {Math.round(info.confidence * 100)}%
-                    </span>
-                  </div>
-                ))}
+                {IMPORT_FIELDS.map(([field, label]) => {
+                  const info = mapping[field];
+                  return (
+                    <div key={field} className="grid grid-cols-3 gap-2 items-center text-xs">
+                      <span className="font-medium text-foreground">{label}</span>
+                      <Select
+                        label={`${label}的表格列`}
+                        value={info ? String(info.col) : '__none__'}
+                        disabled={isLoading || importedCount !== null}
+                        options={[{ value: '__none__', label: '不导入' }, ...headers.map((header, index) => ({
+                          value: String(index), label: `[${index + 1}列] ${header || '空表头'}`
+                        }))]}
+                        onChange={value => setMapping(current => {
+                          const next = { ...current };
+                          if (value === '__none__') delete next[field];
+                          else next[field] = { col: Number(value), raw_header: headers[Number(value)], confidence: 1, manual: true };
+                          return next;
+                        })}
+                      />
+                      <span className="text-right font-mono text-muted-foreground">
+                        {info?.manual ? '已手动核对' : info ? `${Math.round(info.confidence * 100)}%` : '—'}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -191,45 +234,48 @@ export function ImportModal({ production, isOpen, onClose }: ImportModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-border bg-background px-6 py-3">
+        <DialogFooter className="shrink-0 border-t border-border px-4 py-4 sm:justify-between sm:px-6">
           {step > 1 ? (
             <Button variant="outline" size="sm"
               onClick={() => setStep(step === 3 ? 2 : 1)}
-              className="rounded border border-border px-4 py-2 font-medium text-foreground hover:bg-muted"
+              disabled={isLoading || importedCount !== null}
+              className="font-medium"
             >
               上一步
             </Button>
           ) : <div />}
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:gap-3">
             <Button variant="outline" size="sm"
               onClick={onClose}
-              className="rounded border border-border px-4 py-2 font-medium text-muted-foreground hover:bg-muted"
+              disabled={isLoading}
+              className="font-medium"
             >
-              取消
+              {importedCount !== null ? '完成' : '取消'}
             </Button>
 
             {step === 2 && (
               <Button variant="default" size="sm"
                 onClick={() => setStep(3)}
-                className="rounded px-5 py-2 font-bold"
+                disabled={!totalRows || !Object.keys(mapping).length}
+                className="font-medium"
               >
                 下一步：预览样本
               </Button>
             )}
 
-            {step === 3 && (
+            {step === 3 && importedCount === null && (
               <Button variant="default" size="sm"
                 onClick={handleCommit}
                 disabled={isLoading}
-                className="rounded px-6 py-2 font-bold disabled:opacity-50"
+                className="font-medium"
               >
                 {isLoading ? '正在导入…' : `确认导入 ${totalRows} 个镜头`}
               </Button>
             )}
           </div>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1323,6 +1323,7 @@ export default function ShotListPage() {
         production={production}
         sequences={sequences}
         nextNumber={nextShotNumber}
+        existingNumbers={shots.map(shot => shot.display_number)}
       />
     </div>
   );

@@ -218,6 +218,7 @@ export default function StoryboardPage() {
         production={production}
         sequences={sequences}
         nextNumber={nextShotNumber}
+        existingNumbers={shots.map(s => s.display_number)}
       />
 
       {/* Smart Table Import Modal */}
