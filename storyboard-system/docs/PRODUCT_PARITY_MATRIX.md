@@ -3,6 +3,22 @@
 This document tracks VNext recovery against the functional golden baseline `5e86a0b`.
 Current explicit user decisions and later accepted removals override the baseline.
 
+## 2026-10-01 user screenshot baseline addendum
+
+Evidence: [24-image audit and remediation](audits/SCREENSHOT_BASELINE_2026-10-01.md), inspected code `392b74e`. Screenshots establish visible product coverage, not runtime success. This checkpoint takes precedence over older broad coverage claims below. No production writes or deployment are authorized; desktop only, no zoom/narrow-width assessment.
+
+| Capability | Baseline / screenshot evidence | Current gap | Status |
+| --- | --- | --- | --- |
+| Primary + secondary method grouping | Golden `static/app.js` method groups; S12 | Canonical table groups/filters by primary method; this does not recover independent groups including secondary methods | BLOCKED |
+| Production overview | Golden `VIEW.OVERVIEW`; S15 | Existing product statistics require a canonical consumer; not equivalent to an unauthorized feature-card project landing page | BLOCKED |
+| Full Inspector / multiple Panels | S05/S07; Golden fields and panels | First Panel media and partial fields do not establish production-step, multi-Panel lifecycle and full photography-field parity | INTEGRATED_NOT_CUT_OVER |
+| Real Asset Library | S23 | Current assets page renders a slice of Shots, fixed media metadata and a fixed count; upload lacks handler and category state does not filter the grid | BLOCKED |
+| PDF six layouts | Golden index `screenplay` / `us-board`; S01 | All six layout choices, scope and field options require target parity; target PDF remains disabled | BLOCKED |
+| Export / project backup coverage | S14 and Golden export links | CSV/EDL/OTIO/SRT slice is insufficient; track VTT/FCPXML/JSON backup/restore plus existing Word/project-PDF contracts separately | INTEGRATED_NOT_CUT_OVER |
+| Review three-region composition | S20 | Preserve shot queue, media/diff and comments together; visible revision submission requires explicit service mapping, not generic approval-dashboard restoration | BLOCKED_VISUAL |
+
+The table/card/wall/timeline capabilities and their entry destinations must be preserved. If a historical rule conflicts with the screenshot's entry form, record the exact conflict and equivalent destination rather than silently removing capability. See the screenshot audit for all 24 evidence mappings.
+
 Status vocabulary:
 - VERIFIED
 - IMPLEMENTED_NOT_INTEGRATED
