@@ -45,6 +45,7 @@ const ui = Object.fromEntries(['Button', 'Input', 'TextArea', 'Select', 'Checkbo
 ui.Icons = new Proxy({}, { get: (_, key) => key });
 const { ShotInspector } = load('apps/web/components/shot/ShotInspector.tsx', {
   react: React, '@frameforge/ui': ui,
+  './ShotImageCell': { ShotImageCell: 'ShotImageCell' },
   '@frameforge/timecode': { framesToSeconds: () => 1, framesToTimecode: () => '00:00:01:00' },
   '@tanstack/react-query': { useQueryClient: () => ({ invalidateQueries: async () => {} }) },
   '@/lib/api-client': { ApiError }, '@/stores/useWorkspaceStore': { useWorkspaceStore: store },
@@ -72,13 +73,18 @@ const input = () => find(node => node.props.id === 'shot-name');
 const button = label => find(node => node.type === 'Button' && node.children.includes(label));
 const edit = value => input().props.onChange({ target: { value } });
 (async () => {
-  store.getState().openInspector('A'); render(a); edit('submitted'); render(a);
+  store.getState().openInspector('A'); render(a);
+  assert.equal(find(node => node.type === 'ShotImageCell').props.shot.id, 'A');
+  assert.equal(find(node => node.type === 'ShotImageCell').props.disabled, false);
+  edit('submitted'); render(a);
+  assert.equal(find(node => node.type === 'ShotImageCell').props.disabled, true, 'Dirty draft must be saved before uploading a new revision');
   const saveA = button('保存').props.onClick();
   render(a); edit('new while pending');
   store.getState().closeInspector(); render(a);
   assert.equal(button('放弃所有草稿并关闭').props.disabled, true, 'Cannot discard pending save');
   button('继续编辑').props.onClick(); render(a);
   store.getState().openInspector('B'); render(b); edit('B draft'); render(b);
+  assert.equal(find(node => node.type === 'ShotImageCell').props.shot.id, 'B', 'Image upload target follows the Inspector target');
   resolveSave({ ...a, name: 'submitted', revision: 2 }); await saveA; render(b);
   assert.equal(input().props.value, 'B draft', 'A acknowledgement must not overwrite B');
   store.getState().openInspector('A'); render(a);

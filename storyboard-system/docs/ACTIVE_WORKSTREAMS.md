@@ -23,7 +23,7 @@
 | 真实资产读模型 | 项目资产列表返回真实文件元数据；Panel/link 合并按活动 Shot 去重；内容读取遵守项目读权限与删除状态；单项隔离 API 合同及保护库哈希检查通过 | INTEGRATED_NOT_CUT_OVER；独立上传、清理与持久媒体迁移仍未齐 |
 | 素材库真实消费 | 真实资产列表替代 Shot 占位；分类、搜索、元数据、镜头引用数、受权图片预览；上传入口连接镜头制作表；共享 AssetImage 处理取消/回收/目标切换；组件回归及 Web build/typecheck 通过 | 1440 明暗素材网格/预览与搜索空态已检查；独立上传/清理、全媒体及整体视觉对等仍未齐 |
 | 根 UI / Tailwind 4 | 官方 New York v4、default h9、OKLCH neutral、字体权重及 Select/Dialog 兼容；`237c4a6` 已上传。UI 包检查、Web typecheck/build 通过 | BLOCKED_VISUAL；保持原 Shell 与业务布局，未标视觉通过 |
-| Inspector 草稿安全 | 按 Shot ID 保留草稿；保存期间切换、失败保留、关闭确认、删除确认及工作面快捷键统一；合成回归与 Web typecheck 通过 | BLOCKED_VISUAL；全字段/多 Panel 对等仍未齐 |
+| Inspector 草稿安全 / 分镜画面 | 按 Shot ID 保留草稿；保存期间切换、失败保留、关闭确认、删除确认及工作面快捷键统一；复用 ShotImageCell 显示/上传首 Panel，dirty/pending 时阻止新增上传；四个分区在 380px 面板两行显示；合成回归与 Web typecheck 通过 | 1440 明暗图片与完整分区标签、草稿禁用上传、真实合成 PNG 上传（revision 4→5）及刷新保留已检查；完整 Inspector 仍 BLOCKED_VISUAL，全字段/多 Panel 对等未齐 |
 | VO 帧分配 | 最低帧数与锁定帧先保留，剩余帧按最大余数分配；可行目标总帧精确，不可行目标明确保留超额；timecode build 与合成回归通过 | 算法检查通过；弹窗真实交互另验，非数据库 cutover |
 | 镜头/导入/VO 弹窗 | 共享 Dialog；新建按最大数字镜号与空场次校验、失败保留；导入可修改真实映射/预览/提交计数；VO 发送各自 revision 并显示部分保存/冲突；合成回归、Web typecheck/build 通过 | BLOCKED_VISUAL；导入多表/嵌图/更新替换、VO 原子批量和服务端并发镜号唯一性未齐 |
 

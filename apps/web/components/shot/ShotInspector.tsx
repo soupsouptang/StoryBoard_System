@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/lib/api-client';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useUpdateShot, useDeleteShot } from '@/lib/hooks/useProduction';
+import { ShotImageCell } from './ShotImageCell';
 
 const METHOD_OPTIONS: { value: ProductionMethod; label: string }[] = [ { value: "live", label: "实拍 (LIVE SHOOT)" }, { value: "stock", label: "购买素材 (STOCK FOOTAGE)" }, { value: "client", label: "客户素材 (CLIENT ASSET)" }, { value: "archive", label: "历史资料 (ARCHIVE)" }, { value: "still", label: "静帧 (STILL FRAME)" }, { value: "ae", label: "AE合成包装 (AE COMP)" }, { value: "mg", label: "动效设计 (MOTION GRAPHICS)" }, { value: "three_d", label: "3D三维制作 (3D ANIMATION)" }, { value: "vfx", label: "视效特效 (VFX SHOT)" }, { value: "type", label: "纯文字字卡 (TITLE CARD)" } ];
 
@@ -295,11 +296,11 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
       )}
 
       {/* Tabs */}
-      <div className="flex overflow-x-auto border-b border-border bg-background/40 text-xs font-medium text-muted-foreground">
+      <div className="grid shrink-0 grid-cols-2 border-b border-border bg-background/40 text-xs font-medium text-muted-foreground">
         <Button variant="ghost" size="sm"
           onClick={() => setActiveTab('creative')}
           aria-pressed={activeTab === 'creative'}
-          className={`min-w-max flex-1 border-b-2 py-2 text-center transition-colors ${
+          className={`min-w-0 border-b-2 text-center transition-colors ${
             activeTab === 'creative' ? 'border-ring text-foreground bg-card' : 'border-transparent hover:text-foreground'
           }`}
         >
@@ -308,7 +309,7 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
         <Button variant="ghost" size="sm"
           onClick={() => setActiveTab('camera')}
           aria-pressed={activeTab === 'camera'}
-          className={`min-w-max flex-1 border-b-2 py-2 text-center transition-colors ${
+          className={`min-w-0 border-b-2 text-center transition-colors ${
             activeTab === 'camera' ? 'border-ring text-foreground bg-card' : 'border-transparent hover:text-foreground'
           }`}
         >
@@ -317,7 +318,7 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
         <Button variant="ghost" size="sm"
           onClick={() => setActiveTab('pipeline')}
           aria-pressed={activeTab === 'pipeline'}
-          className={`min-w-max flex-1 border-b-2 py-2 text-center transition-colors ${
+          className={`min-w-0 border-b-2 text-center transition-colors ${
             activeTab === 'pipeline' ? 'border-ring text-foreground bg-card' : 'border-transparent hover:text-foreground'
           }`}
         >
@@ -326,7 +327,7 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
         <Button variant="ghost" size="sm"
           onClick={() => setActiveTab('timing')}
           aria-pressed={activeTab === 'timing'}
-          className={`min-w-max flex-1 border-b-2 py-2 text-center transition-colors ${
+          className={`min-w-0 border-b-2 text-center transition-colors ${
             activeTab === 'timing' ? 'border-ring text-foreground bg-card' : 'border-transparent hover:text-foreground'
           }`}
         >
@@ -338,6 +339,11 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
       <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
         {activeTab === 'creative' && (
           <>
+            <div className="space-y-2">
+              <p className="font-medium text-muted-foreground">分镜画面</p>
+              <ShotImageCell key={shot.id} shot={shot} disabled={isDirty || anyPending} />
+              <p className="text-muted-foreground">{isDirty ? '请先保存镜头修改，再更换画面。' : '点击画面上传或更换，上传后立即保存。'}</p>
+            </div>
             <div>
               <label htmlFor="shot-panel-frame" className="block text-muted-foreground mb-1 font-medium">分镜图框</label>
               <Input

@@ -6,7 +6,7 @@ import { Button, Icons } from '@frameforge/ui';
 import { useUploadPanelImage } from '@/lib/hooks/useProduction';
 import { ShotPanelImage } from './ShotPanelImage';
 
-export function ShotImageCell({ shot }: { shot: Shot }) {
+export function ShotImageCell({ shot, disabled = false }: { shot: Shot; disabled?: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const upload = useUploadPanelImage(shot.production_id);
   const [error, setError] = useState<string | null>(null);
@@ -18,12 +18,13 @@ export function ShotImageCell({ shot }: { shot: Shot }) {
         type="file"
         accept="image/png,image/jpeg,image/gif,image/webp"
         hidden
+        disabled={disabled || upload.isPending}
         tabIndex={-1}
         aria-label={`镜头 ${shot.display_number} 分镜画面文件`}
         onChange={event => {
           const file = event.target.files?.[0];
           event.target.value = '';
-          if (!file) return;
+          if (!file || disabled || upload.isPending) return;
           setError(null);
           void upload.mutateAsync({ shot, file }).catch(cause => {
             setError(cause instanceof Error ? cause.message : '上传失败');
@@ -34,7 +35,7 @@ export function ShotImageCell({ shot }: { shot: Shot }) {
         type="button"
         variant="outline"
         size="sm"
-        disabled={upload.isPending}
+        disabled={disabled || upload.isPending}
         aria-label={`${shot.panels?.some(panel => panel.asset_id) ? '更换' : '上传'}镜头 ${shot.display_number} 分镜画面`}
         title="上传或更换分镜画面"
         onClick={event => { event.stopPropagation(); inputRef.current?.click(); }}
