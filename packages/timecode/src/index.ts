@@ -131,6 +131,13 @@ export function calculateVOTiming(
   weights = DEFAULT_PUNCTUATION_WEIGHTS,
   minFrames = Math.round(fps * 0.8)
 ): VOTimingInput[] {
+  if (!Number.isSafeInteger(targetDurationFrames)) {
+    throw new RangeError('targetDurationFrames must be a safe integer');
+  }
+  if (!Number.isSafeInteger(minFrames) || minFrames < 0) {
+    throw new RangeError('minFrames must be a non-negative integer');
+  }
+
   const lockedTotalFrames = shots
     .filter(s => s.locked)
     .reduce((sum, s) => sum + s.duration_frames, 0);
@@ -138,7 +145,8 @@ export function calculateVOTiming(
   const unlockedShots = shots.filter(s => !s.locked);
   if (unlockedShots.length === 0) return shots;
 
-  const availableFrames = Math.max(unlockedShots.length * minFrames, targetDurationFrames - lockedTotalFrames);
+  const availableFrames = targetDurationFrames - lockedTotalFrames;
+  const minimumTotal = unlockedShots.length * minFrames;
 
   // Calculate weights for each unlocked shot
   const weightsList = unlockedShots.map(s => {
@@ -164,20 +172,23 @@ export function calculateVOTiming(
     return { base: charCount, pauses: pauseFrames, total: totalWeight };
   });
 
-  const sumWeights = weightsList.reduce((acc, w) => acc + w.total, 0) || unlockedShots.length;
-
-  // Largest remainder method for integer frame distribution
-  let assigned = 0;
-  const allocations: number[] = [];
-
-  for (let i = 0; i < unlockedShots.length; i++) {
-    if (i === unlockedShots.length - 1) {
-      allocations.push(Math.max(minFrames, availableFrames - assigned));
-    } else {
-      const share = Math.max(minFrames, Math.round((weightsList[i].total / sumWeights) * availableFrames));
-      allocations.push(share);
-      assigned += share;
-    }
+  let allocations: number[];
+  if (availableFrames < minimumTotal) {
+    // Keep locked durations and the per-shot minimum; the caller detects the
+    // infeasible target because the proposed total remains above the target.
+    allocations = unlockedShots.map(() => minFrames);
+  } else {
+    const extraFrames = availableFrames - minimumTotal;
+    const sumWeights = weightsList.reduce((acc, w) => acc + w.total, 0) || unlockedShots.length;
+    const shares = weightsList.map((weight, index) => {
+      const exact = (weight.total / sumWeights) * extraFrames;
+      const floor = Math.floor(exact);
+      return { index, floor, remainder: exact - floor };
+    });
+    let framesLeft = extraFrames - shares.reduce((sum, share) => sum + share.floor, 0);
+    const byRemainder = [...shares].sort((a, b) => b.remainder - a.remainder || a.index - b.index);
+    allocations = shares.map(share => minFrames + share.floor);
+    for (let i = 0; i < framesLeft; i++) allocations[byRemainder[i].index] += 1;
   }
 
   // Apply back to unlocked shots
