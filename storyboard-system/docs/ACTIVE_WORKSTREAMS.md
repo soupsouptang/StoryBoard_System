@@ -21,6 +21,7 @@
 | 主/辅制作方式 | 独立分组入口、表格跨组/筛选/徽标、Inspector 辅助方式保存、Review 去重展示复用同一方法读模型；跨组选择去重；合成回归和 Web build/typecheck 通过 | 1440 明暗布局及真实 API 辅助保存/跨组跳转已检查；独立组列表右键菜单仍待补齐，完整视觉对等未通过。卡/墙/时间线仅主方式符合功能基线 |
 | 制作概览 | 恢复独立导航与基线四项真实统计；主/辅方式去重入组，AE/VFX 保持基线任务相加口径；空数据与请求失败区分；组件回归、Web typecheck 通过 | 1440 明暗四项卡片与真实 3/2/0/1 统计已检查；完整视觉对等仍未通过，未新增额外 KPI |
 | 真实资产读模型 | 项目资产列表返回真实文件元数据；Panel/link 合并按活动 Shot 去重；内容读取遵守项目读权限与删除状态；单项隔离 API 合同及保护库哈希检查通过 | INTEGRATED_NOT_CUT_OVER；独立上传、清理与持久媒体迁移仍未齐 |
+| Panel 图片上传服务拆分 | 上传路由保留鉴权、文件解析与 HTTP 映射；PanelMediaService 承接 Shot/revision、Panel/Asset/link/audit 和文件事务回滚；py_compile 与无应用/数据库导入的格式、版本、确认/失败文件清理检查通过 | INTEGRATED_NOT_CUT_OVER；本次仅服务拆分，未执行数据库测试或 PostgreSQL cutover，媒体内容读取路由仍待服务收敛 |
 | 素材库真实消费 | 真实资产列表替代 Shot 占位；分类、搜索、元数据、镜头引用数、受权图片预览；上传入口连接镜头制作表；共享 AssetImage 处理取消/回收/目标切换；组件回归及 Web build/typecheck 通过 | 1440 明暗素材网格/预览与搜索空态已检查；独立上传/清理、全媒体及整体视觉对等仍未齐 |
 | 根 UI / Tailwind 4 | 官方 New York v4、default h9、OKLCH neutral、字体权重及 Select/Dialog 兼容；`237c4a6` 已上传。UI 包检查、Web typecheck/build 通过 | BLOCKED_VISUAL；保持原 Shell 与业务布局，未标视觉通过 |
 | Inspector 草稿安全 / 分镜画面 | 按 Shot ID 保留草稿；保存期间切换、失败保留、关闭确认、删除确认及工作面快捷键统一；复用 ShotImageCell 显示/上传首 Panel，dirty/pending 时阻止新增上传；四个分区在 380px 面板两行显示；合成回归与 Web typecheck 通过 | 1440 明暗图片与完整分区标签、草稿禁用上传、真实合成 PNG 上传（revision 4→5）及刷新保留已检查；完整 Inspector 仍 BLOCKED_VISUAL，全字段/多 Panel 对等未齐 |
