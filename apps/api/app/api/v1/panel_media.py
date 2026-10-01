@@ -17,6 +17,7 @@ from app.core.database import get_db
 from app.models.asset import Asset, ShotAssetLink
 from app.models.collaboration import AuditLog
 from app.models.shot import Panel, Shot
+from app.models.production import Production
 from app.models.user import User
 
 router = APIRouter(tags=["Panel Media"])
@@ -114,7 +115,14 @@ async def read_asset_content(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    asset = (await db.execute(select(Asset).where(Asset.id == asset_id, Asset.deleted_at.is_(None)))).scalar_one_or_none()
+    permissions = getattr(getattr(current_user, "role", None), "permissions", None) or {}
+    if not (permissions.get("*") or permissions.get("production.read")):
+        raise HTTPException(403, detail={"code": "FORBIDDEN", "message": "当前账号没有读取项目的权限"})
+    asset = (await db.execute(
+        select(Asset).join(Production, Production.id == Asset.production_id).where(
+            Asset.id == asset_id, Asset.deleted_at.is_(None), Production.deleted_at.is_(None)
+        )
+    )).scalar_one_or_none()
     if asset is None:
         raise HTTPException(404, detail={"code": "NOT_FOUND", "message": "图片不存在"})
     root = MEDIA_ROOT.resolve()
