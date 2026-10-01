@@ -54,7 +54,7 @@ Canonical parity ledgers:
 
 FRAMEFORGE converges toward one canonical target:
 
-- `apps/web` — canonical Web application: Next.js 15 + React 19.
+- `apps/web` — canonical Web application: Next.js 16 + React 19.
 - `apps/api` — canonical backend API: FastAPI + async SQLAlchemy 2.
 - `packages/ui` — canonical `@frameforge/ui`.
 - `packages/types` — canonical shared types.

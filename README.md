@@ -25,7 +25,7 @@
 ```text
 /
 ├── apps/
-│   ├── web/                     # Next.js 15+ App Router, React 19, TypeScript, Tailwind, Zustand
+│   ├── web/                     # Next.js 16 App Router, React 19, TypeScript, Tailwind 4, Zustand
 │   ├── api/                     # FastAPI (Python 3.12+), SQLAlchemy 2, Pydantic v2, Argon2id, JWT
 │   └── worker/                  # Redis + RQ Background Worker for async exports & media processing
 │
