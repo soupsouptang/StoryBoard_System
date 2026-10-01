@@ -2,6 +2,8 @@
 
 This document tracks VNext screen recovery against the accepted FRAMEFORGE product behavior.
 
+2026-10-01 re-audit and full desktop redesign proposal: [shadcn UI roadmap](SHADCN_UI_REDESIGN_ROADMAP_2026-10-01.md). Code checkpoint: `ae62318`; this is not fresh runtime acceptance. Historical approval-status controls are not automatically recovery requirements: the component master specification restricts approval workflows. Preserve comments, versions, diff and per-change accept/reject; map historical statuses separately.
+
 Status vocabulary:
 - VERIFIED
 - IMPLEMENTED_NOT_INTEGRATED
@@ -23,7 +25,7 @@ Status vocabulary:
 | /projects/[id]/timeline | /production/[id]/timeline | IMPLEMENTED_NOT_INTEGRATED | V-Web implementation exists but remains below baseline timeline behavior. |
 | /projects/[id]/storyboard | /production/[id]/storyboard | IMPLEMENTED_NOT_INTEGRATED | V-Web implementation exists but remains below baseline storyboard/wall behavior. |
 | /projects/[id]/deliverables | /production/[id]/deliverables | INTEGRATED_NOT_CUT_OVER | CSV/EDL/OTIO/SRT use real V-API; PDF/Word/layout parity remains incomplete. |
-| /projects/[id]/review | /production/[id]/review | BLOCKED_VISUAL | Persisted comments plus version save/branch/merge/restore and Before–After compare are live, but the screen was rewritten into a version-centric large-card composition and currently lacks the functional-baseline per-shot `提交意见 / 同意 / 驳回` review decision flow. That per-shot Word-style audit flow must return. The removed global approval dashboard remains removed; version accept/restore/merge operations are not substitutes for review decisions. Desktop 1440 visual hierarchy also remains failed. |
+| /projects/[id]/review | /production/[id]/review | BLOCKED_VISUAL | Persisted comments, reply/quote authoring, version operations and Before–After compare have consumers. Historical screenshots show oversized stacked sections; fresh desktop acceptance remains pending. Word-style per-change accept/reject still needs contract and UI parity. Do not equate whole-version accept, per-change audit and historical approval statuses, or restore approval workflows from the old baseline automatically. |
 | /projects/[id]/narration | N/A | BLOCKED | Baseline capability not yet migrated to canonical V-Web. |
 | /projects/[id]/moodboard | N/A | BLOCKED | Baseline capability not yet migrated to canonical V-Web. |
 | /projects/[id]/planning / lighting | N/A | BLOCKED | Baseline scene-planning/lighting capability not yet migrated. |

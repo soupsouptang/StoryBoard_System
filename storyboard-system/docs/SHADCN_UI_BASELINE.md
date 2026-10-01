@@ -426,6 +426,8 @@ Do not restore:
 
 ## 14. Visual acceptance gate
 
+2026-10-01 execution override: the user requires desktop first. Validate the core desktop surfaces at 1440×900 before resuming narrow/mobile QA; the other sizes below are deferred, not current prerequisites. Existing 1440×1000 screenshots remain historical failure evidence. The complete proposed module/control/motion implementation sequence is in [SHADCN_UI_REDESIGN_ROADMAP_2026-10-01.md](SHADCN_UI_REDESIGN_ROADMAP_2026-10-01.md); proposals there do not imply visual acceptance or replace this canonical visual baseline.
+
 A visible slice is not complete after JSX/build only.
 
 Minimum browser evidence for a relevant surface:
