@@ -285,3 +285,91 @@ CREATE TABLE column_layouts (
 | outbox_events | id、production_id/command_id/event_type text、entity_ids JSONB、revision bigint、published_at NULL、attempt integer | unique(project,command,type)；未发布time索引；同事务写提交后发，不含正文/秘密 |
 
 旧 exports 先引用 job/artifact，消费者迁完后变兼容投影并退出，不能长期两套 export 状态机。全套表不是一次上线要求；具体迁移批次、源数据回填与回滚演练尚待完善，见交接文档。schema 确认后才写 Alembic。
+
+## 8. 分阶段迁移运行方案（新增补充；未执行）
+
+本节补齐迁移批次、源数据回填、切换和回滚步骤。它是实施前的操作设计，不表示任何数据库已连接、DDL 已生成、数据已复制或生产已切换。目标环境、数据库类型、schema head、数据量和部署拓扑都须在每次实施前重新只读核对；不得从本方案推测连接地址或复用真实凭据。
+
+### 8.1 迁移前置条件与停止点
+
+| 阶段 | 操作 | 必须保存的机器可读证据 | 停止条件 |
+| --- | --- | --- | --- |
+| M0 环境盘点 | 确认迁移源、目标库类型/版本、连接应用、Alembic heads、存储后端、运行写入者、当前备份策略；只读取元数据，不打印/复制凭据 | 环境类别、schema/head 清单、迁移源与目标表清单、消费者/写入者清单、备份恢复演练结果 | 环境归属不明、存在未纳入的写入者、备份无法恢复、schema 多 head 无解释时停止 |
+| M1 方案锁定 | 将第 4 节 32 项逐一归入 `confirmed_binding`、`raw_source_only` 或 `pending_mapping`；锁定 converter 版本与字段语义；核对现有 FK、唯一约束及 ID 格式 | 带版本的字段映射 CSV/JSON、待确认项表、schema 差异报告、数据字典 | 任一来源列会被静默丢弃、猜测合并或错误地映射到安全字段时停止 |
+| M2 恢复基线 | 对隔离副本生成加密备份和校验摘要；在同版本空环境及带数据副本各演练恢复；记录 purge ledger 的保留与重放入口 | 备份标识/摘要、恢复日志、记录数及引用闭包基线、ledger 重放演练 | 仅有“备份完成”而无恢复证据，或旧备份恢复会重活已 purge 内容时停止 |
+
+真实生产连接、生产 DDL、数据删除、密钥销毁和部署切换不在本补充授权范围内；需另行按当时有效的用户指令执行。隔离副本演练也须使用脱敏数据或合成数据。
+
+### 8.2 Expand：先加目标结构，不改变现有读写 owner
+
+1. 在目标 owner 下为列定义/值、SavedView 布局、row layout、生命周期 ledger、评论 read state、board、media crop、jobs/artifacts、导入导出模板、水印实例、TTS render、receipt/outbox 按 7.2–7.3 拆分 Alembic revisions。每个 revision 只含一种可审阅变化，并记录升级和降级行为。
+2. 首批只添加 nullable 字段、新表、非强制索引及约束；历史数据核对通过后再设置 NOT NULL、唯一约束或 FK。PostgreSQL 大表索引采用可恢复的并发创建路径，Alembic 事务边界须匹配数据库能力；失败后检查并清理 invalid index，再重试。
+3. 变更 `shots`、`saved_views` 等既有表之前先核对实际类型、主键与复合唯一约束。不可因草案 DDL 与模型相似就假定实际库已符合。
+4. 目标代码以只读影子查询或隔离演练开始。写入仍由已登记的当前 owner 负责；禁止应用同时向新旧两套表长期双写。若需变更捕获，只能选定一种短期机制（已存在的变更日志/事务 outbox、经验证的 CDC，或受控写入暂停后的最终增量），记录起止 watermark、重放顺序及移除条件。
+
+### 8.3 Backfill：可重复、可暂停、来源可追踪
+
+迁移按 `production_id` 分批，使用稳定源主键和固定 `source_watermark`。为每批保存 `migration_run_id`、源/目标计数、摘要、开始/结束 watermark、converter/schema 版本与异常计数。作业可从最后一个成功事务边界恢复；相同 run/key 重放应幂等，不能生成重复实体、revision、评论、事件或 artifact。
+
+| 来源类别 | 目标 | 回填约束与特殊处理 |
+| --- | --- | --- |
+| Production / Sequence / Scene / Shot | canonical production、sequence、scene、shot | 保留稳定 ID 与完整项目归属；sort 顺序独立于 display number；TC 用原始 FPS、起点与帧数重建并逐镜校验，不从格式化秒数反推帧 |
+| builtin 字段 / 32 项预设 / custom definition 与 values | `project_columns`、binding、`shot_column_values` | 内建列绑定现有实体属性，不重复写 EAV；预设只产生定义/布局；保留原 definition ID、key、类型、选项及来源；未知项进 `pending_mapping`，原始 header/value 留隔离来源包，不静默丢弃 |
+| ColumnPreference / SavedView / width、order、visibility、freeze | SavedView、`column_layouts`、`view_row_layouts` | 只迁移有有效用户/项目权限的视图；用户私有视图不得自动公开；manual 尺寸原样，旧自动尺寸作为需重测的缓存而不是权威 |
+| Shot/Project snapshot、branch/merge、review/comment/quote | canonical snapshots、comment/event/read state | 保留版本拓扑、revision、作者/时间及有效锚点；纯摘要无法重建的正文引用进入异常队列；read state 按 user+shot 迁移；不能把审阅决策升级成全局审批状态 |
+| Panel、Asset、AssetVersion、ShotAssetLink、thumbnail | canonical media owner、asset references、artifacts | 先导入私有 staging，逐件校验 bytes/hash/MIME/尺寸，再发布 DB 引用；原图与 crop 分离；缩略图可重建但源文件不可丢；校验完成前不释放旧存储副本 |
+| Moodboard / Lighting 聚合 JSON | `creative_boards`、`board_objects`、`board_shot_links` | JSON schema 按版本解析，保留对象 ID、顺序、引用和单位；未知对象进入隔离报告；2D/3D共享对象身份；不对用户未确认的 cm/坐标做有损转换 |
+| Import staging / export / share / job | `import_sessions`、`processing_jobs`、`artifacts`、share owner | 未提交 staging 不变成业务数据；运行中任务重新校验输入版本/授权；旧 share token 不明文迁移，重新签发或撤销；下载成品按新依赖/权限校验再决定迁移或作废 |
+
+值的语义区分 `NULL`、空文本、数值零、`false`、缺列和显式清除；无对应能力时不得填入 0、75 帧、draft 或空字符串作为替代。每个源行都登记 `source_system`、`source_entity_id`、`source_revision`、`migration_run_id` 与 converter 版本；映射索引不允许携带已 purge 的业务正文。
+
+### 8.4 对账、增量与并发控制
+
+每个批次完成后执行以下核对；单项失败即暂停该项目后续批次，修正转换器后用新 run ID 重做该批，保留失败报告：
+
+- 实体逐类计数：源活动/删除/历史数量与目标活动/trashed/purged 数量逐项相等或有具名解释；不把 tombstone 与实体总数混为一项。
+- ID 闭包：Shot、Panel、AssetVersion、Comment、Snapshot、Board 对应关系无悬空 FK；共享媒体的全局引用数与项目引用拆开核算。
+- 内容摘要：规范化且排除明确非业务易变字段后，对各实体/附件计算稳定 digest；错误行提供 source ID，不在日志输出敏感正文。
+- 列核对：32 项、custom column 数、重复 key/binding、来源 header、tombstone、列值、布局引用全部可追溯；每个 pending mapping 有负责人和阻塞理由。
+- 时码核对：每项目 FPS、起始 TC、总帧、每条 shot 的 in/out 与 duration_frames；逐镜帧级比较，禁用浮点秒容差作为唯一标准。
+- revision/历史核对：版本 parent 图无环，version_number 唯一，revision 不回退；无法复用的 revision 映射以独立 `source_revision` 记录，不能伪造目标已连续变更。
+- 附件核对：源/目标 byte size、SHA-256、MIME、thumbnail 派生关系和权限范围；不因相同 hash 跨项目自动公开或共享。
+- 幂等核对：同一批作业重复运行后目标计数、摘要、业务 revision、审计事件数不变；只增加作业运行尝试日志。
+
+若迁移期间源仍有写入，必须持续保存变更 watermark 并按原顺序回放到目标；回放命令用稳定 source event ID 幂等。切换前进入写入冻结窗口，记录最终 watermark，完成最后增量与全部对账。若无可靠增量日志，则保持旧 owner，安排明确的维护窗口；不得依赖周期性全量覆盖来处理竞态。
+
+### 8.5 Cutover：单写 owner 切换
+
+按能力（例如 Shot core、columns/views、Review、media、Boards、Import/Export、TTS/Watermarks）逐项切换，不一次性翻转全站。每一项需准备：
+
+1. 可审阅的消费者表：读路由、写命令、后台 worker、缓存、websocket、导入/导出及管理员工具，各自目标 owner 和回退开关。
+2. 同一版本的兼容 API 契约和权限矩阵；目标服务 commit 后才 ack，outbox 在 commit 后通知；缓存 key 包含 owner/revision/purge epoch。
+3. 切换前 source/target count、digest、FK、revision 与附件报告全部通过；所有现存 command/job/lease 已排空或按合同暂停。
+4. 在冻结窗口提交最终源 watermark，停止旧 owner 写入，启用唯一目标 owner，再做只读 smoke 与一笔隔离合成事务验证。验证失败时先关目标写入，再按 8.6 回退；不允许两端同时接受写入。
+5. 保存开关前后时间、schema heads、构建标识、操作者、报告摘要和每项结果。生产切换另需当时有效授权；本文件不会自动授予。
+
+### 8.6 回退与不可逆操作
+
+| 时段 | 回退方式 | 数据保护 |
+| --- | --- | --- |
+| Expand/Backfill 尚未改变权威写 owner | 停止作业，保持新表不可读写；修正后以新批次续跑。确需移除结构时仅降级无依赖的新 revision | 保留源 owner 与备份；清理迁移临时对象前先确认无引用 |
+| 影子读/对账阶段 | 关闭影子读取，回旧读路径；保留目标数据供分析 | 不把影子错误结果写回源；标记报告和代码版本 |
+| 单能力切换后、无目标写入 | 关目标写入口，恢复旧 owner 读写；检查切换前冻结 watermark | 只在目标未产生业务写入时可直接回切 |
+| 目标 owner 已接受新写入 | 冻结双方写入，按审定的反向事件映射/人工冲突清单回放，验证完成后选定唯一 owner | 不可直接重开旧 owner 并丢弃新事务；没有可逆转换时保持冻结并人工决策 |
+| 永久删除/purge 已逻辑提交 | 不恢复已删除业务值；恢复任何备份/PITR 后必须重放 deletion ledger 并再次清查受控副本 | purge 是有意不可逆。恢复结构不代表恢复业务内容；禁止从旧 snapshot、离线包或 undo 重建 |
+
+每份 runbook 都需包含触发阈值、负责人、冻结入口、恢复步骤与验证命令；真实环境演练前仅能标 `DESIGNED_NOT_TESTED`。若迁移 revision 降级可能丢新写字段或恢复已 purge 内容，禁止提供“安全 downgrade”承诺，应采用向前修复。
+
+### 8.7 交付清单与状态
+
+实施前必须分别产出并由隔离演练证明：
+
+1. schema/head 差异报告和逐 revision expand/backfill/cutover/contract 顺序；
+2. 可机器读取的 source-to-target manifest、converter fixtures 及异常处置清单；
+3. 空库升级、脱敏数据副本回填、重复运行、分批中断续跑、最终增量及恢复的记录；
+4. FK/唯一性/时码/媒体 hash/权限/历史闭包/幂等的前后对账文件；
+5. 每能力单 owner 消费者表、写冻结步骤、回退决定树；
+6. purge preview→logical commit→cleanup 的中断重试及备份 ledger 重放结果；
+7. 在测试环境验证过的旧 owner 消费者清零证据，满足后才能设计 Contract 阶段删除。
+
+当前状态：本节为 **DESIGNED_NOT_TESTED**；没有本轮 Alembic revision、DDL 执行、DB 回填、PostgreSQL 对账、迁移恢复演练或 owner cutover。M0 环境盘点尚未开始；直到获得隔离测试库/脱敏副本并完成恢复证明，所有数据库执行门槛均为 NOT_RUN。任何一项未满足时，应停留在当前 owner，不以“schema 已存在”或“迁移脚本可运行”宣称完成。
