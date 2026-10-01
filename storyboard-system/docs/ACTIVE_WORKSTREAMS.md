@@ -17,9 +17,10 @@
 | Shot 写权限 | 8 个标准写命令统一检查真实角色权限，导入/版本调用传递 actor；审片专用命令仅允许授权状态转换。隔离合成 API 与服务检查 23 项通过 | INTEGRATED_NOT_CUT_OVER；不代表完整项目权限与数据迁移验收 |
 | Shot 右键菜单 | 复用 ShotTableContextMenu；接通单元格复制、换行偏好/保存视图、自定义字段隐藏/归档、新建与废纸篓入口、批量删除确认与失败处理；合成菜单回归、Web typecheck 通过 | BLOCKED_VISUAL；整镜头剪切/复制/粘贴、原子相对插入、核心列归档合同仍待补齐 |
 | Review 三区域 | 镜头队列/真实 Panel 画面/评论版本并列；选择按 Shot ID 保留，提交修订调用版本快照命令，真实角色控制入口，失败保留目标并提示；合成组件回归与 Web build/typecheck 通过 | BLOCKED_VISUAL；Word-style 逐项接受/拒绝与完整自定义字段/制作步骤仍待补齐 |
-| 主/辅制作方式 | 独立分组入口、表格跨组/筛选/徽标、Inspector 辅助方式保存、Review 去重展示复用同一方法读模型；跨组选择去重；合成回归和 Web build/typecheck 通过 | BLOCKED_VISUAL；独立组列表右键菜单与其余卡/墙方式展示仍待逐项验收 |
+| 主/辅制作方式 | 独立分组入口、表格跨组/筛选/徽标、Inspector 辅助方式保存、Review 去重展示复用同一方法读模型；跨组选择去重；合成回归和 Web build/typecheck 通过 | 1440 明暗布局及真实 API 辅助保存/跨组跳转已检查；独立组列表右键菜单仍待补齐，完整视觉对等未通过。卡/墙/时间线仅主方式符合功能基线 |
 | 制作概览 | 恢复独立导航与基线四项真实统计；主/辅方式去重入组，AE/VFX 保持基线任务相加口径；空数据与请求失败区分；组件回归、Web typecheck 通过 | BLOCKED_VISUAL；未新增额外 KPI |
 | 真实资产读模型 | 项目资产列表返回真实文件元数据；Panel/link 合并按活动 Shot 去重；内容读取遵守项目读权限与删除状态；单项隔离 API 合同及保护库哈希检查通过 | INTEGRATED_NOT_CUT_OVER；独立上传、清理与持久媒体迁移仍未齐 |
+| 素材库真实消费 | 真实资产列表替代 Shot 占位；分类、搜索、元数据、镜头引用数、受权图片预览；上传入口连接镜头制作表；共享 AssetImage 处理取消/回收/目标切换；组件回归及 Web build/typecheck 通过 | 1440 明暗素材网格/预览与搜索空态已检查；独立上传/清理、全媒体及整体视觉对等仍未齐 |
 | 根 UI / Tailwind 4 | 官方 New York v4、default h9、OKLCH neutral、字体权重及 Select/Dialog 兼容；`237c4a6` 已上传。UI 包检查、Web typecheck/build 通过 | BLOCKED_VISUAL；保持原 Shell 与业务布局，未标视觉通过 |
 | Inspector 草稿安全 | 按 Shot ID 保留草稿；保存期间切换、失败保留、关闭确认、删除确认及工作面快捷键统一；合成回归与 Web typecheck 通过 | BLOCKED_VISUAL；全字段/多 Panel 对等仍未齐 |
 | VO 帧分配 | 最低帧数与锁定帧先保留，剩余帧按最大余数分配；可行目标总帧精确，不可行目标明确保留超额；timecode build 与合成回归通过 | 算法检查通过；弹窗真实交互另验，非数据库 cutover |

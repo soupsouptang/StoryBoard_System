@@ -73,6 +73,7 @@ export function useUploadPanelImage(productionId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shots', productionId] });
+      queryClient.invalidateQueries({ queryKey: ['assets', productionId] });
       queryClient.invalidateQueries({ queryKey: ['production', productionId] });
     }
   });

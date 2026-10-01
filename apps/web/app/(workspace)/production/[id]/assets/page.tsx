@@ -1,89 +1,77 @@
 'use client';
 
-import { Button, Card, Icons } from '@frameforge/ui';
-
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useProduction, useShots } from '@/lib/hooks/useProduction';
+import { Button, Card, Input, Icons, Dialog, DialogContent, DialogTitle, DialogDescription } from '@frameforge/ui';
+import { useAssets } from '@/lib/hooks/useAssets';
+import { AssetImage } from '@/components/asset/AssetImage';
+
+const TABS = [
+  { key: 'all', label: '全部素材' }, { key: 'unused', label: '未使用' },
+  { key: 'image', label: '图片' }, { key: 'video', label: '视频' }, { key: 'other', label: '其他文件' }
+] as const;
 
 export default function AssetsPage() {
   const params = useParams();
   const id = typeof params?.id === 'string' ? params.id : '';
-
-  const { data: production } = useProduction(id);
-  const { data: shots = [] } = useShots(id);
-
-  const [activeTab, setActiveTab] = useState<'all' | 'storyboard' | 'stock' | 'reference' | 'proxy'>('all');
+  const { data: assets = [], isLoading, error, refetch } = useAssets(id);
+  const [tab, setTab] = useState<typeof TABS[number]['key']>('all');
   const [search, setSearch] = useState('');
-
-  if (!production) return null;
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const selected = assets.find(asset => asset.id === previewId);
+  const matchesTab = (asset: typeof assets[number], key: typeof tab) => key === 'all' ||
+    (key === 'unused' ? asset.reference_shot_count === 0 :
+      key === 'other' ? !/^(image|video)\//.test(asset.mime_type) : asset.mime_type.startsWith(`${key}/`));
+  const filtered = assets.filter(asset => matchesTab(asset, tab) &&
+    `${asset.filename} ${asset.display_name}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
+  const bytes = (value: number) => value < 1024 ? `${value} B` : value < 1024 * 1024 ? `${(value / 1024).toFixed(1)} KB` : `${(value / 1024 / 1024).toFixed(1)} MB`;
 
   return (
-    <div className="flex h-full w-full flex-col p-6 overflow-y-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-base font-bold text-foreground">素材资产库 (Media Asset Hub)</h2>
-          <p className="text-xs text-muted-foreground">
-            集中管理分镜图版、实拍参考、购买素材、视效资产与代理文件
-          </p>
+    <div className="space-y-4 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-lg font-semibold">素材资产库 <span className="ml-2 text-xs font-normal text-muted-foreground">{isLoading || error ? '—' : `${assets.length} 个素材`}</span></h1>
+        <Link href={`/production/${id}/shots`} className="inline-flex h-9 items-center gap-2 rounded-md border border-input px-3 text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><Icons.Images className="h-4 w-4" aria-hidden="true" />上传/替换分镜画面</Link>
+      </div>
+      <p className="text-xs text-muted-foreground">分镜画面可在镜头制作表上传或替换。独立素材上传与清理暂未开放。</p>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+        <div role="group" aria-label="素材分类" className="flex flex-wrap gap-1">
+          {TABS.map(item => <Button key={item.key} variant={tab === item.key ? 'secondary' : 'ghost'} size="sm" aria-pressed={tab === item.key} onClick={() => setTab(item.key)}>
+            {item.label}{!isLoading && !error && <span className="ml-1 text-xs text-muted-foreground">{assets.filter(asset => matchesTab(asset, item.key)).length}</span>}
+          </Button>)}
         </div>
-
-        <Button size="sm">
-          <Icons.Plus className="h-4 w-4" />
-          上传新资产
-        </Button>
+        <Input aria-label="搜索素材" placeholder="搜索素材名称…" value={search} onChange={event => setSearch(event.target.value)} className="w-full sm:w-64" />
       </div>
-
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-border pb-3 mb-6 text-xs">
-        {[
-          { key: 'all', label: '全部资产' },
-          { key: 'storyboard', label: '分镜画面 (80)' },
-          { key: 'stock', label: '待购/已购素材' },
-          { key: 'reference', label: '参考图/气氛图' },
-          { key: 'proxy', label: '审片代理视频' }
-        ].map(tab => (
-          <Button
-            variant="ghost"
-            size="sm"
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key as any)}
-            className={`${
-              activeTab === tab.key
-                ? 'bg-accent text-accent-foreground'
-                : 'text-muted-foreground'
-            }`}
-          >
-            {tab.label}
-          </Button>
-        ))}
-      </div>
-
-      {/* Assets Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {shots.slice(0, 24).map((shot, idx) => (
-          <Card
-            key={shot.id}
-            className="group overflow-hidden hover:border-ring transition cursor-pointer"
-          >
-            <div className="aspect-video bg-gradient-to-br from-muted to-background flex items-center justify-center p-4 text-center">
-              <span className="font-mono text-xl font-bold text-foreground">
-                {shot.display_number}
-              </span>
+      {isLoading ? <p role="status" className="text-sm text-muted-foreground">正在加载素材…</p> : error ? (
+        <div role="alert" className="space-y-2"><p>素材加载失败。</p><Button onClick={() => void refetch()}>重试</Button></div>
+      ) : filtered.length === 0 ? <p className="text-sm text-muted-foreground">{assets.length ? '没有匹配的素材。' : '当前项目暂无素材。'}</p> : (
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          {filtered.map(asset => <Card key={asset.id} className="gap-0 overflow-hidden border-0 bg-transparent py-0 shadow-none">
+            <button type="button" onClick={() => setPreviewId(asset.id)} aria-label={`预览 ${asset.filename}`} className="flex aspect-video w-full items-center justify-center overflow-hidden rounded-md bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              {asset.mime_type.startsWith('image/') ? <AssetImage assetId={asset.id} alt={asset.filename} className="h-full w-full object-contain"><span className="text-xs text-muted-foreground">预览不可用</span></AssetImage> : <Icons.FileDown className="h-6 w-6 text-muted-foreground" aria-hidden="true" />}
+            </button>
+            <div className="space-y-1 pt-2 text-xs">
+              <p className="truncate font-medium" title={asset.filename}>{asset.filename}</p>
+              <p className="text-muted-foreground">{asset.mime_type} · {asset.reference_shot_count} 个镜头引用 · {bytes(asset.file_size)}</p>
+              {asset.width && asset.height && <p className="text-muted-foreground">{asset.width} × {asset.height}</p>}
             </div>
-            <div className="p-3 text-xs space-y-1">
-              <div className="font-bold text-foreground truncate">
-                {shot.name || `镜头 ${shot.display_number} 画面`}
-              </div>
-              <div className="text-[10px] font-mono text-muted-foreground flex justify-between">
-                <span>1920×1080</span>
-                <span>JPG · 250KB</span>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+          </Card>)}
+        </div>
+      )}
+      <Dialog open={Boolean(selected)} onOpenChange={open => { if (!open) setPreviewId(null); }}>
+        <DialogContent className="max-w-3xl">
+          <DialogTitle>{selected?.filename || '素材预览'}</DialogTitle>
+          <DialogDescription>{selected ? `${selected.mime_type} · ${bytes(selected.file_size)} · ${selected.reference_shot_count} 个镜头引用` : ''}</DialogDescription>
+          {selected && <>
+            {selected.mime_type.startsWith('image/') ? <div className="flex max-h-[60vh] min-h-40 items-center justify-center overflow-hidden rounded-md bg-muted"><AssetImage assetId={selected.id} alt={selected.filename} className="max-h-[60vh] max-w-full object-contain"><p className="text-sm text-muted-foreground">无法预览此图片，文件信息仍可查看。</p></AssetImage></div> : <p className="text-sm text-muted-foreground">此文件类型暂不支持预览。</p>}
+            <dl className="grid grid-cols-2 gap-2 text-xs">
+              <dt className="text-muted-foreground">素材类型</dt><dd>{selected.asset_type}</dd>
+              <dt className="text-muted-foreground">来源</dt><dd>{selected.source_type}</dd>
+              <dt className="text-muted-foreground">权利状态</dt><dd>{selected.rights_status || '未提供'}</dd>
+            </dl>
+          </>}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
