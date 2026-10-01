@@ -19,7 +19,10 @@ export default function ProductionsPage() {
 
   const [productions, setProductions] = useState<Production[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
 
   // New production form
   const [name, setName] = useState('');
@@ -33,10 +36,12 @@ export default function ProductionsPage() {
   const fetchProductions = async () => {
     try {
       setLoading(true);
+      setLoadError('');
       const data = await apiClient<Production[]>('/api/v1/productions');
       setProductions(data || []);
     } catch (err) {
       console.error(err);
+      setLoadError(err instanceof Error ? err.message : '载入项目失败');
     } finally {
       setLoading(false);
     }
@@ -48,11 +53,14 @@ export default function ProductionsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isCreating) return;
+    setCreateError('');
     if (Number(startTimecode.slice(-2)) >= fps) {
       setTimecodeError(`帧数必须小于当前帧率 ${fps}`);
       return;
     }
     try {
+      setIsCreating(true);
       const targetFrames = targetSeconds ? Math.round(targetSeconds * fps) : null;
       await apiClient<Production>('/api/v1/productions', {
         method: 'POST',
@@ -70,9 +78,11 @@ export default function ProductionsPage() {
       setShowModal(false);
       setName('');
       setStartTimecode('01:00:00:00');
-      fetchProductions();
-    } catch (err: any) {
-      alert(err.message || '创建项目失败');
+      void fetchProductions();
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : '创建项目失败');
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -100,6 +110,11 @@ export default function ProductionsPage() {
           <div className="py-20 text-center text-xs font-mono text-muted-foreground">
             正在载入项目库...
           </div>
+        ) : loadError ? (
+          <div role="alert" className="rounded-lg border border-destructive/30 p-8 text-center">
+            <p className="mb-4 text-sm text-destructive">载入项目失败：{loadError}</p>
+            <Button size="sm" variant="outline" onClick={() => void fetchProductions()}>重试</Button>
+          </div>
         ) : productions.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border p-12 text-center">
             <p className="text-muted-foreground text-sm mb-4">暂无影视制作项目</p>
@@ -124,7 +139,7 @@ export default function ProductionsPage() {
                     router.push(`/production/${prod.id}/shots`);
                   }
                 }}
-                className="group flex min-h-[90px] cursor-pointer items-center gap-3 p-3 transition hover:bg-accent/40 sm:gap-4 sm:p-4"
+                className="group flex min-h-[90px] flex-row cursor-pointer items-center gap-3 p-3 transition hover:bg-accent/40 sm:gap-4 sm:p-4"
               >
                 <ProjectCover name={prod.name} mediaId={prod.cover_media_id} className="h-12 w-[72px] sm:h-[56px] sm:w-24" />
                 <div className="min-w-0 flex-1 space-y-1.5">
@@ -147,8 +162,8 @@ export default function ProductionsPage() {
       </main>
 
       {/* New Production Dialog — shared shadcn/Radix primitive, functional form preserved. */}
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-lg">
+      <Dialog open={showModal} onOpenChange={open => { if (!isCreating) setShowModal(open); }}>
+        <DialogContent hideCloseButton={isCreating} className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-lg">
           <DialogHeader className="border-b border-border pb-3 pr-8">
             <DialogTitle className="text-sm">{t('newProduction')}</DialogTitle>
             <DialogDescription className="sr-only">
@@ -240,16 +255,19 @@ export default function ProductionsPage() {
                 {timecodeError && <span id="start-timecode-error" role="alert" className="text-xs text-destructive">{timecodeError}</span>}
               </Field>
 
+            {createError && <p role="alert" className="text-xs text-destructive">{createError}</p>}
+
             <DialogFooter className="border-t border-border pt-4">
               <Button
                 variant="outline"
                 type="button"
+                disabled={isCreating}
                 onClick={() => setShowModal(false)}
               >
                 取消
               </Button>
-              <Button type="submit">
-                创建项目
+              <Button type="submit" disabled={isCreating}>
+                {isCreating ? '创建中…' : '创建项目'}
               </Button>
             </DialogFooter>
           </form>

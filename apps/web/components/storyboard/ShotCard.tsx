@@ -37,6 +37,17 @@ export function ShotCard({
 
   const style = getMethodStyle(shot.primary_method);
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget && (e.target as HTMLElement).closest('button, a, input, select, textarea, [role="button"], [role="checkbox"]')) return;
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      onSelect(e as unknown as React.MouseEvent);
+    } else if (e.key === ' ') {
+      e.preventDefault();
+      onInspect();
+    }
+  };
+
   const toggleLock = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
@@ -54,7 +65,11 @@ export function ShotCard({
     <Card
       onClick={onSelect}
       onDoubleClick={onInspect}
-      className={`group relative flex flex-col rounded-lg border bg-card transition-all duration-150 select-none cursor-pointer overflow-hidden ${
+      onKeyDown={handleKeyDown}
+      role="group"
+      tabIndex={0}
+      aria-label={`镜头 ${shot.display_number}，${shot.name || shot.description || '打开镜头详情'}`}
+      className={`group relative flex flex-col gap-0 py-0 rounded-lg border bg-card transition-all duration-150 select-none cursor-pointer overflow-hidden ${
         isSelected
           ? 'border-ring ring-2 ring-ring/50 shadow-lg shadow-foreground/10 bg-accent'
           : 'border-border hover:border-border hover:shadow-md'

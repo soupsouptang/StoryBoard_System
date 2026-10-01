@@ -83,6 +83,12 @@ The Legacy version also confirms that professional density comes from hierarchy 
 
 ---
 
+## 2026-10-01 explicit standards update
+
+The active user requests official latest Tailwind 4 and New York default h9. This supersedes historical Tailwind 3 / 40px control guidance. The root package now adopts the official New York v4 neutral OKLCH theme, 0.625rem radius, default 36px controls, 32px small and 40px large Button variants. Shell dimensions and functional/layout relationships remain unchanged. Fonts remain the approved Satoshi/Sarasa stack; bundled font weights are documented in `packages/ui/README.md`. Select empty-domain and controlled Dialog focus adapters preserve existing consumers. Package checks, Web typecheck and build pass; rendered acceptance remains BLOCKED_VISUAL.
+
+Sources: [Tailwind PostCSS installation](https://tailwindcss.com/docs/installation/using-postcss), [shadcn Tailwind v4](https://ui.shadcn.com/docs/tailwind-v4), [official New York v4 registry](https://github.com/shadcn-ui/ui/tree/main/apps/v4/registry/new-york-v4/ui).
+
 ## 3. Canonical theme tokens
 
 The implementation owner is:
@@ -94,7 +100,7 @@ packages/ui/src/theme.css
 Current baseline tokens include:
 
 ```text
---radius: 0.5rem
+--radius: 0.625rem
 
 --ff-shell-topbar-h: 3.125rem
 --ff-shell-mobile-nav-h: 3.5rem
@@ -169,10 +175,10 @@ Follow the shared shadcn variants:
 
 Baseline sizing:
 
-- default: `h-10`
-- small: `h-9`
-- large: `h-11`
-- icon: `h-10 w-10`
+- default: `h-9`
+- small: `h-8`
+- large: `h-10`
+- icon: `size-9`
 
 Feature pages may use an explicit smaller icon hit target only when the surrounding interaction already supplies adequate target size, such as a table utility control.
 
@@ -180,7 +186,7 @@ Do not globally shrink Button just to make the application appear “professiona
 
 ### Input / TextArea / Select
 
-- default control height: `h-10`;
+- default Input / Select height: `h-9`; Textarea uses `min-h-16`;
 - `rounded-md`;
 - one semantic input border;
 - one focus-visible ring;
@@ -192,10 +198,10 @@ Do not globally shrink Button just to make the application appear “professiona
 
 Use the shared Card geometry:
 
-- `rounded-lg`;
+- `rounded-xl`;
 - one subtle border;
 - `shadow-sm` only where Card elevation is useful;
-- standard content rhythm based on shadcn `p-6` primitives.
+- official v4 `flex flex-col gap-6 py-6`, with `px-6` header/content/footer; existing row/media compositions explicitly keep their layout.
 
 A feature may use tighter internal padding where the product density requires it, but must not redefine Card radius or introduce a different card family.
 

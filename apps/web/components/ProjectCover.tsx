@@ -55,7 +55,7 @@ export function ProjectCover({ name, mediaId, className = '' }: ProjectCoverProp
       <div
         className="pointer-events-none absolute inset-0 z-10"
         style={{
-          background: 'linear-gradient(90deg, rgba(0,0,0,0) 62%, rgb(var(--card)) 128%)'
+          background: 'linear-gradient(90deg, transparent 62%, var(--card) 128%)'
         }}
       />
       <span className="relative z-0 text-base font-semibold leading-none tracking-[0.04em] text-white/80">

@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { Check, ChevronDown } from 'lucide-react';
-import { Select as Choice, Tooltip } from 'radix-ui';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from './components/tooltip';
+import { Select as Choice, SelectTrigger, SelectContent, SelectValue, SelectItem } from './components/select';
 import { Button, type ButtonProps } from './components/button';
 import { Input } from './components/input';
 import { TextArea } from './components/textarea';
@@ -12,21 +12,19 @@ export type { ButtonProps };
 export type IconButtonProps = ButtonProps & { label: string };
 
 export function UIProvider({ children }: React.PropsWithChildren) {
-  return <Tooltip.Provider delayDuration={450}>{children}</Tooltip.Provider>;
+  return <TooltipProvider>{children}</TooltipProvider>;
 }
 
 export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
   function IconButton({ label, className, children, ...props }, ref) {
     return (
       <UIProvider>
-        <Tooltip.Root>
-          <Tooltip.Trigger asChild>
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Button {...props} variant={props.variant ?? 'ghost'} size={props.size ?? 'icon'} ref={ref} aria-label={label} className={className}>{children}</Button>
-          </Tooltip.Trigger>
-          <Tooltip.Portal>
-            <Tooltip.Content className="z-50 max-w-60 rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md" sideOffset={6} collisionPadding={12}>{label}</Tooltip.Content>
-          </Tooltip.Portal>
-        </Tooltip.Root>
+          </TooltipTrigger>
+          <TooltipContent>{label}</TooltipContent>
+        </Tooltip>
       </UIProvider>
     );
   }
@@ -51,24 +49,19 @@ export type SelectProps = {
 };
 
 export function Select({ label, value, options, onChange, disabled, required, name, className }: SelectProps) {
+  // Radix reserves an empty value for clearing; domain forms still accept empty options.
+  let emptyOptionValue = '__frameforge_empty_option__';
+  const optionValues = new Set(options.map(option => option.value));
+  while (optionValues.has(emptyOptionValue)) emptyOptionValue += '_';
+
   return (
-    <Choice.Root value={value} onValueChange={onChange} disabled={disabled} required={required} name={name}>
-      <Choice.Trigger className={cn('flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50', className)} aria-label={label}>
-        <Choice.Value />
-        <Choice.Icon><ChevronDown className="h-4 w-4 opacity-60" aria-hidden="true" /></Choice.Icon>
-      </Choice.Trigger>
-      <Choice.Portal>
-        <Choice.Content className="z-50 max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md" position="popper" sideOffset={5} collisionPadding={12}>
-          <Choice.Viewport>
-            {options.map(option => (
-              <Choice.Item className="relative flex min-h-9 cursor-default select-none items-center rounded-sm py-2 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50" value={option.value} key={option.value} disabled={option.disabled}>
-                <Choice.ItemText>{option.label}</Choice.ItemText>
-                <Choice.ItemIndicator className="absolute left-2"><Check className="h-4 w-4" aria-hidden="true" /></Choice.ItemIndicator>
-              </Choice.Item>
-            ))}
-          </Choice.Viewport>
-        </Choice.Content>
-      </Choice.Portal>
-    </Choice.Root>
+    <Choice value={value} onValueChange={nextValue => onChange(nextValue === emptyOptionValue ? '' : nextValue)} disabled={disabled} required={required} name={name}>
+      <SelectTrigger className={cn('w-full min-w-0', className)} aria-label={label}>
+        <SelectValue placeholder={options.find(option => option.value === '')?.label} />
+      </SelectTrigger>
+      <SelectContent position="popper" collisionPadding={12}>
+        {options.map(option => <SelectItem value={option.value || emptyOptionValue} key={option.value} disabled={option.disabled}>{option.label}</SelectItem>)}
+      </SelectContent>
+    </Choice>
   );
 }

@@ -11,35 +11,35 @@
 :root.dark {
   color-scheme: dark;
 
-  /* shadcn neutral semantic color roles */
-  --background: 10 10 11;
-  --foreground: 250 250 250;
-  --card: 15 15 17;
-  --card-foreground: 250 250 250;
-  --popover: 24 24 27;
-  --popover-foreground: 250 250 250;
-  --primary: 250 250 250;
-  --primary-foreground: 24 24 27;
-  --secondary: 39 39 42;
-  --secondary-foreground: 250 250 250;
-  --muted: 39 39 42;
-  --muted-foreground: 161 161 170;
-  --accent: 39 39 42;
-  --accent-foreground: 250 250 250;
-  --destructive: 214 95 101;
-  --destructive-foreground: 255 255 255;
-  --warning: 214 153 72;
-  --warning-foreground: 255 248 235;
-  --border: 39 39 42;
-  --input: 63 63 70;
-  --ring: 161 161 170;
+  /* Official New York v4 neutral theme: apps/v4/registry/themes.ts. */
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(1 0 0);
+  --warning: rgb(214 153 72);
+  --warning-foreground: rgb(255 248 235);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
 
   /* Keep shadcn/new-york radius geometry canonical. */
-  --radius: 0.5rem;
+  --radius: 0.625rem;
 
   /* FRAMEFORGE typography */
   --font-ui: 'Satoshi', 'Sarasa Gothic SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
-  --font-mono: 'Sarasa Term SC', 'SFMono-Regular', Consolas, Menlo, monospace;
+  --font-mono: var(--font-ui);
 
   /* Shell metrics recovered from the accepted product proportions.
    * They are layout constraints, not a second design system.
@@ -58,36 +58,62 @@
   --ff-motion-fast: 120ms;
   --ff-motion-normal: 180ms;
   --ff-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
 }
 
 :root.light {
   color-scheme: light;
-  --background: 255 255 255;
-  --foreground: 9 9 11;
-  --card: 255 255 255;
-  --card-foreground: 9 9 11;
-  --popover: 255 255 255;
-  --popover-foreground: 9 9 11;
-  --primary: 24 24 27;
-  --primary-foreground: 250 250 250;
-  --secondary: 244 244 245;
-  --secondary-foreground: 24 24 27;
-  --muted: 244 244 245;
-  --muted-foreground: 113 113 122;
-  --accent: 244 244 245;
-  --accent-foreground: 24 24 27;
-  --destructive: 185 28 28;
-  --destructive-foreground: 255 255 255;
-  --warning: 161 98 7;
-  --warning-foreground: 69 26 3;
-  --border: 228 228 231;
-  --input: 228 228 231;
-  --ring: 161 161 170;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
+  --warning: rgb(161 98 7);
+  --warning-foreground: rgb(69 26 3);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
 body {
-  background: rgb(var(--background));
-  color: rgb(var(--foreground));
+  background: var(--background);
+  color: var(--foreground);
   font-family: var(--font-ui);
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
@@ -99,5 +125,23 @@ body {
   :root.light {
     --ff-motion-fast: 0ms;
     --ff-motion-normal: 0ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot='button'],
+  [data-slot='input'],
+  [data-slot='textarea'],
+  [data-slot='select-trigger'],
+  [data-slot='checkbox'],
+  [data-slot='dialog-overlay'],
+  [data-slot='dialog-content'],
+  [data-slot='popover-content'],
+  [data-slot='dropdown-menu-content'],
+  [data-slot='dropdown-menu-sub-content'],
+  [data-slot='select-content'],
+  [data-slot='tooltip-content'] {
+    animation: none !important;
+    transition: none !important;
   }
 }

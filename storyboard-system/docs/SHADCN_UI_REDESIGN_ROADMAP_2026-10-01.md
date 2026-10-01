@@ -28,7 +28,7 @@
 | 当前实现 | `ae62318` 的真实消费者、服务、持久化 | 已有功能保留；未接通不得用静态控件伪装 |
 | 本计划 | 新布局、控件组合与阶段提案 | 新的尺寸建议、阶段安排不等于已有实现或已接受视觉稿 |
 
-shadcn 提供可拥有、可组合的组件源码，不自动决定 FrameForge 的业务布局。项目锁定现有 new-york 基线；不因官网新组件或新默认值就整体升级依赖、换风格或改用另一套 primitive 后端。[官方说明](https://ui.shadcn.com/docs)
+shadcn 提供可拥有、可组合的组件源码，不自动决定 FrameForge 的业务布局。最新用户明确要求 Tailwind 4、官方 New York v4 和 default h9；历史尺寸建议据此更新。现有 Radix 后端、业务布局及功能合同保留。[官方说明](https://ui.shadcn.com/docs)
 
 ### 1.2 必须纠正的既有结论
 
@@ -37,7 +37,7 @@ shadcn 提供可拥有、可组合的组件源码，不自动决定 FrameForge �
 | A01 | 上轮将逐镜头“提交意见 / 同意 / 驳回”全部判为必恢复；旧版确有这些状态，但总规范 §6 明确限制审批流程 | 不再把旧状态按钮当作无条件恢复项。确定保留评论、版本、Before/After、Word-style 逐条接受/拒绝；旧状态迁移映射列入语义待核，不新增审批流 |
 | A02 | Review 已有回复和引用草稿代码；master 已包含相关合并 | 不再把回复/引用一概写成不存在；标记代码已接入、真实行为待验收 |
 | A03 | 项目封面已读取受权媒体并有 fallback | 不再写成只支持 monogram；检查真实图片、缺图、加载失败 |
-| A04 | 新建镜头按钮恢复，但 `shots/page.tsx` 覆盖 `size=sm` 为 `h-8`；场次用 ID 生成名称，镜号为数量+1 | 仅算入口恢复。统一 36px 小按钮；接真实场次读模型；处理空场次、删除后的编号、重复编号与再次打开表单 |
+| A04 | 新建镜头按钮恢复，但 `shots/page.tsx` 覆盖 `size=sm` 为 `h-8`；场次用 ID 生成名称，镜号为数量+1 | 仅算入口恢复。采用官方 default 36px / sm 32px 按钮；接真实场次读模型；处理空场次、删除后的编号、重复编号与再次打开表单 |
 | A05 | `NewShotModal` 用初始 props 初始化表单，需核对异步加载/重新打开；失败仍调用 alert | 保留草稿与字段错误；按明确的新建生命周期重置，不随 refetch 清空输入 |
 | A06 | Dialog 有 Radix owner，但当前根实现没有 open/close 状态动效；theme 有 120/180ms token 不等于所有控件已采用 | 统一根包动效 token、data-state、reduced-motion 与退出生命周期 |
 | A07 | master 项目设置仍调用 alert/confirm，删除文案同时写“归档/删除”“不可逆”“数据仍保留” | 必须对照服务真实生命周期改名与确认文案；用共享反馈/AlertDialog |
@@ -132,8 +132,8 @@ shadcn 提供可拥有、可组合的组件源码，不自动决定 FrameForge �
 
 | 控件组 | 统一规则 | 本轮后续工作 |
 | --- | --- | --- |
-| Button/IconButton | 根 variant；default 40px、sm 36px、lg 44px、icon 40px；主/次/危险分层；loading 不改变宽度 | 清点页面 h-6/h-7/h-8 覆盖；仅明确表格 utility 可例外 |
-| Input/Textarea/Field | 40px 单行输入；有 label、说明、错误；多行 Enter 换行 | IME composition 不触发保存；沿用 Ctrl/Cmd+Enter；草稿失败不丢 |
+| Button/IconButton | 根 variant；default 36px、sm 32px、lg 40px、icon 36px；主/次/危险分层；loading 不改变宽度 | 清点页面 h-6/h-7/h-8 覆盖；仅明确表格 utility 可例外 |
+| Input/Textarea/Field | 36px 单行输入；有 label、说明、错误；多行 Enter 换行 | IME composition 不触发保存；沿用 Ctrl/Cmd+Enter；草稿失败不丢 |
 | Select/Combobox | 固定枚举 Select，真正大列表才用可搜索组合控件 | 场次用真实名称/编号，空数据与加载有状态；不伪造选项 |
 | Checkbox/Switch | 多选与全选中间态清楚；Switch 只用于即时生效布尔属性 | 动作失败恢复/说明；不可拿 Switch 当提交按钮 |
 | Table | Renderer 与 temporary editor 分开，sticky/scroll 单一 owner | 根 Table 外观+现有业务模型；不为采用 Data Table 示例重写全部排序状态 |

@@ -44,8 +44,21 @@ export function WallView({
             key={shot.id}
             onClick={e => onSelectShot(shot.id, e)}
             onDoubleClick={() => onInspectShot(shot.id)}
+            onKeyDown={e => {
+              if (e.target !== e.currentTarget && (e.target as HTMLElement).closest('button, a, input, select, textarea, [role="button"], [role="checkbox"]')) return;
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                onSelectShot(shot.id, e as unknown as React.MouseEvent);
+              } else if (e.key === ' ') {
+                e.preventDefault();
+                onInspectShot(shot.id);
+              }
+            }}
+            role="group"
+            tabIndex={0}
+            aria-label={`镜头 ${shot.display_number}，${shot.name || shot.description || '选择镜头或打开详情'}`}
             title={`[${shot.display_number}] ${shot.name || ''}\n${shot.description || ''}\nVO: ${shot.voice_over || '无'}`}
-            className={`group relative flex flex-col rounded-md border bg-card overflow-hidden cursor-pointer transition-all duration-150 ${
+            className={`group relative flex flex-col gap-0 py-0 rounded-md border bg-card overflow-hidden cursor-pointer transition-all duration-150 ${
               isSelected
                 ? 'border-ring ring-2 ring-ring shadow-lg shadow-foreground/20 scale-[1.02] z-10'
                 : 'border-border hover:border-border hover:scale-[1.01]'
