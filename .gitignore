@@ -23,6 +23,7 @@ apps/api/media/
 node_modules/
 dist/
 .next/
+apps/web/next-env.d.ts
 *.tsbuildinfo
 
 # OS
