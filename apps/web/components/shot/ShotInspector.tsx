@@ -396,6 +396,16 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
                 placeholder="导演特别要求与注意事项..."
               />
             </div>
+            {([
+              ['dialogue', '角色对白 (Dialogue)'],
+              ['subtitle', '画面字幕 (Subtitle)'],
+            ] as const).map(([field, label]) => (
+              <div key={field}>
+                <label htmlFor={`shot-${field}`} className="block text-muted-foreground mb-1 font-medium">{label}</label>
+                <TextArea id={`shot-${field}`} rows={2} value={formData[field] || ''}
+                  onChange={event => handleFieldChange(field, event.target.value)} />
+              </div>
+            ))}
           </>
         )}
 
@@ -456,6 +466,16 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
                 placeholder="例如：ARRI Alexa Mini + 航拍无人机"
               />
             </div>
+            {([
+              ['action', '人物与镜头动作 (Action)'],
+              ['composition', '构图要求 (Composition)'],
+            ] as const).map(([field, label]) => (
+              <div key={field}>
+                <label htmlFor={`shot-${field}`} className="block text-muted-foreground mb-1 font-medium">{label}</label>
+                <TextArea id={`shot-${field}`} rows={3} value={formData[field] || ''}
+                  onChange={event => handleFieldChange(field, event.target.value)} />
+              </div>
+            ))}
           </>
         )}
 

@@ -130,6 +130,23 @@ const edit = value => input().props.onChange({ target: { value } });
   const methodSave = button('保存').props.onClick();
   assert.equal(lastSave.id, 'A');
   assert.equal(JSON.stringify(lastSave.changes.secondary_methods), '["ae"]');
-  resolveSave({ ...a, name: 'A survives delete', secondary_methods: ['ae'], revision: 5 }); await methodSave;
+  const savedA = { ...a, name: 'A survives delete', secondary_methods: ['ae'], revision: 5 };
+  resolveSave(savedA); await methodSave; render(savedA);
+  button('画面与旁白').props.onClick(); render(savedA);
+  const field = name => find(node => node.props.id === `shot-${name}`);
+  field('dialogue').props.onChange({ target: { value: '合成对白' } }); render(savedA);
+  field('subtitle').props.onChange({ target: { value: '合成字幕' } }); render(savedA);
+  button('摄影与构图').props.onClick(); render(savedA);
+  field('action').props.onChange({ target: { value: '向左走' } }); render(savedA);
+  field('composition').props.onChange({ target: { value: '左侧三分线' } }); render(savedA);
+  const detailSave = button('保存').props.onClick();
+  assert.equal(lastSave.revision, 5);
+  assert.deepEqual(JSON.parse(JSON.stringify(lastSave.changes)), {
+    dialogue: '合成对白', subtitle: '合成字幕', action: '向左走', composition: '左侧三分线'
+  }, 'Detail fields use the existing changed-fields command across section switches');
+  rejectSave(new Error('Synthetic detail failure')); await detailSave; render(savedA);
+  assert.equal(field('action').props.value, '向左走', 'Failed detail save retains its draft');
+  button('画面与旁白').props.onClick(); render(savedA);
+  assert.equal(field('dialogue').props.value, '合成对白');
   console.log('Inspector synthetic save/close/delete and secondary-method regression passed');
 })().catch(error => { console.error(error); process.exitCode = 1; });
