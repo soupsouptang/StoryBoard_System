@@ -43,6 +43,6 @@
 
 ## 判定规则
 
-核心页面布局错、功能入口缺、假动作、字段丢失、保存/同步失败、图拉伸或时码不一致任一存在即 FAIL。未跑项写 NOT_RUN，不推断 PASS。所有核心桌面页面及其对应持久化/同步证明通过后才允许讨论 cutover；Legacy 的真实消费者迁移完成前不能清理旧 owner。
+核心页面布局错、功能入口缺、假动作、字段丢失、保存/同步失败、图拉伸或时码不一致任一存在即 FAIL。未跑项写 NOT_RUN，不推断 PASS。所有核心桌面页面及其对应 VNext 持久化/同步证明通过后再讨论 VNext 上线；Legacy 消费者/API/数据库 parity 不再是上线或清理门槛。清理 Legacy 前仅需确认所需产品行为已提取，并保留/验证便携工程 exporter → VNext importer bridge。
 
 截图原始目录约定：工作区 `outputs/screenshots/YYYY-MM-DD/desktop-acceptance`，只新增、不自动删除。公开目录为 `docs/audits/visual-evidence/YYYY-MM-DD`；不上传真实工作簿、私有地址、密码、token、浏览器书签栏或诊断环境文件。

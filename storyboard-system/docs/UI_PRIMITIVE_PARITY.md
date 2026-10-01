@@ -1,6 +1,6 @@
 # UI primitive parity ledger
 
-更新基线：2026-09-29。**视觉/primitive 基线是 [SHADCN_UI_BASELINE.md](SHADCN_UI_BASELINE.md) 所定义的 shadcn/ui `new-york` + neutral semantic theme；功能/交互基线是 `5e86a0b`，实现目标是当前 `master`。** 旧 owner 是 `storyboard-system/packages/ui`；新 owner 是仓库根 `packages/ui`。迁移时保留 `5e86a0b` 的真实能力，但以 shadcn/Radix 的视觉、focus、overlay 和 accessibility 语义重建，不复制 Legacy CSS。消费者数量指直接导入该控件的 TSX 模块数；V = `apps/web`，L = `storyboard-system/src/workspace`。
+更新基线：2026-10-02。**视觉/primitive 基线是 [SHADCN_UI_BASELINE.md](SHADCN_UI_BASELINE.md) 所定义的 shadcn/ui `new-york` + neutral semantic theme；功能/交互基线是 `5e86a0b`，实现目标是当前 `master`。** Legacy primitive 只作行为参考，不要求 VNext API/component 兼容，也不要求旧工作区改为消费根包。VNext 以 shadcn/Radix 的视觉、focus、overlay 和 accessibility 语义原生重建，不复制 Legacy CSS。
 
 | Primitive | Old owner / L 消费数 | New owner / V 消费数 | API compatibility | Visual compatibility | Focus behavior | Accessibility | Tests / evidence | Cutover |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -17,4 +17,4 @@
 | Icons | Legacy 手写 svg | root (lucide-react) / 全站 | Lucide 图标集导出 | 单一图标系统，语义化尺寸 | 无独立焦点 | aria-hidden | V-Web 全站实装 | INTEGRATED_NOT_CUT_OVER |
 | Popover / DropdownMenu / Dialog | Legacy / 2 / 1 / 0 | root primitives；V 列管理/表格右键/项目创建/新镜头/废纸篓已真实消费 | Radix portal/collision/controlled open 统一；Dialog/DropdownMenu/Popover 由根包单一 owner 提供 | shadcn `new-york` 比例、neutral surface、默认 radius；不复制 Legacy overlay CSS | Escape、外点、focus return 由 Radix 承担；表格右键显式恢复触发点焦点 | dialog/menu/trigger/content 语义已接入；仍需浏览器无障碍回归 | V-Web 已有三类真实 overlay consumer；代码构建证据已有，1440/375/320 rendered focus/collision 尚待 | INTEGRATED_NOT_CUT_OVER |
 
-删除 Legacy 同名包前，必须完成根包 primitive parity，旧工作区改为消费根包，并让 `storyboard-system npm run check` 与 `apps/web build`、实际浏览器焦点和视觉测试同时通过。未达到门槛前两个 source tree 保留，禁止宣称 `CUT_OVER`。
+Legacy 同名包不再需要迁到根包或保持 API 兼容。根 `packages/ui` 只需满足 VNext 真实消费者、浏览器焦点/可访问性/视觉测试；Legacy runtime 退役时可一并删除旧 UI 包。便携工程 exporter 若不依赖该 UI 包，不构成保留理由。

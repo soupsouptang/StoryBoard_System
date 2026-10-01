@@ -1,16 +1,27 @@
-# FrameForge 架构迁移契约（审计修正版）
+# FrameForge VNext 原生重构契约（Legacy 兼容范围收窄）
 
-> 审计/重写日期：2026-09-29（Convergence & Cutover 补核）
-> 文档类型：执行级迁移契约  
-> 当前状态：本地迁移实施中；生产环境保持现状；用户已暂停部署  
-> 当前已配置的 Legacy 服务基线：Python 标准库 HTTP + SQLite + 静态前端/过渡 React；仓库同时已有 `apps/api`、`apps/web`、根 `packages/*` 的 VNext 实现，尚未统一运行 owner
+> 审计/重写日期：2026-10-02（VNext-native rebuild 决策覆盖）
+> 文档类型：执行级重构契约  
+> 当前状态：VNext 原生重构；生产环境保持现状；用户已暂停部署  
+> 当前已配置的 Legacy 服务基线：Python 标准库 HTTP + SQLite + 静态前端/过渡 React；该运行时不再是 VNext 的兼容目标，仅保留为功能参考和临时工程导出桥接
 > 关联文档：`ARCHITECTURE.md`、`LIFECYCLE_ARCHITECTURE_PLAN.md`  
-> 文档职责：本文件只负责**从当前事实迁移到目标边界的方法、不可变规则、候选技术契约、切换条件、验证与回滚**。当前仓库事实以 `ARCHITECTURE.md` 为准；产品/实体生命周期阶段编号以 `LIFECYCLE_ARCHITECTURE_PLAN.md` 为准。
+> 文档职责：本文件只负责**从当前事实重构到 VNext 目标边界的方法、不可变规则、Legacy 工程文件桥接、验证与退役条件**。当前仓库事实以 `ARCHITECTURE.md` 为准；产品/实体生命周期阶段编号以 `LIFECYCLE_ARCHITECTURE_PLAN.md` 为准。
 > 统一 owner、并行实现和切换门槛见 [CANONICAL_OWNER_MATRIX.md](CANONICAL_OWNER_MATRIX.md)。下文 2026-09-27 的“当前/尚未开始/占位”审计表述，以该矩阵和本轮状态补核为准，不可读作 2026-09-29 的最新事实。
 
 ---
 
-# 1. 为什么需要这份迁移契约
+## 0. 2026-10-02 覆盖性决策
+
+以下规则覆盖本文中更早的 Legacy 迁移/cutover 设计：
+
+- **不迁移 Legacy SQLite 数据库，也不迁移旧工程数据。**
+- **不兼容 Legacy API、session、路由、客户端或运行时。**
+- VNext 直接以 `apps/web` + `apps/api` + PostgreSQL/Alembic 为唯一目标架构；旧系统只作为功能/交互证据。
+- 唯一保留的跨版本兼容面是**文件级工程桥接**：Legacy 导出便携工程文件，VNext 按明确 schema/mapping 导入。
+- 为实现该文件桥接，可以窄范围修改 Legacy exporter 源码、导出 schema 与对应测试；不得因此恢复双写、旧 API 兼容层或数据库 backfill。
+- 本文后续凡涉及 SQLite→PostgreSQL 数据回填、旧 API 路由对等、双 owner cutover、旧项目原地升级的旧设计，均标记为 **RETIRED / DO NOT EXECUTE**；保留文字仅供历史审计。
+
+# 1. 为什么需要这份重构契约
 
 FrameForge 当前不是一个可以通过“一次性重写”安全替换的系统。
 
@@ -30,7 +41,7 @@ SQLite 当前数据库
 真实 Excel / PDF / Word / 交付流程
 ```
 
-因此迁移的核心不是：
+因此重构的核心不是：
 
 ```text
 换框架
@@ -41,14 +52,12 @@ SQLite 当前数据库
 而是：
 
 ```text
-确认真实入口
-→ 固定现有契约
-→ 明确状态和数据所有权
-→ 迁移一条真实调用链
-→ 新路径接管
-→ 证明旧路径无消费者
-→ 删除旧实现
-→ 回归与回滚演练
+从 `5e86a0b` 与现有文档提取仍需保留的产品能力
+→ 在 VNext 中按新架构原生实现
+→ 用 VNext 自身合同/浏览器/文件往返验收
+→ 固化 Legacy 便携工程导出 schema 与 VNext mapping
+→ 退役 Legacy runtime
+→ 继续只维护 VNext
 ```
 
 本文件的目标是防止以下“伪迁移”：
@@ -715,7 +724,7 @@ AI 不能：
 
 ---
 
-## 4.14 数据库迁移先备份演练
+## 4.14 RETIRED — Legacy 数据库迁移/备份演练（不再执行）
 
 PostgreSQL 或任何高风险 schema 变更前必须：
 

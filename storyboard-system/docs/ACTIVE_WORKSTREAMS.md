@@ -1,25 +1,26 @@
-# FrameForge 并行迁移工作簿
+# FrameForge VNext 原生重构工作簿
 
 ## 2026-10-02 当前协调检查点
 
+- **最新架构决定：停止 Legacy 兼容迁移。旧工程数据库/数据不迁，旧 API/session/runtime 不兼容；VNext 直接原生重构。唯一保留的跨版本兼容面是 Legacy 导出的便携工程文件可被 VNext 映射导入，允许为此窄范围修改 Legacy exporter 源码与测试。**
 - 本地与远端主分支同步到 `2fde7c4` 后，以该SHA完成1440×900桌面现状采集；审计/13张合成截图/流程/工程码协议/基线修订已推送 `751e4b2`。完整UI仍 FAIL / BLOCKED_VISUAL，不部署。
-- [功能/UI/动画计划](FEATURE_UI_PLAN_2026-10-02.md)及[数据库/迁移计划](UI_DATABASE_PLAN_2026-10-02.md)承接最新完整需求；是后续实施合同，不是已完成清单。根 `packages/ui`、API服务、SavedView等现有owner继续复用。
+- [功能/UI/动画计划](FEATURE_UI_PLAN_2026-10-02.md)及[新系统数据库结构计划](UI_DATABASE_PLAN_2026-10-02.md)承接最新完整需求；是后续实施合同，不是已完成清单。根 `packages/ui`、API服务、SavedView等现有owner继续复用。
 - 最新决定：无归档；删除入回收站保留快照，永久删除确认后清除历史内容；基础列默认/预设手加；自定义及自动列宽/行高、全员共享视图；Ctrl/Cmd+C/V及右键向上/向下粘贴，默认V向下，移除duplicate/域剪切；适用交互均设计动画，不新增Reduced motion模式；整行照片封面硬保留。
 - 下方旧日期的归档、九项镜头菜单、宽屏之外验收和旧界面事实均是历史记录，不能覆盖最新决定与本轮截图。
 - 尚未吸收的4条远端治理/对等分支保留至摘取有效增量后再删；14条已清理分支不重复删除。原始截图与本地stash保留，不纳入发布包。
 
 ## 2026-09-30 增量
 
-- 数据库 URL 配对、ProductionService/AuthService 拆分、镜头图片/文字图框、项目封面、项目起始时码和 Alembic head 合并均已上传；GitHub 写权限已恢复。`9611be3` 的 CI、Regression Guard 与 PostgreSQL 空库升级通过，实际数据副本迁移仍未完成。
-- Shot 图片/文字图框恢复切片已接 V-API Panel/Asset 与 V-Web 表、卡、墙；空 SQLite Alembic 升级到最新通过，隔离后端测试通过。媒体默认写入 `apps/api/media/`，可通过 `FRAMEFORGE_MEDIA_DIR` 指向持久目录；生产 cutover 前仍需对象存储或持久卷、旧媒体复制和引用/回滚核验。
-- 项目库现已消费 V-API 的 `cover_media_id` 和受权图片字节读取，缺图时维持原有 Monogram 回退；合成数据浏览器在 1440/1024/768/375/320 宽度验证图片、回退与无横向溢出。仍需持久媒体迁移。
+- 数据库 URL 配对、ProductionService/AuthService 拆分、镜头图片/文字图框、项目封面、项目起始时码和 Alembic head 合并均已上传；GitHub 写权限已恢复。`9611be3` 的 CI、Regression Guard 与 PostgreSQL 空库升级通过，旧数据副本迁移已取消，不再是未完成项。
+- Shot 图片/文字图框恢复切片已接 V-API Panel/Asset 与 V-Web 表、卡、墙；空 SQLite Alembic 升级到最新通过，隔离后端测试通过。媒体默认写入 `apps/api/media/`，可通过 `FRAMEFORGE_MEDIA_DIR` 指向持久目录；VNext 上线前仍需对象存储或持久卷及新系统引用/回滚核验；不复制 Legacy 媒体库。
+- 项目库现已消费 V-API 的 `cover_media_id` 和受权图片字节读取，缺图时维持原有 Monogram 回退；合成数据浏览器在 1440/1024/768/375/320 宽度验证图片、回退与无横向溢出。仍需完成 VNext 持久对象存储接入；不迁 Legacy 媒体。
 - `5e86a0b` 仍是功能基线，根 shadcn/ui 仍是视觉基线。其余表格高级功能、生产步骤、字段生命周期、Narration/Moodboard/Lighting 等尚未恢复，不得宣称整体对等。
 
 ## 2026-10-01 当前 UI 修复
 
 最新 UI 文档与 Review 回复/引用、Shot Table 新建镜头入口已整合；视觉证据保留为 `BLOCKED_VISUAL`，先验收 1440 桌面四个核心面。当前用户要求同步视觉检查，并核对所有 Markdown 要求、组件加载、字体、图标及入口到后端/基线的对应。Luna 会话按互不重叠文件实施，主会话审查后按模块上传。
 
-交接合并与分支收敛见 [审计记录](audits/HANDOFF_MERGE_2026-10-01.md)：独立模块已上传，14 个冗余远端分支已删除并保留归档标签；4 个开放 PR 仍有待整合能力，继续保留。未部署，整体 cutover 未完成。
+交接合并与分支收敛见 [审计记录](audits/HANDOFF_MERGE_2026-10-01.md)：独立模块已上传，14 个冗余远端分支已删除并保留归档标签；4 个开放 PR 仍有待整合能力，继续保留。未部署；VNext 功能/视觉验收仍未完成，Legacy parity/cutover 不再是目标。
 
 | 模块 | 已修复与代码检查 | 视觉/功能验收 |
 | --- | --- | --- |
@@ -75,11 +76,11 @@
 | M0 文档事实与根 AGENTS | 根规则从误追加的 Legacy AGENTS 分离；架构/生命周期/组件规范按并行实现与运行 owner 修正 | VERIFIED（本轮文档盘点） | 新增切片持续按 owner 矩阵同步 |
 | M1 Canonical Owner Matrix | [矩阵](CANONICAL_OWNER_MATRIX.md) 已覆盖 HTTP、持久化、AI/Presence、Workspace 及 UI | VERIFIED（盘点） | 各切片按真实调用链更新状态 |
 | M2 `@frameforge/ui` 收敛 | 已建立 [shadcn UI 基线](SHADCN_UI_BASELINE.md)：`new-york` 几何 + neutral semantic theme 为视觉基线，`5e86a0b` 仅作功能/IA 基线；共享 theme 锁定 50px TopBar、224/64px desktop rail、56px mobile rail、380px Inspector 与 1152px Hub content metrics。TopBar/NavRail/Project Hub 已成为首批真实消费者；Legacy 同名包仍供旧工作区使用 | INTEGRATED_NOT_CUT_OVER | 完成 Shot Table/Inspector/Review 的 rendered 1440/1024/768/375/320 dark/light QA，并继续迁真实 primitive consumers；未有浏览器证据前不得宣称视觉完成 |
-| M3 API/持久化 | `apps/api` 已有路由/SQLAlchemy；[路由对等表](API_ROUTE_PARITY_MATRIX.md) 已建立；V-Web 已真实消费 SRT、EDL、OTIO、CSV 导出并有测试覆盖；Legacy `server.py` 仍是服务配置入口，第二 FastAPI 树并存 | IMPLEMENTED_NOT_INTEGRATED（整体；导出子项已集成） | 路由/事务对等、真实 PostgreSQL 隔离集成、旧 owner 退出 |
+| M3 API/持久化 | `apps/api` 已有路由/SQLAlchemy；[Legacy 路由清单](API_ROUTE_PARITY_MATRIX.md) 仅作功能参考；V-Web 已真实消费 SRT、EDL、OTIO、CSV | IMPLEMENTED_NOT_INTEGRATED（整体；导出子项已集成） | 直接完善 VNext 路由/事务与 PostgreSQL 隔离集成；不做旧 API parity |
 | M4 Web 视图 | `apps/web` 有部分可挂载视图；Legacy `WorkspaceStage` 未从入口挂载 | IMPLEMENTED_NOT_INTEGRATED | 一个视图完成 render/state/request/mutation/save owner 接管 |
 | M5 AI | VNext mock/proposal 为进程内；无持久 Job/真实 Web 消费；接受路径未走普通 Command | BLOCKED | 禁用零外发、provider/job/proposal/人工接受合同 |
 | M6 Presence | VNext service 仍为进程内；canonical V-Web consumer 已主动断开，Redis/WS auth 尚未完成 | BLOCKED | authenticated WS、Redis TTL/pubsub、session_id、多 worker 与重连验收后才能重新接 UI |
-| M7 PostgreSQL | Alembic/asyncpg 代码存在；尚无本轮真实 PG 升级与 SQLite 副本迁移报告 | BLOCKED | empty→head、事务/业务集成与机器可读迁移核验 |
+| M7 PostgreSQL | Alembic/asyncpg 代码存在；Legacy SQLite 数据迁移已取消 | BLOCKED | empty→head、VNext 事务/业务集成；无需 SQLite 副本 backfill |
 
 旧 2026-09-29 “完整 AI/Presence/React”等记录属于实现切片的历史笔记，不能作为当前 cutover 证据。`VNEXT_PROGRESS.md` 已将历史“READY FOR RELEASE”撤出当前状态。当前未部署，也未接触生产数据。未完成的路径继续保留 Legacy owner，不删除迁移源。
 

@@ -2,7 +2,7 @@
 
 状态：2026-09-29，目标栈已有并行实现，运行权尚未完成切换；生产部署仍暂停。本方案的阶段条目是生命周期门槛，不代表其目标 owner 已接管。当前 owner 与缺口见 [CANONICAL_OWNER_MATRIX.md](CANONICAL_OWNER_MATRIX.md)。
 
-两份后续架构要求所提出的模块化单体、FastAPI/PostgreSQL/React 演进、Command/Event、AI Proposal、i18n 和可观测性已细化为 [架构迁移契约](ARCHITECTURE_MIGRATION.md)。该文档区分现有运行事实与目标技术栈，并定义每条迁移的测试、删除旧实现及回滚门槛。
+两份后续架构要求所提出的模块化单体、FastAPI/PostgreSQL/React 演进、Command/Event、AI Proposal、i18n 和可观测性已细化为 [VNext 原生重构契约](ARCHITECTURE_MIGRATION.md)。2026-10-02 起不再迁 Legacy 数据库/API/runtime；旧实现只提供功能参考和便携工程 exporter 桥接。
 
 Legacy 已抽出字段、Shot、导入导出等模块，`server.py` 与 `static/app.js` 仍承载真实服务和视图。根 `apps/api` 已有 FastAPI、SQLAlchemy、Alembic、asyncpg，`apps/web` 已有 Next/React 页面；Legacy 子树还存在独立 FastAPI、仓储、AI、Presence 和 UI 包。这些实现的路由对等、事务语义、真实消费者、PostgreSQL/Redis 集成及旧 owner 退出尚未证明，不能写成完成迁移。真实 Excel、PDF、Word 工作流仍须保护。
 
@@ -14,7 +14,7 @@ Legacy 已抽出字段、Shot、导入导出等模块，`server.py` 与 `static/
 
 | 层 | 唯一所有者 | 允许的状态 | 禁止的交叉依赖 |
 | --- | --- | --- | --- |
-| Domain | 服务端 SQLite/API；客户端规范化 Shot/Field/Asset/Revision/Board 数据 | 实体 ID、版本号、内容、生命周期 | 视图 CSS、抽屉开关、浏览器焦点决定数据内容 |
+| Domain | VNext FastAPI/PostgreSQL；客户端规范化 Shot/Field/Asset/Revision/Board 数据 | 实体 ID、版本号、内容、生命周期 | 视图 CSS、抽屉开关、浏览器焦点决定数据内容 |
 | Workspace UI | 单一 `selectionStore`、`inspectorStore`、`viewStore`、`modalStore`、`layoutStore` | 选中 ID、面板开合/模式、当前视图、最顶层弹窗、面板尺寸 | 选中镜头自动等于打开详情；跨 feature 复用临时面板状态 |
 | Feature UI | Table/Card/Timeline/Review/Narration/Moodboard/Lighting 自己的 adapter | 排序、过滤、局部编辑、当前 revision 或画布相机 | feature 再造全局 Shot、独立改写其他视图数据 |
 | Design system | 目标为仓库根 `packages/ui`；Legacy `storyboard-system/packages/ui` 是迁移源 | 控件语义、键盘焦点、浮层、间距、状态动效 | 同名 `@frameforge/ui` 两套包长期并列 |
@@ -58,11 +58,11 @@ AI 已有 Legacy `ai_system` 与 `apps/api` mock/provider/proposal 两套局部�
 | 阶段 | 交付物和主要文件边界 | 完成门槛 |
 | --- | --- | --- |
 | 0 基线 | `AGENTS.md`、本方案、入口/数据目录/发布清单、桌面与窄屏截图 | 记录 dirty 状态；辨识运行数据、源码、生成物、可删临时文件；生产不变 |
-| 1 UI 与 Motion 基础 | selection/inspector/modal/view/focus 的单一状态契约；共享 Shell/token/motion；`static/app.js` → `src/workspace` 按调用方迁移 | 卡片/时间线不自动弹详情；切视图和删除无泄漏；动效不残留交互层；1440/1024 的键盘/鼠标与浮层截图通过 |
-| 2 Schema 与持久化 | `field_lifecycle.py`、字段 API、view config/localStorage 迁移；ShotQuery/Shot command 集中 | 归档/恢复/永久删除跨重载一致；旧配置不会复活 purged 列；真实 Excel 导入不回归 |
+| 1 UI 与 Motion 基础 | selection/inspector/modal/view/focus 的单一状态契约；共享 Shell/token/motion；按功能基线在 `apps/web` 原生重建，不迁 Legacy DOM/CSS | 卡片/时间线不自动弹详情；切视图和删除无泄漏；动效不残留交互层；1440/1024 的键盘/鼠标与浮层截图通过 |
+| 2 Schema 与持久化 | VNext 字段生命周期、SavedView/布局与 ShotQuery/Shot command 集中；PostgreSQL 空库建模，不迁 Legacy DB | 归档/恢复/永久删除跨重载一致；旧配置不会复活 purged 列；真实 Excel 导入不回归 |
 | 3 业务视图 | Table/Card/Timeline 共用镜头契约，再迁 Review/Narration | 同一编辑在所有视图一致；自动旁白随语速改变总时长且保护手动锁；timeline 长度按时长 |
 | 4 画布与交付 | Moodboard/Lighting 共享 EditorShell 生命周期、独立领域模型；PDF 配置拆维度 | 模式切换释放 WebGL、保存重载、画板自动 fit、横版 PDF 密集字段分页均经浏览器验收 |
-| 5 AI 与清理 | 架构稳定后才接入默认关闭的 AI provider 契约、权限/审计测试；移除已无引用旧代码与静态临时文件 | 关闭时界面零元素、网络零外发；目录清理逐文件证据；发布包无测试表格/数据 |
+| 5 AI 与清理 | 架构稳定后才接入默认关闭的 AI provider 契约、权限/审计测试；保留便携工程 exporter fixture 后退役 Legacy runtime 与静态临时文件 | 关闭时界面零元素、网络零外发；目录清理逐文件证据；发布包无测试表格/数据 |
 | 6 发布（当前暂停） | 可复现发布包、隔离启动、生产对比、备份与回滚记录 | 仅在用户重新授权部署后执行；先完整桌面验收，再处理手机 2D/3D |
 
-每阶段先固定 API/状态不变量，迁移一条真实调用链，删除旧实现，再跑有意义的合同测试和浏览器截图。`npm run check` 会重建 bundle；运行前检查未提交生成物。发布包只包含运行文件；隔离数据下启动后验证健康、登录、核心操作和静态资源。未经用户新指令，阶段 6 不启动。
+每阶段先固定 VNext API/状态不变量，原生实现一条真实调用链并跑有意义的合同测试和浏览器截图；Legacy 无需逐调用链迁移。涉及旧工程时只验证“Legacy 导出文件 → VNext mapping/import”。`npm run check` 会重建 bundle；运行前检查未提交生成物。发布包只包含运行文件；隔离数据下启动后验证健康、登录、核心操作和静态资源。未经用户新指令，阶段 6 不启动。
