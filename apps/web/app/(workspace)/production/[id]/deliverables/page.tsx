@@ -80,7 +80,7 @@ export default function DeliverablesPage() {
   return (
     <div className="mx-auto flex h-full w-full max-w-5xl flex-col space-y-8 overflow-y-auto p-4 sm:p-8">
       <div>
-        <h2 className="text-lg font-bold text-foreground">交付与导出</h2>
+        <h1 className="text-lg font-bold text-foreground">交付导出</h1>
         <p className="text-xs text-muted-foreground">选择导出工业级制作与剪辑格式。</p>
       </div>
 

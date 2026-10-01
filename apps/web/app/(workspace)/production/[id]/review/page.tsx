@@ -441,6 +441,7 @@ export default function ReviewPage() {
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:flex-row">
       <aside className="flex max-h-52 w-full shrink-0 flex-col border-b border-border bg-background lg:max-h-none lg:w-40 lg:border-b-0 lg:border-r">
         <div className="border-b border-border bg-card/60 p-4">
+          <h1 className="mb-2 text-lg font-semibold">审片版本</h1>
           <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
             审片镜头队列 ({shots.length})
           </h3>

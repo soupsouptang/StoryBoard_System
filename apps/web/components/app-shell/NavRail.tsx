@@ -13,7 +13,7 @@ interface NavRailProps {
 export function NavRail({ productionId }: NavRailProps) {
   const pathname = usePathname();
   const t = useAuthStore(s => s.t);
-  const [collapsed, setCollapsed] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
 
   const navItems = [
     {

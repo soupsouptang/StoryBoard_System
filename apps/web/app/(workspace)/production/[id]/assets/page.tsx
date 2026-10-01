@@ -30,7 +30,7 @@ export default function AssetsPage() {
   return (
     <div className="space-y-4 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-lg font-semibold">素材资产库 <span className="ml-2 text-xs font-normal text-muted-foreground">{isLoading || error ? '—' : `${assets.length} 个素材`}</span></h1>
+        <h1 className="text-lg font-semibold">素材资产 <span className="ml-2 text-xs font-normal text-muted-foreground">{isLoading || error ? '—' : `${assets.length} 个素材`}</span></h1>
         <Link href={`/production/${id}/shots`} className="inline-flex h-9 items-center gap-2 rounded-md border border-input px-3 text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><Icons.Images className="h-4 w-4" aria-hidden="true" />上传/替换分镜画面</Link>
       </div>
       <p className="text-xs text-muted-foreground">分镜画面可在镜头制作表上传或替换。独立素材上传与清理暂未开放。</p>

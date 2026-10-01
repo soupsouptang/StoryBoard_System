@@ -57,13 +57,13 @@ export function BulkActionToolbar({ production, allShotIds }: BulkActionToolbarP
     <div
       role="toolbar"
       aria-label="镜头批量操作"
-      className="flex w-full shrink-0 flex-wrap items-center gap-2 border-b bg-muted/30 px-3 py-2.5 text-xs md:px-4"
+      className="flex w-full shrink-0 flex-wrap items-center gap-2 rounded-xl border bg-muted/30 px-3 py-2.5 text-xs md:px-4"
     >
-      <div className="flex shrink-0 items-center gap-2 border-r border-border pr-3">
-        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 font-mono text-[11px] font-bold text-accent-foreground">
-          {selectedShotIds.length}
+      <div className="flex shrink-0 items-center gap-2 pr-3">
+        <span className="flex h-5 w-7 items-center justify-center rounded-md bg-blue-500 px-1 font-mono tabular-nums text-[11px] font-bold text-white">
+          {Math.min(selectedShotIds.length, 99)}
         </span>
-        <span className="font-medium text-foreground">个镜头已选</span>
+        <span className="font-medium text-foreground">点击要修改的列标题或单元格</span>
       </div>
 
       <div className="flex min-w-[240px] flex-1 flex-wrap items-center gap-2">
@@ -190,10 +190,10 @@ export function BulkActionToolbar({ production, allShotIds }: BulkActionToolbarP
             size="sm"
             disabled={isBusy}
             onClick={() => setConfirmingTrash(true)}
-            className="flex h-8 items-center gap-1.5 text-xs"
+            aria-label={`删除 ${selectedShotIds.length} 个镜头`}
+            className="flex h-8 w-[122px] shrink-0 items-center justify-center gap-0.5 text-xs"
           >
-            <Icons.Trash2 className="h-3.5 w-3.5" />
-            移入废纸篓
+            删除<span className="inline-block w-[2ch] text-center font-mono tabular-nums">{Math.min(selectedShotIds.length, 99)}</span><span className="inline-block w-[1em] text-center">{selectedShotIds.length > 99 ? '+' : '个'}</span>镜头
           </Button>
         )}
       </div>

@@ -70,7 +70,7 @@ export default function SettingsPage() {
   return (
     <div className="flex h-full w-full flex-col p-8 overflow-y-auto max-w-4xl mx-auto space-y-8">
       <div>
-        <h2 className="text-lg font-bold text-foreground">项目与管线设置 (Pipeline Settings)</h2>
+        <h1 className="text-lg font-bold text-foreground">项目设置</h1>
         <p className="text-xs text-muted-foreground">
           配置影视制作管线的标准帧率、画幅比例、色彩工作流及团队权限
         </p>

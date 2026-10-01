@@ -82,12 +82,24 @@ const plain = value => JSON.parse(JSON.stringify(value));
 async function main() {
   render();
   assert.equal(selects().length, 3);
-  assert.match(tree.props.className, /shrink-0.*flex-wrap.*border-b.*bg-muted\/30/);
+  assert.match(tree.props.className, /shrink-0.*flex-wrap.*rounded-xl.*border.*bg-muted\/30/);
   assert.ok(!tree.props.className.includes('fixed'));
   assert.ok(selects().every(node => node.props.className === 'w-[170px] min-w-0'));
   assert.deepEqual(plain(select('批量设置制作方式').props.options.map(({ value }) => value)), ['', 'live', 'stock', 'client', 'archive', 'still', 'ae', 'mg', 'three_d', 'vfx', 'type']);
   assert.deepEqual(plain(select('批量设置制作状态').props.options.map(({ value }) => value)), ['', 'draft', 'in_progress', 'review', 'changes_requested', 'approved', 'locked']);
   assert.deepEqual(plain(select('批量设置责任部门').props.options.map(({ value }) => value)), ['', 'camera', 'director', 'production', 'art', 'stock', 'editorial', 'motion', 'three_d', 'vfx', 'sound', 'color']);
+
+  for (const count of [1, 9, 10, 99, 100]) {
+    selectedShotIds = Array.from({ length: count }, (_, i) => `shot-${i}`);
+    render();
+    const deletion = buttons().find(node => node.props['aria-label'] === `删除 ${count} 个镜头`);
+    assert.ok(deletion);
+    assert.match(deletion.props.className, /w-\[122px\]/);
+    assert.ok(textIncludes(count > 99 ? '+' : '个', deletion));
+    assert.ok(!textIncludes('个镜头已选'));
+  }
+  selectedShotIds = ['shot-A', 'shot-C'];
+  render();
 
   select('批量设置制作方式').props.onChange('ae');
   await flush();
@@ -124,13 +136,13 @@ async function main() {
   selectedShotIds = ['shot-A', 'shot-C'];
   render();
 
-  button('移入废纸篓').props.onClick();
+  buttons().find(node => node.props['aria-label'] === '删除 2 个镜头').props.onClick();
   render();
   assert.ok(textIncludes('确认移入废纸篓？'));
   button('取消').props.onClick();
   render();
   assert.ok(!textIncludes('确认移入废纸篓？'));
-  button('移入废纸篓').props.onClick();
+  buttons().find(node => node.props['aria-label'] === '删除 2 个镜头').props.onClick();
   render();
   button('确认').props.onClick();
   await flush();

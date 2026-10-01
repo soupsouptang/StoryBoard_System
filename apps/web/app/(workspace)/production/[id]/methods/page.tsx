@@ -17,12 +17,12 @@ export default function MethodGroupsPage() {
   const locale = useAuthStore(state => state.locale);
   const { selectShot, resetFilters } = useWorkspaceStore();
 
-  if (isLoading) return <div role="status" className="p-4 text-sm text-muted-foreground">正在加载制作方式分组…</div>;
-  if (error) return <div role="alert" className="space-y-3 p-4"><p>制作方式分组加载失败。</p><Button onClick={() => void refetch()}>重试</Button></div>;
+  if (isLoading) return <div role="status" className="p-4 text-sm text-muted-foreground">正在加载制作分类…</div>;
+  if (error) return <div role="alert" className="space-y-3 p-4"><p>制作分类加载失败。</p><Button onClick={() => void refetch()}>重试</Button></div>;
 
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-lg font-semibold">制作方式分组</h1>
+      <h1 className="text-lg font-semibold">制作分类</h1>
       <p className="text-xs text-muted-foreground">主方式和辅助方式均参与分组，同一镜头可出现在多个组。</p>
       {shots.length === 0 ? <p className="text-sm text-muted-foreground">当前项目暂无镜头。</p> : (
         <div className="grid items-start gap-3 lg:grid-cols-2">

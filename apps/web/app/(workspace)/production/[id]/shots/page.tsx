@@ -532,7 +532,7 @@ export default function ShotListPage() {
     .filter(field => field.state === 'visible' && !field.permanently_deleted)
     .sort((a, b) => (a.position - b.position) || (a.sort_index - b.sort_index));
   const tableMinWidth =
-    192 +
+    232 +
     visibleColumns.reduce(
       (sum, column) => sum + tablePresentation.columnWidths[column],
       0
@@ -542,7 +542,7 @@ export default function ShotListPage() {
       0
     );
   const rowPadding = ROW_PADDING[tablePresentation.rowHeight];
-  const tableColumnCount = 2 + visibleColumns.length + visibleCustomFields.length;
+  const tableColumnCount = 3 + visibleColumns.length + visibleCustomFields.length;
 
   const activeFilterCount = [
     filters.primaryMethod !== 'all',
@@ -640,6 +640,7 @@ export default function ShotListPage() {
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
       <div className="z-10 shrink-0 space-y-3 border-b border-border bg-background px-4 py-3">
+        <h1 className="text-lg font-semibold">分镜制作</h1>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-baseline gap-3">
             <ShotViewNavigation productionId={production.id} active="table" count={shots.length} />
@@ -684,12 +685,12 @@ export default function ShotListPage() {
               disabled={!visibleShotIds.length}
               className="shrink-0"
             >
-              全选可见
+              全选所有镜头
             </Button>
 
             {selectedShotIds.length > 0 && (
               <Button variant="ghost" size="sm" onClick={clearSelection} className="shrink-0">
-                清除选择
+                取消选择
               </Button>
             )}
 
@@ -863,6 +864,13 @@ export default function ShotListPage() {
             >
               <thead className="sticky top-0 z-10 border-b border-border bg-card text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
                 <tr>
+                  <th scope="col" className="w-10 px-2 py-2.5">
+                    <input type="checkbox" aria-label="全选所有镜头"
+                      checked={visibleShotIds.length > 0 && visibleShotIds.every(id => selectedShotIds.includes(id))}
+                      ref={element => { if (element) element.indeterminate = visibleShotIds.some(id => selectedShotIds.includes(id)) && !visibleShotIds.every(id => selectedShotIds.includes(id)); }}
+                      onChange={() => visibleShotIds.length > 0 && visibleShotIds.every(id => selectedShotIds.includes(id)) ? clearSelection() : selectAllShots(visibleShotIds)}
+                      className="h-4 w-4 cursor-pointer accent-foreground" />
+                  </th>
                   <th
                     scope="col"
                     tabIndex={0}
@@ -1102,6 +1110,13 @@ export default function ShotListPage() {
                           : ''
                       }`}
                     >
+                      <td className={`w-10 px-2 ${rowPadding}`}>
+                        <input type="checkbox" aria-label={`选择镜头 ${shot.display_number}`} checked={isSelected}
+                          onChange={() => {}}
+                          onClick={event => { event.stopPropagation(); selectShot(shot.id, event.shiftKey, event.ctrlKey || event.metaKey, visibleShotIds); }}
+                          onDoubleClick={event => event.stopPropagation()}
+                          className="h-4 w-4 cursor-pointer accent-foreground" />
+                      </td>
                       <td
                         data-shot-column="display_number"
                         className={`sticky left-0 z-10 w-20 border-r border-border px-2 ${rowPadding} font-mono font-bold text-foreground ${

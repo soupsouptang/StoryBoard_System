@@ -89,8 +89,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       if (startIdx !== -1 && endIdx !== -1) {
         const [low, high] = startIdx < endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
         const range = allIds.slice(low, high + 1);
-        const next = Array.from(new Set([...selectedShotIds, ...range]));
-        set({ selectedShotIds: next, lastSelectedId: id });
+        const next = isCtrlOrCmd ? Array.from(new Set([...selectedShotIds, ...range])) : range;
+        set({ selectedShotIds: next });
         return;
       }
     }
@@ -108,7 +108,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     set({ selectedShotIds: [id], lastSelectedId: id });
   },
 
-  selectAllShots: allIds => set({ selectedShotIds: [...allIds] }),
+  selectAllShots: allIds => set({ selectedShotIds: [...new Set(allIds)], lastSelectedId: allIds[0] ?? null }),
   clearSelection: () => set({ selectedShotIds: [], lastSelectedId: null }),
 
   openInspector: shotId => set({ inspectedShotId: shotId, isInspectorOpen: true }),
