@@ -562,6 +562,21 @@ Avoid parallel libraries for the same architectural responsibility, especially f
 
 Shared packages should reduce duplication, not become hidden global application layers.
 
+### Root package allowlist
+
+The root `packages/` namespace is intentionally closed. The only canonical top-level shared packages are:
+
+- `packages/ui`
+- `packages/types`
+- `packages/contracts`
+- `packages/timecode`
+
+Do not create additional top-level packages such as `common`, `core`, `shared`, `utils`, `hooks`, `domain`, `api-client`, or similar convenience layers by default.
+
+New code belongs in the owning application or one of the four existing packages unless the user explicitly approves a new shared package as an architecture change. Any approved addition must update the package-boundary gate in the same coherent commit.
+
+A new package is not justified merely because code is reusable in theory. Prefer app-local modules until there is a demonstrated cross-application or cross-runtime ownership boundary.
+
 ---
 
 ## 22. Parallel/Sub-Agent Work

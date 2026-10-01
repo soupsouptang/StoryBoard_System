@@ -7,6 +7,7 @@ on:
       - "apps/**"
       - "packages/**"
       - "tests/**"
+      - "tools/**"
       - "storyboard-system/src/**"
       - "storyboard-system/packages/**"
       - "storyboard-system/tests/**"
@@ -24,6 +25,7 @@ on:
       - "apps/**"
       - "packages/**"
       - "tests/**"
+      - "tools/**"
       - "storyboard-system/src/**"
       - "storyboard-system/packages/**"
       - "storyboard-system/tests/**"
@@ -62,6 +64,8 @@ jobs:
           python-version: "3.11"
       - name: Run architecture boundary gate
         run: python storyboard-system/tools/architecture_boundary_gate.py
+      - name: Enforce canonical root packages
+        run: python tools/package_boundary_gate.py
 
   vnext-backend:
     name: VNext API contracts
