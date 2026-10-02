@@ -6,6 +6,8 @@
 > 当前状态：本地重构进行中；生产环境保持现状；用户已暂停部署。  
 > 关联文档：`ARCHITECTURE_MIGRATION.md`、`LIFECYCLE_ARCHITECTURE_PLAN.md`、[CANONICAL_OWNER_MATRIX.md](CANONICAL_OWNER_MATRIX.md)
 > 重要说明：本文件区分当前已配置的 Legacy 服务入口与仓库中已有的 VNext 实现。目标代码存在、被局部测试或在开发入口挂载，都不等于生产运行权已经切换。本轮未探测生产服务。
+>
+> **2026-10-02 最新决策：**VNext 采用原生重构，不迁移 Legacy 数据库/旧工程数据，不兼容 Legacy API/session/runtime。Legacy 仅保留为功能参考及临时“工程文件导出桥接”；允许为该导出合同窄范围修改旧源码。下文描述 Legacy 当前运行事实的段落仍是历史/现状证据，但不再构成 VNext 兼容门槛。
 
 ---
 

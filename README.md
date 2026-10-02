@@ -1,85 +1,172 @@
-# FRAMEFORGE OS · 专业影视分镜与镜头制作管理系统
+# FRAMEFORGE OS
 
-> **Master Specification V1.0 Implementation Ready**  
-> 单公司私有部署、以 Shot 为核心、面向专业影视管线的分镜、镜头规划、制作方式管理、素材版本、审片审批与交付平台。
+专业影视分镜与镜头制作管理系统。当前仓库正在建设 **VNext 原生架构**；旧系统保留为功能参考和便携工程导出来源，不再作为新系统的 API、数据库或运行时兼容目标。
 
----
+## 当前架构原则
 
-## 🌟 核心特性 (Key Features)
+FRAMEFORGE VNext 采用 clean-break 设计：
 
-1. **Shot = Single Source of Truth**：所有视图（分镜卡片板、视觉墙、镜头制作表、时间线、审片审批、工程导出）共享单一镜头实体，杜绝数据孤岛与重复修改。
-2. **SMPTE 帧级精确时码引擎**：支持 `23.976`、`24`、`25`、`29.97 DF/NDF`、`30`、`48`、`50`、`59.94`、`60` fps；基于整数帧存储，零浮点累计漂移。
-3. **智能旁白计时算法 (VO Auto-Timing)**：基于中英文文字量与标点停顿权重（逗号 `+8f`、句号 `+16f`、省略号 `+14f`），通过最大余数法自动平衡总片长，严格保护锁定镜头。
-4. **制作方式精细化管理 (Production Method)**：实拍 (LIVE)、购买素材 (STOCK)、客户素材 (CLIENT)、历史资料 (ARCHIVE)、静帧 (STILL)、AE合成 (AE)、MG动效 (MG)、3D三维 (3D)、视效 (VFX)、字卡 (TYPE)。
-5. **智能 Excel/CSV 导入引擎**：多工作表智能探测，支持别名词典模糊匹配、匹配置信度指示、导入前 Diff 预览与冲突检测。
-6. **工业级多格式工程导出**：一键导出 CMX 3600 EDL (DaVinci/Premiere)、OpenTimelineIO (`.otio`)、SubRip (`.srt`) 旁白字幕及 Excel 制作表。
-7. **不可猜测 Token 匿名审片分享**：免登录访客只读审片页面 (`/share/[token]`)，包含剧场预览监视器、分镜画册 (Cards) 与全片视觉墙 (Wall) 切换、一键打包下载及随时撤销。
-8. **内外网分离与零数据驻留 (Zero-Residency)**：外网节点仅部署静态应用壳与 L4 TLS Passthrough 密文转发，全量业务数据、账号权限及媒体代理均位于公司内网。
-9. **离线设计体系与排版**：100% 离线内嵌 Google Material Symbols SVG Sprite 注册表，采用更纱黑体 (Sarasa Gothic) 等宽数字排版，DaVinci Resolve / Linear 暗黑专业影视调色台风格。
-10. **可插拔 AI Provider 契约层**：当前部署 100% 零 AI 运行与依赖，通过标准化 Provider 契约预留未来剧本拆镜、语音对齐等扩展。
+- **旧数据库不迁移**：不做 SQLite → PostgreSQL 数据回填，也不维持双写。
+- **旧 API 不兼容**：VNext API 只服务新系统，不为旧客户端保留兼容层。
+- **旧运行时不作为发布门槛**：Legacy 代码可以用于核对产品能力，但不能成为 VNext 的长期运行依赖。
+- **保留一个文件级跨版本桥**：旧系统可以导出便携工程文件，VNext 负责解析、映射并导入该文件。为了保证这个导出合同可靠，可以对 Legacy exporter 做窄范围维护。
+- **功能基线仍然有效**：Golden Baseline `5e86a0bb11a20ecd631d9c2af66260a73d7c92e7` 用于防止功能在重建过程中无意丢失；它不是代码、API 或数据库兼容要求。
+- **一个能力只有一个权威 owner**：避免长期并存的第二套状态、写入路径或持久化实现。
 
----
+## Canonical VNext
 
-## 🏗️ 架构与技术栈
+```text
+Browser
+   │
+   ▼
+apps/web
+Next.js 16 + React 19 + TypeScript
+   │
+   ▼
+apps/api
+FastAPI + SQLAlchemy 2
+   │
+   ├── PostgreSQL      durable business data
+   ├── Redis           ephemeral presence / lease / realtime state
+   └── Media storage   assets / exports / generated artifacts
+
+apps/worker
+   └── asynchronous jobs such as export, media processing, TTS and future AI work
+```
+
+仓库的目标边界：
 
 ```text
 /
 ├── apps/
-│   ├── web/                     # Next.js 16 App Router, React 19, TypeScript, Tailwind 4, Zustand
-│   ├── api/                     # FastAPI (Python 3.12+), SQLAlchemy 2, Pydantic v2, Argon2id, JWT
-│   └── worker/                  # Redis + RQ Background Worker for async exports & media processing
+│   ├── web/          # Canonical Web application
+│   ├── api/          # Canonical HTTP/API and application services
+│   └── worker/       # Background jobs
 │
 ├── packages/
-│   ├── timecode/                # SMPTE Frame-accurate Engine & VO Auto-Timing
-│   ├── types/                   # Domain TypeScript definitions (Production, Shot, Panel, Asset)
-│   ├── ui/                      # Design tokens, Sarasa Gothic, Google Icon Sprite, i18n
-│   └── contracts/               # Standard API Error formats & AI Provider contracts
+│   ├── ui/           # Shared UI primitives and design tokens
+│   ├── types/        # Shared TypeScript domain types
+│   ├── contracts/    # Cross-runtime contracts
+│   └── timecode/     # SMPTE/timecode logic
 │
-├── infra/
-│   ├── docker/                  # Production Dockerfiles (api, web, worker)
-│   └── nginx/                   # Zero-residency external gateway & internal server configs
+├── infra/            # Deployment/runtime infrastructure
+├── tests/            # VNext tests
+├── tools/            # Repository architecture/quality gates
 │
-└── tests/                       # Complete automated unit & integration test suites
+└── storyboard-system/
+    └── Legacy reference + portable-project exporter bridge
 ```
 
----
+## `packages/` 是封闭集合
 
-## 🚀 快速上手 (Quick Start)
+根目录 `packages/` **不是通用代码收纳区**。当前只允许四个顶层共享包：
 
-### 方式 1：Docker Compose 生产编排（推荐）
+```text
+packages/ui
+packages/types
+packages/contracts
+packages/timecode
+```
+
+默认禁止为了“看起来更模块化”继续增加：
+
+```text
+packages/common
+packages/core
+packages/shared
+packages/utils
+packages/hooks
+packages/domain
+packages/api-client
+...
+```
+
+可复用代码应先放在真正拥有它的应用内。只有出现明确、稳定的跨应用或跨运行时所有权边界，并且用户明确批准架构变更后，才允许新增顶层 package。
+
+CI 通过 `tools/package_boundary_gate.py` 对这四个目录做白名单校验；未经批准增加第五个顶层 package 会直接失败。
+
+## Legacy → VNext 工程文件桥
+
+兼容范围只有文件，不是数据库或 API：
+
+```text
+Legacy project
+      │
+      ▼
+Legacy portable export
+      │
+      ▼
+versioned file contract
+      │
+      ▼
+VNext importer / mapper
+      │
+      ▼
+new VNext project in PostgreSQL
+```
+
+要求：
+
+1. Legacy exporter 可以为稳定导出格式做必要修复。
+2. VNext importer 必须显式映射字段和媒体引用，不直接读取旧数据库。
+3. 导入失败不得部分污染新项目；映射和校验应有明确错误。
+4. 文件合同应版本化，并使用固定 fixture 做回归。
+5. 不因此恢复旧 API、旧 session、旧数据库 schema 或运行时依赖。
+
+## 产品与工程状态
+
+仓库中已经存在 VNext Web、API、Worker 和共享包实现，但不同能力的完成度不同。**文件存在、构建成功或局部测试通过，不等于整个产品已经完成。**
+
+当前状态应以以下文档和真实测试/浏览器证据为准：
+
+- `AGENTS.md` — 仓库执行规则与长期架构约束
+- `storyboard-system/docs/ACTIVE_WORKSTREAMS.md` — 当前工作状态
+- `storyboard-system/docs/PRODUCT_PARITY_MATRIX.md` — 功能恢复情况
+- `storyboard-system/docs/SCREEN_PARITY_MATRIX.md` — 页面与视觉恢复情况
+- `storyboard-system/docs/SHADCN_UI_BASELINE.md` — VNext 视觉基线
+
+不要从 README 推断某个具体功能已经通过功能或视觉验收。
+
+## 本地开发
+
+安装 JavaScript/TypeScript 依赖：
+
 ```bash
-# 1. 复制环境变量模板
-cp .env.example .env
-
-# 2. 启动所有容器服务
-docker compose up -d
-
-# 3. 访问应用
-# 前端工作台: http://localhost:3000
-# 后端 API 文档: http://localhost:8000/docs
+npm ci
 ```
 
-### 方式 2：单机独立模式 (Standalone Mode)
-```bash
-# 启动独立轻量服务 (端口 8080)
-python storyboard-system/server.py
-```
-
----
-
-## 🧪 自动化测试验证
-
-系统配备 100% 通过的自动化测试套件：
+启动 VNext Web：
 
 ```bash
-# 运行全量 19 项单元、集成与万镜级基准测试
-python tests/backend/test_phase0_runner.py ; python tests/test_phase1_runner.py ; python tests/test_phase2_runner.py ; python tests/test_phase3_runner.py
-
-# 运行外网零驻留安全审计
-python scripts/verify_zero_residency.py
+npm run dev
 ```
 
----
+安装并启动 VNext API：
 
-## 📄 许可证
-FrameForge OS 是单公司私有部署的专业影视制作管理系统，保留所有权利。
+```bash
+python -m pip install -r apps/api/requirements.txt
+npm run dev:api
+```
+
+数据库、认证和媒体目录等运行参数按环境配置提供。生产 schema 由 **Alembic** 管理；应用启动时的 `Base.metadata.create_all(...)` 只允许用于明确的开发/测试场景。
+
+## 验证
+
+常用 VNext 检查：
+
+```bash
+# Root package architecture allowlist
+python tools/package_boundary_gate.py
+
+# Backend contracts
+python -m pytest tests/backend -q
+
+# Shared packages + Web
+npm run build
+```
+
+可见 UI 修改还必须经过真实浏览器验收；源代码审查、TypeScript 通过或 Next.js build 不能替代视觉与交互验证。
+
+## License
+
+FRAMEFORGE OS 为私有项目，保留所有权利。

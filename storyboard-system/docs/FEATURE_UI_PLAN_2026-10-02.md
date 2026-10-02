@@ -2,7 +2,7 @@
 
 日期：2026-10-02，Asia/Shanghai。代码检查点：`master @ 2fde7c4f6313e7b9c7d07ffeed2083c00045e1a9`。功能黄金基线：`5e86a0bb11a20ecd631d9c2af66260a73d7c92e7`。
 
-本文是后续实施与验收方案，由并行稿整合完成；不是已实现清单。未据此修改实现、数据库或服务器。本轮实际页面观察见 [桌面审计与截图](audits/DESKTOP_UI_AUDIT_2026-10-02.md)，文档和合成截图已分段推送。以下“已接入”只表示真实消费者和代码调用链，不代表完整行为、生产可用或迁移 cutover。
+本文是后续实施与验收方案，由并行稿整合完成；不是已实现清单。未据此修改实现、数据库或服务器。本轮实际页面观察见 [桌面审计与截图](audits/DESKTOP_UI_AUDIT_2026-10-02.md)。2026-10-02 起采用 **VNext 原生重构**：不迁 Legacy 数据库/旧工程数据，不兼容旧 API/session/runtime；Legacy 只作功能参考，唯一保留的兼容面是便携工程文件 exporter → VNext importer mapping。
 
 ## 1. 决策依据与明确覆盖
 
@@ -18,7 +18,7 @@
 | 行和排序 | 单选/Shift 区间/Ctrl 或 Cmd 任意多选/筛选全选；底部输入新增；成组拖动 | 排序事务按完整项目重新编号 001…，稳定 ID 与关联不变 |
 | 审阅标记 | 位于勾选之后、镜号之前；全项目没有需提示的审阅标记时隐藏整个列 | 覆盖旧“空图标但留列”；是否隐藏不可仅看当前筛选或可视页 |
 | 审片版本 | Word 式锚定批注、回复/引用、版本、逐项差异处理 | 不恢复全局审批看板或精简/专业模式 |
-| 导入 | XLSX、DOCX、PDF、扫描 PDF/JPG/PNG OCR；自动识别列→映射预览→追加/覆盖 | 真实 XLSX，不以 CSV 替代；旧导入能力需逐项迁移 |
+| 导入 | XLSX、DOCX、PDF、扫描 PDF/JPG/PNG OCR；自动识别列→映射预览→追加/覆盖 | 真实 XLSX，不以 CSV 替代；按当前产品需求在 VNext 原生实现，不复制旧 API。另保留 Legacy 便携工程文件 mapping |
 | 导出 | 横/竖 PDF、Word、工程 PDF、Hollywood 脚本、分镜表、自定义字段与旧交付格式 | 真正渲染预览；产品中不出现免责声明 |
 | 水印 | 所有导出强制可追溯隐写水印；可见水印可创建/编辑/删除/关闭 | 不能用 metadata、QR 或附件 hash 充数；必须验证截图/裁剪后追溯 |
 | 工程码 | PDF 配置默认 QR 多码分片，可选 DataMatrix ECC200；编号/分片校验；工程数据+附件往返 | 大图放 PDF 附件或 portable ZIP；码中无 IP、密钥、session、share token |
@@ -306,7 +306,7 @@ motion owner 为根共享 UI；建议 tokens `instant=0ms/quick=80ms/fast=120ms/
 
 ## 11. 导入、PDF/Word、工程包与水印
 
-导入向导分五步：选择文件/来源 → 自动识别表头及列 → 映射（预设匹配/新自定义/忽略） → 镜头与图片/值转换预览 → 添加或覆盖确认。包含XLSX嵌图、DOCX表格、文本PDF、扫描/OCR；保留源列名/顺序/行号及识别置信度。低置信度进入可修改映射，不能静默合并同名异义列。覆盖显示将替换范围、保留稳定引用策略及revision；后台staging隔离，最终原子提交，失败不留下半套工程。
+导入向导分五步：选择文件/来源 → 自动识别表头及列 → 映射（预设匹配/新自定义/忽略） → 镜头与图片/值转换预览 → 添加或覆盖确认。包含XLSX嵌图、DOCX表格、文本PDF、扫描/OCR，以及 **Legacy 便携工程导出文件**；保留源列名/顺序/行号及识别置信度。Legacy 文件由旧版 exporter 显式生成，必要时允许修改其源码以符合版本化 schema；VNext 不直接读取旧数据库或调用旧 API。低置信度进入可修改映射，不能静默合并同名异义列。覆盖显示将替换范围、保留稳定引用策略及revision；后台staging隔离，最终原子提交，失败不留下半套工程。
 
 | 导出 | 版式/内容 | 预览与往返验收 |
 | --- | --- | --- |
@@ -344,7 +344,7 @@ motion owner 为根共享 UI；建议 tokens `instant=0ms/quick=80ms/fast=120ms/
 | R5 画布/旁白 | Board服务/双renderer、情绪板；TTS/slider/计时job | 保存恢复/undo、2D3D一致、真音频播放/实测帧时长 |
 | R6 导入导出 | staging映射、PDF/Word模板、便携包/QRDM、可见/隐写水印 | 真实文件打开/往返、允许字段不泄露、水印实验达标 |
 | R7 管理协作 | RBAC、组/颜色、锁/pointer、缓存失效 | 普通用户拒绝访问、多用户冲突不吞草稿/不伪保存 |
-| R8 收敛 | PostgreSQL迁移按数据库计划演练；真实consumer切换后清Legacy | 一能力一owner、回滚和purge边界明确、无残留活动替代owner |
+| R8 收敛 | VNext 空 PostgreSQL/Alembic 与对象存储验收；固化 Legacy portable export → VNext import fixture 后退役旧 runtime | 一能力一 VNext owner；不保留旧 API/DB 兼容层，文件桥接往返通过 |
 
 复用 [验收流程](DESKTOP_UI_ACCEPTANCE.md)。本计划覆盖功能和路线，当前尚未通过的能力须逐段实施；不将新增Markdown或升级Next当成全量重构完成。
 

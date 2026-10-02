@@ -30,7 +30,7 @@ If code and canonical documentation disagree, determine the real owner and behav
 
 `FRAMEFORGE_PRODUCT_BASELINE = 5e86a0bb11a20ecd631d9c2af66260a73d7c92e7`
 
-This commit is the functional product-behavior inventory used to prevent accidental feature loss during VNext migration.
+This commit is the functional product-behavior inventory used to prevent accidental feature loss during the VNext-native rebuild. It is a product-capability reference, not a Legacy runtime, API, database, or old-project compatibility target.
 
 Rules:
 
@@ -38,6 +38,8 @@ Rules:
 - The baseline is **not** permission to restore behavior that the user explicitly removed or changed later.
 - The baseline is **not** a requirement to preserve Legacy implementation details, DOM structure, CSS architecture, or framework choices.
 - Newer explicit user decisions and documented accepted product changes override baseline behavior.
+- As of 2026-10-02, Legacy project databases/data are not migrated, Legacy API compatibility is not required, and Legacy runtime parity is not a release gate.
+- The only Legacy compatibility surface retained is a portable project export produced by the Legacy application that the VNext importer can map. Narrow Legacy source changes are allowed solely to make that export contract reliable and testable.
 - Do not create fake pages, mock cards, placeholder endpoints, or decorative shells to claim parity. Build the real capability or mark it missing/blocked.
 - Product parity must be tracked in the parity documents, not by optimistic prose in this file.
 
@@ -64,7 +66,7 @@ FRAMEFORGE converges toward one canonical target:
 - Alembic — canonical production schema-history owner.
 - Redis — canonical ephemeral Presence backend using TTL/pubsub or an equivalent explicitly approved ephemeral mechanism.
 
-`storyboard-system/` remains an active Legacy/migration source until each runtime responsibility has actually been cut over.
+`storyboard-system/` is now a Legacy reference and temporary export-bridge source, not a target runtime that VNext must remain compatible with. Required product behavior may be reimplemented natively in VNext; old project data and old API contracts are out of scope.
 
 The repository currently contains hybrid/parallel implementations. Their existence is migration evidence, not proof of ownership transfer.
 
@@ -100,7 +102,7 @@ Before choosing the next migration slice, read the current dynamic sources inste
 Each architecture document has one job:
 
 - `ARCHITECTURE.md` records **current repository/runtime reality**.
-- `ARCHITECTURE_MIGRATION.md` records **migration contracts, target boundaries, cutover gates, verification, and rollback**.
+- `ARCHITECTURE_MIGRATION.md` records **VNext rebuild boundaries, the limited Legacy export bridge, verification, and Legacy retirement rules**.
 - `LIFECYCLE_ARCHITECTURE_PLAN.md` records **lifecycle phases and phase gates**.
 - `FRAMEFORGE_COMPONENT_LIBRARY_CODEX_MASTER.md` governs **UI/component/motion/icon/graphics migration**.
 - `SHADCN_UI_BASELINE.md` is the **canonical VNext visual baseline** for shadcn geometry, neutral semantic color, Shell proportions, table/Inspector hierarchy, overlays and visual QA.
@@ -118,10 +120,10 @@ Capability migration uses these states:
 
 - `VERIFIED` — current ownership/behavior has been proven by code/runtime/test audit.
 - `IMPLEMENTED_NOT_INTEGRATED` — target code exists but no real consumer uses it.
-- `INTEGRATED_NOT_CUT_OVER` — a real consumer uses the target path but Legacy remains authoritative somewhere in the capability.
-- `CUTOVER_READY` — parity and cutover prerequisites are proven; rollback/recovery is understood where relevant.
-- `CUT_OVER` — the target path is the authoritative runtime owner.
-- `LEGACY_RETIRED` — the former owner has zero runtime consumers and is removed or deliberately inert.
+- `INTEGRATED_NOT_CUT_OVER` — a real VNext consumer uses the target path, but the capability is not yet accepted as complete.
+- `CUTOVER_READY` — VNext acceptance prerequisites are proven; rollback/recovery is understood where relevant.
+- `CUT_OVER` — VNext is the authoritative runtime owner for the capability.
+- `LEGACY_RETIRED` — the Legacy runtime is no longer needed; the narrowly scoped portable-project exporter may remain until its file-mapping contract is frozen and tested.
 - `BLOCKED` — a required prerequisite, decision, credential, environment, or dependency is missing.
 - `BLOCKED_VISUAL` — code or functional checks may pass, but required rendered-browser visual evidence is missing or has failed.
 
@@ -164,9 +166,7 @@ Where relevant also identify:
 
 Do not maintain two authoritative owners for the same responsibility.
 
-Temporary mirrored behavior is allowed only as an explicit migration bridge with a cutover gate and removal condition.
-
-Avoid dual-write architectures unless the migration contract explicitly requires them and reconciliation is defined.
+Do not introduce mirrored Legacy/VNext runtime behavior or dual-write persistence for compatibility. The only permitted cross-version bridge is file-based: Legacy exports a portable project artifact and VNext imports/maps that artifact.
 
 ---
 
@@ -215,41 +215,20 @@ Never discard unrelated valid work to make the current task easier.
 
 ---
 
-## 9. Legacy Freeze and Deletion Protocol
+## 9. Legacy Reference and Export-Bridge Protocol
 
-`storyboard-system/` is frozen for ordinary new feature development.
+`storyboard-system/` is frozen for ordinary feature development. It is no longer a runtime/API/database compatibility target.
 
 Allowed Legacy changes are limited to:
 
-- critical fixes;
-- security fixes;
-- migration adapters;
-- cutover instrumentation;
-- parity tests;
-- compatibility changes strictly required to move a real consumer.
+- fixes strictly necessary to keep the portable project exporter runnable;
+- export-schema/mapping changes required so a Legacy project file can be imported by VNext;
+- focused exporter fixtures/tests and documentation;
+- critical security fixes only when needed to safely run the exporter during the bridge period.
 
-Do not delete Legacy code because a replacement-looking file exists.
+Do not add new product features, new persistence owners, new API compatibility layers, or dual-write adapters to Legacy.
 
-Before deleting an old owner, inspect applicable:
-
-- static imports;
-- dynamic imports;
-- string-based loaders;
-- HTML/template references;
-- build manifests;
-- deployment/package manifests;
-- Python imports;
-- global symbols;
-- custom events;
-- DOM selectors;
-- CSS selectors;
-- tests;
-- documentation/runbooks;
-- runtime registrations.
-
-Deletion requires stronger evidence than creation.
-
-`LEGACY_RETIRED` requires zero real consumers, not “search looked mostly empty.”
+Legacy runtime code may be retired once required product behavior has been captured/reimplemented in VNext and the portable-project export/import bridge has stable fixtures and round-trip evidence. Zero API parity, zero database backfill, and zero old-client compatibility are **not** retirement gates.
 
 ---
 
@@ -342,12 +321,13 @@ PostgreSQL is the persistent target. SQLAlchemy 2 async patterns are canonical f
 
 Alembic owns production schema history.
 
-`Base.metadata.create_all(...)` is restricted to explicit development/test fixtures. It is not a production migration strategy and is not evidence that PostgreSQL migration works.
+Legacy SQLite databases and old project data are not migrated. VNext starts from its own clean PostgreSQL schema; no SQLite→PostgreSQL backfill, dual-write, source-schema upgrade, or old-project database cutover is required.
 
-Before PostgreSQL cutover, verify applicable:
+`Base.metadata.create_all(...)` is restricted to explicit development/test fixtures. It is not the production schema strategy.
+
+Before VNext database acceptance, verify applicable:
 
 - empty database → Alembic head;
-- upgrade of the expected source schema;
 - transaction behavior;
 - constraints and foreign keys;
 - revision/conflict behavior;
@@ -515,9 +495,9 @@ Verify:
 - keyboard/focus behavior;
 - accessibility;
 - responsive behavior;
-- old consumer removal.
+- VNext real-consumer ownership. Legacy consumer removal is repository cleanup, not an API/database compatibility gate.
 
-Do not remove the Legacy `@frameforge/ui` owner until the root package reaches required parity and Legacy consumers have actually moved.
+The Legacy `@frameforge/ui` package is reference-only for the rebuild. Do not copy its visual system into VNext; it may be removed with the Legacy runtime once required product behaviors have been captured and the export bridge no longer depends on it.
 
 ---
 
@@ -544,7 +524,8 @@ Acceptable migration evidence includes:
 - registered runtime route;
 - integration/contract test;
 - browser verification;
-- database migration rehearsal;
+- clean PostgreSQL bootstrap/integration rehearsal;
+- portable Legacy project export → VNext import round-trip where that bridge is affected;
 - request/response trace;
 - removal of the old consumer;
 - successful affected build/regression.
@@ -580,6 +561,21 @@ Avoid parallel libraries for the same architectural responsibility, especially f
 - date/timecode logic.
 
 Shared packages should reduce duplication, not become hidden global application layers.
+
+### Root package allowlist
+
+The root `packages/` namespace is intentionally closed. The only canonical top-level shared packages are:
+
+- `packages/ui`
+- `packages/types`
+- `packages/contracts`
+- `packages/timecode`
+
+Do not create additional top-level packages such as `common`, `core`, `shared`, `utils`, `hooks`, `domain`, `api-client`, or similar convenience layers by default.
+
+New code belongs in the owning application or one of the four existing packages unless the user explicitly approves a new shared package as an architecture change. Any approved addition must update the package-boundary gate in the same coherent commit.
+
+A new package is not justified merely because code is reusable in theory. Prefer app-local modules until there is a demonstrated cross-application or cross-runtime ownership boundary.
 
 ---
 

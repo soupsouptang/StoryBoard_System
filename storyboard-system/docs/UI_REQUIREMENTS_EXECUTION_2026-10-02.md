@@ -1,6 +1,6 @@
 # 已确认需求执行记录
 
-基准：[需求文档](CONFIRMED_UI_REQUIREMENTS_2026-10-02.md)。仅本地合成数据；整体迁移 cutover 未完成。
+基准：[需求文档](CONFIRMED_UI_REQUIREMENTS_2026-10-02.md)。仅本地合成数据。当前采用 VNext 原生重构，不再等待 Legacy API/数据库 cutover；唯一跨版本任务是便携工程文件 exporter → importer mapping。
 
 ## 2026-10-02 第一批
 

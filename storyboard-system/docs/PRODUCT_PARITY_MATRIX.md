@@ -1,7 +1,7 @@
 # FRAMEFORGE Product Parity Matrix
 
-This document tracks VNext recovery against the functional golden baseline `5e86a0b`.
-Current explicit user decisions and later accepted removals override the baseline.
+This document tracks VNext product-capability recovery against the functional golden baseline `5e86a0b`.
+Current explicit user decisions and later accepted removals override the baseline. As of 2026-10-02, parity means **capability coverage**, not Legacy API/database/runtime compatibility. Old project data is not migrated; the only cross-version compatibility requirement is Legacy portable-project export → VNext mapping/import.
 
 ## 2026-10-01 user screenshot baseline addendum
 
@@ -33,7 +33,7 @@ Status vocabulary:
 | Capability | Baseline | VNext target | Status | Gap / evidence |
 | :--- | :--- | :--- | :--- | :--- |
 | Project Cover Fallback | Present | Present | INTEGRATED_NOT_CUT_OVER | Monogram + deterministic gradient remains visible in `/productions` when cover media is absent or unavailable. |
-| Project Cover Media | Present | Present | INTEGRATED_NOT_CUT_OVER | V-API derives `cover_media_id` from the earliest active Shot's first linked image asset; V-Web Project Hub loads its authenticated image bytes. Synthetic browser QA passed at 1440/1024/768/375/320; durable storage and copied-media migration remain. |
+| Project Cover Media | Present | Present | INTEGRATED_NOT_CUT_OVER | V-API derives `cover_media_id` from the earliest active Shot's first linked image asset; V-Web Project Hub loads its authenticated image bytes. Synthetic browser QA passed at 1440/1024/768/375/320; durable VNext storage remains; copying Legacy media stores is out of scope. |
 | Project Entry | Project list → selected workspace | Same | VERIFIED | `/production/[id]` now redirects to `/production/[id]/shots`; the unauthorized feature-card overview has been removed from the runtime path. |
 | Workspace IA: Narration | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |
 | Workspace IA: Moodboard | Present | Present | BLOCKED | Missing from canonical V-Web workspace. |

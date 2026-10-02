@@ -9,10 +9,10 @@
 
 ## 项目与运行数据边界
 
-- `server.py` 提供 HTTP/API、静态文件、认证和 SQLite 访问；当前直接依赖根目录 `creative_boards.py`、`field_lifecycle.py`、`text_format.py`、`asset_cleanup.py`、`narration_timing.py`、`delivery_exports.py`、`shot_updates.py`、`shot_bulk_updates.py`、`shot_versions.py`、`persistence_helpers.py`、`runtime_clock.py`、`import_parsing.py`、`import_staging.py`、`schema_migrations.py`。修改/拆分服务端逻辑时保留这些运行依赖及现有 API 契约。
+- `server.py` 及其 SQLite/静态前端依赖现在只作为 Legacy 功能参考和临时工程导出桥接，不再要求 VNext 保留旧 API、旧 session、旧数据库或旧运行时契约。仅允许为“旧工程导出文件 → VNext 可映射导入”所必需的 Legacy 导出源码、测试和安全修复做窄范围修改。
 - `static/index.html` 加载 `static/app.js`、工作区 bundle 和多份功能脚本、样式及媒体资源。不得仅因名称相似或位于 `static/` 就认定文件未使用。
-- 运行数据由 `STORYBOARD_DATA_ROOT` 决定，含 `storyboard.db`、`media/`、`exports/`、`import_staging/`、`avatars/`。未设置时默认指向项目 `data/`；线上配置位于独立的 `storyboard.env`。这些目录/配置含真实业务数据或机密，测试必须使用临时数据根目录，任何清理、复制、覆盖或迁移都要先核实路径并得到用户明确授权。
-- 保留真实 Excel 导入能力，包括 `.xlsx` 解析、字段映射、嵌入图片和原始导入列。不要用“只支持 CSV”替代，不要删除真实工作簿回归覆盖。`tests/test_v62_import_xlsx.py` 会尝试读取用户桌面上的 V4 工作簿；本地文件缺失时允许按测试设计跳过，不要复制真实工作簿进源码、静态资源或发布包。合成工作簿契约覆盖也应保留。
+- 运行数据由 `STORYBOARD_DATA_ROOT` 决定，含 `storyboard.db`、`media/`、`exports/`、`import_staging/`、`avatars/`。旧数据库/旧工程数据不做迁移或回填；开发与测试只使用隔离/合成数据。真实旧工程仅在用户主动使用 Legacy 导出器生成便携工程文件时进入桥接流程，不直接读取其数据库给 VNext。
+- 保留真实 Excel 导入能力，包括 `.xlsx` 解析、字段映射、嵌入图片和原始导入列。不要用“只支持 CSV”替代，不要删除真实工作簿回归覆盖。旧工程唯一跨版本兼容要求是 Legacy 可导出一个便携工程文件，VNext 能按明确 mapping 导入；必要时允许修改 Legacy exporter 以生成该合同。真实工作簿/真实工程文件不得复制进源码或发布包，回归使用脱敏或合成 fixture。
 
 ## 源码、构建产物与发布包
 
