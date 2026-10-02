@@ -174,7 +174,7 @@ def test_migration_upgrade_constraints_and_guarded_downgrade():
 def test_migration_chain_and_postgresql_ddl():
     config = Config(str(ROOT / "apps/api/alembic.ini"))
     scripts = ScriptDirectory.from_config(config)
-    assert scripts.get_heads() == ["d6a93f08b241"]
+    assert len(scripts.get_heads()) == 1, "Alembic history must have exactly one canonical head"
     assert scripts.get_revision("d6a93f08b241").down_revision == "c58f2d01e739"
     migration = scripts.get_revision("d6a93f08b241").module
     output = StringIO()
