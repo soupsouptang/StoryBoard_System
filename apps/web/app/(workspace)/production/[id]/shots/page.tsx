@@ -1045,11 +1045,8 @@ export default function ShotListPage() {
               {selectedShotIds.length > 0 && ` · 已选 ${selectedShotIds.length}`}
             </span>
           </div>
-          <Button onClick={() => setNewShotRowOpen(true)}>
-            <Icons.Plus aria-hidden="true" />新增镜头
-          </Button>
         </div>
-        <div className="grid min-w-0 grid-cols-[minmax(max-content,1fr)_minmax(15rem,20rem)_minmax(0,1fr)] items-center gap-2 overflow-x-auto [&_button]:h-9 [&_button]:text-sm [&_svg]:h-4 [&_svg]:w-4" role="group" aria-label="镜头查询与工具">
+        <div className="grid min-w-0 grid-cols-[minmax(max-content,1fr)_minmax(12rem,20rem)_minmax(max-content,1fr)] items-center gap-2 overflow-x-auto [&_button]:h-9 [&_button]:text-sm [&_svg]:h-4 [&_svg]:w-4" role="group" aria-label="镜头查询与工具">
           <div className="relative col-start-2 row-start-1 w-full min-w-0">
             <Icons.Search aria-hidden="true" className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -1128,6 +1125,9 @@ export default function ShotListPage() {
               </span>
             )}
           </div>
+          <Button size="sm" className="col-start-3 row-start-1 justify-self-end" onClick={() => setNewShotRowOpen(true)}>
+            <Icons.Plus aria-hidden="true" />新增镜头
+          </Button>
         </div>
       </div>
 
