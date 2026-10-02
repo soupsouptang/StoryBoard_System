@@ -128,3 +128,5 @@ Alembic `c58f2d01e739` 为 Asset 增加 revision/category，约束同资产 vers
 后续每次开工先读CONTINUE_WORK及最新远端MD，再选明确切片；所有未完成项继续保留真实状态，不标产品全面完成。
 
 GitHub `095fb7a` 已核实：FRAMEFORGE CI、PostgreSQL Migration Rehearsal、Safety Invariants成功；Regression Guard因裁剪重构未同步两份parity台账失败。后续文档补齐PRODUCT_PARITY_MATRIX和SCREEN_PARITY_MATRIX，必须以完整基线差异重跑guard，并核实新推送结果；不抹除该次失败记录。
+
+补充实际结果：补齐台账后，以 `93c98f4` 为base的完整本地Regression Guard通过；GitHub文档提交 `cd9536d` 的Regression Guard亦已核实成功。代码 `095fb7a` 的构建/PostgreSQL/安全成功证据保持；文档提交的额外FRAMEFORGE CI查询时仍queued。

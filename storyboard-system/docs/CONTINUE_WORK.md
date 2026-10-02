@@ -109,3 +109,5 @@ OCR 当前限制：40 MB/文件、10000 行、200 列、PDF 30 页、图片 10 M
 **停点结论：本轮列/菜单/工具条与追加删除/文字代码已上传、定向检查与真实浏览器验收完成；后续先读本文及本轮执行文档；新版功能、视觉及 VNext 数据库验收仍有待办。**
 
 GitHub `095fb7a` 已核实：FRAMEFORGE CI、PostgreSQL Migration Rehearsal、Safety Invariants成功；Regression Guard因裁剪重构未同步两份parity台账失败。后续文档补齐PRODUCT_PARITY_MATRIX和SCREEN_PARITY_MATRIX，必须以完整基线差异重跑guard，并核实新推送结果；不抹除该次失败记录。
+
+补充实际结果：补齐台账后，以 `93c98f4` 为base的完整本地Regression Guard通过；GitHub文档提交 `cd9536d` 的Regression Guard亦已核实成功。代码 `095fb7a` 的构建/PostgreSQL/安全成功证据保持；文档提交的额外FRAMEFORGE CI查询时仍queued。
