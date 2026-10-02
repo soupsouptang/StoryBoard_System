@@ -101,6 +101,61 @@ async def test_column_copy_full_data_metadata_conflict_protection_and_atomic_ins
 
 
 @pytest.mark.asyncio
+async def test_column_delete_restore_revision_and_preserved_values():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        login = await client.post("/api/v1/auth/login", json={"email": settings.INITIAL_ADMIN_EMAIL, "password": settings.INITIAL_ADMIN_PASSWORD})
+        headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+        production = (await client.post("/api/v1/productions", headers=headers, json={"name": "Delete restore synthetic"})).json()
+        root = f"/api/v1/productions/{production['id']}"
+        shot = (await client.post(root + "/shots", headers=headers, json={"display_number":"001", "name":"完整保留", "description":"原文"})).json()
+        for key in ('display_number', 'tc_in', 'panel_image'):
+            protected = await client.patch(root + f"/column-preferences/{key}/state", headers=headers, json={"state":"removed", "revision":0})
+            assert protected.status_code == 400
+            assert '不允许删除' in protected.text
+        for key in ('name',):
+            path = root + f"/column-preferences/{key}/state"
+            deleted = await client.patch(path, headers=headers, json={"state":"removed", "revision":0})
+            assert deleted.status_code == 200, deleted.text
+            assert deleted.json()['state'] == 'removed'
+            stale = await client.patch(path, headers=headers, json={"state":"visible", "revision":0})
+            assert stale.status_code == 409
+        invalid = await client.patch(root + "/column-preferences/revision/state", headers=headers, json={"state":"removed", "revision":0})
+        assert invalid.status_code == 400
+        current = (await client.get(root + "/shots", headers=headers)).json()[0]
+        assert {key:value for key,value in current.items() if key not in {'created_at','updated_at'}} == {key:value for key,value in shot.items() if key not in {'created_at','updated_at'}}
+        assert current['updated_at'].rstrip('Z') == shot['updated_at'].rstrip('Z')
+        blocked = await client.post(root + "/custom-fields/copy-column", headers=headers, json={"source":"name", "label":"标题", "shot_revisions":{shot['id']:shot['revision']}})
+        assert blocked.status_code == 400
+        failed = await client.post(root + "/custom-fields/insert", headers=headers, json={"restore_columns":{"name":1}, "fields":[{"label":" "}]})
+        assert failed.status_code == 400
+        states = (await client.get(root + "/column-preferences", headers=headers)).json()
+        assert next(row for row in states if row['column_key'] == 'name')['state'] == 'removed'
+        bad_revision = await client.post(root + "/custom-fields/insert", headers=headers, json={"restore_columns":{"name":-1}})
+        assert bad_revision.status_code == 422
+        restored = await client.post(root + "/custom-fields/insert", headers=headers, json={"restore_columns":{"name":1}})
+        assert restored.status_code == 201
+        states = (await client.get(root + "/column-preferences", headers=headers)).json()
+        assert all(row['state'] == 'visible' and row['revision'] == 2 for row in states)
+        field = (await client.post(root + "/custom-fields", headers=headers, json={"label":"可恢复"})).json()
+        value = await client.patch(f"/api/v1/shots/{shot['id']}/custom-fields/{field['id']}", headers=headers, json={"revision":shot['revision'], "value":"全列内容"})
+        assert value.status_code == 200, value.text
+        deleted = await client.patch(root + f"/custom-fields/{field['id']}/state", headers=headers, json={"revision":1,"state":"removed"})
+        assert deleted.status_code == 200
+        matrix = (await client.get(root + "/custom-field-values", headers=headers)).json()['values']
+        assert matrix[shot['id']][field['id']] == '全列内容'
+        restored = await client.patch(root + f"/custom-fields/{field['id']}/state", headers=headers, json={"revision":deleted.json()['revision'],"state":"visible"})
+        assert restored.status_code == 200
+        from app.services.custom_field_service import CustomFieldService
+        from app.schemas.custom_field import BuiltinColumnStateUpdate
+        from app.core.exceptions import DomainError
+        from types import SimpleNamespace
+        async with AsyncSessionLocal() as db:
+            with pytest.raises(DomainError) as denied:
+                await CustomFieldService.set_builtin_state(db, production['id'], 'name', BuiltinColumnStateUpdate(state='removed',revision=2), SimpleNamespace(role=SimpleNamespace(permissions={})))
+            assert denied.value.code == 'FORBIDDEN'
+
+
+@pytest.mark.asyncio
 async def test_custom_field_archive_restore_purge_is_irreversible_and_scrubs_saved_views():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         login = await client.post("/api/v1/auth/login", json={

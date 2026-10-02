@@ -42,14 +42,27 @@ export interface CustomFieldValueMatrix {
   values: Record<string, Record<string, unknown>>;
 }
 
+export interface BuiltinColumnState { column_key: string; state: CustomFieldState; revision: number }
+export function useBuiltinColumnStates(productionId: string) {
+  return useQuery({ queryKey: ['column-preferences', productionId], enabled: Boolean(productionId),
+    queryFn: () => apiClient<BuiltinColumnState[]>(`/api/v1/productions/${productionId}/column-preferences`) });
+}
+export function useSetBuiltinColumnState(productionId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({ mutationFn: (input: { column: string; state: 'visible' | 'removed'; revision: number }) =>
+    apiClient<BuiltinColumnState>(`/api/v1/productions/${productionId}/column-preferences/${input.column}/state`, { method: 'PATCH', json: { state: input.state, revision: input.revision } }),
+    onSuccess: saved => queryClient.setQueryData<BuiltinColumnState[]>(['column-preferences', productionId], current => [...(current || []).filter(row => row.column_key !== saved.column_key), saved]),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['column-preferences', productionId] }) });
+}
+
 export function useInsertCustomFields(productionId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { fields: { label: string; field_type: CustomFieldType; options?: string[] }[]; restore: Record<string, number> }) =>
+    mutationFn: (input: { fields: { label: string; field_type: CustomFieldType; options?: string[] }[]; restore: Record<string, number>; restore_columns?: Record<string, number> }) =>
       apiClient<CustomFieldDefinition[]>(`/api/v1/productions/${productionId}/custom-fields/insert`, { method: 'POST', json: input }),
     onSuccess: saved => queryClient.setQueryData<CustomFieldDefinition[]>(['custom-fields', productionId], current =>
       [...(current || []).filter(field => !saved.some(item => item.id === field.id)), ...saved]),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['custom-fields', productionId] })
+    onSettled: () => Promise.all(['custom-fields', 'column-preferences'].map(key => queryClient.invalidateQueries({ queryKey: [key, productionId] })))
   });
 }
 

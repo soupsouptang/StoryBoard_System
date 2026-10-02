@@ -52,3 +52,9 @@
   * { @apply border-border; }
   body { @apply bg-background text-foreground; }
 }
+
+/* Shot table shares the toolbar type size, including badges and editor hints. */
+.shot-production-table, .shot-production-table :where(th, td, span, div, button, input, textarea, select) {
+  font-size: 14px !important;
+  line-height: 20px;
+}

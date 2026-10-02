@@ -30,6 +30,7 @@ let resolveSave;
 let rejectSave;
 const dependencies = {
   react: React, '@frameforge/ui': { Button: 'Button', Input: 'Input' },
+  './ShotTableText': { ShotTableText: 'ShotTableText' },
   '@/lib/api-client': { ApiError },
   '@/lib/hooks/useProduction': { useUpdateShot: () => ({
     mutateAsync: request => new Promise((resolve, reject) => {
@@ -62,9 +63,9 @@ const key = (key, nativeEvent = {}) => input().props.onKeyDown({ key, nativeEven
 const settle = async () => { await new Promise(resolve => setImmediate(resolve)); render(); };
 (async () => {
   render();
-  assert.equal(tree.children[0].children[0].children[0], props.placeholder, 'Empty values retain the editing hint');
+  assert.equal(find(node => node.type === 'ShotTableText').props.text, props.placeholder, 'Empty values retain the editing hint');
   props.value = 0; render();
-  assert.equal(tree.children[0].children[0], 0, 'Numeric zero is a value');
+  assert.equal(find(node => node.type === 'ShotTableText').props.text, '0', 'Numeric zero is a value');
   props.value = ''; render();
   tree.props.onDoubleClick({ stopPropagation() {} }); render();
   assert.equal(input().props['aria-label'], props.placeholder);

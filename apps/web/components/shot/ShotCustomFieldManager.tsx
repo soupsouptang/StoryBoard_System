@@ -153,10 +153,12 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
     }
   };
 
+  const [pendingDelete, setPendingDelete] = useState<CustomFieldDefinition | null>(null);
   const changeState = async (
     field: CustomFieldDefinition,
-    state: 'visible' | 'hidden' | 'removed'
+    state: 'visible' | 'hidden' | 'removed', confirmed = false
   ) => {
+    if (state === 'removed' && !confirmed) { setPopoverOpen(false); setPendingDelete(field); setActionError(null); return; }
     setActionError(null);
     try {
       await setFieldState.mutateAsync({
@@ -164,6 +166,7 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
         revision: field.revision,
         state
       });
+      if (state === 'removed') setPendingDelete(null);
     } catch (error) {
       setActionError(error instanceof Error ? error.message : '修改列状态失败');
     }
@@ -207,11 +210,11 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
               <div>
                 <div className="text-sm font-medium text-foreground">自定义列</div>
                 <div className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
-                  隐藏只影响显示；归档保留数据；永久删除只允许对已归档列执行。
+                  隐藏只影响显示；删除保留数据；永久删除只允许对已删除列执行。
                 </div>
               </div>
               {archivedCount > 0 && (
-                <Badge variant="outline">{archivedCount} 已归档</Badge>
+                <Badge variant="outline">{archivedCount} 已删除</Badge>
               )}
             </div>
           </div>
@@ -243,7 +246,7 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
                         <Badge variant="secondary" className="shrink-0 text-[10px]">已隐藏</Badge>
                       )}
                       {field.state === 'removed' && (
-                        <Badge variant="secondary" className="shrink-0 text-[10px]">已归档</Badge>
+                        <Badge variant="secondary" className="shrink-0 text-[10px]">已删除</Badge>
                       )}
                     </div>
                     <div className="mt-1 truncate font-mono text-[10px] text-muted-foreground">
@@ -282,8 +285,8 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 shrink-0"
-                        title="归档列"
-                        aria-label={`归档自定义列 ${field.label}`}
+                        title="删除列"
+                        aria-label={`删除自定义列 ${field.label}`}
                         disabled={setFieldState.isPending}
                         onClick={() => void changeState(field, 'removed')}
                       >
@@ -309,8 +312,8 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 shrink-0"
-                        title="归档列"
-                        aria-label={`归档自定义列 ${field.label}`}
+                        title="删除列"
+                        aria-label={`删除自定义列 ${field.label}`}
                         disabled={setFieldState.isPending}
                         onClick={() => void changeState(field, 'removed')}
                       >
@@ -379,6 +382,15 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
         </PopoverContent>
       </Popover>
 
+      <Dialog open={Boolean(pendingDelete)} onOpenChange={open => { if (!open && !setFieldState.isPending) { setPendingDelete(null); setActionError(null); } }}>
+        <DialogContent className="max-w-md" onEscapeKeyDown={event => { if (setFieldState.isPending) event.preventDefault(); }} onInteractOutside={event => { if (setFieldState.isPending) event.preventDefault(); }}>
+          <DialogTitle>删除此列</DialogTitle>
+          <DialogDescription>确认删除“{pendingDelete?.label}”整列？列数据保留，可以恢复。</DialogDescription>
+          {actionError && <p role="alert" className="text-sm text-destructive">{actionError}</p>}
+          <DialogFooter><Button variant="outline" disabled={setFieldState.isPending} onClick={() => setPendingDelete(null)}>取消</Button>
+            <Button variant="destructive" disabled={setFieldState.isPending} onClick={() => pendingDelete && void changeState(pendingDelete, 'removed', true)}>{setFieldState.isPending ? '删除中…' : '确认删除'}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog
         open={createOpen}
         onOpenChange={open => {
@@ -391,7 +403,7 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
         <DialogContent className="max-w-md">
           <DialogTitle>新建自定义列</DialogTitle>
           <DialogDescription>
-            创建后列键由服务器固定；列名可以后续调整。归档不会删除已有镜头值。
+            创建后列键由服务器固定；列名可以后续调整。删除不会删除已有镜头值。
           </DialogDescription>
 
           <div className="space-y-3">

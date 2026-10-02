@@ -31,6 +31,36 @@ export const SHOT_TABLE_COLUMN_LABELS = {
 
 export type ShotTableColumnKey = keyof typeof SHOT_TABLE_COLUMN_LABELS;
 export type ShotTableRowHeight = 'compact' | 'standard' | 'comfortable' | 'auto';
+
+const tableCharacters = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+export function shotTableTextLines(text: string, maxLines = 1, width = Infinity, measure: (value: string) => number = () => 0): string[] {
+  const characters = Array.from(tableCharacters.segment(text.replace(/\r\n?/g, '\n').replace(/\n+(?=\p{P})/gu, '').replace(/\n+$/u, '')), item => item.segment);
+  const punctuationNext = (end: number) => {
+    while (characters[end] && /^[\t ]+$/u.test(characters[end])) end++;
+    return /^\p{P}/u.test(characters[end] || '');
+  };
+  const lines: string[] = [];
+  let position = 0;
+  while (position < characters.length && lines.length < Math.max(1, maxLines)) {
+    let length = 0;
+    while (length < 18 && position + length < characters.length && characters[position + length] !== '\n'
+      && measure(characters.slice(position, position + length + 1).join('')) <= width) length++;
+    if (length === 0 && characters[position] !== '\n') length = 1;
+    // Keep punctuation with its preceding text; a too-narrow run must end in dots.
+    while (length > 1 && punctuationNext(position + length)) length--;
+    const end = position + length;
+    const last = lines.length === Math.max(1, maxLines) - 1 || punctuationNext(end);
+    if (last && end < characters.length) {
+      length = Math.min(length, 17);
+      while (length > 0 && measure(characters.slice(position, position + length).join('') + '...') > width) length--;
+      lines.push(characters.slice(position, position + length).join('') + '...');
+      break;
+    }
+    lines.push(characters.slice(position, end).join(''));
+    position = end + (characters[end] === '\n' ? 1 : 0);
+  }
+  return lines.length ? lines : [''];
+}
 export const RETIRED_SHOT_TABLE_COLUMN_LABELS = new Set(['原镜号', '原描述', '分镜图框', '机位/运镜']);
 export function isRetiredShotColumnLabel(label: string) {
   return RETIRED_SHOT_TABLE_COLUMN_LABELS.has(label.trim().replace(/^原始列\s*[·.]\s*/u, '').replace(/\s*\(\d+\)$/u, ''));

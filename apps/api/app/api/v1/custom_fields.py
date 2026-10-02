@@ -20,6 +20,7 @@ from app.schemas.custom_field import (
     CustomFieldInsert,
     ColumnCopyRequest,
     ColumnCopyResult,
+    BuiltinColumnStateUpdate,
 )
 from app.services.custom_field_service import CustomFieldService
 
@@ -50,6 +51,23 @@ def _http(error: DomainError) -> HTTPException:
         status_code=status.HTTP_400_BAD_REQUEST,
         detail={"code": error.code, "message": error.message},
     )
+
+
+@router.get('/productions/{production_id}/column-preferences')
+async def builtin_column_states(production_id: str, db: AsyncSession = db_session, current_user: User = Depends(get_current_user)):
+    try:
+        return await CustomFieldService.builtin_states(db, production_id)
+    except DomainError as error:
+        raise _http(error)
+
+
+@router.patch('/productions/{production_id}/column-preferences/{column_key}/state')
+async def set_builtin_column_state(production_id: str, column_key: str, req: BuiltinColumnStateUpdate,
+    db: AsyncSession = db_session, current_user: User = Depends(get_current_user)):
+    try:
+        return await CustomFieldService.set_builtin_state(db, production_id, column_key, req, current_user)
+    except DomainError as error:
+        raise _http(error)
 
 
 @router.get(

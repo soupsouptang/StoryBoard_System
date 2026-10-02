@@ -32,6 +32,7 @@ from app.schemas.custom_field import (
     CustomFieldValuePatch,
     CustomFieldInsert,
     ColumnCopyRequest,
+    BuiltinColumnStateUpdate,
 )
 
 
@@ -51,6 +52,44 @@ class CustomFieldService:
         **{key: "text" for key in ("shot_reference", "location", "int_ext", "day_night",
             "dialogue_character", "edit_transition", "notes", "feasibility", "replacement", "execution_method")},
     }
+
+    @staticmethod
+    async def builtin_states(db: AsyncSession, production_id: str) -> list[dict]:
+        await CustomFieldService._production(db, production_id)
+        rows = await db.execute(select(ColumnPreference).where(
+            ColumnPreference.production_id == production_id,
+            ColumnPreference.column_key.in_([*CustomFieldService.COPY_COLUMNS, 'display_number', 'tc_in', 'panel_image'])))
+        return [{'column_key': row.column_key, 'state': row.state, 'revision': row.revision} for row in rows.scalars()]
+
+    @staticmethod
+    async def set_builtin_state(db: AsyncSession, production_id: str, column_key: str, req: BuiltinColumnStateUpdate, user: User) -> dict:
+        CustomFieldService._require_write(user)
+        if column_key not in {*CustomFieldService.COPY_COLUMNS, 'display_number', 'tc_in', 'panel_image'}:
+            raise DomainError('该列不可操作', code='INVALID_COLUMN_KEY')
+        if req.state == 'removed' and column_key in {'display_number', 'tc_in', 'panel_image'}:
+            raise DomainError('镜号、时码、分镜画面不允许删除。', code='PROTECTED_COLUMN')
+        await CustomFieldService._production(db, production_id, for_update=True)
+        preference = await CustomFieldService._preference(db, production_id, column_key, for_update=True)
+        revision = preference.revision if preference else 0
+        if revision != req.revision:
+            raise ConflictError(message='列状态已修改，请刷新后重试。', details={'server_revision': revision})
+        if preference and preference.permanently_deleted:
+            raise DomainError('永久删除的列不可恢复', code='FIELD_PERMANENTLY_DELETED')
+        if not preference:
+            preference = ColumnPreference(production_id=production_id, column_key=column_key,
+                state=req.state, updated_by=user.id, revision=1)
+            db.add(preference)
+        elif preference.state != req.state:
+            preference.state = req.state
+            preference.revision += 1
+            preference.updated_by = user.id
+            preference.updated_at = datetime.now(timezone.utc)
+        else:
+            return {'column_key': column_key, 'state': preference.state, 'revision': preference.revision}
+        CustomFieldService._audit(db, user_id=user.id, action='column.delete' if req.state == 'removed' else 'column.restore',
+            field_id=column_key, production_id=production_id, metadata={'state': req.state, 'revision': preference.revision})
+        await db.flush()
+        return {'column_key': column_key, 'state': preference.state, 'revision': preference.revision}
 
     @staticmethod
     def _retired_label(label: str) -> bool:
@@ -418,9 +457,12 @@ class CustomFieldService:
         """Create/restore a dialog's selections in one acknowledged transaction."""
         CustomFieldService._require_write(user)
         await CustomFieldService._production(db, production_id, for_update=True)
-        if not req.fields and not req.restore:
+        if not req.fields and not req.restore and not req.restore_columns:
             raise DomainError("请先选择或输入列名", code="VALIDATION_ERROR")
         restored = []
+        for column_key, revision in req.restore_columns.items():
+            await CustomFieldService.set_builtin_state(db, production_id, column_key,
+                BuiltinColumnStateUpdate(revision=revision, state='visible'), user)
         for field_id, revision in req.restore.items():
             restored.append(await CustomFieldService.set_state(db, production_id, field_id,
                 CustomFieldStateUpdate(revision=revision, state="visible"), user))
@@ -452,6 +494,9 @@ class CustomFieldService:
                 raise ConflictError(message="来源列已修改，请重新复制。", details={"server_revision": source.revision})
         elif req.source not in CustomFieldService.COPY_COLUMNS:
             raise DomainError("镜号、时码、分镜画面不能复制；已取消的列不可操作。", code="COLUMN_PROTECTED")
+        preference = await CustomFieldService._preference(db, production_id, req.source, for_update=True)
+        if preference and (preference.state == 'removed' or preference.permanently_deleted):
+            raise DomainError('来源列已删除，请恢复后重新复制。', code='COLUMN_REMOVED')
         source_values = {}
         if source:
             result = await db.execute(select(ShotCustomFieldValue).where(
@@ -752,7 +797,7 @@ class CustomFieldService:
             action={
                 "visible": "custom_field.restore",
                 "hidden": "custom_field.hide",
-                "removed": "custom_field.archive",
+                "removed": "custom_field.delete",
             }[req.state],
             field_id=field.id,
             production_id=production_id,

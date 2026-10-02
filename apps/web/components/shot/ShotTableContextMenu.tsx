@@ -87,6 +87,7 @@ interface ShotTableContextMenuProps {
   onClearSort: () => void;
   onAutoFitColumn: (column: string) => void;
   onHideColumn: (column: string) => void;
+  onDeleteColumn: (column: string) => Promise<void>;
 }
 
 export function ShotTableContextMenu({
@@ -107,7 +108,7 @@ export function ShotTableContextMenu({
   onSort,
   onClearSort,
   onAutoFitColumn,
-  onHideColumn
+  onHideColumn, onDeleteColumn
 }: ShotTableContextMenuProps) {
   const column = target?.kind === 'column' ? target.column : target?.kind === 'custom-column' ? target.columnKey : null;
   const label = column ? columnLabels[column] || (target?.kind === 'custom-column' ? target.label : SHOT_TABLE_COLUMN_LABELS[column as ShotTableColumnKey]) || '镜号' : '';
@@ -117,12 +118,17 @@ export function ShotTableContextMenu({
     label: string;
   } | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [pendingColumn, setPendingColumn] = useState<{ column: string; label: string } | null>(null);
+  const protectedDelete = Boolean(pendingColumn && ['display_number', 'tc_in', 'panel_image'].includes(pendingColumn.column));
+  const [deletingColumn, setDeletingColumn] = useState(false);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const returnRegionRef = useRef<HTMLElement | null>(null);
   const restoreFocusOnCloseRef = useRef(true);
 
   useEffect(() => {
     if (target?.returnFocus) {
       returnFocusRef.current = target.returnFocus;
+      returnRegionRef.current = target.returnFocus.closest<HTMLElement>('[role="region"]');
     }
   }, [target]);
 
@@ -226,10 +232,29 @@ export function ShotTableContextMenu({
           {target?.kind !== 'row' && <>
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled={!commands.canWrite} onSelect={onNewShot}><Icons.Plus className="mr-2 h-4 w-4" />新建镜头…</DropdownMenuItem>
-            <DropdownMenuItem onSelect={onOpenTrash}><Icons.Trash2 className="mr-2 h-4 w-4" />打开废纸篓 / 恢复镜头…</DropdownMenuItem>
+            {column && <DropdownMenuItem disabled={!commands.canWrite || columnPending} className="text-destructive focus:text-destructive"
+              onSelect={() => { setActionError(null); setPendingColumn({ column, label }); }}><Icons.Trash2 className="mr-2 h-4 w-4" />删除此列</DropdownMenuItem>}
           </>}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <Dialog open={Boolean(pendingColumn)} onOpenChange={open => { if (!open && !deletingColumn) { setPendingColumn(null); setActionError(null); } }}>
+        <DialogContent className="max-w-md" onEscapeKeyDown={event => { if (deletingColumn) event.preventDefault(); }}
+          onInteractOutside={event => { if (deletingColumn) event.preventDefault(); }}
+          onCloseAutoFocus={event => { event.preventDefault(); (returnFocusRef.current?.isConnected ? returnFocusRef.current : returnRegionRef.current)?.focus({ preventScroll: true }); }}>
+          <DialogTitle>{protectedDelete ? '无法删除此列' : '删除此列'}</DialogTitle>
+          <DialogDescription>{protectedDelete ? '镜号、时码、分镜画面不允许删除。' : <>确认删除“{pendingColumn?.label}”整列？列数据保留，可从新增列弹窗重新加入。</>}</DialogDescription>
+          {actionError && <p role="alert" className="text-sm text-destructive">{actionError}</p>}
+          <DialogFooter><Button variant="outline" disabled={deletingColumn} onClick={() => { setPendingColumn(null); setActionError(null); }}>{protectedDelete ? '知道了' : '取消'}</Button>
+            {!protectedDelete && <Button variant="destructive" disabled={deletingColumn} onClick={async () => {
+              if (!pendingColumn || deletingColumn) return;
+              setDeletingColumn(true); setActionError(null);
+              try { await onDeleteColumn(pendingColumn.column); setPendingColumn(null); }
+              catch (error) { setActionError(error instanceof Error ? error.message : '删除失败，原列已保留。'); }
+              finally { setDeletingColumn(false); }
+            }}>{deletingColumn ? '删除中…' : '确认删除'}</Button>}</DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={Boolean(pendingTrash)}

@@ -6,6 +6,7 @@ import type { Shot } from '@frameforge/types';
 import { ApiError } from '@/lib/api-client';
 import { MethodBadge } from './MethodBadge';
 import { StatusBadge } from './StatusBadge';
+import { ShotTableText } from './ShotTableText';
 import { getMethodLabel, getStatusBadge } from '@/lib/media-resolver';
 import {
   type CustomFieldDefinition,
@@ -269,14 +270,14 @@ export function CustomFieldCell({
       className="mx-[-6px] cursor-text rounded px-1.5 py-0.5 transition-colors hover:bg-muted"
       title="双击编辑自定义列"
     >
-      <div className={field.wrap_text ? 'whitespace-pre-wrap' : 'truncate'}>
+      <div>
         {currentDisplay ? format === 'primary_method' ? <div className="flex flex-wrap gap-1">{currentDisplay.split(' / ').map(method => <MethodBadge key={method} method={method} />)}</div>
           : format === 'status' ? <StatusBadge status={currentDisplay} />
-          : format === 'duration_frames' ? <span className="font-mono"><strong>{currentDisplay}f</strong> <span className="text-[10px] text-muted-foreground">({(Number(currentDisplay) / fps).toFixed(1)}s)</span></span>
-          : format === 'lens_mm' ? `${currentDisplay}mm`
-          : format === 'sequence_id' ? `场次 ${currentDisplay.slice(0,8)}`
-          : format === 'camera_movement' && field.field_type === 'json' ? String(((value === undefined ? field.default_value : value) as { type?: unknown } | null)?.type || '固定')
-          : currentDisplay : (
+          : format === 'duration_frames' ? <span className="font-mono"><ShotTableText text={`${currentDisplay}f (${(Number(currentDisplay) / fps).toFixed(1)}s)`} /></span>
+          : format === 'lens_mm' ? <ShotTableText text={`${currentDisplay}mm`} />
+          : format === 'sequence_id' ? <ShotTableText text={`场次 ${currentDisplay.slice(0,8)}`} />
+          : format === 'camera_movement' && field.field_type === 'json' ? <ShotTableText text={String(((value === undefined ? field.default_value : value) as { type?: unknown } | null)?.type || '固定')} />
+          : <ShotTableText text={currentDisplay} /> : (
           <span className={field.required ? 'italic text-[#FF0082]' : 'italic text-muted-foreground'}>
             {field.required ? '必填' : '空'}
           </span>

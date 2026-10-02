@@ -5,6 +5,7 @@ import { Button, Input } from '@frameforge/ui';
 import { useUpdateShot } from '@/lib/hooks/useProduction';
 import type { Shot } from '@frameforge/types';
 import { ApiError } from '@/lib/api-client';
+import { ShotTableText } from './ShotTableText';
 
 interface InlineEditCellProps {
   productionId: string;
@@ -167,7 +168,7 @@ export function InlineEditCell({
       className={`cursor-text rounded px-1.5 py-0.5 -mx-1.5 transition-colors hover:bg-muted ${className} ${isSaving ? 'opacity-50' : ''}`}
       title="双击编辑"
     >
-      <div className="line-clamp-1">{value !== null && value !== '' ? value : <span className={required ? 'text-[#FF0082]' : 'text-muted-foreground italic'}>{placeholder || (required ? '请输入内容（必填）' : '空')}</span>}</div>
+      {value !== null && value !== '' ? <ShotTableText text={String(value)} /> : <span className={required ? 'text-[#FF0082]' : 'text-muted-foreground italic'}>{typeof placeholder === 'string' || !placeholder ? <ShotTableText text={String(placeholder || (required ? '请输入内容（必填）' : '空'))} /> : placeholder}</span>}
     </div>
   );
 }

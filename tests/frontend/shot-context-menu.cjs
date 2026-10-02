@@ -27,7 +27,7 @@ const props = {
   productionId: 'synthetic', sortKey: 'default', sortDirection: 'asc', wrappedColumns: [],
   onOpenChange() {}, onOpenInspector: id => called.push(id), onClearSelection() {},
   onSort() {}, onClearSort() {}, onAutoFitColumn() {}, onHideColumn() {},
-  onNewShot() {}, onOpenTrash() {}, onToggleWrap() {},
+  onNewShot() {}, onOpenTrash() {}, onDeleteColumn: async column => called.push(column), onToggleWrap() {},
   columnLabels: { display_number: '镜号', description: '画面描述' }, canPasteColumn: true, columnPending: false,
   onInsertColumn: (...args) => called.push(args), onCopyColumn: (...args) => called.push(args), onPasteColumn: (...args) => called.push(args),
   onCopyCell: value => called.push(value), onCustomFieldState: (...args) => called.push(args)
@@ -53,10 +53,12 @@ actions.find(action => action.label.includes('后插列')).onSelect();
 assert.deepEqual(called.pop(), ['custom:shoot_date', true]);
 assert.match(html, /按内容自动列宽/);
 assert.match(html, /新建镜头/);
-assert.match(html, /恢复镜头/);
+assert.match(html, /删除此列/);
+assert.doesNotMatch(html, /恢复镜头/);
 html = render({ kind: 'column', column: 'description' });
 assert.match(html, /开启文本换行/);
 html = render({ kind: 'column', column: 'display_number' });
 assert.doesNotMatch(html, /隐藏此列/);
-assert.match(html, /恢复镜头/);
+assert.match(html, /删除此列/);
+assert.doesNotMatch(html, /恢复镜头/);
 console.log('Shot workspace menu branch/action check passed (primitive stubs; no visual QA).');

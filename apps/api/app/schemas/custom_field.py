@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, NonNegativeInt
 
 
 CustomFieldType = Literal["text", "textarea", "number", "boolean", "date", "url", "select", "multiselect", "json"]
@@ -37,6 +37,11 @@ class CustomFieldUpdate(BaseModel):
 class CustomFieldStateUpdate(BaseModel):
     revision: int = Field(ge=1)
     state: CustomFieldColumnState
+
+
+class BuiltinColumnStateUpdate(BaseModel):
+    revision: int = Field(ge=0)
+    state: Literal['visible', 'removed']
 
 
 class CustomFieldPurgeRequest(BaseModel):
@@ -87,6 +92,7 @@ class CustomFieldValueMatrix(BaseModel):
 class CustomFieldInsert(BaseModel):
     fields: list[CustomFieldCreate] = Field(default_factory=list, max_length=100)
     restore: dict[str, int] = Field(default_factory=dict, max_length=100)
+    restore_columns: dict[str, NonNegativeInt] = Field(default_factory=dict, max_length=100)
 
 
 class ColumnCopyRequest(BaseModel):
