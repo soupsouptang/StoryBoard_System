@@ -20,6 +20,7 @@ interface ShotColumnManagerProps {
   columnOrder: ShotTableColumnKey[];
   hiddenColumns: ShotTableColumnKey[];
   rowHeight: ShotTableRowHeight;
+  columnLabels?: Record<string, string>;
   onVisibleChange: (column: ShotTableColumnKey, visible: boolean) => void;
   onMove: (column: ShotTableColumnKey, direction: -1 | 1) => void;
   onRowHeightChange: (value: ShotTableRowHeight) => void;
@@ -30,6 +31,7 @@ export function ShotColumnManager({
   columnOrder,
   hiddenColumns,
   rowHeight,
+  columnLabels = SHOT_TABLE_COLUMN_LABELS,
   onVisibleChange,
   onMove,
   onRowHeightChange,
@@ -67,12 +69,12 @@ export function ShotColumnManager({
                   onCheckedChange={checked => onVisibleChange(column, checked === true)}
                   aria-label={
                     visible
-                      ? `隐藏${SHOT_TABLE_COLUMN_LABELS[column]}`
-                      : `显示${SHOT_TABLE_COLUMN_LABELS[column]}`
+                      ? `隐藏${columnLabels[column]}`
+                      : `显示${columnLabels[column]}`
                   }
                 />
                 <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-                  {SHOT_TABLE_COLUMN_LABELS[column]}
+                  {columnLabels[column]}
                 </span>
                 <Button
                   type="button"
@@ -81,7 +83,7 @@ export function ShotColumnManager({
                   disabled={index === 0}
                   onClick={() => onMove(column, -1)}
                   className="h-7 px-2 text-[11px]"
-                  aria-label={`上移${SHOT_TABLE_COLUMN_LABELS[column]}`}
+                  aria-label={`上移${columnLabels[column]}`}
                 >
                   上移
                 </Button>
@@ -92,7 +94,7 @@ export function ShotColumnManager({
                   disabled={index === columnOrder.length - 1}
                   onClick={() => onMove(column, 1)}
                   className="h-7 px-2 text-[11px]"
-                  aria-label={`下移${SHOT_TABLE_COLUMN_LABELS[column]}`}
+                  aria-label={`下移${columnLabels[column]}`}
                 >
                   下移
                 </Button>

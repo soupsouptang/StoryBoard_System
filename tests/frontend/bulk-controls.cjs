@@ -82,7 +82,7 @@ const plain = value => JSON.parse(JSON.stringify(value));
 async function main() {
   render();
   assert.equal(selects().length, 3);
-  assert.match(tree.props.className, /shrink-0.*flex-wrap.*rounded-xl.*border.*bg-muted\/30/);
+  assert.match(tree.props.className, /shrink-0.*flex-wrap.*border-b.*bg-muted\/30/);
   assert.ok(!tree.props.className.includes('fixed'));
   assert.ok(selects().every(node => node.props.className === 'w-[170px] min-w-0'));
   assert.deepEqual(plain(select('批量设置制作方式').props.options.map(({ value }) => value)), ['', 'live', 'stock', 'client', 'archive', 'still', 'ae', 'mg', 'three_d', 'vfx', 'type']);

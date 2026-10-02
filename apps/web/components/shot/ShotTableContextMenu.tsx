@@ -27,7 +27,8 @@ import {
 export type ShotTableContextColumnKey =
   | 'display_number'
   | 'primary_method'
-  | ShotTableColumnKey;
+  | ShotTableColumnKey
+  | `custom:${string}`;
 
 export type ShotTableContextTarget =
   | {
@@ -42,6 +43,7 @@ export type ShotTableContextTarget =
       x: number;
       y: number;
       returnFocus: HTMLElement | null;
+      columnKey: `custom:${string}`;
       fieldId: string;
       revision: number;
       label: string;
@@ -73,31 +75,18 @@ interface ShotTableContextMenuProps {
   onCopyCell: (value: string) => void;
   onOpenTrash: () => void;
   onNewShot: () => void;
-  onCustomFieldState: (id: string, revision: number, state: 'hidden' | 'removed') => void;
+  columnLabels: Record<string, string>;
+  canPasteColumn: boolean;
+  columnPending: boolean;
+  onInsertColumn: (column: string, after: boolean) => void;
+  onCopyColumn: (column: string, cut: boolean) => void;
+  onPasteColumn: (column: string) => void;
   wrappedColumns: ShotTableColumnKey[];
   onToggleWrap: (column: ShotTableColumnKey) => void;
   onSort: (column: ShotTableContextColumnKey, direction: 'asc' | 'desc') => void;
   onClearSort: () => void;
-  onAutoFitColumn: (column: ShotTableColumnKey) => void;
-  onHideColumn: (column: ShotTableColumnKey) => void;
-}
-
-const FIXED_COLUMN_LABELS: Record<'display_number' | 'primary_method', string> = {
-  display_number: '镜号',
-  primary_method: '制作方式'
-};
-
-function columnLabel(column: ShotTableContextColumnKey) {
-  if (column === 'display_number' || column === 'primary_method') {
-    return FIXED_COLUMN_LABELS[column];
-  }
-  return SHOT_TABLE_COLUMN_LABELS[column];
-}
-
-function isManagedColumn(
-  column: ShotTableContextColumnKey
-): column is ShotTableColumnKey {
-  return column !== 'display_number' && column !== 'primary_method';
+  onAutoFitColumn: (column: string) => void;
+  onHideColumn: (column: string) => void;
 }
 
 export function ShotTableContextMenu({
@@ -112,7 +101,7 @@ export function ShotTableContextMenu({
   onCopyCell,
   onOpenTrash,
   onNewShot,
-  onCustomFieldState,
+  columnLabels, canPasteColumn, columnPending, onInsertColumn, onCopyColumn, onPasteColumn,
   wrappedColumns,
   onToggleWrap,
   onSort,
@@ -120,6 +109,8 @@ export function ShotTableContextMenu({
   onAutoFitColumn,
   onHideColumn
 }: ShotTableContextMenuProps) {
+  const column = target?.kind === 'column' ? target.column : target?.kind === 'custom-column' ? target.columnKey : null;
+  const label = column ? columnLabels[column] || (target?.kind === 'custom-column' ? target.label : SHOT_TABLE_COLUMN_LABELS[column as ShotTableColumnKey]) || '镜号' : '';
   const bulkTrash = useBulkTrashShots(productionId);
   const [pendingTrash, setPendingTrash] = useState<{
     shotIds: string[];
@@ -194,73 +185,22 @@ export function ShotTableContextMenu({
             restoreFocusOnCloseRef.current = true;
           }}
         >
-          {target?.kind === 'column' && (
-            <>
-              <DropdownMenuLabel>
-                列属性 · {columnLabel(target.column)}
-              </DropdownMenuLabel>
-              <DropdownMenuItem
-                onSelect={() => onSort(target.column, 'asc')}
-              >
-                <span className="mr-2 w-4 text-center">↑</span>
-                升序排序
-                {sortKey === target.column && sortDirection === 'asc' && (
-                  <Icons.Check className="ml-auto h-4 w-4" />
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => onSort(target.column, 'desc')}
-              >
-                <span className="mr-2 w-4 text-center">↓</span>
-                降序排序
-                {sortKey === target.column && sortDirection === 'desc' && (
-                  <Icons.Check className="ml-auto h-4 w-4" />
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={sortKey !== target.column}
-                onSelect={onClearSort}
-              >
-                <Icons.X className="mr-2 h-4 w-4" />
-                清除排序
-              </DropdownMenuItem>
-
-              {isManagedColumn(target.column) && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={() => onAutoFitColumn(target.column as ShotTableColumnKey)}
-                  >
-                    <Icons.ArrowUpDown className="mr-2 h-4 w-4 rotate-90" />
-                    按内容自动列宽
-                  </DropdownMenuItem>
-                  {['description', 'panel_frame', 'voice_over', 'camera_movement'].includes(target.column) && (
-                    <DropdownMenuItem onSelect={() => onToggleWrap(target.column as ShotTableColumnKey)}>
-                      {wrappedColumns.includes(target.column as ShotTableColumnKey) ? '关闭文本换行' : '开启文本换行'}
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
-                    onSelect={() => onHideColumn(target.column as ShotTableColumnKey)}
-                  >
-                    <Icons.Columns3 className="mr-2 h-4 w-4" />
-                    隐藏此列
-                  </DropdownMenuItem>
-                </>
-              )}
-            </>
-          )}
-
-          {target?.kind === 'custom-column' && (
-            <>
-              <DropdownMenuLabel>列属性 · {target.label}</DropdownMenuLabel>
-              <DropdownMenuItem onSelect={() => onCustomFieldState(target.fieldId, target.revision, 'hidden')}>
-                隐藏此列（可恢复）
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => onCustomFieldState(target.fieldId, target.revision, 'removed')}>
-                归档此列（可恢复）
-              </DropdownMenuItem>
-            </>
-          )}
+          {column && <>
+            <DropdownMenuLabel>列属性 · {label}</DropdownMenuLabel>
+            <DropdownMenuItem onSelect={() => onSort(column as ShotTableContextColumnKey, 'asc')}><span className="mr-2 w-4 text-center">↑</span>升序排序{sortKey === column && sortDirection === 'asc' && <Icons.Check className="ml-auto h-4 w-4" />}</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onSort(column as ShotTableContextColumnKey, 'desc')}><span className="mr-2 w-4 text-center">↓</span>降序排序{sortKey === column && sortDirection === 'desc' && <Icons.Check className="ml-auto h-4 w-4" />}</DropdownMenuItem>
+            <DropdownMenuItem disabled={sortKey !== column} onSelect={onClearSort}><Icons.X className="mr-2 h-4 w-4" />清除排序</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem disabled={!commands.canWrite || columnPending} onSelect={() => onInsertColumn(column, false)}><span className="mr-2 w-4 text-center">←</span>前插列</DropdownMenuItem>
+            <DropdownMenuItem disabled={!commands.canWrite || columnPending} onSelect={() => onInsertColumn(column, true)}><span className="mr-2 w-4 text-center">→</span>后插列</DropdownMenuItem>
+            <DropdownMenuItem disabled={columnPending} onSelect={() => onCopyColumn(column, false)}><Icons.Copy className="mr-2 h-4 w-4" />复制<DropdownMenuShortcut>Ctrl/Cmd+C</DropdownMenuShortcut></DropdownMenuItem>
+            <DropdownMenuItem disabled={!commands.canWrite || columnPending} onSelect={() => onCopyColumn(column, true)}><Icons.Scissors className="mr-2 h-4 w-4" />剪切<DropdownMenuShortcut>Ctrl/Cmd+X</DropdownMenuShortcut></DropdownMenuItem>
+            <DropdownMenuItem disabled={!commands.canWrite || columnPending || !canPasteColumn} onSelect={() => onPasteColumn(column)}><Icons.ClipboardPaste className="mr-2 h-4 w-4" />向后粘贴<DropdownMenuShortcut>Ctrl/Cmd+V</DropdownMenuShortcut></DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => onAutoFitColumn(column)}><Icons.ArrowUpDown className="mr-2 h-4 w-4 rotate-90" />按内容自动列宽</DropdownMenuItem>
+            {['description', 'voice_over', 'camera_movement'].includes(column) && <DropdownMenuItem onSelect={() => onToggleWrap(column as ShotTableColumnKey)}>{wrappedColumns.includes(column as ShotTableColumnKey) ? '关闭文本换行' : '开启文本换行'}</DropdownMenuItem>}
+            {column !== 'display_number' && <DropdownMenuItem onSelect={() => onHideColumn(column)}><Icons.Columns3 className="mr-2 h-4 w-4" />隐藏此列</DropdownMenuItem>}
+          </>}
 
           {target?.kind === 'row' && (
             <>
@@ -272,12 +212,11 @@ export function ShotTableContextMenu({
               <DropdownMenuItem onSelect={() => onSelectShot(target.shotId)}><Icons.Check className="mr-2 h-4 w-4" />选中 SHOT {target.displayNumber}</DropdownMenuItem>
               <DropdownMenuItem disabled={!canAutoTime || !commands.canWrite || commands.pending} onSelect={() => commands.run('auto_timing', target.shotId)}><Icons.Clock3 className="mr-2 h-4 w-4" />单条旁白自动计时</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem disabled={!commands.canWrite || commands.pending} onSelect={() => commands.run('insert_before', target.shotId)}><span className="mr-2 w-4 text-center">↑</span>在前面插入镜头</DropdownMenuItem>
-              <DropdownMenuItem disabled={!commands.canWrite || commands.pending} onSelect={() => commands.run('insert_after', target.shotId)}><span className="mr-2 w-4 text-center">↓</span>在后面插入镜头</DropdownMenuItem>
-              <DropdownMenuItem disabled={!commands.canWrite || commands.pending} onSelect={() => commands.run('duplicate', target.shotId, target.shotIds)}><Icons.Copy className="mr-2 h-4 w-4" />复制此镜头</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => void commands.copy(target.shotIds)}><Icons.Copy className="mr-2 h-4 w-4" />复制到剪贴板<DropdownMenuShortcut>Ctrl/Cmd+C</DropdownMenuShortcut></DropdownMenuItem>
-              <DropdownMenuItem disabled={!commands.canWrite || commands.pending} onSelect={() => void commands.copy(target.shotIds, true)}><Icons.Scissors className="mr-2 h-4 w-4" />剪切到剪贴板<DropdownMenuShortcut>Ctrl/Cmd+X</DropdownMenuShortcut></DropdownMenuItem>
-              <DropdownMenuItem disabled={!commands.canWrite || commands.pending || !commands.clipboard || (commands.clipboard.cut && commands.clipboard.sources.some(source => source.id === target.shotId))} onSelect={() => void commands.paste(target.shotId)}><Icons.ClipboardPaste className="mr-2 h-4 w-4" />在此镜头后粘贴<DropdownMenuShortcut>Ctrl/Cmd+V</DropdownMenuShortcut></DropdownMenuItem>
+              <DropdownMenuItem disabled={!commands.canWrite || commands.pending} onSelect={() => commands.run('insert_before', target.shotId)}><span className="mr-2 w-4 text-center">↑</span>上插镜头</DropdownMenuItem>
+              <DropdownMenuItem disabled={!commands.canWrite || commands.pending} onSelect={() => commands.run('insert_after', target.shotId)}><span className="mr-2 w-4 text-center">↓</span>下插镜头</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => void commands.copy(target.shotIds)}><Icons.Copy className="mr-2 h-4 w-4" />复制<DropdownMenuShortcut>Ctrl/Cmd+C</DropdownMenuShortcut></DropdownMenuItem>
+              <DropdownMenuItem disabled={!commands.canWrite || commands.pending} onSelect={() => void commands.copy(target.shotIds, true)}><Icons.Scissors className="mr-2 h-4 w-4" />剪切<DropdownMenuShortcut>Ctrl/Cmd+X</DropdownMenuShortcut></DropdownMenuItem>
+              <DropdownMenuItem disabled={!commands.canWrite || commands.pending || !commands.clipboard || (commands.clipboard.cut && commands.clipboard.sources.some(source => source.id === target.shotId))} onSelect={() => void commands.paste(target.shotId)}><Icons.ClipboardPaste className="mr-2 h-4 w-4" />向下粘贴<DropdownMenuShortcut>Ctrl/Cmd+V</DropdownMenuShortcut></DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem disabled={!commands.canWrite || commands.pending} className="text-destructive focus:text-destructive" onSelect={() => requestTrash(target.shotIds, target.shotIds.length > 1 ? target.shotIds.length + ' 个镜头' : 'SHOT ' + target.displayNumber)}>
                 <Icons.Trash2 className="mr-2 h-4 w-4" />{target.shotIds.length > 1 ? '删除所选镜头' : '删除此镜头'}

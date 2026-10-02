@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import re
 import uuid
+import copy
+import json
 from datetime import datetime, timezone
 from typing import Any
 
@@ -17,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import ConflictError, DomainError, NotFoundError
 from app.models.collaboration import AuditLog
 from app.models.field import ColumnPreference, CustomFieldDefinition, ShotCustomFieldValue
-from app.models.production import Production
+from app.models.production import Production, Sequence
 from app.models.shot import Shot
 from app.models.user import User
 from app.models.view import SavedView
@@ -28,12 +30,32 @@ from app.schemas.custom_field import (
     CustomFieldStateUpdate,
     CustomFieldUpdate,
     CustomFieldValuePatch,
+    CustomFieldInsert,
+    ColumnCopyRequest,
 )
 
 
 class CustomFieldService:
-    FIELD_TYPES = {"text", "textarea", "number", "boolean", "date", "url", "select"}
+    FIELD_TYPES = {"text", "textarea", "number", "boolean", "date", "url", "select", "multiselect", "json"}
     COLUMN_STATES = {"visible", "hidden", "removed"}
+    PROTECTED_LABELS = {"镜号", "时码", "时码 TC", "分镜画面"}
+    RETIRED_LABELS = {"原镜号", "原描述", "分镜图框", "机位/运镜"}
+    # Explicit allowlist: column clipboard input must never expose arbitrary Shot attributes.
+    COPY_COLUMNS = {
+        "name": "text", "description": "textarea", "voice_over": "textarea",
+        "performance": "textarea", "dialogue": "textarea", "action": "textarea",
+        "duration_frames": "number", "lens_mm": "number", "sequence_id": "select",
+        "owner_id": "text", "primary_method": "multiselect", "status": "select",
+        "department": "select", "shot_size": "select", "camera_angle": "select",
+        "camera_movement": "json",
+        **{key: "text" for key in ("shot_reference", "location", "int_ext", "day_night",
+            "dialogue_character", "edit_transition", "notes", "feasibility", "replacement", "execution_method")},
+    }
+
+    @staticmethod
+    def _retired_label(label: str) -> bool:
+        heading = re.sub(r"^原始列\s*[·.]\s*", "", label.strip())
+        return re.sub(r"\s*\(\d+\)$", "", heading) in CustomFieldService.RETIRED_LABELS
 
     @staticmethod
     def _has_permission(user: User, permission: str) -> bool:
@@ -110,6 +132,19 @@ class CustomFieldService:
         return f"custom:{field.key}"
 
     @staticmethod
+    def _unique_label(label: str, used: set[str], *, numbered: bool = False) -> str:
+        if not numbered and label not in used:
+            return label
+        base = label
+        suffix = 1
+        while f"{base}{suffix:02d}" in used:
+            suffix += 1
+        result = f"{base}{suffix:02d}"
+        if len(result) > 80:
+            raise DomainError("新增后的列名不能超过 80 个字符", code="VALIDATION_ERROR")
+        return result
+
+    @staticmethod
     def _audit(
         db: AsyncSession,
         *,
@@ -165,6 +200,15 @@ class CustomFieldService:
         if value is None:
             return None
 
+        if field_type == "json":
+            try:
+                encoded = json.dumps(value, ensure_ascii=False, allow_nan=False)
+            except (TypeError, ValueError):
+                raise DomainError("结构化列内容不是有效 JSON", code="VALIDATION_ERROR")
+            if len(encoded) > 10000:
+                raise DomainError("结构化列内容过长", code="VALIDATION_ERROR")
+            return copy.deepcopy(value)
+
         if field_type in {"text", "textarea", "date", "url"}:
             text = str(value)
             max_length = 10000 if field_type == "textarea" else 2000
@@ -193,6 +237,11 @@ class CustomFieldService:
             if selected not in options:
                 raise DomainError("选择值不在自定义列选项中", code="VALIDATION_ERROR")
             return selected
+
+        if field_type == "multiselect":
+            if not isinstance(value, list) or any(not isinstance(item, str) or item not in options for item in value):
+                raise DomainError("多选值不在自定义列选项中", code="VALIDATION_ERROR")
+            return list(dict.fromkeys(value))
 
         raise DomainError("不支持的自定义列类型", code="INVALID_FIELD_TYPE")
 
@@ -279,6 +328,11 @@ class CustomFieldService:
         label = req.label.strip()
         if not label:
             raise DomainError("自定义列名称不能为空", code="VALIDATION_ERROR")
+        if label in CustomFieldService.PROTECTED_LABELS or (CustomFieldService._retired_label(label) and req.group_name != "导入原文"):
+            raise DomainError("镜号、时码、分镜画面不能重复新增；已取消的列不能新增。", code="COLUMN_PROTECTED")
+        existing_labels = await db.execute(select(CustomFieldDefinition.label).where(
+            CustomFieldDefinition.production_id == production_id, CustomFieldDefinition.is_purged.is_(False)))
+        label = CustomFieldService._unique_label(label, set(existing_labels.scalars()))
 
         key = CustomFieldService._normalize_key(req.key)
         existing_result = await db.execute(
@@ -297,7 +351,7 @@ class CustomFieldService:
             raise DomainError("该自定义列键已存在", code="FIELD_KEY_EXISTS")
 
         options = CustomFieldService._normalize_options(req.options)
-        if req.field_type != "select":
+        if req.field_type not in {"select", "multiselect"}:
             options = []
         elif not options:
             raise DomainError("选择列至少需要一个选项", code="VALIDATION_ERROR")
@@ -338,7 +392,7 @@ class CustomFieldService:
         preference = ColumnPreference(
             production_id=production_id,
             column_key=CustomFieldService._column_key(field),
-            state="visible",
+            state="hidden" if CustomFieldService._retired_label(label) else "visible",
             permanently_deleted=False,
             position=sort_index,
             width_px=220 if req.field_type == "textarea" else 180,
@@ -358,6 +412,94 @@ class CustomFieldService:
         )
         await db.flush()
         return (await CustomFieldService._projection(db, [field]))[0]
+
+    @staticmethod
+    async def insert_fields(db: AsyncSession, production_id: str, req: CustomFieldInsert, user: User) -> list[dict]:
+        """Create/restore a dialog's selections in one acknowledged transaction."""
+        CustomFieldService._require_write(user)
+        await CustomFieldService._production(db, production_id, for_update=True)
+        if not req.fields and not req.restore:
+            raise DomainError("请先选择或输入列名", code="VALIDATION_ERROR")
+        restored = []
+        for field_id, revision in req.restore.items():
+            restored.append(await CustomFieldService.set_state(db, production_id, field_id,
+                CustomFieldStateUpdate(revision=revision, state="visible"), user))
+        created = [await CustomFieldService.create_field(db, production_id, field, user) for field in req.fields]
+        return restored + created
+
+    @staticmethod
+    async def copy_column(db: AsyncSession, production_id: str, req: ColumnCopyRequest, user: User) -> dict:
+        """Copy all live rows, never a filtered client matrix; reject stale clipboard snapshots."""
+        CustomFieldService._require_write(user)
+        await CustomFieldService._production(db, production_id, for_update=True)
+        result = await db.execute(select(Shot).where(Shot.production_id == production_id,
+            Shot.deleted_at.is_(None)).order_by(Shot.id).with_for_update())
+        shots = list(result.scalars().all())
+        if req.shot_revisions != {shot.id: shot.revision for shot in shots}:
+            raise ConflictError(message="镜头数据已修改，请刷新后重新复制整列。", details={})
+        source = None
+        if req.source.startswith("custom:"):
+            result = await db.execute(select(CustomFieldDefinition).where(
+                CustomFieldDefinition.production_id == production_id,
+                CustomFieldDefinition.key == req.source[7:],
+                CustomFieldDefinition.is_purged.is_(False)).with_for_update())
+            source = result.scalar_one_or_none()
+            if not source:
+                raise NotFoundError("来源列不存在")
+            if CustomFieldService._retired_label(source.label):
+                raise DomainError("该列已取消，不能复制。", code="COLUMN_RETIRED")
+            if source.revision != req.field_revision:
+                raise ConflictError(message="来源列已修改，请重新复制。", details={"server_revision": source.revision})
+        elif req.source not in CustomFieldService.COPY_COLUMNS:
+            raise DomainError("镜号、时码、分镜画面不能复制；已取消的列不可操作。", code="COLUMN_PROTECTED")
+        source_values = {}
+        if source:
+            result = await db.execute(select(ShotCustomFieldValue).where(
+                ShotCustomFieldValue.field_definition_id == source.id))
+            source_values = {row.shot_id: row.value for row in result.scalars()}
+        values = {}
+        for shot in shots:
+            if source:
+                value = source_values.get(shot.id, source.default_value)
+            elif req.source == "primary_method":
+                value = list(dict.fromkeys([shot.primary_method, *(shot.secondary_methods or [])]))
+            else:
+                value = getattr(shot, req.source, None)
+            values[shot.id] = copy.deepcopy(value)
+        field_type = source.field_type if source else CustomFieldService.COPY_COLUMNS[req.source]
+        options = list(source.options or []) if source else []
+        if not source and field_type in {"select", "multiselect"}:
+            if req.source == "sequence_id":
+                sequence_ids = await db.execute(select(Sequence.id).where(Sequence.production_id == production_id))
+                req.options = list(sequence_ids.scalars())
+            options = CustomFieldService._normalize_options(req.options + [str(item) for value in values.values() if value is not None
+                for item in (value if isinstance(value, list) else [value]) if item != ""])
+            if not options:
+                # Empty enum columns still need a valid, editable enum definition.
+                options = ["未设置"]
+        labels = {row["label"] for row in await CustomFieldService.list_fields(db, production_id)} | set(req.existing_labels)
+        if not req.label.strip():
+            raise DomainError("列名不能为空", code="VALIDATION_ERROR")
+        label = CustomFieldService._unique_label(req.label.strip(), labels, numbered=True)
+        created = await CustomFieldService.create_field(db, production_id, CustomFieldCreate(
+            label=label, field_type=field_type, options=options,
+            description=source.description if source else "",
+            group_name=source.group_name if source else "Custom",
+            required=source.required if source else False,
+            default_value=copy.deepcopy(source.default_value) if source else None), user)
+        preference = await CustomFieldService._preference(db, production_id, created["column_key"], for_update=True)
+        preference.width_px = req.width_px
+        preference.wrap_text = req.wrap_text
+        for shot in shots:
+            value = values[shot.id]
+            db.add(ShotCustomFieldValue(shot_id=shot.id, field_definition_id=created["id"], value=value, updated_by=user.id))
+            shot.revision += 1
+            shot.updated_at = datetime.now(timezone.utc)
+            db.add(AuditLog(user_id=user.id, action="shot.column.copy", entity_type="shot", entity_id=shot.id,
+                metadata_json={"field_id": created["id"], "source": req.source, "revision": shot.revision}))
+        await db.flush()
+        return {"field": (await CustomFieldService._projection(db, [await CustomFieldService._field(db, production_id, created["id"])]))[0],
+                "shot_revisions": {shot.id: shot.revision for shot in shots}}
 
     @staticmethod
     async def update_field(
@@ -400,20 +542,17 @@ class CustomFieldService:
             value_rows = list(values_result.scalars().all())
 
         next_options = list(field.options or [])
-        if next_field_type == "select":
+        if next_field_type in {"select", "multiselect"}:
             if req.options is not None:
                 next_options = CustomFieldService._normalize_options(req.options)
-            elif field.field_type != "select":
+            elif field.field_type not in {"select", "multiselect"}:
                 next_options = []
 
             if not next_options:
                 raise DomainError("选择列至少需要一个选项", code="VALIDATION_ERROR")
 
-            used = {
-                row.value
-                for row in value_rows
-                if row.value is not None
-            }
+            used = {str(value) for row in value_rows if row.value is not None
+                    for value in (row.value if isinstance(row.value, list) else [row.value])}
             removed_in_use = sorted(
                 str(value) for value in used if value not in next_options
             )
@@ -456,6 +595,8 @@ class CustomFieldService:
             label = req.label.strip()
             if not label:
                 raise DomainError("自定义列名称不能为空", code="VALIDATION_ERROR")
+            if CustomFieldService._retired_label(label):
+                raise DomainError("该列已取消，不能使用此名称。", code="COLUMN_RETIRED")
             if field.label != label:
                 field.label = label
                 changed.append("label")
@@ -791,7 +932,7 @@ class CustomFieldService:
             req.value,
             list(field.options or []),
         )
-        if field.required and normalized in (None, ""):
+        if field.required and normalized in (None, "", []):
             raise DomainError("必填自定义列不能为空", code="FIELD_REQUIRED")
 
         value_result = await db.execute(

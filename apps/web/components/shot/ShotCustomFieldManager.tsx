@@ -35,15 +35,20 @@ const FIELD_TYPE_LABELS: Record<CustomFieldType, string> = {
   boolean: '勾选',
   date: '日期',
   url: '链接',
-  select: '单选'
+  select: '单选',
+  multiselect: '多选',
+  json: '结构化内容'
 };
 
 interface ShotCustomFieldManagerProps {
   productionId: string;
 }
 
+import { isRetiredShotColumnLabel } from '@/lib/shot-table-presentation';
+
 export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerProps) {
-  const { data: fields = [], isLoading } = useCustomFields(productionId);
+  const { data: allFields = [], isLoading } = useCustomFields(productionId);
+  const fields = allFields.filter(field => !isRetiredShotColumnLabel(field.label));
   const createField = useCreateCustomField(productionId);
   const updateField = useUpdateCustomField(productionId);
   const setFieldState = useSetCustomFieldState(productionId);
@@ -107,7 +112,7 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
     if (!nextLabel) return;
 
     const options =
-      editFieldType === 'select'
+      ['select', 'multiselect'].includes(editFieldType)
         ? parseOptions(editOptions)
         : undefined;
 
@@ -132,7 +137,7 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
     const trimmedLabel = label.trim();
     if (!trimmedLabel) return;
 
-    const options = fieldType === 'select' ? parseOptions(selectOptions) : [];
+    const options = ['select', 'multiselect'].includes(fieldType) ? parseOptions(selectOptions) : [];
 
     setActionError(null);
     try {
@@ -414,7 +419,7 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
               }))}
             />
 
-            {fieldType === 'select' && (
+            {['select', 'multiselect'].includes(fieldType) && (
               <div className="space-y-2">
                 <label htmlFor="custom-field-options" className="text-sm font-medium text-foreground">
                   选项
@@ -456,7 +461,7 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
               disabled={
                 !label.trim() ||
                 createField.isPending ||
-                (fieldType === 'select' && !selectOptions.trim())
+                (['select', 'multiselect'].includes(fieldType) && !selectOptions.trim())
               }
               onClick={() => void create()}
             >
@@ -500,8 +505,8 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
               onChange={value => {
                 const nextType = value as CustomFieldType;
                 setEditFieldType(nextType);
-                if (nextType === 'select' && editOptions.trim() === '' && editingField?.field_type === 'select') {
-                  setEditOptions(editingField.options.join(', '));
+                if (['select', 'multiselect'].includes(nextType) && editOptions.trim() === '' && ['select', 'multiselect'].includes(editingField?.field_type || '')) {
+                  setEditOptions(editingField?.options.join(', ') || '');
                 }
               }}
               options={(Object.keys(FIELD_TYPE_LABELS) as CustomFieldType[]).map(value => ({
@@ -531,7 +536,7 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
               />
             </div>
 
-            {editFieldType === 'select' && (
+            {['select', 'multiselect'].includes(editFieldType) && (
               <div className="space-y-2">
                 <label htmlFor="custom-field-edit-options" className="text-sm font-medium text-foreground">
                   选项
@@ -584,7 +589,7 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
               disabled={
                 !editLabel.trim() ||
                 updateField.isPending ||
-                (editFieldType === 'select' && parseOptions(editOptions).length === 0)
+                (['select', 'multiselect'].includes(editFieldType) && parseOptions(editOptions).length === 0)
               }
               onClick={() => void saveEdit()}
             >

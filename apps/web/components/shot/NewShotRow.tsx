@@ -5,11 +5,10 @@ import { Button, Input } from '@frameforge/ui';
 import type { Production, Shot } from '@frameforge/types';
 import { useCreateShot } from '@/lib/hooks/useProduction';
 import { nextAvailableShotNumber } from '@/components/storyboard/NewShotModal';
-import type { ShotTableColumnKey } from '@/lib/shot-table-presentation';
 
-export function NewShotRow({ production, shots, columns, customColumnCount, onDone }: {
-  production: Production; shots: Shot[]; columns: ShotTableColumnKey[];
-  customColumnCount: number; onDone: () => void;
+export function NewShotRow({ production, shots, columns, onDone }: {
+  production: Production; shots: Shot[]; columns: string[];
+  onDone: () => void;
 }) {
   const createShot = useCreateShot(production.id);
   const key = `frameforge:new-shot-draft:${production.id}`;
@@ -76,9 +75,8 @@ export function NewShotRow({ production, shots, columns, customColumnCount, onDo
         {column === 'primary_method' ? <select aria-label="新增镜头制作方式" value={draft.primary_method || 'live'} disabled={createShot.isPending} onFocus={() => { cancelled.current = false; }} onChange={event => setDraft(previous => ({ ...previous, primary_method: event.target.value }))} onBlur={() => { void save(); }} className="h-8 w-full rounded-md border bg-background text-xs">{['live','stock','client','archive','still','ae','mg','three_d','vfx','type'].map(method => <option key={method} value={method}>{method.toUpperCase()}</option>)}</select> : column === 'duration_frames' ? input(column, '时长 / 帧数（必填）', true, true)
           : ['name','description','panel_frame','voice_over','shot_size'].includes(column) ? input(column, column === 'name' ? '镜头标题' : column === 'description' ? '画面描述' : column === 'voice_over' ? '对应旁白' : column === 'panel_frame' ? '分镜图框' : '景别') : '—'}
       </td>)}
-      {Array.from({ length: customColumnCount }, (_, index) => <td key={index} />)}
     </tr>
-    <tr><td colSpan={3 + columns.length + customColumnCount} className="px-3 py-2">
+    <tr><td colSpan={3 + columns.length} className="px-3 py-2">
       <div className="flex items-center gap-2 text-xs">
         <span className="text-muted-foreground">新增镜头草稿 · 必填项完成后，离开输入即保存；Esc 取消当前输入。</span>
         {!columns.includes('duration_frames') && input('duration_frames', '时长 / 帧数（必填）', true, true)}

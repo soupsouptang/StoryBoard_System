@@ -17,6 +17,9 @@ from app.schemas.custom_field import (
     CustomFieldValueMatrix,
     CustomFieldValuePatch,
     CustomFieldValueResult,
+    CustomFieldInsert,
+    ColumnCopyRequest,
+    ColumnCopyResult,
 )
 from app.services.custom_field_service import CustomFieldService
 
@@ -82,6 +85,24 @@ async def create_custom_field(
             req,
             current_user,
         )
+    except DomainError as error:
+        raise _http(error)
+
+
+@router.post("/productions/{production_id}/custom-fields/insert", response_model=list[CustomFieldOut], status_code=201)
+async def insert_custom_fields(production_id: str, req: CustomFieldInsert,
+    db: AsyncSession = db_session, current_user: User = Depends(get_current_user)):
+    try:
+        return await CustomFieldService.insert_fields(db, production_id, req, current_user)
+    except DomainError as error:
+        raise _http(error)
+
+
+@router.post("/productions/{production_id}/custom-fields/copy-column", response_model=ColumnCopyResult, status_code=201)
+async def copy_column(production_id: str, req: ColumnCopyRequest,
+    db: AsyncSession = db_session, current_user: User = Depends(get_current_user)):
+    try:
+        return await CustomFieldService.copy_column(db, production_id, req, current_user)
     except DomainError as error:
         raise _http(error)
 

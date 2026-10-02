@@ -7,7 +7,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
-CustomFieldType = Literal["text", "textarea", "number", "boolean", "date", "url", "select"]
+CustomFieldType = Literal["text", "textarea", "number", "boolean", "date", "url", "select", "multiselect", "json"]
 CustomFieldColumnState = Literal["visible", "hidden", "removed"]
 
 
@@ -82,3 +82,24 @@ class CustomFieldValueResult(BaseModel):
 
 class CustomFieldValueMatrix(BaseModel):
     values: dict[str, dict[str, Any]]
+
+
+class CustomFieldInsert(BaseModel):
+    fields: list[CustomFieldCreate] = Field(default_factory=list, max_length=100)
+    restore: dict[str, int] = Field(default_factory=dict, max_length=100)
+
+
+class ColumnCopyRequest(BaseModel):
+    source: str = Field(min_length=1, max_length=120)
+    label: str = Field(min_length=1, max_length=80)
+    field_revision: int | None = Field(default=None, ge=1)
+    shot_revisions: dict[str, int] = Field(max_length=10000)
+    width_px: int = Field(default=180, ge=80, le=560)
+    wrap_text: bool = False
+    existing_labels: list[str] = Field(default_factory=list, max_length=200)
+    options: list[str] = Field(default_factory=list, max_length=100)
+
+
+class ColumnCopyResult(BaseModel):
+    field: CustomFieldOut
+    shot_revisions: dict[str, int]

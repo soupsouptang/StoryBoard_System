@@ -32,6 +32,7 @@ def sanitize_saved_view_config(
     browser may submit an old layout, but the server never persists a purged
     key back into a view.
     """
+    blocked_column_keys = blocked_column_keys | {"original_number", "original_description", "panel_frame", "movement_reference"}
     next_config = copy.deepcopy(config)
     changed = False
 
@@ -61,9 +62,9 @@ def sanitize_saved_view_config(
 
     presentation = next_config.get("presentation")
     if isinstance(presentation, dict):
-        for key in ("columnOrder", "hiddenColumns", "visibleColumns", "columns"):
+        for key in ("columnOrder", "displayOrder", "hiddenColumns", "visibleColumns", "columns"):
             remove_from_list(presentation, key)
-        for key in ("columnWidths", "widths"):
+        for key in ("columnWidths", "columnLabels", "columnFormats", "widths"):
             remove_from_map(presentation, key)
 
     custom_columns = next_config.get("customColumns")

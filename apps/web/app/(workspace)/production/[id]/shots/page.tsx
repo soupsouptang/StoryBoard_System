@@ -11,7 +11,7 @@ import { useProduction, useReorderShots, useShots, useUpdateShot } from '@/lib/h
 import { useShotCommands } from '@/lib/hooks/useShotCommands';
 import { ImportModal } from '@/components/storyboard/ImportModal';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
-import { useCustomFields, useCustomFieldValues, useSetCustomFieldState } from '@/lib/hooks/useCustomFields';
+import { useCustomFields, useCustomFieldValues, useSetCustomFieldState, useUpdateCustomField, useInsertCustomFields, useCopyColumn } from '@/lib/hooks/useCustomFields';
 import { MethodBadge } from '@/components/shot/MethodBadge';
 import { StatusBadge } from '@/components/shot/StatusBadge';
 import { ShotInspector } from '@/components/shot/ShotInspector';
@@ -23,6 +23,7 @@ import { ShotViewNavigation } from '@/components/shot/ShotViewNavigation';
 import { ShotColumnManager } from '@/components/shot/ShotColumnManager';
 import { ShotCustomFieldManager } from '@/components/shot/ShotCustomFieldManager';
 import { ShotSavedViews } from '@/components/shot/ShotSavedViews';
+import { ShotColumnDialog } from '@/components/shot/ShotColumnDialog';
 import { NewShotRow } from '@/components/shot/NewShotRow';
 import {
   ShotTableContextMenu,
@@ -30,12 +31,17 @@ import {
   type ShotTableContextTarget
 } from '@/components/shot/ShotTableContextMenu';
 import { BulkActionToolbar } from '@/components/storyboard/BulkActionToolbar';
+import { getMethodLabel, getStatusBadge } from '@/lib/media-resolver';
 import { shotMovementLabel, shotMethodValues, groupShotsByMethod } from '@/lib/shot-display';
 import {
   DEFAULT_SHOT_TABLE_COLUMN_ORDER,
   SHOT_TABLE_COLUMN_LABELS,
   PENDING_SHOT_TABLE_COLUMNS,
   clampShotTableColumnWidth,
+  compareShotColumnValues,
+  SHOT_TABLE_COLUMN_OPTIONS,
+  isRetiredShotColumnLabel,
+  isShotTableLayoutColumn,
   defaultShotTablePresentationPreferences,
   loadShotTablePresentationPreferences,
   normalizeShotTablePresentationPreferences,
@@ -67,19 +73,17 @@ function shotColumnValue(
     case 'display_number':
       return shot.display_number || '';
     case 'primary_method':
-      return shotMethodValues(shot).join(' / ');
+      return shotMethodValues(shot).map(method => getMethodLabel(method)).join(' / ');
     case 'panel_image':
       return shot.panels?.some(panel => panel.asset_id) ? 1 : 0;
     case 'shot_size':
       return shot.shot_size || '';
     case 'lens_mm':
-      return shot.lens_mm ?? 0;
+      return shot.lens_mm ?? '';
     case 'camera_movement':
       return shotMovementLabel(shot);
     case 'description':
       return shot.description || '';
-    case 'panel_frame':
-      return shot.panel_frame || '';
     case 'voice_over':
       return shot.voice_over || '';
     case 'duration_frames':
@@ -89,7 +93,7 @@ function shotColumnValue(
     case 'owner_id':
       return shot.owner_id || '';
     case 'status':
-      return shot.status || '';
+      return shot.status ? getStatusBadge(shot.status).label : '';
     default:
       return typeof shot[column as keyof Shot] === 'string' ? shot[column as keyof Shot] as string : '';
   }
@@ -105,6 +109,9 @@ export default function ShotListPage() {
   const { data: customFieldValueMatrix } = useCustomFieldValues(id);
   const updateShot = useUpdateShot(id);
   const setCustomFieldState = useSetCustomFieldState(id);
+  const insertFields = useInsertCustomFields(id);
+  const copyColumn = useCopyColumn(id);
+  const updateCustomField = useUpdateCustomField(id);
   const reorderShots = useReorderShots(id);
   const commands = useShotCommands(id, shots);
   const [isImportOpen, setImportOpen] = useState(false);
@@ -125,6 +132,10 @@ export default function ShotListPage() {
   // Retain the rendered positions after unpinning until horizontal scrolling resumes.
   const [renderedPins, setRenderedPins] = useState<string[]>([]);
   const lastScrollLeft = useRef(0);
+  const [columnDialog, setColumnDialog] = useState<{ column: string; after: boolean; mode: 'insert' | 'rename'; returnFocus: HTMLElement | null } | null>(null);
+  const [columnClipboard, setColumnClipboard] = useState<{ kind: 'frameforge-column'; version: 1; productionId: string; source: string; label: string; cut: boolean; field_revision?: number; shot_revisions: Record<string, number>; width_px: number; wrap_text: boolean; options?: string[] } | null>(null);
+  const [cutColumn, setCutColumn] = useState<string | null>(null);
+  const freezeClickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [contextTarget, setContextTarget] = useState<ShotTableContextTarget | null>(null);
   const [reorderPreview, setReorderPreview] = useState<{
     sourceIds: string[];
@@ -223,7 +234,11 @@ export default function ShotListPage() {
 
       const nextOrder = [...current.columnOrder];
       [nextOrder[index], nextOrder[target]] = [nextOrder[target], nextOrder[index]];
-      return { ...current, columnOrder: nextOrder };
+      const displayOrder = [...orderedColumns];
+      const displayIndex = displayOrder.indexOf(column);
+      const neighborIndex = displayOrder.indexOf(nextOrder[index]);
+      if (displayIndex >= 0 && neighborIndex >= 0) [displayOrder[displayIndex], displayOrder[neighborIndex]] = [displayOrder[neighborIndex], displayOrder[displayIndex]];
+      return { ...current, columnOrder: nextOrder, displayOrder };
     });
   };
 
@@ -232,7 +247,7 @@ export default function ShotListPage() {
   };
 
   const resetColumnLayout = () => {
-    const next = defaultShotTablePresentationPreferences();
+    const next = { ...defaultShotTablePresentationPreferences(), columnLabels: tablePresentation.columnLabels };
     setTablePresentation(next);
     setWrappedColumns([]);
     window.localStorage.removeItem(`frameforge:shot-wrap:${id}`);
@@ -277,7 +292,8 @@ export default function ShotListPage() {
       'default',
       'display_number',
       'primary_method',
-      ...DEFAULT_SHOT_TABLE_COLUMN_ORDER
+      ...DEFAULT_SHOT_TABLE_COLUMN_ORDER,
+      ...customFields.map(field => field.column_key)
     ]);
     const nextSortKey =
       typeof savedSort.key === 'string' && validSortKeys.has(savedSort.key)
@@ -311,25 +327,25 @@ export default function ShotListPage() {
     );
   };
 
-  const resizeColumnBy = (column: ShotTableColumnKey, delta: number) => {
+  const resizeColumnBy = (column: string, delta: number) => {
     commitTablePresentation(current => ({
       ...current,
       columnWidths: {
         ...current.columnWidths,
-        [column]: clampShotTableColumnWidth(column, current.columnWidths[column] + delta)
+        [column]: clampShotTableColumnWidth(column, (current.columnWidths[column] || columnWidths[column]) + delta)
       }
     }));
   };
 
   const handleResizePointerDown = (
-    column: ShotTableColumnKey,
+    column: string,
     event: React.PointerEvent<HTMLButtonElement>
   ) => {
     event.preventDefault();
     event.stopPropagation();
 
     const startX = event.clientX;
-    const startWidth = tablePresentation.columnWidths[column];
+    const startWidth = columnWidths[column];
     let latestWidth = startWidth;
     const previousCursor = document.body.style.cursor;
     const previousUserSelect = document.body.style.userSelect;
@@ -379,7 +395,7 @@ export default function ShotListPage() {
   };
 
   const handleResizeKeyDown = (
-    column: ShotTableColumnKey,
+    column: string,
     event: React.KeyboardEvent<HTMLButtonElement>
   ) => {
     if (event.key === 'ArrowLeft') {
@@ -391,10 +407,10 @@ export default function ShotListPage() {
     }
   };
 
-  const autoFitColumn = (column: ShotTableColumnKey) => {
-    const labelLength = SHOT_TABLE_COLUMN_LABELS[column].length;
+  const autoFitColumn = (column: string) => {
+    const labelLength = columnLabels[column].length;
     const longestContent = shots.reduce((max, shot) => {
-      const value = String(shotColumnValue(shot, column));
+      const value = String(valueForColumn(shot, column));
       return Math.max(max, Math.min(value.length, 80));
     }, 0);
     const desiredWidth = Math.max(labelLength * 14 + 40, longestContent * 7.5 + 32);
@@ -414,6 +430,7 @@ export default function ShotListPage() {
     x: number,
     y: number
   ) => {
+    void refreshColumnClipboard();
     setContextTarget({
       kind: 'column',
       column,
@@ -457,7 +474,7 @@ export default function ShotListPage() {
       name: shot.name,
       ...(column && column !== 'panel_image' ? {
         cellValue: column === 'lens_mm' && shot.lens_mm == null ? '' : String(shotColumnValue(shot, column)),
-        cellLabel: column === 'display_number' ? '镜号' : column === 'primary_method' ? '制作方式' : SHOT_TABLE_COLUMN_LABELS[column]
+        cellLabel: columnLabels[column]
       } : customField ? {
         cellValue: String(customFieldValueMatrix?.values[shot.id]?.[customField.id] ?? ''),
         cellLabel: customField.label
@@ -520,21 +537,31 @@ export default function ShotListPage() {
 
     if (sortKey === 'default') return filtered;
 
-    return [...filtered].sort((a, b) => {
-      const left = shotColumnValue(a, sortKey);
-      const right = shotColumnValue(b, sortKey);
-
-      const comparison =
-        typeof left === 'number' && typeof right === 'number'
-          ? left - right
-          : String(left).localeCompare(String(right), undefined, {
-              numeric: true,
-              sensitivity: 'base'
-            });
-
-      return sortDirection === 'asc' ? comparison : -comparison;
-    });
-  }, [shots, filters, sortKey, sortDirection, customFieldValueMatrix]);
+    const field = customFields.find(field => field.column_key === sortKey);
+    const kind = ['display_number', 'duration_frames', 'lens_mm', 'tc_in', 'panel_image'].includes(sortKey) || field?.field_type === 'number' ? 'number'
+      : field && (['select', 'multiselect', 'boolean', 'date'].includes(field.field_type) || tablePresentation.columnFormats[field.column_key] === 'camera_movement') || ['primary_method', 'status', 'department', 'shot_size', 'camera_angle', 'camera_movement', 'sequence_id'].includes(sortKey) ? 'select' : 'text';
+    const timecodeFrames = new Map<string, number>();
+    if (sortKey === 'tc_in') {
+      let frame = 0;
+      for (const shot of [...shots].sort((a,b) => a.sort_index - b.sort_index || a.id.localeCompare(b.id))) {
+        timecodeFrames.set(shot.id, frame); frame += shot.duration_frames;
+      }
+    }
+    const rawValue = (shot: Shot) => field ? (customFieldValueMatrix?.values[shot.id]?.[field.id] === undefined ? field.default_value : customFieldValueMatrix?.values[shot.id]?.[field.id])
+      : sortKey === 'tc_in' ? timecodeFrames.get(shot.id)
+      : shotColumnValue(shot, sortKey);
+    const value = (shot: Shot) => {
+      const raw = rawValue(shot);
+      const format = field ? tablePresentation.columnFormats[field.column_key] : '';
+      return raw == null || raw === '' ? raw : format === 'primary_method' ? (Array.isArray(raw) ? raw : [raw]).map(method => getMethodLabel(String(method))).join(' / ')
+        : format === 'status' ? getStatusBadge(String(raw)).label : format === 'camera_movement' && isRecord(raw) ? String(raw.type || '固定') : raw;
+    };
+    const category = (shot: Shot) => { const content = value(shot); return Array.isArray(content) ? [...content].sort().join('\0') : String(content ?? ''); };
+    const categoryOrder = new Map<string, number>();
+    if (kind === 'select') for (const shot of shots) if (!categoryOrder.has(category(shot))) categoryOrder.set(category(shot), categoryOrder.size);
+    return [...filtered].sort((a, b) => compareShotColumnValues(value(a), value(b), kind, sortDirection)
+      || (kind === 'select' ? (categoryOrder.get(category(a))! - categoryOrder.get(category(b))!) : 0));
+  }, [shots, filters, sortKey, sortDirection, customFieldValueMatrix, customFields, tablePresentation.columnFormats]);
 
   const shotGroups = useMemo(() => {
     if (groupMode === 'none') {
@@ -562,16 +589,20 @@ export default function ShotListPage() {
 
   const visibleShotIds = Array.from(new Set(shotGroups.flatMap(group => group.shots.map(item => item.id))));
   const visibleColumns = tablePresentation.columnOrder.filter(
-    column => !tablePresentation.hiddenColumns.includes(column)
+    column => DEFAULT_SHOT_TABLE_COLUMN_ORDER.includes(column) && !tablePresentation.hiddenColumns.includes(column)
   );
   const visibleCustomFields = customFields
-    .filter(field => field.state === 'visible' && !field.permanently_deleted)
+    .filter(field => field.state === 'visible' && !field.permanently_deleted && !isRetiredShotColumnLabel(field.label))
     .sort((a, b) => (a.position - b.position) || (a.sort_index - b.sort_index));
-  const columnWidths: Record<string, number> = { selection: 40, annotations: 40, display_number: 80, ...tablePresentation.columnWidths,
-    ...Object.fromEntries(visibleCustomFields.map(field => [`custom:${field.id}`, field.width_px || 180])) };
+  const columnWidths: Record<string, number> = { selection: 40, annotations: 40, display_number: 80,
+    ...Object.fromEntries(customFields.map(field => [field.column_key, field.width_px || 180])), ...tablePresentation.columnWidths };
+  const availableColumns = [...visibleColumns, ...visibleCustomFields.map(field => field.column_key)];
+  const orderedColumns = [...new Set([...tablePresentation.displayOrder, ...availableColumns])].filter(column => availableColumns.includes(column as ShotTableColumnKey) && column !== 'display_number');
+  const columnLabels: Record<string, string> = { display_number: '镜号', ...SHOT_TABLE_COLUMN_LABELS,
+    ...Object.fromEntries(customFields.map(field => [field.column_key, field.label])), ...tablePresentation.columnLabels };
   const frozenOffsets: Record<string, number> = {};
   let frozenWidth = 0;
-  for (const column of ['selection', 'annotations', 'display_number', ...visibleColumns, ...visibleCustomFields.map(field => `custom:${field.id}`)]) {
+  for (const column of ['selection', 'annotations', 'display_number', ...orderedColumns]) {
     if (column === 'display_number' || renderedPins.includes(column)) { frozenOffsets[column] = frozenWidth; frozenWidth += columnWidths[column]; }
   }
   const frozenStyle = (column: string, header = false): React.CSSProperties => column in frozenOffsets
@@ -581,22 +612,19 @@ export default function ShotListPage() {
     const column = (event.target as HTMLElement).closest<HTMLTableCellElement>('th')?.dataset.shotColumn;
     if (!column || column === 'display_number') return;
     if ('key' in event) { if (!['Enter', ' '].includes(event.key)) return; event.preventDefault(); event.stopPropagation(); }
-    setSelectedPins(previous => {
+    const toggle = () => setSelectedPins(previous => {
       if (previous.includes(column)) return previous.filter(item => item !== column);
       setRenderedPins(current => [...new Set([...current, column])]);
       return [...previous, column];
     });
+    if ('key' in event) toggle();
+    else {
+      if (freezeClickTimer.current) clearTimeout(freezeClickTimer.current);
+      freezeClickTimer.current = setTimeout(toggle, 500);
+    }
   };
-  const tableMinWidth =
-    160 +
-    visibleColumns.reduce(
-      (sum, column) => sum + tablePresentation.columnWidths[column],
-      0
-    ) +
-    visibleCustomFields.reduce(
-      (sum, field) => sum + (field.width_px || 180),
-      0
-    );
+  const tableMinWidth = 80 + columnWidths.display_number + orderedColumns.reduce((sum, column) => sum + columnWidths[column], 0);
+
   const rowPadding = ROW_PADDING[tablePresentation.rowHeight];
   const tableColumnCount = 3 + visibleColumns.length + visibleCustomFields.length;
 
@@ -653,6 +681,114 @@ export default function ShotListPage() {
     for (const shot of canonicalShots) { result[shot.id] = framesToTimecode(frame, rate, production?.drop_frame); frame += shot.duration_frames; }
     return result;
   }, [canonicalShots, production]);
+
+  const protectedColumns = new Set(['display_number', 'tc_in', 'panel_image']);
+  const valueForColumn = (shot: Shot, column: string) => {
+    const field = customFields.find(field => field.column_key === column);
+    return field ? (customFieldValueMatrix?.values[shot.id]?.[field.id] === undefined ? field.default_value : customFieldValueMatrix?.values[shot.id]?.[field.id])
+      : column === 'tc_in' ? shotTimecodes[shot.id] : shotColumnValue(shot, column as ShotTableContextColumnKey);
+  };
+  const placeColumns = (columns: string[], reference: string, after: boolean, shownBuiltins: ShotTableColumnKey[] = []) => {
+    commitTablePresentation(current => {
+      const order = ['display_number', ...orderedColumns].filter(key => !columns.includes(key));
+      const index = order.indexOf(reference);
+      order.splice(Math.max(1, index + (after ? 1 : 0)), 0, ...columns);
+      return { ...current, displayOrder: order, columnOrder: [...order.filter(key => DEFAULT_SHOT_TABLE_COLUMN_ORDER.includes(key as ShotTableColumnKey)), ...current.columnOrder.filter(key => !order.includes(key))] as ShotTableColumnKey[], hiddenColumns: current.hiddenColumns.filter(key => !shownBuiltins.includes(key)) };
+    });
+  };
+  const refreshColumnClipboard = async () => {
+    try {
+      const value = JSON.parse(await navigator.clipboard.readText());
+      if (value?.kind !== 'frameforge-column' || value.version !== 1 || value.productionId !== id || !isShotTableLayoutColumn(value.source)
+          || typeof value.cut !== 'boolean' || typeof value.label !== 'string' || value.label.length > 80
+          || !isRecord(value.shot_revisions) || Object.entries(value.shot_revisions).some(([key, revision]) => typeof key !== 'string' || !Number.isSafeInteger(revision) || Number(revision) < 1)
+          || typeof value.width_px !== 'number' || value.width_px < 80 || value.width_px > 560 || typeof value.wrap_text !== 'boolean') {
+        setColumnClipboard(null); setCutColumn(null); return null;
+      }
+      setColumnClipboard(value); setCutColumn(value.cut ? value.source : null); return value as NonNullable<typeof columnClipboard>;
+    } catch { setColumnClipboard(null); return null; }
+  };
+  const copyTableColumn = async (column: string, cut: boolean) => {
+    if (protectedColumns.has(column)) { setClipboardMessage('镜号、时码、分镜画面不支持复制或剪切移动。'); return; }
+    if (cut && !commands.canWrite) { setClipboardMessage('当前账号没有移动列的权限。'); return; }
+    const field = customFields.find(field => field.column_key === column);
+    const clip: NonNullable<typeof columnClipboard> = { kind: 'frameforge-column', version: 1, productionId: id, source: column, label: columnLabels[column], cut,
+      ...(field ? { field_revision: field.revision } : {}), shot_revisions: Object.fromEntries(shots.map(shot => [shot.id, shot.revision])),
+      width_px: columnWidths[column], wrap_text: field ? field.wrap_text : wrappedColumns.includes(column as ShotTableColumnKey), options: field ? field.options : SHOT_TABLE_COLUMN_OPTIONS[column] || [] };
+    try { await navigator.clipboard.writeText(JSON.stringify(clip)); setColumnClipboard(clip); setCutColumn(cut ? column : null); setClipboardMessage(cut ? '列已剪切；成功粘贴前保留原列数据。' : '整列已复制。'); }
+    catch { setClipboardMessage('无法访问剪贴板，请允许浏览器访问后重试。'); }
+  };
+  const pasteTableColumn = async (target: string) => {
+    if (!commands.canWrite || copyColumn.isPending) return;
+    const clip = await refreshColumnClipboard();
+    if (!clip) { setClipboardMessage('剪贴板没有当前项目的列。'); return; }
+    if (protectedColumns.has(clip.source)) { setClipboardMessage('镜号、时码、分镜画面不支持复制或剪切移动。'); return; }
+    try {
+      if (clip.cut) {
+        if (clip.source === target) throw new Error('请在另一列后粘贴。');
+        const field = customFields.find(field => field.column_key === clip.source);
+        if (!orderedColumns.includes(clip.source) || field && field.revision !== clip.field_revision) throw new Error('来源列已修改或隐藏，请重新剪切。');
+        placeColumns([clip.source], target, true);
+        setColumnClipboard(null); setCutColumn(null); await navigator.clipboard.writeText('').catch(() => {});
+      } else {
+        const result = await copyColumn.mutateAsync({ ...clip, existing_labels: Object.values(columnLabels) });
+        const saved = result.field;
+        const refreshed = { ...clip, shot_revisions: result.shot_revisions };
+        setColumnClipboard(refreshed);
+        await navigator.clipboard.writeText(JSON.stringify(refreshed)).catch(() => {});
+        placeColumns([saved.column_key], target, true);
+        commitTablePresentation(current => ({ ...current, columnWidths: { ...current.columnWidths, [saved.column_key]: clip.width_px },
+          columnFormats: { ...current.columnFormats, [saved.column_key]: current.columnFormats[clip.source] || clip.source } }));
+      }
+      setClipboardMessage('列已向后粘贴。');
+    } catch (cause) { setClipboardMessage(cause instanceof Error ? cause.message : '粘贴失败，原数据已保留。'); }
+  };
+  const openColumnDialog = (column: string, mode: 'insert' | 'rename', after = false, returnFocus: HTMLElement | null = contextTarget?.returnFocus || null) => {
+    if (!commands.canWrite) { setClipboardMessage('当前账号没有修改列的权限。'); return; }
+    if (freezeClickTimer.current) clearTimeout(freezeClickTimer.current);
+    setColumnDialog({ column, mode, after, returnFocus });
+  };
+  const hiddenCandidates = [
+    ...tablePresentation.columnOrder.filter(key => DEFAULT_SHOT_TABLE_COLUMN_ORDER.includes(key) && tablePresentation.hiddenColumns.includes(key) && !protectedColumns.has(key)).map(key => ({ key, label: columnLabels[key] })),
+    ...customFields.filter(field => field.state !== 'visible' && !field.permanently_deleted && !isRetiredShotColumnLabel(field.label)).map(field => ({ key: field.column_key, label: field.label }))
+  ];
+  const confirmColumnDialog = async (keys: string[], name: string) => {
+    if (!columnDialog) return;
+    const { column, mode, after } = columnDialog;
+    if (isRetiredShotColumnLabel(name)) throw new Error('该列已取消，不能使用此名称。');
+    if (mode === 'rename') {
+      if (!name) throw new Error('列名不能为空。');
+      const field = customFields.find(field => field.column_key === column);
+      if (field) await updateCustomField.mutateAsync({ id: field.id, revision: field.revision, label: name });
+      else commitTablePresentation(current => ({ ...current, columnLabels: { ...current.columnLabels, [column]: name } }));
+    } else {
+      if (['镜号','时码','时码 TC','分镜画面', ...[...protectedColumns].map(key => columnLabels[key])].includes(name)) throw new Error('镜号、时码、分镜画面不能重复新增。');
+      const labels = new Set(Object.values(columnLabels));
+      let nextName = name;
+      if (name && labels.has(name)) { let suffix = 1; while (labels.has(`${name}${String(suffix).padStart(2, '0')}`)) suffix++; nextName = `${name}${String(suffix).padStart(2, '0')}`; }
+      if (nextName.length > 80) throw new Error('列名不能超过 80 个字符。');
+      const hidden = keys.map(key => customFields.find(field => field.column_key === key)).filter(field => !!field);
+      const saved = name || hidden.length ? await insertFields.mutateAsync({ fields: name ? [{ label: nextName, field_type: 'text' }] : [], restore: Object.fromEntries(hidden.map(field => [field.id, field.revision])) }) : [];
+      const builtins = keys.filter(key => DEFAULT_SHOT_TABLE_COLUMN_ORDER.includes(key as ShotTableColumnKey)) as ShotTableColumnKey[];
+      placeColumns([...keys, ...saved.filter(field => !keys.includes(field.column_key)).map(field => field.column_key)], column, after, builtins);
+    }
+    setColumnDialog(null);
+  };
+  const columnKeyDown = (column: string, event: React.KeyboardEvent<HTMLTableCellElement>) => {
+    if (event.key === 'F2') { event.preventDefault(); event.stopPropagation(); openColumnDialog(column, 'rename', false, event.currentTarget); return; }
+    if (!(event.ctrlKey || event.metaKey) || !['c','x','v'].includes(event.key.toLowerCase())) return;
+    event.preventDefault(); event.stopPropagation();
+    if (event.key.toLowerCase() === 'v') void pasteTableColumn(column);
+    else void copyTableColumn(column, event.key.toLowerCase() === 'x');
+  };
+  const orderColumnElements = (elements: React.ReactElement<React.HTMLAttributes<HTMLTableCellElement>>[], header = false) => elements
+    .sort((a, b) => orderedColumns.indexOf((a.props as Record<string, unknown>)['data-shot-column'] as string) - orderedColumns.indexOf((b.props as Record<string, unknown>)['data-shot-column'] as string))
+    .map(element => {
+      const column = (element.props as Record<string, unknown>)['data-shot-column'] as string;
+      return React.cloneElement(element, { className: `${element.props.className || ''} ${cutColumn === column ? 'opacity-40' : ''}`,
+        ...(header ? { onDoubleClick: event => { if (!(event.target as HTMLElement).closest('button,input')) { event.stopPropagation(); openColumnDialog(column, 'rename', false, event.currentTarget); } },
+          onKeyDown: event => { columnKeyDown(column, event); if (!event.defaultPrevented) element.props.onKeyDown?.(event); } } : {}) });
+    });
 
   const clearShotReorderDrag = () => {
     const drag = reorderDragRef.current;
@@ -874,7 +1010,7 @@ export default function ShotListPage() {
   useEffect(() => {
     const cancel = (event: KeyboardEvent) => { if (event.key === 'Escape') clearShotReorderDrag(); };
     window.addEventListener('keydown', cancel);
-    return () => { window.removeEventListener('keydown', cancel); clearShotReorderDrag(); };
+    return () => { window.removeEventListener('keydown', cancel); clearShotReorderDrag(); if (freezeClickTimer.current) clearTimeout(freezeClickTimer.current); };
   }, []);
 
   if (!production) return null;
@@ -919,7 +1055,7 @@ export default function ShotListPage() {
             />
           </div>
 
-          <div className="flex min-w-0 flex-wrap items-center gap-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-1 [&_button]:h-9 [&_button]:text-sm [&_svg]:h-4 [&_svg]:w-4">
             <Button variant="ghost" size="sm" disabled={!commands.canWrite} onClick={() => setImportOpen(true)}><Icons.FileDown className="h-3.5 w-3.5" />导入</Button>
             <Button
               variant={showFilters || activeFilterCount > 0 || groupMode !== 'none' ? 'secondary' : 'ghost'}
@@ -940,27 +1076,12 @@ export default function ShotListPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => selectAllShots(visibleShotIds)}
-              disabled={!visibleShotIds.length}
+              disabled={!isInspectorOpen && selectedShotIds.length !== 1}
+              aria-expanded={isInspectorOpen}
+              onClick={() => isInspectorOpen ? closeInspector() : selectedShotIds[0] && openInspector(selectedShotIds[0])}
               className="shrink-0"
             >
-              全选所有镜头
-            </Button>
-
-            {selectedShotIds.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={clearSelection} className="shrink-0">
-                取消选择
-              </Button>
-            )}
-
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={selectedShotIds.length !== 1}
-              onClick={() => selectedShotIds[0] && openInspector(selectedShotIds[0])}
-              className="shrink-0"
-            >
-              <Icons.PanelRightOpen className="h-3.5 w-3.5" />
+              <Icons.PanelRightOpen className={`h-4 w-4 ${isInspectorOpen ? 'scale-x-[-1]' : ''}`} />
               详情
             </Button>
 
@@ -973,9 +1094,10 @@ export default function ShotListPage() {
             <ShotCustomFieldManager productionId={production.id} />
 
             <ShotColumnManager
-              columnOrder={tablePresentation.columnOrder}
+              columnOrder={tablePresentation.columnOrder.filter(column => DEFAULT_SHOT_TABLE_COLUMN_ORDER.includes(column))}
               hiddenColumns={tablePresentation.hiddenColumns}
               rowHeight={tablePresentation.rowHeight}
+              columnLabels={columnLabels}
               onVisibleChange={handleColumnVisibleChange}
               onMove={handleColumnMove}
               onRowHeightChange={handleRowHeightChange}
@@ -1139,8 +1261,9 @@ export default function ShotListPage() {
                   </th>
                   <th data-shot-column="annotations" scope="col" tabIndex={0} style={frozenStyle('annotations', true)} className={`w-10 px-1 py-2.5 ${selectedPins.includes('annotations') ? 'font-bold underline' : ''}`} title="批注提示">批注</th>
                   <th
-                    style={frozenStyle('display_number', true)} data-shot-column="display_number" scope="col"
+                    style={{ width: columnWidths.display_number, ...frozenStyle('display_number', true) }} data-shot-column="display_number" scope="col"
                     tabIndex={0}
+                    onDoubleClick={event => { if (!(event.target as HTMLElement).closest('button,input')) { event.stopPropagation(); openColumnDialog('display_number', 'rename', false, event.currentTarget); } }}
                     onContextMenu={event => {
                       event.preventDefault();
                       openColumnContextMenu(
@@ -1151,6 +1274,7 @@ export default function ShotListPage() {
                       );
                     }}
                     onKeyDown={event => {
+                      columnKeyDown('display_number', event);
                       if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
                         event.preventDefault();
                         const rect = event.currentTarget.getBoundingClientRect();
@@ -1162,11 +1286,14 @@ export default function ShotListPage() {
                         );
                       }
                     }}
-                    className="sticky left-0 z-30 w-20 border-r border-border bg-card px-3 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    className="relative sticky left-0 z-30 border-r border-border bg-card px-3 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                   >
-                    镜号
+                    {columnLabels.display_number}
+                    <button type="button" aria-label={`调整${columnLabels.display_number}列宽`} title="拖动调整镜号列宽；方向键微调"
+                      onPointerDown={event => handleResizePointerDown('display_number', event)} onKeyDown={event => handleResizeKeyDown('display_number', event)}
+                      className="absolute inset-y-0 right-0 z-20 w-2 cursor-col-resize touch-none border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-ring"><span className="pointer-events-none absolute inset-y-1 right-0 w-px bg-border" /></button>
                   </th>
-                  {visibleColumns.map(column => (
+                  {orderColumnElements([...visibleColumns.map(column => (
                     <th
                       data-shot-column={column} key={column}
                       scope="col"
@@ -1202,45 +1329,48 @@ export default function ShotListPage() {
                       style={{ width: tablePresentation.columnWidths[column], ...frozenStyle(column, true) }}
                     >
                       <span className={`block truncate pr-1 ${selectedPins.includes(column) ? 'font-bold underline underline-offset-4' : ''}`}>
-                        {SHOT_TABLE_COLUMN_LABELS[column]}
+                        {columnLabels[column]}
                       </span>
                       <button
                         type="button"
-                        aria-label={`调整${SHOT_TABLE_COLUMN_LABELS[column]}列宽`}
-                        title={`拖动调整${SHOT_TABLE_COLUMN_LABELS[column]}列宽；方向键微调`}
+                        aria-label={`调整${columnLabels[column]}列宽`}
+                        title={`拖动调整${columnLabels[column]}列宽；方向键微调`}
                         onPointerDown={event => handleResizePointerDown(column, event)}
                         onKeyDown={event => handleResizeKeyDown(column, event)}
-                        className="absolute inset-y-0 right-0 z-20 w-2 cursor-col-resize touch-none border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      />
+                        className="absolute inset-y-0 right-0 z-20 w-2 cursor-col-resize touch-none border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-ring"><span className="pointer-events-none absolute inset-y-1 right-0 w-px bg-border" /></button>
                     </th>
-                  ))}
-                  {visibleCustomFields.map(field => (
+                  )), ...visibleCustomFields.map(field => (
                     <th
-                      data-shot-column={`custom:${field.id}`} key={field.id}
+                      data-shot-column={field.column_key} key={field.column_key}
                       scope="col"
-                      className="px-3 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                      style={{ width: field.width_px || 180, ...frozenStyle(`custom:${field.id}`, true) }}
+                      className="relative px-3 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                      style={{ width: columnWidths[field.column_key], ...frozenStyle(field.column_key, true) }}
                       tabIndex={0}
                       onContextMenu={event => {
                         event.preventDefault();
-                        setContextTarget({ kind: 'custom-column', fieldId: field.id, revision: field.revision,
+                        void refreshColumnClipboard();
+                        setContextTarget({ kind: 'custom-column', columnKey: field.column_key as `custom:${string}`, fieldId: field.id, revision: field.revision,
                           label: field.label, x: event.clientX, y: event.clientY, returnFocus: event.currentTarget });
                       }}
                       onKeyDown={event => {
                         if (event.key !== 'ContextMenu' && !(event.shiftKey && event.key === 'F10')) return;
                         event.preventDefault();
                         const rect = event.currentTarget.getBoundingClientRect();
-                        setContextTarget({ kind: 'custom-column', fieldId: field.id, revision: field.revision,
+                        void refreshColumnClipboard();
+                        setContextTarget({ kind: 'custom-column', columnKey: field.column_key as `custom:${string}`, fieldId: field.id, revision: field.revision,
                           label: field.label, x: rect.left + 24, y: rect.bottom, returnFocus: event.currentTarget });
                       }}
                       title={field.description || field.label}
                     >
-                      <span className={`block truncate ${selectedPins.includes(`custom:${field.id}`) ? 'font-bold underline underline-offset-4' : ''}`}>{field.label}</span>
+                      <span className={`block truncate ${selectedPins.includes(field.column_key) ? 'font-bold underline underline-offset-4' : ''}`}>{field.label}</span>
                       <span className="mt-0.5 block truncate text-[9px] font-normal normal-case tracking-normal text-muted-foreground">
                         自定义 · {field.field_type}
                       </span>
+                      <button type="button" aria-label={`调整${field.label}列宽`} title={`拖动调整${field.label}列宽；方向键微调`}
+                        onPointerDown={event => handleResizePointerDown(field.column_key, event)} onKeyDown={event => handleResizeKeyDown(field.column_key, event)}
+                        className="absolute inset-y-0 right-0 z-20 w-2 cursor-col-resize touch-none border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-ring"><span className="pointer-events-none absolute inset-y-1 right-0 w-px bg-border" /></button>
                     </th>
-                  ))}
+                  ))], true)}
                 </tr>
               </thead>
 
@@ -1368,11 +1498,12 @@ export default function ShotListPage() {
                             onPointerCancel={event => finishShotReorder(event, false)}
                             onLostPointerCapture={event => finishShotReorder(event, false)}
                             onKeyDown={event => {
-                              event.stopPropagation();
                               if (event.key === 'ArrowUp') {
+                                event.stopPropagation();
                                 event.preventDefault();
                                 void moveShotByKeyboard(shot.id, -1);
                               } else if (event.key === 'ArrowDown') {
+                                event.stopPropagation();
                                 event.preventDefault();
                                 void moveShotByKeyboard(shot.id, 1);
                               }
@@ -1383,7 +1514,7 @@ export default function ShotListPage() {
                             <span className="min-w-0 truncate">{shot.display_number}</span>
                           </button>
                       </td>
-                      {visibleColumns.map(column => {
+                      {orderColumnElements([...visibleColumns.map(column => {
                         if (PENDING_SHOT_TABLE_COLUMNS.has(column)) return <td data-shot-column={column} key={column} className={`px-3 ${rowPadding} text-muted-foreground`} title="此列暂不可编辑">—</td>;
                         if (column === 'primary_method') return <td data-shot-column={column} key={column} className={`px-3 ${rowPadding}`}><div className="flex flex-wrap gap-1">{shotMethodValues(shot).map(method => <MethodBadge key={method} method={method} size="sm" />)}</div></td>;
                         if (column === 'tc_in') return <td data-shot-column={column} key={column} className={`px-3 ${rowPadding} font-mono`}>{shotTimecodes[shot.id] || '—'}</td>;
@@ -1431,20 +1562,6 @@ export default function ShotListPage() {
                                 field="description"
                                 value={shot.description || ''}
                                 placeholder="双击输入画面描述"
-                              />
-                            </td>
-                          );
-                        }
-
-                        if (column === 'panel_frame') {
-                          return (
-                            <td data-shot-column={column} key={column} className={`px-3 ${rowPadding} text-foreground ${wrappedColumns.includes(column) ? '[&_.line-clamp-1]:line-clamp-none [&_.line-clamp-1]:whitespace-pre-wrap [&_.line-clamp-1]:break-words' : ''}`}>
-                              <InlineEditCell
-                                productionId={production.id}
-                                shot={shot}
-                                field="panel_frame"
-                                value={shot.panel_frame || ''}
-                                placeholder="双击输入分镜图框"
                               />
                             </td>
                           );
@@ -1520,29 +1637,30 @@ export default function ShotListPage() {
                         const element = cell as React.ReactElement<React.HTMLAttributes<HTMLTableCellElement>>;
                         const column = element.key as string;
                         return React.cloneElement(element, { style: { ...element.props.style, ...frozenStyle(column), ...(column in frozenOffsets && isSelected ? { background: 'var(--accent)' } : {}) } });
-                      })}
-                      {visibleCustomFields.map(field => (
+                      }), ...visibleCustomFields.map(field => (
                         <td
-                          key={field.id}
+                          key={field.column_key}
+                          data-shot-column={field.column_key}
                           data-custom-field-id={field.id}
                           className={`px-3 ${rowPadding} text-foreground`}
-                          style={{ width: field.width_px || 180, ...frozenStyle(`custom:${field.id}`) }}
+                          style={{ width: columnWidths[field.column_key], ...frozenStyle(field.column_key), ...(field.column_key in frozenOffsets && isSelected ? { background: 'var(--accent)' } : {}) }}
                         >
                           <CustomFieldCell
                             productionId={production.id}
                             shot={shot}
                             field={field}
+                            format={tablePresentation.columnFormats[field.column_key]}
+                            fps={production.fps_num / (production.fps_den || 1)}
                             value={customFieldValueMatrix?.values[shot.id]?.[field.id]}
                           />
                         </td>
-                      ))}
+                      ))])}
                     </tr>
                   );
                     })}
                   </React.Fragment>
                 ))}
-                {isNewShotRowOpen && <NewShotRow production={production} shots={shots} columns={visibleColumns}
-                  customColumnCount={visibleCustomFields.length} onDone={() => setNewShotRowOpen(false)} />}
+                {isNewShotRowOpen && <NewShotRow production={production} shots={shots} columns={orderedColumns} onDone={() => setNewShotRowOpen(false)} />}
               </tbody>
             </table>
           )}
@@ -1583,10 +1701,12 @@ export default function ShotListPage() {
         onClearSelection={clearSelection}
         onNewShot={() => setNewShotRowOpen(true)}
         onOpenTrash={() => setIsTrashOpen(true)}
-        onCustomFieldState={(fieldId, revision, state) => {
-          void setCustomFieldState.mutateAsync({ id: fieldId, revision, state }).catch(error =>
-            setClipboardMessage(error instanceof Error ? error.message : '列状态修改失败，请刷新后重试'));
-        }}
+        columnLabels={columnLabels}
+        canPasteColumn={Boolean(columnClipboard)}
+        columnPending={copyColumn.isPending || insertFields.isPending || updateCustomField.isPending}
+        onInsertColumn={(column, after) => openColumnDialog(column, 'insert', after)}
+        onCopyColumn={(column, cut) => void copyTableColumn(column, cut)}
+        onPasteColumn={column => void pasteTableColumn(column)}
         wrappedColumns={wrappedColumns}
         onToggleWrap={column => {
           const next = wrappedColumns.includes(column) ? wrappedColumns.filter(item => item !== column) : [...wrappedColumns, column];
@@ -1608,8 +1728,18 @@ export default function ShotListPage() {
           setSortDirection('asc');
         }}
         onAutoFitColumn={autoFitColumn}
-        onHideColumn={column => handleColumnVisibleChange(column, false)}
+        onHideColumn={column => {
+          const field = customFields.find(field => field.column_key === column);
+          if (field) void setCustomFieldState.mutateAsync({ id: field.id, revision: field.revision, state: 'hidden' }).catch(cause => setClipboardMessage(cause instanceof Error ? cause.message : '隐藏列失败。'));
+          else handleColumnVisibleChange(column as ShotTableColumnKey, false);
+        }}
       />
+
+      {columnDialog && <ShotColumnDialog key={`${columnDialog.mode}:${columnDialog.column}`} mode={columnDialog.mode}
+        label={columnLabels[columnDialog.column]}
+        candidates={columnDialog.mode === 'insert' ? hiddenCandidates : []}
+        existingLabels={Object.entries(columnLabels).filter(([key]) => key !== columnDialog.column).map(([, label]) => label)}
+        returnFocus={columnDialog.returnFocus} onCancel={() => setColumnDialog(null)} onConfirm={confirmColumnDialog} />}
 
       {clipboardMessage && (
         <div role="status" className="shrink-0 border-t border-border bg-card px-3 py-2 text-xs">

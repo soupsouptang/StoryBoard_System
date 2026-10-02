@@ -56,7 +56,7 @@ export function BulkActionToolbar({ production }: BulkActionToolbarProps) {
     <div
       role="toolbar"
       aria-label="镜头批量操作"
-      className="flex w-full shrink-0 flex-wrap items-center gap-2 rounded-xl border bg-muted/30 px-3 py-2.5 text-xs md:px-4"
+      className="flex w-full shrink-0 flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-3 py-2.5 text-xs md:px-4"
     >
       <div className="flex shrink-0 items-center gap-2 pr-3">
         <span className="flex h-5 w-7 items-center justify-center rounded-md bg-blue-500 px-1 font-mono tabular-nums text-[11px] font-bold text-white">

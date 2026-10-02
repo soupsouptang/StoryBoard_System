@@ -162,6 +162,7 @@ export function InlineEditCell({
 
   return (
     <div
+      onClick={event => event.stopPropagation()}
       onDoubleClick={handleDoubleClick}
       className={`cursor-text rounded px-1.5 py-0.5 -mx-1.5 transition-colors hover:bg-muted ${className} ${isSaving ? 'opacity-50' : ''}`}
       title="双击编辑"

@@ -25,6 +25,82 @@ async def setup_db():
 
 
 @pytest.mark.asyncio
+async def test_column_copy_full_data_metadata_conflict_protection_and_atomic_insert():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        login = await client.post("/api/v1/auth/login", json={"email": settings.INITIAL_ADMIN_EMAIL, "password": settings.INITIAL_ADMIN_PASSWORD})
+        headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+        production = (await client.post("/api/v1/productions", headers=headers, json={"name": "Column commands synthetic", "fps_num": 24})).json()
+        root = f"/api/v1/productions/{production['id']}"
+        shots = []
+        for index in range(2):
+            response = await client.post(root + "/shots", headers=headers, json={"display_number": f"{index + 1:03d}", "description": "长描述" * (index + 1), "primary_method": "live", "secondary_methods": ["ae"], "lens_mm": 25 if index == 0 else None, "camera_movement": {"type": "推镜", "speed": "缓慢", "distance": index + 1}})
+            assert response.status_code == 201, response.text
+            shots.append(response.json())
+        source = (await client.post(root + "/custom-fields", headers=headers, json={"label": "分组", "field_type": "select", "options": ["甲", "乙", "未使用"], "required": True, "default_value": "甲"})).json()
+        write = await client.patch(f"/api/v1/shots/{shots[1]['id']}/custom-fields/{source['id']}", headers=headers, json={"revision": shots[1]["revision"], "value": "乙"})
+        assert write.status_code == 200
+        shots[1]["revision"] = write.json()["revision"]
+        request = {"source": source["column_key"], "label": "分组", "field_revision": source["revision"],
+            "shot_revisions": {shot["id"]: shot["revision"] for shot in shots}, "width_px": 247, "wrap_text": True}
+        response = await client.post(root + "/custom-fields/copy-column", headers=headers, json=request)
+        assert response.status_code == 201, response.text
+        result = response.json()
+        copied = result["field"]
+        assert (copied["label"], copied["field_type"], copied["options"], copied["required"], copied["default_value"], copied["width_px"], copied["wrap_text"]) == ("分组01", "select", source["options"], True, "甲", 247, True)
+        matrix = (await client.get(root + "/custom-field-values", headers=headers)).json()["values"]
+        assert [matrix[shot["id"]][copied["id"]] for shot in shots] == ["甲", "乙"]
+        before = (await client.get(root + "/custom-fields", headers=headers)).json()
+        stale = await client.post(root + "/custom-fields/copy-column", headers=headers, json=request)
+        assert stale.status_code == 409
+        assert (await client.get(root + "/custom-fields", headers=headers)).json() == before
+        request["shot_revisions"] = result["shot_revisions"]
+        repeated = await client.post(root + "/custom-fields/copy-column", headers=headers, json=request)
+        assert repeated.status_code == 201
+        assert repeated.json()["field"]["label"] == "分组02"
+        request.update(source="primary_method", label="制作方式", shot_revisions=repeated.json()["shot_revisions"], options=["live", "ae", "mg"])
+        methods = await client.post(root + "/custom-fields/copy-column", headers=headers, json=request)
+        assert methods.status_code == 201, methods.text
+        assert methods.json()["field"]["field_type"] == "multiselect"
+        assert methods.json()["field"]["options"] == ["live", "ae", "mg"]
+        matrix = (await client.get(root + "/custom-field-values", headers=headers)).json()["values"]
+        assert matrix[shots[0]["id"]][methods.json()["field"]["id"]] == ["live", "ae"]
+        request.update(source="camera_movement", label="运镜", shot_revisions=methods.json()["shot_revisions"], options=[])
+        movement = await client.post(root + "/custom-fields/copy-column", headers=headers, json=request)
+        assert movement.status_code == 201, movement.text
+        assert movement.json()["field"]["field_type"] == "json"
+        matrix = (await client.get(root + "/custom-field-values", headers=headers)).json()["values"]
+        assert [matrix[shot["id"]][movement.json()["field"]["id"]] for shot in shots] == [shot["camera_movement"] for shot in shots]
+        request["shot_revisions"] = movement.json()["shot_revisions"]
+        numeric = await client.post(root + "/custom-fields/copy-column", headers=headers, json={**request, "source": "lens_mm", "label": "焦段"})
+        assert numeric.status_code == 201, numeric.text
+        matrix = (await client.get(root + "/custom-field-values", headers=headers)).json()["values"]
+        assert [matrix[shot["id"]][numeric.json()["field"]["id"]] for shot in shots] == [25, None]
+        request["shot_revisions"] = numeric.json()["shot_revisions"]
+        for key in ("display_number", "tc_in", "panel_image", "original_number", "original_description", "panel_frame", "movement_reference", "revision"):
+            blocked = await client.post(root + "/custom-fields/copy-column", headers=headers, json={**request, "source": key})
+            assert blocked.status_code == 400, (key, blocked.text)
+        before = (await client.get(root + "/custom-fields", headers=headers)).json()
+        failed = await client.post(root + "/custom-fields/insert", headers=headers, json={"fields": [{"label": "不应留下"}, {"label": " "}]})
+        assert failed.status_code == 400
+        assert (await client.get(root + "/custom-fields", headers=headers)).json() == before
+        failed = await client.post(root + "/custom-fields/insert", headers=headers, json={"fields": [{"label": "镜号"}]})
+        assert failed.status_code == 400
+        # A protected source cannot be bypassed by renaming the display label.
+        from app.services.custom_field_service import CustomFieldService
+        from app.schemas.custom_field import ColumnCopyRequest
+        from app.core.exceptions import DomainError
+        from types import SimpleNamespace
+        assert CustomFieldService._unique_label("标题2026", {"标题"}, numbered=True) == "标题202601"
+        async with AsyncSessionLocal() as session:
+            with pytest.raises(DomainError) as denied:
+                await CustomFieldService.copy_column(session, production["id"], ColumnCopyRequest(**request), SimpleNamespace(role=SimpleNamespace(permissions={})))
+            assert denied.value.code == "FORBIDDEN"
+        imported = await client.post(root + "/custom-fields", headers=headers, json={"label": "原描述", "group_name": "导入原文"})
+        assert imported.status_code == 201
+        assert imported.json()["state"] == "hidden"
+
+
+@pytest.mark.asyncio
 async def test_custom_field_archive_restore_purge_is_irreversible_and_scrubs_saved_views():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         login = await client.post("/api/v1/auth/login", json={

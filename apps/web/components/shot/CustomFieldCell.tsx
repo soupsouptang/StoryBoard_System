@@ -4,6 +4,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Button, Input, Select, TextArea } from '@frameforge/ui';
 import type { Shot } from '@frameforge/types';
 import { ApiError } from '@/lib/api-client';
+import { MethodBadge } from './MethodBadge';
+import { StatusBadge } from './StatusBadge';
+import { getMethodLabel, getStatusBadge } from '@/lib/media-resolver';
 import {
   type CustomFieldDefinition,
   usePatchCustomFieldValue
@@ -14,12 +17,16 @@ interface CustomFieldCellProps {
   shot: Shot;
   field: CustomFieldDefinition;
   value: unknown;
+  format?: string;
+  fps?: number;
 }
 
 function displayValue(field: CustomFieldDefinition, value: unknown) {
   const effective = value === undefined ? field.default_value : value;
   if (effective === null || effective === undefined || effective === '') return '';
   if (field.field_type === 'boolean') return effective ? '是' : '否';
+  if (field.field_type === 'json') return JSON.stringify(effective);
+  if (field.field_type === 'multiselect' && Array.isArray(effective)) return effective.join(' / ');
   return String(effective);
 }
 
@@ -27,7 +34,7 @@ export function CustomFieldCell({
   productionId,
   shot,
   field,
-  value
+  value, format, fps = 24
 }: CustomFieldCellProps) {
   const mutation = usePatchCustomFieldValue(productionId);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -37,6 +44,7 @@ export function CustomFieldCell({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [hasConflict, setHasConflict] = useState(false);
   const [conflictRevision, setConflictRevision] = useState<number | null>(null);
+  const cancelled = useRef(false);
 
   const currentDisplay = displayValue(field, value);
 
@@ -59,6 +67,7 @@ export function CustomFieldCell({
 
   const beginEdit = (event: React.MouseEvent) => {
     event.stopPropagation();
+    cancelled.current = false;
     setEditValue(currentDisplay);
     setSaveError(null);
     setHasConflict(false);
@@ -73,13 +82,17 @@ export function CustomFieldCell({
     if (field.field_type === 'boolean') {
       return raw === 'true';
     }
+    if (field.field_type === 'multiselect') return raw ? raw.split(' / ') : [];
+    if (field.field_type === 'json') return raw.trim() ? JSON.parse(raw) : null;
     return raw;
   };
 
   const save = async (rawValue: string = editValue) => {
-    if (!isEditing || mutation.isPending || hasConflict) return;
+    if (!isEditing || mutation.isPending || hasConflict || cancelled.current) return;
 
-    const nextValue = parseValue(rawValue);
+    let nextValue: unknown;
+    try { nextValue = parseValue(rawValue); }
+    catch { setSaveError('请输入有效的结构化 JSON 内容。'); return; }
     const effectiveCurrent = value === undefined ? field.default_value : value;
 
     if (nextValue === effectiveCurrent) {
@@ -121,6 +134,7 @@ export function CustomFieldCell({
       void save();
     } else if (event.key === 'Escape') {
       event.preventDefault();
+      cancelled.current = true;
       setIsEditing(false);
       setSaveError(null);
       setHasConflict(false);
@@ -130,7 +144,15 @@ export function CustomFieldCell({
 
   if (isEditing) {
     const editor =
-      field.field_type === 'select' ? (
+      field.field_type === 'multiselect' ? (
+        <select multiple autoFocus aria-label={field.label} value={editValue ? editValue.split(' / ') : []}
+          disabled={mutation.isPending} onKeyDown={handleKeyDown}
+          className="w-full rounded-md border bg-background p-1 text-xs"
+          onChange={event => setEditValue(Array.from(event.target.selectedOptions, option => option.value).join(' / '))}
+          onBlur={() => { if (!saveError) void save(); }}>
+          {field.options.map(option => <option key={option} value={option}>{format === 'primary_method' ? getMethodLabel(option) : option}</option>)}
+        </select>
+      ) : field.field_type === 'select' ? (
         <Select
           label={field.label}
           value={editValue}
@@ -140,7 +162,7 @@ export function CustomFieldCell({
           }}
           options={[
             ...(!field.required ? [{ value: '', label: '— 空 —' }] : []),
-            ...field.options.map(option => ({ value: option, label: option }))
+            ...field.options.map(option => ({ value: option, label: format === 'status' ? getStatusBadge(option).label : format === 'sequence_id' ? `场次 ${option.slice(0,8)}` : option }))
           ]}
           disabled={mutation.isPending}
           className="h-8 text-xs"
@@ -160,7 +182,7 @@ export function CustomFieldCell({
           disabled={mutation.isPending}
           className="h-8 text-xs"
         />
-      ) : field.field_type === 'textarea' ? (
+      ) : ['textarea', 'json'].includes(field.field_type) ? (
         <TextArea
           value={editValue}
           onChange={event => setEditValue(event.target.value)}
@@ -242,13 +264,20 @@ export function CustomFieldCell({
 
   return (
     <div
+      onClick={event => event.stopPropagation()}
       onDoubleClick={beginEdit}
       className="mx-[-6px] cursor-text rounded px-1.5 py-0.5 transition-colors hover:bg-muted"
       title="双击编辑自定义列"
     >
       <div className={field.wrap_text ? 'whitespace-pre-wrap' : 'truncate'}>
-        {currentDisplay || (
-          <span className="italic text-muted-foreground">
+        {currentDisplay ? format === 'primary_method' ? <div className="flex flex-wrap gap-1">{currentDisplay.split(' / ').map(method => <MethodBadge key={method} method={method} />)}</div>
+          : format === 'status' ? <StatusBadge status={currentDisplay} />
+          : format === 'duration_frames' ? <span className="font-mono"><strong>{currentDisplay}f</strong> <span className="text-[10px] text-muted-foreground">({(Number(currentDisplay) / fps).toFixed(1)}s)</span></span>
+          : format === 'lens_mm' ? `${currentDisplay}mm`
+          : format === 'sequence_id' ? `场次 ${currentDisplay.slice(0,8)}`
+          : format === 'camera_movement' && field.field_type === 'json' ? String(((value === undefined ? field.default_value : value) as { type?: unknown } | null)?.type || '固定')
+          : currentDisplay : (
+          <span className={field.required ? 'italic text-[#FF0082]' : 'italic text-muted-foreground'}>
             {field.required ? '必填' : '空'}
           </span>
         )}
