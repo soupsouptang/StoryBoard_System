@@ -882,6 +882,10 @@ class CustomFieldService:
             )
         )
 
+        from app.services.version_redaction import redact_column_history, redact_live_column_quotes
+        await redact_live_column_quotes(db, production_id, field.id, column_key, user)
+        await redact_column_history(db, production_id, field.id, column_key)
+
         now = datetime.now(timezone.utc)
         field.state = "purged"
         field.purged_at = now

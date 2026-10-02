@@ -6,6 +6,7 @@ from app.models.asset import Asset, AssetVersion, ShotAssetLink, StockAssetMetad
 from app.models.collaboration import Comment, CommentEvent, CommentReadState, Approval, ReviewDecision, ShotVersion, AuditLog, Share, Export
 from app.models.view import SavedView, ViewRowLayout
 from app.models.command import OutboxEvent
+from app.models.project_version import ProjectBranch, ProjectCommit
 from app.models.field import ColumnPreference, ProjectColumn, ShotColumnValue
 
 __all__ = [
@@ -34,6 +35,8 @@ __all__ = [
     "SavedView",
     "ViewRowLayout",
     "OutboxEvent",
+    "ProjectCommit",
+    "ProjectBranch",
     "ColumnPreference",
     "ProjectColumn",
     "ShotColumnValue"

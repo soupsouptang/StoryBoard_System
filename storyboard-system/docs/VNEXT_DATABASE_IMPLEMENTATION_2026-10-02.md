@@ -59,3 +59,17 @@ Alembic `a36d9b21f807` 接在第二段后，新增 CommentEvent、CommentReadSta
 全要素撤销重做单独 command/history service：持久回执、expected revision、原子应用、失败不移动游标、分支后清 redo；永久删除不可撤销，必须应用 tombstone/清理 ledger，旧版本不能复活已删内容。情绪板不版本化不等于不支持撤销重做。
 
 图片资产管理另由 AssetService/媒体 owner 承接：独立上传、文件验证、缩略图、改名、分类/搜索、引用明细、删除/恢复与安全清理；裁剪/画框为独立元数据，原图不可拉伸或覆盖。后续各模块单独提交，不把待办状态写成已实现。
+
+## 7. 项目提交与比较：第四段
+
+Alembic `b47e1c90d628` 新增 ProjectCommit / ProjectBranch；同项目复合 FK 约束父提交、合并父提交与分支 head，保留旧镜头比较入口。项目提交、snapshot codec、差异引擎、历史清理、HTTP adapter 各有独立模块。
+
+- GET `/productions/{id}/version-state` 返回工作内容摘要；POST `/productions/{id}/commits` 要求 expected state hash 与 expected branch head。修改后未刷新或分支推进返回409；无变化复用已有提交，不写重复审计/通知。创建分支从已有同项目提交开始。
+- GET `/productions/{id}/version-graph` 返回分页提交和分支；提交详情及 compare 支持两次提交比较或与工作内容比较，也支持 shot_id 过滤。差异提供业务字段、左右行号、insert/delete/replace/equal 与未变化折叠计数，供后续 Git 式 UI 消费。
+- 所有段落用单条 UNION 查询捕获同一数据库语句快照，避免多次 SELECT 在并发写入中拼成混合状态。纳入项目、篇章、场景、镜头、画面、制作步骤、列定义/值/偏好、图片元数据/版本摘要/关联、素材请求、批注、审核与共享布局；软删除内容仍可保留历史。
+- 情绪板按用户决定不进入项目版本。私人视图、已读水位、Presence、认证/分享密钥、存储路径、递归版本记录不进入快照。媒体目前记录身份和内容摘要；实体文件保留/回收引用闭包尚需资产 owner 完成。
+- 自定义列永久删除同事务清理这些项目提交中的定义、默认值、单元格、布局引用及引用原文，重算内容摘要并增加 redaction revision。也清理当前批注引用并推进批注 revision/activity，避免下一次提交重新保存已清除原文。普通删除不触发历史清除。此清理不等于导出产物、分享快照、备份等全闭包已经完成。
+
+隔离项目服务/差异检查3项、迁移同项目 FK/自引用/空库降级再升级1项、PostgreSQL 全历史离线 SQL 1项通过。未执行生产 DDL或部署。并行基础设施正在替换认证依赖，当前旧 QA 环境缺少新 PyJWT，HTTP 集成待该依赖环境就绪后验证。
+
+**未完成项明确保留**：灯光组件原生持久化（version-state 返回 pending_components）；项目全要素恢复、三方合并与冲突解决；全要素 undo/redo journal 及实际命令接入；Git 式版本 UI；资产不可变文件版本保留/缩略图/裁剪及完整永久删除闭包。不能用提交/比较接口声称这些功能已实现。

@@ -23,6 +23,9 @@ from app.services.version_service import VersionService
 
 router = APIRouter(tags=["Versions"])
 
+from app.api.v1.project_versions import router as project_versions_router
+router.include_router(project_versions_router)
+
 
 def _http(error: DomainError) -> HTTPException:
     if isinstance(error, NotFoundError):
