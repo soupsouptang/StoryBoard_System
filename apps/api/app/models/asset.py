@@ -3,13 +3,16 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import BigInteger, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 
 class Asset(Base):
     __tablename__ = "assets"
+    __table_args__ = (CheckConstraint("revision > 0", name="revision"),)
+    revision: Mapped[int] = mapped_column(BigInteger, default=1, server_default="1")
+    category: Mapped[str] = mapped_column(String(64), default="", server_default="")
 
     production_id: Mapped[str] = mapped_column(ForeignKey("productions.id", ondelete="CASCADE"), index=True)
     filename: Mapped[str] = mapped_column(String(255))
@@ -37,6 +40,10 @@ class Asset(Base):
 
 class AssetVersion(Base):
     __tablename__ = "asset_versions"
+    __table_args__ = (
+        UniqueConstraint("asset_id", "version_number", name="uq_asset_versions_number"),
+        CheckConstraint("version_number > 0", name="version_number"),
+    )
 
     asset_id: Mapped[str] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), index=True)
     version_number: Mapped[int] = mapped_column(Integer, default=1)

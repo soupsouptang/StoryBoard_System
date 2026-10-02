@@ -27,6 +27,7 @@ import {
 } from '@/lib/hooks/useReview';
 import type { ReviewComment } from '@/lib/hooks/useReview';
 import { ShotPanelImage } from '@/components/shot/ShotPanelImage';
+import { ProjectVersionPanel } from '@/components/review/ProjectVersionPanel';
 import { framesToTimecode } from '@frameforge/timecode';
 import {
   useAcceptShotVersion,
@@ -307,8 +308,9 @@ export default function ReviewPage() {
 
   if (!currentShot) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
         当前项目还没有可审阅的镜头。
+        <ProjectVersionPanel productionId={productionId} />
       </div>
     );
   }
@@ -448,6 +450,7 @@ export default function ReviewPage() {
       <aside className="flex max-h-52 w-full shrink-0 flex-col border-b border-border bg-background lg:max-h-none lg:w-40 lg:border-b-0 lg:border-r">
         <div className="border-b border-border bg-card/60 p-4">
           <h1 className="mb-2 text-lg font-semibold">审片版本</h1>
+          <ProjectVersionPanel productionId={productionId} shotId={shotId || undefined} />
           <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
             审片镜头队列 ({shots.length})
           </h3>

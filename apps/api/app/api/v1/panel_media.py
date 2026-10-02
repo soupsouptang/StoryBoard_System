@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_current_user
 from app.core.database import db_session
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import DomainError, NotFoundError
 from app.models.asset import Asset
 from app.models.production import Production
 from app.models.user import User
@@ -42,20 +42,18 @@ async def upload_panel_image(
     await image.close()
     if len(data) > MAX_IMAGE_BYTES:
         raise HTTPException(413, detail={"code": "IMAGE_TOO_LARGE", "message": "图片不得超过 10 MB"})
-    image_format = PanelMediaService.image_format(data)
-    if image_format is None:
-        raise HTTPException(415, detail={"code": "INVALID_IMAGE", "message": "仅支持 PNG、JPEG、GIF 或 WebP 图片"})
-    mime_type, extension = image_format
-    return await PanelMediaService.save_panel_image(
-        db,
-        shot=shot,
-        data=data,
-        filename=image.filename or "panel-image",
-        mime_type=mime_type,
-        extension=extension,
-        user_id=current_user.id,
-        media_root=MEDIA_ROOT,
-    )
+    try:
+        return await PanelMediaService.save_panel_image(
+            db,
+            shot=shot,
+            data=data,
+            filename=image.filename or "panel-image",
+            user_id=current_user.id,
+            media_root=MEDIA_ROOT,
+        )
+    except DomainError as error:
+        raise HTTPException(415 if error.code == "INVALID_IMAGE" else 413 if error.code == "IMAGE_TOO_LARGE" else 400,
+            detail={"code": error.code, "message": error.message}) from error
 
 
 @router.get("/assets/{asset_id}/content")
@@ -78,4 +76,4 @@ async def read_asset_content(
     path = (root / asset.storage_key).resolve()
     if not path.is_relative_to(root) or not path.is_file():
         raise HTTPException(404, detail={"code": "NOT_FOUND", "message": "图片文件不存在"})
-    return FileResponse(path, media_type=asset.mime_type, headers={"Cache-Control": "private, max-age=3600", "X-Content-Type-Options": "nosniff"})
+    return FileResponse(path, media_type=asset.mime_type, headers={"Cache-Control": "private, no-cache", "ETag": '"' + asset.hash_sha256 + '"', "X-Content-Type-Options": "nosniff"})

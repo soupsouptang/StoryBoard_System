@@ -159,8 +159,8 @@ class ImportService:
             for index, (filename, data) in enumerate(decoded_images.get(row_index, [])):
                 panel = None if index == 0 else Panel(shot_id=shot.id, display_number=chr(65+index) if index < 26 else str(index+1), sort_index=(index+1)*1000)
                 if panel is not None: db.add(panel)
-                mime, extension = PanelMediaService.image_format(data)
-                await PanelMediaService.save_panel_image(db, shot=shot, data=data, filename=filename, mime_type=mime, extension=extension, user_id=user.id, media_root=MEDIA_ROOT, panel=panel)
+                await PanelMediaService.save_panel_image(db, shot=shot, data=data, filename=filename,
+                    user_id=user.id, media_root=MEDIA_ROOT, panel=panel)
             if headers is not None:
                 ShotService._audit_shot_mutation(db, user_id=user.id, action='shot.import_source', shot_id=shot.id, metadata={'headers': headers, 'cells': row, 'row_index': row_index})
             imported_count += 1

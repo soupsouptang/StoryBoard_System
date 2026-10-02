@@ -4,7 +4,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from typing import Annotated
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 
 class AssetOut(BaseModel):
@@ -22,5 +23,20 @@ class AssetOut(BaseModel):
     rights_status: Optional[str] = None
     created_at: datetime
     reference_shot_count: int
+    revision: int = 1
+    category: str = ""
+    has_thumbnail: bool = False
+    updated_at: datetime | None = None
+    deleted_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class AssetUpdate(BaseModel):
+    revision: int = Field(ge=1)
+    display_name: Annotated[str | None, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)] = None
+    category: Annotated[str | None, StringConstraints(strip_whitespace=True, max_length=64)] = None
+
+
+class AssetRevision(BaseModel):
+    revision: int = Field(ge=1)

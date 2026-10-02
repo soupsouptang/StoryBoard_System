@@ -29,7 +29,7 @@ FIELDS = {
     "columns": (ProjectColumn, "key label description field_type group_name options required default_value sort_index origin binding_kind binding_key schema_version state deleted_at"),
     "values": (ShotColumnValue, "shot_id column_id value"),
     "column_preferences": (ColumnPreference, "column_key state position width_px wrap_text"),
-    "assets": (Asset, "filename display_name asset_type source_type mime_type width height duration_frames fps_num fps_den file_size hash_sha256 rights_status deleted_at"),
+    "assets": (Asset, "filename display_name category asset_type source_type mime_type width height duration_frames fps_num fps_den file_size hash_sha256 rights_status deleted_at"),
     "asset_versions": (AssetVersion, "asset_id version_number mime_type file_size hash_sha256"),
     "asset_links": (ShotAssetLink, "shot_id asset_id role"),
     "asset_requests": (ClientAssetRequest, "shot_id requested_from requested_at received_at status notes"),
@@ -66,6 +66,19 @@ async def capture_project(db: AsyncSession, production_id: str) -> dict:
             if dialect == "sqlite" and isinstance(column.type, JSON):
                 column = func.json(column)
             args.extend((literal(name), column))
+        if section == "asset_versions":
+            framing_args = []
+            for key in ("width", "height", "crop", "rotation", "aspect_ratio", "source_version_id"):
+                value = model.metadata_json[key]
+                framing_args.extend((literal(key), func.json(value) if dialect == "sqlite" else value))
+            framing = json_object(*framing_args)
+            args.extend((literal("framing"), func.json(framing) if dialect == "sqlite" else framing))
+        if section == "assets":
+            # Pin the selected immutable version in the manifest, so a later
+            # crop cannot change which image a historical commit refers to.
+            current_version = select(AssetVersion.id).where(AssetVersion.asset_id == model.id,
+                AssetVersion.storage_key == model.storage_key).order_by(AssetVersion.version_number.desc()).limit(1)
+            args.extend((literal("current_version_id"), current_version.correlate(model).scalar_subquery()))
         statement = select(literal(section).label("section"), model.id.label("entity_id"),
             cast(json_object(*args), String).label("payload"))
         if model is Production:
@@ -91,7 +104,7 @@ async def capture_project(db: AsyncSession, production_id: str) -> dict:
         if dialect == "sqlite":
             model, _ = FIELDS[section]
             for key, value in payload.items():
-                if value is not None and getattr(model, key).type.python_type is bool:
+                if value is not None and hasattr(model, key) and getattr(model, key).type.python_type is bool:
                     payload[key] = bool(value)
         snapshot["sections"][section][identity] = payload
     return snapshot

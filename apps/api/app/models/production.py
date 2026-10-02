@@ -3,13 +3,26 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import BigInteger, Boolean, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 
 class Production(Base):
     __tablename__ = "productions"
+    __table_args__ = (
+        CheckConstraint("revision > 0", name="revision"),
+        CheckConstraint("schema_revision > 0", name="schema_revision"),
+        CheckConstraint("order_revision > 0", name="order_revision"),
+        CheckConstraint("content_revision > 0", name="content_revision"),
+        CheckConstraint("purge_epoch >= 0", name="purge_epoch"),
+    )
+
+    revision: Mapped[int] = mapped_column(BigInteger, default=1, server_default="1", nullable=False)
+    schema_revision: Mapped[int] = mapped_column(BigInteger, default=1, server_default="1", nullable=False)
+    order_revision: Mapped[int] = mapped_column(BigInteger, default=1, server_default="1", nullable=False)
+    content_revision: Mapped[int] = mapped_column(BigInteger, default=1, server_default="1", nullable=False)
+    purge_epoch: Mapped[int] = mapped_column(BigInteger, default=0, server_default="0", nullable=False)
 
     name: Mapped[str] = mapped_column(String(255), index=True)
     code: Mapped[str] = mapped_column(String(64), default="")

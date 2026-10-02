@@ -2,8 +2,6 @@
 from __future__ import annotations
 
 import os
-import hashlib
-import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -11,9 +9,11 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, NotFoundError
-from app.models.asset import Asset, ShotAssetLink
+from app.models.asset import ShotAssetLink
 from app.models.collaboration import AuditLog
 from app.models.shot import Panel, Shot
+from app.models.production import Production
+from app.services.image_asset_service import create_image_asset
 
 
 MEDIA_ROOT = Path(os.environ.get("FRAMEFORGE_MEDIA_DIR", Path(__file__).resolve().parents[2] / "media"))
@@ -29,26 +29,21 @@ class ShotRevisionConflict(ConflictError):
 
 class PanelMediaService:
     @staticmethod
-    def image_format(data: bytes) -> tuple[str, str] | None:
-        if data.startswith(b"\x89PNG\r\n\x1a\n"):
-            return "image/png", "png"
-        if data.startswith(b"\xff\xd8\xff"):
-            return "image/jpeg", "jpg"
-        if data.startswith((b"GIF87a", b"GIF89a")):
-            return "image/gif", "gif"
-        if data.startswith(b"RIFF") and data[8:12] == b"WEBP":
-            return "image/webp", "webp"
-        return None
-
-    @staticmethod
     async def get_upload_shot(
         db: AsyncSession,
         *,
         shot_id: str,
         revision: int,
     ) -> Shot:
+        scope = (await db.execute(select(Shot.production_id).where(Shot.id == shot_id, Shot.deleted_at.is_(None)))).scalar_one_or_none()
+        if scope is None:
+            raise NotFoundError("镜头不存在")
+        if (await db.execute(select(Production.id).where(Production.id == scope,
+            Production.deleted_at.is_(None)).with_for_update())).scalar_one_or_none() is None:
+            raise NotFoundError("项目不存在")
         shot = (await db.execute(
             select(Shot).where(Shot.id == shot_id, Shot.deleted_at.is_(None))
+            .with_for_update().execution_options(populate_existing=True)
         )).scalar_one_or_none()
         if shot is None:
             raise NotFoundError("镜头不存在")
@@ -63,8 +58,6 @@ class PanelMediaService:
         shot: Shot,
         data: bytes,
         filename: str,
-        mime_type: str,
-        extension: str,
         user_id: str,
         media_root: Path,
         panel: Panel | None = None,
@@ -78,28 +71,10 @@ class PanelMediaService:
             panel = Panel(shot_id=shot_id, display_number="A", sort_index=1000.0)
             db.add(panel)
 
-        asset_id = str(uuid.uuid4())
-        storage_key = f"{asset_id}.{extension}"
-        media_root.mkdir(parents=True, exist_ok=True)
-        target = media_root / storage_key
-        temporary = media_root / f".{asset_id}.tmp"
+        asset = await create_image_asset(db, production_id=shot.production_id, data=data, filename=filename,
+            user_id=user_id, media_root=media_root, display_name=f"镜头 {shot.display_number} 分镜画面", asset_type="storyboard")
+        asset_id = asset.id
         try:
-            temporary.write_bytes(data)
-            temporary.replace(target)
-            asset = Asset(
-                id=asset_id,
-                production_id=shot.production_id,
-                filename=Path(filename or "panel-image").name[:255],
-                display_name=f"镜头 {shot.display_number} 分镜画面",
-                asset_type="storyboard",
-                source_type="internal",
-                storage_key=storage_key,
-                mime_type=mime_type,
-                file_size=len(data),
-                hash_sha256=hashlib.sha256(data).hexdigest(),
-                created_by=user_id,
-            )
-            db.add(asset)
             if getattr(panel, 'asset_id', None):
                 await db.execute(delete(ShotAssetLink).where(
                     ShotAssetLink.shot_id == shot_id,
@@ -117,10 +92,10 @@ class PanelMediaService:
                 entity_id=shot_id,
                 metadata_json={"asset_id": asset_id, "revision": shot.revision},
             ))
-            db.info.setdefault("created_media_files", []).append(target)
             await db.flush()
-        except Exception:
-            temporary.unlink(missing_ok=True)
-            target.unlink(missing_ok=True)
+        except BaseException:
+            for key in (asset.storage_key, asset.proxy_storage_key):
+                if key:
+                    (media_root / key).unlink(missing_ok=True)
             raise
         return {"asset_id": asset_id, "revision": shot.revision}
