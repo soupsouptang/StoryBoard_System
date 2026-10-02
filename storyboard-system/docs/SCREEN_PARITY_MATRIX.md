@@ -1,5 +1,18 @@
 # FRAMEFORGE Screen Parity Matrix
 
+## 2026-10-02 rendered increment (`095fb7a`)
+
+The crop dialog refactor retains the framing destination through the existing Asset Library, replacing version-file creation with source-preserving metadata commands. It is not a removal of crop capability. Synthetic3002/8002 PostgreSQL-backed UI was used; original3001 remains separate.
+
+| Route / surface | Fresh rendered evidence | Remaining visual/product gate |
+| --- | --- | --- |
+| assets / ImageCropDialog | Actual source canvas, ratios/flip/rotation/pan/zoom, local Undo/Redo, save and cancellation;9:16 output with original retained | Component-specific Panel/project editors and full keyboard/focus/gesture QA remain; INTEGRATED_NOT_CUT_OVER |
+| shots / column manager |9 builtin /20 preset /custom/trash sections;mirror soft-delete, same001 restored;voice-over preset added |10 pending mappings, complete preset Purge and all table configurations remain; existing broad BLOCKED_VISUAL retained |
+| review / project compare | Actual Before/After original horizontal versus framed vertical image | Project restore/merge/global undo and full Review desktop acceptance remain; broad BLOCKED_VISUAL retained |
+| deliverables | Saved title-only field template reloads after refresh;actual PDF renders1/1 with only chosen title data | Full PDF layouts/profile/watermarks and broader format parity remain; INTEGRATED_NOT_CUT_OVER |
+
+Evidence kept locally at `/Users/montblanc/Documents/Codex/2026-09-30/new-chat/media-before-after-qa.png` and `export-template-pdf-qa.png`; no user files uploaded. Supplemental crop-width checks do not promote full desktop core surfaces to PASS. No deployment or complete product acceptance is claimed. See [implementation §9](VNEXT_DATABASE_IMPLEMENTATION_2026-10-02.md#9-非破坏图片三类列与交付字段第六段).
+
 This document tracks VNext screen recovery against the accepted FRAMEFORGE product behavior. It does not require Legacy runtime/API/database compatibility; Legacy screens are visual/functional references only.
 
 2026-10-01 re-audit and full desktop redesign proposal: [shadcn UI roadmap](SHADCN_UI_REDESIGN_ROADMAP_2026-10-01.md). Code checkpoint: `ae62318`; this is not fresh runtime acceptance. Historical approval-status controls are not automatically recovery requirements: the component master specification restricts approval workflows. Preserve comments, versions, diff and per-change accept/reject; map historical statuses separately.

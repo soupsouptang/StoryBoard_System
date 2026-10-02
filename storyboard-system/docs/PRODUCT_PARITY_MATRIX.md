@@ -1,5 +1,18 @@
 # FRAMEFORGE Product Parity Matrix
 
+## 2026-10-02 native media / columns / exports checkpoint (`095fb7a`)
+
+This increment replaces crop-to-new-source-file behavior with metadata presentations; it does not remove image framing. `ImageCropDialog` now reuses react-image-crop/native controls for ratios, rotation/flips, straighten/perspective, pan/zoom and local draft Undo/Redo. Complete appends presentation metadata after CAS; cancel leaves the source untouched. Review renders actual Before/After media. Production content schema2 excludes layout/comments/review independent histories. Synthetic UI and real image/API checks passed; full component-specific framing/retention and project-wide undo/restore/merge remain pending.
+
+| Capability | Real consumer / evidence | Status / remaining scope |
+| --- | --- | --- |
+| Asset framing | Asset page → ImageCropDialog → ImageCropService → media_presentations; original pixels/version retained after save, cancelled draft does not persist | INTEGRATED_NOT_CUT_OVER; all Panel/project UI and media retention/GC pending |
+| Column Manager | Four sections;9 builtin +20 preset catalog; stable soft-delete/restore and builtin SQL/API Purge rejection; synthetic mirror deletion/restoration and preset addition verified | INTEGRATED_NOT_CUT_OVER;10 pending mappings and preset Purge closure pending |
+| Versions | Actual media Before/After in ProjectVersionPanel; immutable source/presentation references and schema2 content separation | INTEGRATED_NOT_CUT_OVER; restore/merge/lighting/global command journal pending |
+| Export fields/templates | Independent grouped allowlist for CSV/XLSX/DOCX/PDF; actual PDF page preview and stable-ID project field templates, refresh/reload verified | INTEGRATED_NOT_CUT_OVER; six layouts/watermarks/profile histories and portable files pending |
+
+Latest three-class contract supersedes old prohibition of ordinary mirror/timecode/image deletion: all9 builtin definitions may trash/restore with canonical values retained, none may hard-delete/Purge. Copy/cut guards remain. Full evidence and gates: [database implementation §9](VNEXT_DATABASE_IMPLEMENTATION_2026-10-02.md#9-非破坏图片三类列与交付字段第六段). No Legacy database/data migration, no deployment; broader historical BLOCKED states below remain unless explicitly superseded here.
+
 This document tracks VNext product-capability recovery against the functional golden baseline `5e86a0b`.
 Current explicit user decisions and later accepted removals override the baseline. As of 2026-10-02, parity means **capability coverage**, not Legacy API/database/runtime compatibility. Old project data is not migrated; the only cross-version compatibility requirement is Legacy portable-project export → VNext mapping/import.
 

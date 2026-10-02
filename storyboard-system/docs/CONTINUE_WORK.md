@@ -1,5 +1,19 @@
 # FRAMEFORGE 续作入口
 
+## 最新代码检查点：`095fb7a`（2026-10-02）
+
+已按用户“再次读取新要求并修改”实施并上传至 `soupsouptang/StoryBoard_System master`。本节覆盖下文历史切片中的旧状态；**不是完整 VNext 产品完成声明**。详见 [数据库实施记录 §9](VNEXT_DATABASE_IMPLEMENTATION_2026-10-02.md#9-非破坏图片三类列与交付字段第六段)。
+
+- 非破坏图片构图：独立展示元数据、原图保留、素材/画面/项目 owner、裁剪旋转翻转/拉直/缩放/透视、局部草稿 undo/redo；Review 实际 Before/After 图片。内容版本 schema2 剔除布局与批注/审阅独立历史。
+- 9 内置 /20 预设 /N 自定义列目录及四区管理；新项目创建9内置定义。最新列模型合同覆盖旧三列禁止普通删除要求：**镜号/时码/分镜画面可软删除恢复，全部9内置禁止 Purge/hard-delete**；三列复制/剪切保护继续保留。
+- 交付独立字段搜索/分组选取、CSV/XLSX/DOCX/PDF 同一服务端 allowlist、真实 PDF 逐页预览；按稳定列 ID 保存/读取交付模板及 revision 冲突，永久删除自定义列同步清模板引用。EDL/OTIO/SRT 标记协议必需。
+- 代码检查：后端完整 **125 passed**（1项框架弃用 warning）、Web production build/TypeScript、package boundary、Regression Guard、diff whitespace 均通过。PostgreSQL16 空库→19条迁移→head `b03e7a42f185`、并发/CAS/FK/UTC/水位/事务回滚、`pg_dump/pg_restore` 和模板稳定 ID恢复已实际通过；此前 UTC 提交 `cf26947` 的 GitHub PostgreSQL CI 已核实成功，本新提交 CI 须以实际 Actions 为准。
+- 合成页面验收：内置列删除恢复、预设添加、图片构图保存/取消、原图不变、真实左右图、交付模板保存刷新读取、PDF预览。裁剪弹窗320/375/768/1024/1440根页面无横向溢出；不代表全站全部主题/交互验收。
+
+**下一步明确待办**：10项预设 pending 语义映射；预设永久删除及历史/导出产物/任务/媒体/cache/undo引用闭包；四区回收站完整Purge入口；导入稳定ID/catalog映射；全项目undo/restore/merge与灯光持久化；完整成员/分享权限和outbox发送；所有媒体组件独立构图UI/历史引用GC；导出完整版式/水印/工程文件合同。交付模板本段仅保存字段选择，不含完整版式/profile版本。
+
+运行验收仅使用独立3002/8002和55432合成数据库，结束后已停止本轮临时服务；原有3001进程未改接合成数据。不访问Legacy数据库，不部署。未知 `:memory:.ses` 保留且未上传。再次开工先读取本文、根AGENTS、最新远端MD，再根据上述待办追踪真实owner。
+
 ## 基础设施续作（2026-10-02）
 
 基础设施提交 `a518ea1` 与修复提交 `7229447`、`07bcc4c` 已推送 `master`。修复包括 PostgreSQL rehearsal 合成 `SECRET_KEY`、Regression Guard 所需三份台账、Web 裁剪依赖和文档变更触发 CI。修复后 Actions 结果因 GitHub API TLS 与浏览器读取失败而尚未核实。本轮不部署。执行记录见 [基础设施整改 worklog](worklogs/INFRASTRUCTURE_REMEDIATION_2026-10-02.md)。
@@ -93,3 +107,5 @@ OCR 当前限制：40 MB/文件、10000 行、200 列、PDF 30 页、图片 10 M
 - 本次没有新建额度等待、没有兑换重置券、没有重复创建云端任务。用户已重置额度；未来需等待时查真实 reset，仅安排单次恢复后续作，不每 15 分钟轮询。
 
 **停点结论：本轮列/菜单/工具条与追加删除/文字代码已上传、定向检查与真实浏览器验收完成；后续先读本文及本轮执行文档；新版功能、视觉及 VNext 数据库验收仍有待办。**
+
+GitHub `095fb7a` 已核实：FRAMEFORGE CI、PostgreSQL Migration Rehearsal、Safety Invariants成功；Regression Guard因裁剪重构未同步两份parity台账失败。后续文档补齐PRODUCT_PARITY_MATRIX和SCREEN_PARITY_MATRIX，必须以完整基线差异重跑guard，并核实新推送结果；不抹除该次失败记录。

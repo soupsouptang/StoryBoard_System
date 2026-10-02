@@ -87,3 +87,44 @@ Alembic `c58f2d01e739` 为 Asset 增加 revision/category，约束同资产 vers
 隔离真实图片/ORM/旋转选区/填黑/原图保留/CAS/跨项目/删除恢复/事务失败3项、版本迁移/bootstrap/约束/拒绝丢弃历史1项，以及既有项目版本3项通过。没有部署或访问生产数据库。统一 AssetReference/对象存储、全引用 GC/永久删除闭包和项目 undo journal 仍待后续基础域，不宣称完成。
 
 最新用户决定：共享布局不版本化，批注/审阅独立历史，全面按新系统重构，不保留旧产品提交兼容目标。第6/7节是已执行阶段记录，其范围将由新的内容版本 owner 收口；当前剩余任务和验收状态见 [重构范围](VNEXT_REFACTOR_SCOPE_2026-10-02.md)。
+
+
+## 9. 非破坏图片、三类列与交付字段：第六段
+
+代码 `095fb7a` 已先行上传。最新合同：[图片/版本重构范围](VNEXT_REFACTOR_SCOPE_2026-10-02.md)、[三类列需求](COLUMN_MODEL_REQUIREMENTS_2026-10-02.md)。本节覆盖第7/8节历史方案中的构图生成新AssetVersion/contain填黑及内容快照收录布局、批注、审阅规则。UTC与真实PostgreSQL演练另由已上传 `cf26947` 完成。
+
+### 9.1 实际实现
+
+- `f81c5e20d963` 新增 `media_presentations`，记录owner（asset/panel/production）、来源不可变AssetVersion、revision与变换参数；同资产来源复合FK、同项目asset FK、owner/revision CHECK。构图锁项目→资产，校验asset和presentation双revision；无变化无审计/事件，失败不写入。保存只追加展示记录，原图/源版本文件保持不变，不创建变换后的新源AssetVersion。服务层append-only；直接数据库写入的完整不可变策略仍待完善。
+- Pillow/现有Canvas分别消费同一旋转、翻转、拉直、透视、缩放、平移、裁剪元数据；输出按目标比例fit而非拉伸/自动contain黑框。服务器输出权威。极端变换的黑边自动避让尚未实现；客户端预览以960px采样，最终服务器为高质量重采样。当前素材库有完整构图入口；各Panel/项目独立UI入口尚未全部接通。
+- Web复用react-image-crop/shadcn/native slider，提供比例、横竖、拖动、滚轮/双指缩放与本地50步Undo/Redo；取消/外点不写入，完成仅一次命令，409保留草稿。当前与历史内容读取通过受权媒体路由，ETag引用source hash/presentation身份；媒体历史引用保留/删除GC全闭包仍待资产owner完成。
+- 项目内容提交schema2纳入固定media presentation引用，排除SavedView/偏好与Comment/Approval/ReviewDecision独立历史。不会重写旧提交。差异提供真实Before/After图片而非transform JSON；这不等于全要素恢复/合并/undo journal完成。
+- `a92d6f31e074` 显式column_class并约束origin/class、builtin生命周期；PostgreSQL和SQLite trigger禁止改类、builtin key/type/binding identity及builtin hard-delete。9内置新项目即建立稳定实例；20预设独立catalog，10已映射实体可添加，另10 pending禁用添加而不猜权威owner。此迁移只调整VNext现有列分类，未访问Legacy或复制旧库。
+- 四区列管理、软删除确认/恢复、镜号列显隐及sticky offsets实际接入。最新三类合同覆盖旧三列禁止普通删除：9内置均可进入回收站，不清Shot等canonical值；恢复同ID，所有内置API/SQL均拒绝Purge。镜号/时码/图片复制剪切限制仍保留。默认9可见，约7高频模板策略待后续。
+- CSV/XLSX/DOCX/PDF字段选取独立于表格可见列，服务端只允许当前项目active且已映射定义，所有active内置均可取消。回收站/已Purge列不进入新列型导出；非法/陈旧/空选择400。图像仅选中分镜画面时输出（CSV不含图片）。EDL/OTIO/SRT保持格式必需技术字段并在UI标记。
+- PDF预览以相同PDF生成函数的实际字节、已安装PDFium渲染逐页PNG，WebView无需PDF插件；分页与no-store，浏览器可见。PDFium原生调用串行防线程问题，达到并发瓶颈后接队列；每次分页当前重新生成PDF，尚无预览cache/job owner。
+- `b03e7a42f185` 新增独立 `export_templates`，持有项目、名称、stable column IDs、schema version与revision，名称项目内唯一。创建/更新使用项目锁、权限/expected revision、同事务audit/outbox；no-op无事件，冲突保留选择草稿。读取过滤失效列，soft-delete恢复同ID可重新引用，自定义Purge清引用并推进模板revision，新同名不同ID不复活旧选择。模板只保存字段选择，不保存格式/布局/profile历史；未新增删除模板UI/API。
+- 导出/模板已加角色权限入口，但不宣称完整项目成员、分享scope和字段级授权完成。
+
+### 9.2 实际证据
+
+- 完整后端125项通过；仅1项Starlette弃用warning，未把warning改成虚假全绿。针对新增真实ORM、source文件像素保留、CAS/no-op/owner、媒体diff、class SQL保护、格式字段、PDF字节预览一致性、stable模板ID与Purge清引用均有可运行检查。
+- Web TypeScript、packages与Next生产构建实际成功；boundary、Regression Guard及diff检查通过。没有新增package依赖；复用Pillow/PDFium/react-image-crop。Next可用环境distDir隔离QA，默认路径不变；验收生成的临时tsconfig配置已恢复。
+- 官方PostgreSQL16隔离loopback55432：空库完整19迁移至 `b03e7a42f185`，32 ORM表/timestamptz与schema一致；跨项目composite FK拒绝、真实project row lock阻塞竞争writer、CAS过期409、批注个人水位、audit/outbox原子回滚、builtin SQL绕过拒绝、soft-delete/restore通过。
+- `frameforge_final_rehearsal` pg_dump→新的 `frameforge_finalrestore_rehearsal` pg_restore，revision、UTC瞬间、批注事件/水位、stable export field IDs及schema/内置列保护复核通过。备份 `/private/tmp/frameforge-final-rehearsal.dump` 仅合成数据，未上传。未执行生产DDL，未部署。
+- 独立3002/8002真实Web验收：镜号删除/回收站/恢复001原值、官方旁白预设添加、原800×600图保存9:16/翻转后源图与单一AssetVersion仍保留，Review真实Before/After，交付模板“仅标题 QA”保存后刷新读取，字段仅标题PDF可见且1页。额外拖动/缩放草稿取消。裁剪弹窗320/375/768/1024/1440无根横向溢出；非全站完整视觉通过。
+- 合成截图留本机：`/Users/montblanc/Documents/Codex/2026-09-30/new-chat/media-before-after-qa.png`、`export-template-pdf-qa.png`。原用户3001服务未改接合成库；本輪API/Web/PG验收进程结束后停止，数据目录和dump保留。
+
+### 9.3 尚未完成，下一次不可忽略
+
+1. 10项pending预设的明确语义/实体映射与类型合同，特别Scene地点与镜头、制作方式/执行方式区别；先定canonical owner，再接schema/导入/编辑消费。
+2. 预设Purge依赖审计及受控历史/导出任务产物/cache/媒体引用/undo/tombstone闭包；不能以清当前实体值声称完成永久删除。四区回收站目前只restore；已有自定义manager Purge保留且补模板清理，不等于全新统一PurgeUI完成。
+3. 导入catalog稳定ID映射、SavedView所有布局按稳定列ID收口、约7高频默认视图。
+4. 全项目undo/redo、restore、三方merge/冲突、灯光原生持久化与组件范围；内容commit/图片草稿Undo不能替代全要素journal。
+5. 媒体所有组件构图UI、共享source独立owner显示、历史source授权/保留与引用GC、直接DB不可变策略；极端transform自动避黑边。
+6. 完整成员/字段/分享scope权限，列命令统一aggregate revisions/outbox，推送worker/Redis重连。
+7. 完整六版式/水印/便携工程附件/交付profile版本/任务队列；本段字段模板不是完整交付配置系统。
+
+后续每次开工先读CONTINUE_WORK及最新远端MD，再选明确切片；所有未完成项继续保留真实状态，不标产品全面完成。
+
+GitHub `095fb7a` 已核实：FRAMEFORGE CI、PostgreSQL Migration Rehearsal、Safety Invariants成功；Regression Guard因裁剪重构未同步两份parity台账失败。后续文档补齐PRODUCT_PARITY_MATRIX和SCREEN_PARITY_MATRIX，必须以完整基线差异重跑guard，并核实新推送结果；不抹除该次失败记录。
