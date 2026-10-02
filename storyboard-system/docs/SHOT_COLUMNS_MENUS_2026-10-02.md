@@ -127,3 +127,11 @@ git diff --check
 Web production build/TypeScript、diff、Regression Guard通过。默认1318px真实页面：搜索/导入/新增中心Y均208px、高36px，按钮完全可见；2400px搜索居中偏差0，同行无重叠/根溢出。点击按钮打开新增输入行后取消测试草稿，未保存新镜头。3002本地预览已重载，截图`new-shot-toolbar-one-row-2026-10-03.png`留本机、不上传。无依赖/API/数据库变更。
 
 追加视觉修正`0bb991d`：新增镜头增加24px右侧留白，向页面中心内收；搜索最小宽度改176px。1318px预览按钮距页面右侧约39px，仍同行、无重叠/根溢出。Webpack production build/类型与守卫通过；Turbopack本机端口限制，未更改项目构建配置。3002已重载，截图`new-shot-toolbar-inset-2026-10-03.png`留本机。
+
+## 9. 2026-10-03 新增、删除与取消选择统一（`e79c357`）
+
+- 新增镜头整体左移，左缘与下方删除按钮一致；为其右侧取消选择按钮及间隔留出位置。三个按钮固定100×36px、14px文字、8px圆角、正常字距，沿用已有Button和操作owner。
+- 单选“删除镜头”；多选2–99“删除N镜”，超过99“删除···镜”。数字槽固定2ch，tabular-nums、居中；可见文案截断不影响ARIA实际数量和删除命令。
+- 删除及确认按钮红色`#e11d48`、悬停`#be123c`，深浅主题一致；二次确认、失败错误及禁用保持。共享BulkActionToolbar同步应用于卡片/视觉墙的批量操作。
+- 工具八项顺序不变，有限宽度左侧工具可横向滚动；搜索和新增保持同一行，宽屏仍居中。1318/2400px真实页面新增/删除左缘偏差0、三按钮尺寸字号圆角相同；2400搜索中心偏差0，根页面无溢出。真实单选/5条多选与取消已核实，未执行删除。
+- `node tests/frontend/bulk-controls.cjs`边界1/9/10/99/100和原命令/失败/确认回归通过；Webpack production build/TypeScript、diff、Regression Guard通过。3002预览已更新；本机截图`shot-actions-single-2026-10-03.png`、`shot-actions-multiple-2026-10-03.png`不上传。无依赖/API/数据库改动。
