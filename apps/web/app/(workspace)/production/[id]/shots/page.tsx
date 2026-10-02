@@ -1047,20 +1047,8 @@ export default function ShotListPage() {
             <Icons.Plus aria-hidden="true" />新增镜头
           </Button>
         </div>
-        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="镜头查询与工具">
-          <div className="relative min-w-0 flex-1 basis-full sm:basis-64 sm:max-w-xs">
-            <Icons.Search aria-hidden="true" className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              value={filters.searchQuery}
-              onChange={event => setFilter('searchQuery', event.target.value)}
-              aria-label="搜索镜头"
-              placeholder="搜索镜号、画面、旁白、负责人..."
-              className="w-full min-w-0 pl-8"
-            />
-          </div>
-
-          <div className="flex min-w-0 flex-wrap items-center gap-1 [&_button]:h-9 [&_button]:text-sm [&_svg]:h-4 [&_svg]:w-4">
+        <div className="grid grid-cols-1 items-center gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,320px)_minmax(0,1fr)] [&_button]:h-9 [&_button]:text-sm [&_svg]:h-4 [&_svg]:w-4" role="group" aria-label="镜头查询与工具">
+          <div className="flex min-w-0 flex-wrap items-center gap-1">
             <Button variant="ghost" size="sm" disabled={!commands.canWrite} onClick={() => setImportOpen(true)}><Icons.FileDown className="h-3.5 w-3.5" />导入</Button>
             <Button
               variant={showFilters || activeFilterCount > 0 || groupMode !== 'none' ? 'secondary' : 'ghost'}
@@ -1072,30 +1060,29 @@ export default function ShotListPage() {
               <Icons.Filter className="h-3.5 w-3.5" />
               筛选/分组{activeFilterCount ? ` · ${activeFilterCount}` : ''}
             </Button>
-            <Button variant={freezeEnabled ? 'secondary' : 'ghost'} size="sm" role="switch" aria-checked={freezeEnabled}
-              onClick={() => { setFreezeEnabled(previous => !previous); if (freezeEnabled) setSelectedPins([]); }} className="h-8 shrink-0 text-xs">
-              <Icons.Columns3 className="h-3.5 w-3.5" />冻结列
-            </Button>
-
-
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={!isInspectorOpen && selectedShotIds.length !== 1}
-              aria-expanded={isInspectorOpen}
-              onClick={() => isInspectorOpen ? closeInspector() : selectedShotIds[0] && openInspector(selectedShotIds[0])}
-              className="shrink-0"
-            >
-              <Icons.PanelRightOpen className={`h-4 w-4 ${isInspectorOpen ? 'scale-x-[-1]' : ''}`} />
-              详情
-            </Button>
-
             <ShotSavedViews
               productionId={production.id}
               currentConfig={currentSavedViewConfig}
               onApply={applySavedTableView}
             />
 
+            <Button variant={freezeEnabled ? 'secondary' : 'ghost'} size="sm" role="switch" aria-checked={freezeEnabled}
+              onClick={() => { setFreezeEnabled(previous => !previous); if (freezeEnabled) setSelectedPins([]); }} className="h-8 shrink-0 text-xs">
+              <Icons.Columns3 className="h-3.5 w-3.5" />冻结列
+            </Button>
+          </div>
+          <div className="relative w-full min-w-0 max-w-xs justify-self-center">
+            <Icons.Search aria-hidden="true" className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              value={filters.searchQuery}
+              onChange={event => setFilter('searchQuery', event.target.value)}
+              aria-label="搜索镜头"
+              placeholder="搜索镜号、画面、旁白、负责人..."
+              className="w-full min-w-0 pl-8"
+            />
+          </div>
+          <div className="flex min-w-0 flex-wrap items-center gap-1 xl:justify-end">
             <ShotCustomFieldManager productionId={production.id} />
 
             <ShotColumnManager
@@ -1109,14 +1096,17 @@ export default function ShotListPage() {
               onReset={resetColumnLayout}
             />
 
-            {!canReorder && shots.length > 1 && (
-              <span
-                className="hidden whitespace-nowrap text-[11px] text-muted-foreground xl:inline"
-                title="清除分组并恢复默认升序后可拖动镜号旁的手柄调整顺序"
-              >
-                顺序已锁定
-              </span>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={!isInspectorOpen && selectedShotIds.length !== 1}
+              aria-expanded={isInspectorOpen}
+              onClick={() => isInspectorOpen ? closeInspector() : selectedShotIds[0] && openInspector(selectedShotIds[0])}
+              className="shrink-0"
+            >
+              <Icons.PanelRightOpen className={`h-4 w-4 ${isInspectorOpen ? 'scale-x-[-1]' : ''}`} />
+              详情
+            </Button>
 
             <Button
               variant="ghost"
@@ -1127,6 +1117,17 @@ export default function ShotListPage() {
               <Icons.Trash2 className="h-3.5 w-3.5" />
               废纸篓
             </Button>
+
+            {!canReorder && shots.length > 1 && (
+              <span
+                className="hidden whitespace-nowrap text-[11px] text-muted-foreground xl:inline"
+                title="清除分组并恢复默认升序后可拖动镜号旁的手柄调整顺序"
+              >
+                顺序已锁定
+              </span>
+            )}
+
+
           </div>
         </div>
       </div>
