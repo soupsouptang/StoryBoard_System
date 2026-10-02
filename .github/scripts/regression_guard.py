@@ -76,7 +76,7 @@ REQUIRED_REVIEW_PAGE_TOKENS = (
     "useShotVersionCompare",
     "useUpdateReviewComment",
     "useDeleteReviewComment",
-    "审片历史",
+    "useReviewDecisions",
     "版本比较",
 )
 
