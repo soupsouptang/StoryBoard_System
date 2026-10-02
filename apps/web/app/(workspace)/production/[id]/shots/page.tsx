@@ -1047,8 +1047,19 @@ export default function ShotListPage() {
             <Icons.Plus aria-hidden="true" />新增镜头
           </Button>
         </div>
-        <div className="grid grid-cols-1 items-center gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,320px)_minmax(0,1fr)] [&_button]:h-9 [&_button]:text-sm [&_svg]:h-4 [&_svg]:w-4" role="group" aria-label="镜头查询与工具">
-          <div className="flex min-w-0 flex-wrap items-center gap-1">
+        <div className="grid min-w-0 grid-cols-1 gap-2 [&_button]:h-9 [&_button]:text-sm [&_svg]:h-4 [&_svg]:w-4" role="group" aria-label="镜头查询与工具">
+          <div className="relative w-full min-w-0 max-w-xs justify-self-center">
+            <Icons.Search aria-hidden="true" className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              value={filters.searchQuery}
+              onChange={event => setFilter('searchQuery', event.target.value)}
+              aria-label="搜索镜头"
+              placeholder="搜索镜号、画面、旁白、负责人..."
+              className="w-full min-w-0 pl-8"
+            />
+          </div>
+          <div className="flex min-w-0 flex-wrap items-center justify-start gap-2">
             <Button variant="ghost" size="sm" disabled={!commands.canWrite} onClick={() => setImportOpen(true)}><Icons.FileDown className="h-3.5 w-3.5" />导入</Button>
             <Button
               variant={showFilters || activeFilterCount > 0 || groupMode !== 'none' ? 'secondary' : 'ghost'}
@@ -1070,19 +1081,6 @@ export default function ShotListPage() {
               onClick={() => { setFreezeEnabled(previous => !previous); if (freezeEnabled) setSelectedPins([]); }} className="h-8 shrink-0 text-xs">
               <Icons.Columns3 className="h-3.5 w-3.5" />冻结列
             </Button>
-          </div>
-          <div className="relative w-full min-w-0 max-w-xs justify-self-center">
-            <Icons.Search aria-hidden="true" className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              value={filters.searchQuery}
-              onChange={event => setFilter('searchQuery', event.target.value)}
-              aria-label="搜索镜头"
-              placeholder="搜索镜号、画面、旁白、负责人..."
-              className="w-full min-w-0 pl-8"
-            />
-          </div>
-          <div className="flex min-w-0 flex-wrap items-center gap-1 xl:justify-end">
             <ShotCustomFieldManager productionId={production.id} />
 
             <ShotColumnManager
@@ -1126,8 +1124,6 @@ export default function ShotListPage() {
                 顺序已锁定
               </span>
             )}
-
-
           </div>
         </div>
       </div>
