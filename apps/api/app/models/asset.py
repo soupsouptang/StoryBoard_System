@@ -10,7 +10,10 @@ from app.core.database import Base
 
 class Asset(Base):
     __tablename__ = "assets"
-    __table_args__ = (CheckConstraint("revision > 0", name="revision"),)
+    __table_args__ = (
+        CheckConstraint("revision > 0", name="revision"),
+        UniqueConstraint("production_id", "id", name="uq_assets_project_identity"),
+    )
     revision: Mapped[int] = mapped_column(BigInteger, default=1, server_default="1")
     category: Mapped[str] = mapped_column(String(64), default="", server_default="")
 
@@ -41,6 +44,7 @@ class Asset(Base):
 class AssetVersion(Base):
     __tablename__ = "asset_versions"
     __table_args__ = (
+        UniqueConstraint("asset_id", "id", name="uq_asset_versions_asset_identity"),
         UniqueConstraint("asset_id", "version_number", name="uq_asset_versions_number"),
         CheckConstraint("version_number > 0", name="version_number"),
     )

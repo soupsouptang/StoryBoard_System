@@ -11,6 +11,7 @@ from app.core.security import get_password_hash
 from app.models.production import Production, Sequence, Scene
 from app.models.shot import Panel, ProductionStep, Shot
 from app.models.user import Role, User
+from app.services.column_catalog import builtin_definitions
 
 ROLES = [
     {"name": "admin", "permissions": {"*": True}},
@@ -74,6 +75,8 @@ async def seed_database(db: AsyncSession) -> None:
             status="approved"
         )
         db.add(prod)
+        await db.flush()
+        db.add_all(builtin_definitions(pid, None))
 
         # Sequences / Chapters
         seq1 = Sequence(id=str(uuid.uuid4()), production_id=pid, display_number="SEQ010", name="篇章一｜强强联手·战略启航", sort_index=1000.0)

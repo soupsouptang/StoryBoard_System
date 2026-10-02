@@ -10,12 +10,12 @@ import hashlib
 import json
 from sqlalchemy import JSON, String, cast, func, literal, select, union_all
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 from app.models.asset import Asset, AssetVersion, ClientAssetRequest, ShotAssetLink
-from app.models.collaboration import Approval, Comment, ReviewDecision
-from app.models.field import ColumnPreference, ProjectColumn, ShotColumnValue
+from app.models.field import ProjectColumn, ShotColumnValue
+from app.models.media import MediaPresentation
 from app.models.production import Production, Scene, Sequence
 from app.models.shot import Panel, ProductionStep, Shot
-from app.models.view import SavedView, ViewRowLayout
 
 # Closed schema: expand it together with the native component owner, never by
 # serializing all ORM columns or accepting arbitrary client snapshot JSON.
@@ -26,18 +26,13 @@ FIELDS = {
     "shots": (Shot, "sequence_id scene_id display_number sort_index name description panel_frame action performance composition director_notes duration_frames timing_locked shot_size camera_angle camera_height lens_mm camera sensor aperture shutter camera_movement dialogue voice_over subtitle music_notes sfx_notes primary_method secondary_methods department owner_id status approval_status vfx_required continuity_notes risk_notes deleted_at"),
     "panels": (Panel, "shot_id display_number sort_index asset_id duration_frames description deleted_at"),
     "steps": (ProductionStep, "shot_id type department owner_id status sort_index input_asset_id output_asset_id notes deleted_at"),
-    "columns": (ProjectColumn, "key label description field_type group_name options required default_value sort_index origin binding_kind binding_key schema_version state deleted_at"),
+    "columns": (ProjectColumn, "key label description field_type group_name options required default_value sort_index origin column_class binding_kind binding_key schema_version state deleted_at"),
     "values": (ShotColumnValue, "shot_id column_id value"),
-    "column_preferences": (ColumnPreference, "column_key state position width_px wrap_text"),
     "assets": (Asset, "filename display_name category asset_type source_type mime_type width height duration_frames fps_num fps_den file_size hash_sha256 rights_status deleted_at"),
     "asset_versions": (AssetVersion, "asset_id version_number mime_type file_size hash_sha256"),
     "asset_links": (ShotAssetLink, "shot_id asset_id role"),
     "asset_requests": (ClientAssetRequest, "shot_id requested_from requested_at received_at status notes"),
-    "comments": (Comment, "shot_id asset_id user_id role body timecode quote_field quote_text parent_id is_resolved deleted_at"),
-    "approvals": (Approval, "shot_id shot_version status user_id comment"),
-    "review_decisions": (ReviewDecision, "shot_id version_id previous_status next_status action_label created_by"),
-    "views": (SavedView, "name view_type is_shared config schema_version row_height_mode manual_row_height_px"),
-    "row_layouts": (ViewRowLayout, "saved_view_id shot_id height_mode manual_height_px"),
+    "media_presentations": (MediaPresentation, "asset_id source_version_id owner_type owner_id revision transform"),
 }
 
 
@@ -54,7 +49,6 @@ async def capture_project(db: AsyncSession, production_id: str) -> dict:
     shot_ids = select(Shot.id).where(Shot.production_id == production_id)
     column_ids = select(ProjectColumn.id).where(ProjectColumn.production_id == production_id, ProjectColumn.state.not_in(("purged", "purging")))
     asset_ids = select(Asset.id).where(Asset.production_id == production_id)
-    shared_views = select(SavedView.id).where(SavedView.production_id == production_id, SavedView.is_shared.is_(True))
     statements = []
     for section, (model, field_names) in FIELDS.items():
         fields = field_names.split()
@@ -79,7 +73,8 @@ async def capture_project(db: AsyncSession, production_id: str) -> dict:
             current_version = select(AssetVersion.id).where(AssetVersion.asset_id == model.id,
                 AssetVersion.storage_key == model.storage_key).order_by(AssetVersion.version_number.desc()).limit(1)
             args.extend((literal("current_version_id"), current_version.correlate(model).scalar_subquery()))
-        statement = select(literal(section).label("section"), model.id.label("entity_id"),
+        identity = model.owner_type + literal(":") + model.owner_id if model is MediaPresentation else model.id
+        statement = select(literal(section).label("section"), identity.label("entity_id"),
             cast(json_object(*args), String).label("payload"))
         if model is Production:
             statement = statement.where(model.id == production_id, model.deleted_at.is_(None))
@@ -87,10 +82,11 @@ async def capture_project(db: AsyncSession, production_id: str) -> dict:
             statement = statement.where(model.id.in_(column_ids))
         elif model is ShotColumnValue:
             statement = statement.where(model.production_id == production_id, model.column_id.in_(column_ids))
-        elif model is SavedView:
-            statement = statement.where(model.id.in_(shared_views))
-        elif model is ViewRowLayout:
-            statement = statement.where(model.production_id == production_id, model.saved_view_id.in_(shared_views))
+        elif model is MediaPresentation:
+            history = aliased(MediaPresentation)
+            latest = select(func.max(history.revision)).where(history.production_id == model.production_id,
+                history.owner_type == model.owner_type, history.owner_id == model.owner_id).correlate(model).scalar_subquery()
+            statement = statement.where(model.production_id == production_id, model.revision == latest)
         elif model is AssetVersion:
             statement = statement.where(model.asset_id.in_(asset_ids))
         elif hasattr(model, "production_id"):
@@ -98,7 +94,7 @@ async def capture_project(db: AsyncSession, production_id: str) -> dict:
         else:
             statement = statement.where(model.shot_id.in_(shot_ids))
         statements.append(statement)
-    snapshot = {"schema_version": 1, "sections": {name: {} for name in FIELDS}}
+    snapshot = {"schema_version": 2, "sections": {name: {} for name in FIELDS}}
     for section, identity, encoded in (await db.execute(union_all(*statements))).all():
         payload = json.loads(encoded)
         if dialect == "sqlite":

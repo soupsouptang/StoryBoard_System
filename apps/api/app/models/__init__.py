@@ -1,4 +1,6 @@
 from app.core.database import Base
+from app.models.media import MediaPresentation
+from app.models.export_template import ExportTemplate
 from app.models.user import User, Role
 from app.models.production import Production, Sequence, Scene
 from app.models.shot import Shot, Panel, ProductionStep
@@ -21,6 +23,8 @@ __all__ = [
     "ProductionStep",
     "Asset",
     "AssetVersion",
+    "MediaPresentation",
+    "ExportTemplate",
     "ShotAssetLink",
     "StockAssetMetadata",
     "ClientAssetRequest",

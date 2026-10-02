@@ -61,13 +61,15 @@ async def test_project_capture_commit_branch_diff_scope_noop_and_conflicts():
     async with AsyncSessionLocal() as db:
         user = await fixture(db)
         first = await commit(db, user)
+        assert first.schema_version == first.snapshot["schema_version"] == 2
+        assert (await Service.working_state(db, "p", user))["schema_version"] == 2
         snapshot = first.snapshot["sections"]
         assert set(snapshot["shots"]) == {"s"}
         assert snapshot["values"]["v"]["value"] is None
         assert snapshot["shots"]["s"]["camera_movement"] == {}
         assert snapshot["shots"]["s"]["timing_locked"] is False
-        assert {"panels", "steps", "comments", "assets", "asset_versions", "asset_links", "views"} <= snapshot.keys()
-        assert set(snapshot["views"]) == {"shared"}
+        assert {"panels", "steps", "assets", "asset_versions", "asset_links", "media_presentations"} <= snapshot.keys()
+        assert not {"comments", "approvals", "review_decisions", "views", "row_layouts", "column_preferences"} & snapshot.keys()
         assert "synthetic-private" not in json.dumps(snapshot)
         assert "moodboard" not in snapshot
         assert await commit(db, user, first.id) is first
@@ -88,7 +90,7 @@ async def test_project_capture_commit_branch_diff_scope_noop_and_conflicts():
         with pytest.raises(ConflictError):
             await commit(db, user, first.id)
         compared = await Service.compare(db, "p", first.id, user, second.id, "s")
-        assert {(row["section"], row["field"]) for row in compared["changes"]} >= {("shots", "name"), ("panels", "description"), ("comments", "body")}
+        assert {(row["section"], row["field"]) for row in compared["changes"]} >= {("shots", "name"), ("panels", "description")}
         assert any(row["lines"][0]["kind"] == "replace" for row in compared["changes"])
         graph = await Service.graph(db, "p", user, limit=1)
         assert len(graph["commits"]) == 1 and graph["next_before_id"]
@@ -121,7 +123,7 @@ async def test_permanent_column_purge_redacts_commit_values_defaults_and_quotes(
         assert first.content_hash != original_hash
         assert "c" not in first.snapshot["sections"]["columns"]
         assert not first.snapshot["sections"]["values"]
-        assert first.snapshot["sections"]["comments"]["comment"]["quote_text"] == ""
+        assert "comments" not in first.snapshot["sections"]
         assert "synthetic deleted" not in json.dumps(first.snapshot)
         assert first.content_hash == content_hash(first.snapshot)
         working = await capture_project(db, "p")

@@ -24,7 +24,7 @@ from app.models.shot import Shot
 from app.models.user import User
 from app.models.view import SavedView
 from app.services.column_lifecycle import sanitize_saved_view_config
-from app.services.column_catalog import BUILTIN_BINDINGS
+from app.services.column_catalog import BUILTIN_BINDINGS, column_class
 from app.schemas.custom_field import (
     CustomFieldCreate,
     CustomFieldPurgeRequest,
@@ -58,17 +58,15 @@ class CustomFieldService:
     async def builtin_states(db: AsyncSession, production_id: str) -> list[dict]:
         await CustomFieldService._production(db, production_id)
         rows = await db.execute(select(ProjectColumn).where(
-            ProjectColumn.production_id == production_id, ProjectColumn.origin == "builtin"))
+            ProjectColumn.production_id == production_id, ProjectColumn.column_class.in_(["builtin", "preset"])))
         return [{'column_key': row.key.removeprefix('builtin:'), 'state': 'visible' if row.state == 'active' else 'removed',
-                 'revision': row.revision, 'column_id': row.id} for row in rows.scalars()]
+                 'revision': row.revision, 'column_id': row.id, 'column_class': row.column_class} for row in rows.scalars()]
 
     @staticmethod
     async def set_builtin_state(db: AsyncSession, production_id: str, column_key: str, req: BuiltinColumnStateUpdate, user: User) -> dict:
         CustomFieldService._require_write(user)
         if column_key not in {*CustomFieldService.COPY_COLUMNS, 'display_number', 'tc_in', 'panel_image'}:
             raise DomainError('该列不可操作', code='INVALID_COLUMN_KEY')
-        if req.state == 'removed' and column_key in {'display_number', 'tc_in', 'panel_image'}:
-            raise DomainError('镜号、时码、分镜画面不允许删除。', code='PROTECTED_COLUMN')
         await CustomFieldService._production(db, production_id, for_update=True)
         column = (await db.execute(select(ProjectColumn).where(
             ProjectColumn.production_id == production_id, ProjectColumn.key == "builtin:" + column_key,
@@ -83,7 +81,7 @@ class CustomFieldService:
         if not column:
             label, kind, binding, field_type = BUILTIN_BINDINGS[column_key]
             column = ProjectColumn(production_id=production_id, key="builtin:" + column_key, label=label,
-                origin="builtin", binding_kind=kind, binding_key=binding, field_type=field_type,
+                origin=column_class(column_key), column_class=column_class(column_key), binding_kind=kind, binding_key=binding, field_type=field_type,
                 group_name="Builtin", state=state, deleted_at=now if state == "trashed" else None,
                 created_by=user.id, revision=1)
             db.add(column)
@@ -178,7 +176,23 @@ class CustomFieldService:
 
     @staticmethod
     def _column_key(field: ProjectColumn) -> str:
-        return f"custom:{field.key}"
+        return f"custom:{field.key}" if field.binding_kind == "custom" else field.key.removeprefix("builtin:")
+
+    @staticmethod
+    async def column_catalog(db: AsyncSession, production_id: str) -> list[dict]:
+        await CustomFieldService._production(db, production_id)
+        fields = list((await db.execute(select(ProjectColumn).where(
+            ProjectColumn.production_id == production_id, ProjectColumn.state != "purged"))).scalars())
+        instances = {CustomFieldService._column_key(field): row for field, row in zip(fields,
+            await CustomFieldService._projection(db, fields))}
+        rows = []
+        for key, (label, kind, binding, field_type) in BUILTIN_BINDINGS.items():
+            instance = instances.pop(key, None)
+            rows.append({"catalog_key": key, "label": label, "column_class": column_class(key),
+                "binding_kind": kind, "field_type": field_type, "instance": instance})
+        rows.extend({"catalog_key": None, "label": row["label"], "column_class": row["column_class"],
+            "binding_kind": "custom", "field_type": row["field_type"], "instance": row} for row in instances.values())
+        return rows
 
     @staticmethod
     def _unique_label(label: str, used: set[str], *, numbered: bool = False) -> str:
@@ -336,6 +350,8 @@ class CustomFieldService:
                 "width_px": preference.width_px if preference else 180,
                 "wrap_text": preference.wrap_text if preference else field.field_type == "textarea",
                 "revision": field.revision,
+                "column_class": field.column_class,
+                "origin": field.origin,
                 "created_by": field.created_by,
                 "created_at": field.created_at,
                 "updated_at": field.updated_at,
@@ -844,6 +860,10 @@ class CustomFieldService:
     ) -> bool:
         CustomFieldService._require_write(user)
         await CustomFieldService._production(db, production_id, for_update=True)
+        definition = await db.scalar(select(ProjectColumn).where(ProjectColumn.id == field_id,
+            ProjectColumn.production_id == production_id).with_for_update())
+        if definition and definition.column_class == "builtin":
+            raise DomainError("内置列仅可删除到回收站并恢复，不允许永久删除。", code="BUILTIN_PURGE_FORBIDDEN")
         field = await CustomFieldService._field(
             db,
             production_id,
@@ -916,6 +936,14 @@ class CustomFieldService:
                 view.config = sanitized
                 view.revision += 1
                 view.updated_at = now
+
+        from app.models.export_template import ExportTemplate
+        templates = await db.scalars(select(ExportTemplate).where(ExportTemplate.production_id == production_id).with_for_update())
+        for template in templates:
+            if field.id in template.field_ids:
+                template.field_ids = [identity for identity in template.field_ids if identity != field.id]
+                template.revision += 1
+                template.updated_at = now
 
         CustomFieldService._audit(
             db,

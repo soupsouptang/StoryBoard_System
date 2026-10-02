@@ -1,5 +1,12 @@
 # FrameForge VNext 原生重构工作簿
 
+## 2026-10-02 原生数据库 / 媒体 / 列 / 导出增量
+
+本轮原生增量：UTC PostgreSQL 在线演练；非破坏图片展示记录、实际左右图对比；9 Built-in /20 Preset /N Custom 分类和内置列 SQL/API Purge 保护；独立导出字段 allowlist、PDF 逐页预览、项目交付模板。Alembic 管 schema，既有命令 service 管事务。三列“禁止普通删除”旧规则由最新列模型合同覆盖：现允许软删除/恢复，禁止永久删除；复制/剪切保护仍保留。
+
+仅在隔离合成数据库/端口验证；没有 Legacy 数据迁移或部署。10 个 pending 预设映射、预设 Purge 依赖/历史清理闭包、全项目 undo/restore/merge、成员权限与推送 worker 仍未完成。最终检查证据见续作入口和 VNext 数据库实施记录；不将该增量标成整个产品完成。
+
+
 ## 2026-10-02 基础设施与 CI 检查点（`a518ea1`）
 
 - `a518ea1` 已推送至 `master`：API/worker/Web 运行时和镜像对齐，Python 依赖按哈希锁定，Web 采用 Next standalone 镜像，Alembic 为 schema 唯一 owner；认证使用 Argon2id/JWT、启动不再自动建表；Nginx WebSocket/CSP 与同源 API 路由已调整。

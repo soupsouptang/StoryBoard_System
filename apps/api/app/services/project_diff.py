@@ -19,6 +19,7 @@ SECTION_LABELS = {
     "asset_requests": "素材请求", "comments": "批注", "approvals": "审核",
     "review_decisions": "审阅决定", "views": "共享视图", "row_layouts": "行高",
     "column_preferences": "列显示设置",
+    "media_presentations": "图片构图",
 }
 
 
@@ -54,7 +55,7 @@ def compare_snapshots(before: dict, after: dict, shot_id: str | None = None) -> 
     left, right = before["sections"], after["sections"]
     changes = []
     unchanged = 0
-    related_columns, related_assets, related_sequences, related_scenes, related_views = set(), set(), set(), set(), set()
+    related_columns, related_assets, related_sequences, related_scenes, related_views, related_panels = set(), set(), set(), set(), set(), set()
     if shot_id:
         for sections in (left, right):
             shot = sections.get("shots", {}).get(shot_id, {})
@@ -64,9 +65,11 @@ def compare_snapshots(before: dict, after: dict, shot_id: str | None = None) -> 
                 if row.get("shot_id") == shot_id:
                     related_columns.add(row.get("column_id"))
             for section in ("panels", "steps", "asset_links", "comments"):
-                for row in sections.get(section, {}).values():
+                for identity, row in sections.get(section, {}).items():
                     if row.get("shot_id") == shot_id:
                         related_assets.update(row.get(key) for key in ("asset_id", "input_asset_id", "output_asset_id"))
+                        if section == "panels":
+                            related_panels.add(identity)
             for row in sections.get("row_layouts", {}).values():
                 if row.get("shot_id") == shot_id:
                     related_views.add(row.get("saved_view_id"))
@@ -81,6 +84,8 @@ def compare_snapshots(before: dict, after: dict, shot_id: str | None = None) -> 
                     section == "columns" and identity in related_columns or
                     section == "assets" and identity in related_assets or
                     section == "asset_versions" and any(row.get("asset_id") in related_assets for row in rows) or
+                    section == "media_presentations" and any(row.get("owner_id") in related_panels
+                        or row.get("owner_type") == "asset" and row.get("asset_id") in related_assets for row in rows) or
                     section == "sequences" and identity in related_sequences or
                     section == "scenes" and identity in related_scenes or
                     section == "views" and identity in related_views)
@@ -88,6 +93,14 @@ def compare_snapshots(before: dict, after: dict, shot_id: str | None = None) -> 
                     continue
             if old == new:
                 unchanged += 1
+                continue
+            if section == "media_presentations":
+                def image_ref(row):
+                    return {key: row[key] for key in ("asset_id", "source_version_id", "owner_type", "owner_id", "revision")} if row else None
+                original = image_ref(old) if old else {**image_ref(new), "revision": 0} if new else None
+                changes.append({"section": section, "section_label": "图片构图", "entity_id": identity,
+                    "field": "image", "label": "构图变化", "kind": "replace", "before": original,
+                    "after": image_ref(new), "lines": []})
                 continue
             if old is None or new is None:
                 changes.append({"section": section, "section_label": SECTION_LABELS.get(section, section),

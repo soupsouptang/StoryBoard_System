@@ -108,17 +108,36 @@ async def test_column_delete_restore_revision_and_preserved_values():
         production = (await client.post("/api/v1/productions", headers=headers, json={"name": "Delete restore synthetic"})).json()
         root = f"/api/v1/productions/{production['id']}"
         shot = (await client.post(root + "/shots", headers=headers, json={"display_number":"001", "name":"完整保留", "description":"原文"})).json()
-        for key in ('display_number', 'tc_in', 'panel_image'):
-            protected = await client.patch(root + f"/column-preferences/{key}/state", headers=headers, json={"state":"removed", "revision":0})
-            assert protected.status_code == 400
-            assert '不允许删除' in protected.text
-        for key in ('name',):
+        catalog = (await client.get(root + "/column-catalog", headers=headers)).json()
+        assert sum(row['column_class'] == 'builtin' for row in catalog) == 9
+        assert sum(row['column_class'] == 'preset' for row in catalog) == 20
+        assert all(row['instance'] for row in catalog if row['column_class'] == 'builtin')
+        assert all(not row['instance'] for row in catalog if row['column_class'] == 'preset')
+        for key in ('display_number', 'tc_in', 'panel_image', 'name'):
             path = root + f"/column-preferences/{key}/state"
-            deleted = await client.patch(path, headers=headers, json={"state":"removed", "revision":0})
-            assert deleted.status_code == 200, deleted.text
-            assert deleted.json()['state'] == 'removed'
-            stale = await client.patch(path, headers=headers, json={"state":"visible", "revision":0})
+            instance = next(row['instance'] for row in catalog if row['catalog_key'] == key)
+            deleted = await client.patch(path, headers=headers, json={"state":"removed", "revision":1})
+            assert deleted.status_code == 200 and deleted.json()['state'] == 'removed', deleted.text
+            purge = await client.post(root + f"/custom-fields/{instance['id']}/purge", headers=headers, json={"revision":2})
+            assert purge.status_code == 400 and 'BUILTIN_PURGE_FORBIDDEN' in purge.text
+            stale = await client.patch(path, headers=headers, json={"state":"visible", "revision":1})
             assert stale.status_code == 409
+            if key != 'name':
+                assert (await client.patch(path, headers=headers, json={"state":"visible", "revision":2})).status_code == 200
+        rejected_export = await client.get(root + "/export/xlsx?fields=name", headers=headers)
+        assert rejected_export.status_code == 400 and 'INVALID_EXPORT_FIELDS' in rejected_export.text
+        selected_export = await client.get(root + "/export/csv?fields=description", headers=headers)
+        assert selected_export.status_code == 200
+        assert selected_export.content.decode('utf-8-sig').splitlines() == ['画面描述', '原文']
+        image_only_csv = await client.get(root + '/export/csv?fields=panel_image', headers=headers)
+        assert image_only_csv.status_code == 400 and 'INVALID_EXPORT_FIELDS' in image_only_csv.text
+        pdf = await client.get(root + '/export/pdf?fields=description', headers=headers)
+        preview = await client.get(root + '/export/pdf?fields=description&preview=true', headers=headers)
+        from app.services.document_export import render_pdf_preview
+        assert pdf.status_code == preview.status_code == 200
+        assert preview.headers['content-type'] == 'image/png' and preview.headers['x-page-count'] == '1'
+        assert preview.content == render_pdf_preview(pdf.content, 0)[0]
+        assert (await client.get(root + '/export/pdf?fields=description&preview=true&page=1', headers=headers)).status_code == 400
         invalid = await client.patch(root + "/column-preferences/revision/state", headers=headers, json={"state":"removed", "revision":0})
         assert invalid.status_code == 400
         current = (await client.get(root + "/shots", headers=headers)).json()[0]
@@ -126,16 +145,17 @@ async def test_column_delete_restore_revision_and_preserved_values():
         assert current['updated_at'].rstrip('Z') == shot['updated_at'].rstrip('Z')
         blocked = await client.post(root + "/custom-fields/copy-column", headers=headers, json={"source":"name", "label":"标题", "shot_revisions":{shot['id']:shot['revision']}})
         assert blocked.status_code == 400
-        failed = await client.post(root + "/custom-fields/insert", headers=headers, json={"restore_columns":{"name":1}, "fields":[{"label":" "}]})
+        failed = await client.post(root + "/custom-fields/insert", headers=headers, json={"restore_columns":{"name":2}, "fields":[{"label":" "}]})
         assert failed.status_code == 400
         states = (await client.get(root + "/column-preferences", headers=headers)).json()
         assert next(row for row in states if row['column_key'] == 'name')['state'] == 'removed'
         bad_revision = await client.post(root + "/custom-fields/insert", headers=headers, json={"restore_columns":{"name":-1}})
         assert bad_revision.status_code == 422
-        restored = await client.post(root + "/custom-fields/insert", headers=headers, json={"restore_columns":{"name":1}})
+        restored = await client.post(root + "/custom-fields/insert", headers=headers, json={"restore_columns":{"name":2}})
         assert restored.status_code == 201
         states = (await client.get(root + "/column-preferences", headers=headers)).json()
-        assert all(row['state'] == 'visible' and row['revision'] == 2 for row in states)
+        assert all(row['state'] == 'visible' for row in states)
+        assert next(row['revision'] for row in states if row['column_key'] == 'name') == 3
         field = (await client.post(root + "/custom-fields", headers=headers, json={"label":"可恢复"})).json()
         value = await client.patch(f"/api/v1/shots/{shot['id']}/custom-fields/{field['id']}", headers=headers, json={"revision":shot['revision'], "value":"全列内容"})
         assert value.status_code == 200, value.text
@@ -532,3 +552,38 @@ async def test_custom_field_definition_update_is_revision_safe_and_preserves_use
         )
         assert numeric_persisted["revision"] == 1
         assert numeric_persisted["field_type"] == "text"
+
+
+@pytest.mark.asyncio
+async def test_export_templates_keep_stable_ids_revisions_and_purge_boundary():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
+        login = await client.post('/api/v1/auth/login', json={'email': settings.INITIAL_ADMIN_EMAIL, 'password': settings.INITIAL_ADMIN_PASSWORD})
+        headers = {'Authorization': 'Bearer ' + login.json()['access_token']}
+        project = (await client.post('/api/v1/productions', headers=headers, json={'name': 'Template synthetic'})).json()
+        root = '/api/v1/productions/' + project['id']
+        catalog = (await client.get(root + '/column-catalog', headers=headers)).json()
+        title = next(row['instance'] for row in catalog if row['catalog_key'] == 'name')
+        custom = (await client.post(root + '/custom-fields', headers=headers, json={'label': 'Fixture optional'})).json()
+        fields = [title['id'], custom['id']]
+        created = await client.post(root + '/export/templates', headers=headers, json={'name': '标题模板', 'field_ids': fields})
+        assert created.status_code == 201, created.text
+        saved = created.json(); path = root + '/export/templates/' + saved['id']
+        assert saved['field_ids'] == fields and saved['revision'] == 1
+        assert (await client.patch(path, headers=headers, json={'name': '标题模板', 'field_ids': fields, 'revision': 1})).json()['revision'] == 1
+        assert (await client.post(root + '/export/templates', headers=headers, json={'name': '标题模板', 'field_ids': fields})).status_code == 409
+        assert (await client.patch(path, headers=headers, json={'name': '标题模板', 'field_ids': fields, 'revision': 2})).status_code == 409
+        await client.patch(root + '/column-preferences/name/state', headers=headers, json={'state': 'removed', 'revision': 1})
+        assert (await client.get(root + '/export/templates', headers=headers)).json()[0]['field_ids'] == [custom['id']]
+        await client.patch(root + '/column-preferences/name/state', headers=headers, json={'state': 'visible', 'revision': 2})
+        assert (await client.get(root + '/export/templates', headers=headers)).json()[0]['field_ids'] == fields
+        await client.patch(root + '/custom-fields/' + custom['id'] + '/state', headers=headers, json={'state': 'removed', 'revision': 1})
+        purged = await client.post(root + '/custom-fields/' + custom['id'] + '/purge', headers=headers, json={'revision': 2})
+        assert purged.status_code == 200
+        current = (await client.get(root + '/export/templates', headers=headers)).json()[0]
+        assert current['field_ids'] == [title['id']] and current['revision'] == 2
+        replacement = (await client.post(root + '/custom-fields', headers=headers, json={'label': 'Fixture optional'})).json()
+        assert replacement['id'] != custom['id']
+        assert (await client.get(root + '/export/templates', headers=headers)).json()[0]['field_ids'] == [title['id']]
+        assert (await client.patch(path, headers=headers, json={'name': '标题模板', 'field_ids': [custom['id']], 'revision': 2})).status_code == 400
+        other = (await client.post('/api/v1/productions', headers=headers, json={'name': 'Other template project'})).json()
+        assert (await client.post('/api/v1/productions/' + other['id'] + '/export/templates', headers=headers, json={'name': 'Foreign columns', 'field_ids': [title['id']]})).status_code == 400

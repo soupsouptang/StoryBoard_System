@@ -61,7 +61,7 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
   return data as T;
 }
 
-export async function apiDownload(path: string, fallbackFilename: string): Promise<{ blob: Blob; filename: string }> {
+export async function apiDownload(path: string, fallbackFilename: string): Promise<{ blob: Blob; filename: string; pageCount: number }> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('frameforge_token') : null;
   const response = await fetch(`${API_BASE}${path}`, {
     headers: {
@@ -85,12 +85,12 @@ export async function apiDownload(path: string, fallbackFilename: string): Promi
     try { filename = decodeURIComponent(encodedName); } catch { /* keep safe fallback */ }
   }
   filename = filename.replace(/[\\/:*?"<>|\x00-\x1f]/g, '_').replace(/^\.+|\.+$/g, '') || fallbackFilename;
-  return { blob: await response.blob(), filename };
+  return { blob: await response.blob(), filename, pageCount: Number(response.headers.get('X-Page-Count')) || 1 };
 }
 
-export async function apiImageBlob(assetId: string, signal?: AbortSignal): Promise<Blob> {
+export async function apiImageBlob(assetId: string, signal?: AbortSignal, owner?: { owner_type: string; owner_id: string }): Promise<Blob> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('frameforge_token') : null;
-  const response = await fetch(`${API_BASE}/api/v1/assets/${encodeURIComponent(assetId)}/content`, {
+  const response = await fetch(`${API_BASE}/api/v1/assets/${encodeURIComponent(assetId)}/content${owner ? `?${new URLSearchParams(owner)}` : ''}`, {
     signal,
     headers: {
       Accept: 'image/*',

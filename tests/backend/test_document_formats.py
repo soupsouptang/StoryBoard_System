@@ -47,8 +47,10 @@ async def test_formats_ocr_permission_images_raw_columns_and_rollback(tmp_path, 
         assert '原始内容 =1+2' in joined and 'English 123' in joined
         if fmt in {'xlsx','docx'}: assert len(parsed['images'])==2
         if fmt=='xlsx':
-            cell=load_workbook(io.BytesIO(content)).active['C2']
-            assert cell.data_type=='s'
+            sheet=load_workbook(io.BytesIO(content)).active
+            description_column=next(cell.column for cell in sheet[1] if cell.value == '画面描述')
+            cell=sheet.cell(2, description_column)
+            assert cell.data_type == 's' and cell.value == '原始内容 =1+2'
         if fmt=='pdf':
             assert '合成分镜测试' in PdfReader(io.BytesIO(content)).pages[0].extract_text()
     for ext in ['png','jpg']:

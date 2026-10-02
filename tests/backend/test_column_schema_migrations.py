@@ -51,6 +51,23 @@ def test_empty_database_has_one_canonical_column_owner(tmp_path):
         assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
 
 
+def test_column_classes_cannot_bypass_builtin_lifecycle(tmp_path):
+    db = tmp_path / "classes.sqlite"
+    migrate(db, "upgrade", "head")
+    with sqlite3.connect(db) as conn:
+        insert(conn, "productions", id="p")
+        insert(conn, "project_columns", id="core", production_id="p", key="builtin:name", label="镜头标题",
+            origin="builtin", column_class="builtin", binding_kind="entity", binding_key="shot.name", state="active")
+        for sql in ("DELETE FROM project_columns WHERE id='core'",
+                    "UPDATE project_columns SET origin='custom', column_class='custom' WHERE id='core'",
+                    "UPDATE project_columns SET field_type='number' WHERE id='core'",
+                    "UPDATE project_columns SET state='purging', deleted_at='2026-10-02' WHERE id='core'"):
+            with pytest.raises(sqlite3.IntegrityError): conn.execute(sql)
+        conn.execute("UPDATE project_columns SET state='trashed', deleted_at='2026-10-02' WHERE id='core'")
+        conn.execute("UPDATE project_columns SET state='active', deleted_at=NULL WHERE id='core'")
+        assert conn.execute("SELECT id, label, column_class FROM project_columns").fetchone() == ("core", "镜头标题", "builtin")
+
+
 def test_vnext_upgrade_preserves_identity_nulls_trash_and_tombstones(tmp_path):
     db = tmp_path / "upgrade.sqlite"
     migrate(db, "upgrade", PREVIOUS)

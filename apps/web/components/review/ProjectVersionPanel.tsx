@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Dialog, DialogContent, DialogDescription, DialogTitle, Input, Select, Textarea } from '@frameforge/ui';
 import { ApiError } from '@/lib/api-client';
+import { AssetImage } from '@/components/asset/AssetImage';
 import { useAuthStore } from '@/stores/authStore';
 import { useProjectCommitDetail, useProjectVersionCompare, useProjectVersionGraph, useProjectVersionMutations, useProjectVersionState, type ProjectChange, type ProjectDiffLine } from '@/lib/hooks/useProjectVersions';
 
-const sectionLabels: Record<string, string> = { production: '项目', sequences: '篇章', scenes: '场景', shots: '镜头', panels: '分镜画面', steps: '制作步骤', columns: '列定义', values: '列值', assets: '素材', asset_versions: '素材版本', asset_links: '素材关联', asset_requests: '素材请求', comments: '批注', approvals: '审核', review_decisions: '审阅决定', views: '共享视图', row_layouts: '行高', column_preferences: '列显示设置', moodboard: '情绪板', lighting_boards: '灯光板' };
+const sectionLabels: Record<string, string> = { production: '项目', sequences: '篇章', scenes: '场景', shots: '镜头', panels: '分镜画面', steps: '制作步骤', columns: '列定义', values: '列值', assets: '素材', asset_versions: '素材版本', asset_links: '素材关联', asset_requests: '素材请求', media_presentations: '图片构图', comments: '批注', approvals: '审核', review_decisions: '审阅决定', views: '共享视图', row_layouts: '行高', column_preferences: '列显示设置', moodboard: '情绪板', lighting_boards: '灯光板' };
 const short = (id: string | null) => id ? id.slice(0, 8) : '无';
 function errorText(error: unknown) {
   if (error instanceof ApiError && error.status === 409) return '项目内容或分支已更新。草稿已保留，请检查最新记录后重新提交。';
@@ -35,9 +36,19 @@ function expandLines(change: ProjectChange): ProjectDiffLine[] {
     return [line];
   });
 }
-function ChangeDiff({ change }: { change: ProjectChange }) {
+function ChangeDiff({ change, productionId }: { change: ProjectChange; productionId: string }) {
   const [expanded, setExpanded] = useState(false);
   const lines = expanded ? expandLines(change) : change.lines;
+  if (change.section === 'media_presentations') {
+    return <Card><CardHeader className="p-3"><CardTitle className="text-sm">图片构图</CardTitle></CardHeader>
+      <CardContent className="grid gap-3 sm:grid-cols-2">{(['before', 'after'] as const).map(side => {
+        const image = change[side] as { asset_id: string; source_version_id: string; owner_type: string; owner_id: string; revision: number } | null;
+        return <div key={side} className="min-w-0 space-y-2"><p className="text-sm">{side === 'before' ? '修改前' : '修改后'}</p>
+          <div className="flex min-h-40 items-center justify-center bg-black">{image
+            ? <AssetImage assetId={image.asset_id} prodId={productionId} presentation={image} alt={side === 'before' ? '修改前画面' : '修改后画面'} className="max-h-96 max-w-full object-contain"><span className="text-sm text-white">正在读取画面…</span></AssetImage>
+            : <span className="text-sm text-white">无画面</span>}</div></div>;
+      })}</CardContent></Card>;
+  }
   return <Card>
     <CardHeader className="p-3"><CardTitle className="text-sm">{change.section_label} · {change.label}</CardTitle><p className="break-all text-xs text-muted-foreground">{change.entity_id}</p></CardHeader>
     <CardContent className="overflow-x-auto p-0">
@@ -95,7 +106,7 @@ function VersionWorkspace({ productionId, shotId }: { productionId: string; shot
     {from === to && from && <p>请选择两个不同版本。</p>}
     {comparison.isFetching && <p role="status">比较中…</p>}
     {comparison.error && <p role="alert" className="text-destructive">{errorText(comparison.error)}</p>}
-    {comparison.data && <div className="space-y-3"><p className="text-sm">{comparison.data.changed_count} 项字段变化 · {comparison.data.unchanged_entities} 个实体未修改</p>{comparison.data.changed_count === 0 && <p>所选范围没有变化。</p>}{comparison.data.changes.map((change, index) => <ChangeDiff key={`${comparison.data.from_hash}:${comparison.data.to_hash}:${scope}:${shotId}:${index}`} change={change} />)}</div>}
+    {comparison.data && <div className="space-y-3"><p className="text-sm">{comparison.data.changed_count} 项字段变化 · {comparison.data.unchanged_entities} 个实体未修改</p>{comparison.data.changed_count === 0 && <p>所选范围没有变化。</p>}{comparison.data.changes.map((change, index) => <ChangeDiff key={`${comparison.data.from_hash}:${comparison.data.to_hash}:${scope}:${shotId}:${index}`} change={change} productionId={productionId} />)}</div>}
   </div>;
 }
 

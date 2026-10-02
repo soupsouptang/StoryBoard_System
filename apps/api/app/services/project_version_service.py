@@ -38,7 +38,7 @@ class ProjectVersionService:
         ProjectVersionService.permission(user)
         await ProjectVersionService.project(db, production_id)
         snapshot = await capture_project(db, production_id)
-        return {"state_hash": content_hash(snapshot), "schema_version": 1,
+        return {"state_hash": content_hash(snapshot), "schema_version": snapshot["schema_version"],
             "sections": {key: len(rows) for key, rows in snapshot["sections"].items()},
             "excluded_components": ["moodboard"],
             "pending_components": ["lighting_boards"]}
@@ -66,7 +66,7 @@ class ProjectVersionService:
             branch = ProjectBranch(production_id=production_id, name="main", created_by=user.id)
             db.add(branch)
         row = ProjectCommit(production_id=production_id, message=req.message, branch_name=req.branch_name,
-            parent_id=head, snapshot=snapshot, content_hash=digest, created_by=user.id)
+            parent_id=head, snapshot=snapshot, schema_version=snapshot["schema_version"], content_hash=digest, created_by=user.id)
         db.add(row)
         await db.flush()
         branch.head_id = row.id

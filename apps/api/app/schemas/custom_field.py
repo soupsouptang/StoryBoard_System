@@ -53,6 +53,8 @@ class CustomFieldOut(BaseModel):
     production_id: str
     key: str
     column_key: str
+    column_class: str
+    origin: str
     label: str
     description: str
     field_type: str

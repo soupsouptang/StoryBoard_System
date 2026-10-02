@@ -27,6 +27,14 @@ from app.services.custom_field_service import CustomFieldService
 router = APIRouter(tags=["Custom Fields"])
 
 
+@router.get('/productions/{production_id}/column-catalog')
+async def column_catalog(production_id: str, db: AsyncSession = db_session, current_user: User = Depends(get_current_user)):
+    try:
+        return await CustomFieldService.column_catalog(db, production_id)
+    except DomainError as error:
+        raise _http(error)
+
+
 def _http(error: DomainError) -> HTTPException:
     if isinstance(error, NotFoundError):
         return HTTPException(

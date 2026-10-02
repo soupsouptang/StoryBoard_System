@@ -19,5 +19,6 @@ export function ShotPanelImage({
   className?: string;
   children?: ReactNode;
 }) {
-  return <AssetImage assetId={primaryPanelAssetId(shot)} alt={`镜头 ${shot.display_number} 分镜画面`} className={className}>{children}</AssetImage>;
+  const panel = [...(shot.panels ?? [])].filter(row => !row.deleted_at).sort((a,b) => a.sort_index - b.sort_index)[0];
+  return <AssetImage assetId={primaryPanelAssetId(shot)} owner={panel ? { owner_type: 'panel', owner_id: panel.id } : undefined} alt={`镜头 ${shot.display_number} 分镜画面`} className={className}>{children}</AssetImage>;
 }

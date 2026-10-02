@@ -23,6 +23,9 @@ class ProjectColumn(Base):
         UniqueConstraint("production_id", "id", name="uq_project_columns_production_id"),
         UniqueConstraint("production_id", "id", "binding_kind", name="uq_project_columns_binding_identity"),
         CheckConstraint("origin IN ('builtin','preset','custom','import')", name="origin"),
+        CheckConstraint("column_class IN ('builtin','preset','custom')", name="column_class"),
+        CheckConstraint("(column_class = 'builtin' AND origin = 'builtin') OR (column_class = 'preset' AND origin = 'preset') OR (column_class = 'custom' AND origin IN ('custom','import'))", name="class_origin"),
+        CheckConstraint("column_class <> 'builtin' OR state IN ('active','trashed')", name="builtin_lifecycle"),
         CheckConstraint("binding_kind IN ('entity','derived','custom','pending')", name="binding_kind"),
         CheckConstraint("state IN ('active','trashed','purging','purged')", name="state"),
         CheckConstraint("revision > 0 AND schema_version > 0", name="versions"),
@@ -49,6 +52,7 @@ class ProjectColumn(Base):
     default_value: Mapped[Optional[Any]] = mapped_column(JSON().with_variant(JSONB(), "postgresql"), nullable=True)
     sort_index: Mapped[int] = mapped_column(Integer, default=0, index=True)
     origin: Mapped[str] = mapped_column(String(16), default="custom", server_default="custom")
+    column_class: Mapped[str] = mapped_column(String(16), default="custom", server_default="custom")
     binding_kind: Mapped[str] = mapped_column(String(16), default="custom", server_default="custom")
     binding_key: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
     schema_version: Mapped[int] = mapped_column(Integer, default=1, server_default="1")

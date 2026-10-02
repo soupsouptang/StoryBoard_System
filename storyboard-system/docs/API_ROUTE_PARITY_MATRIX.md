@@ -1,5 +1,17 @@
 # API route inventory — Legacy reference only
 
+## 2026-10-02 新增 / 变更原生路由
+
+- `GET /productions/{id}/column-catalog`：9 Built-in /20 Preset /N Custom 与活动/回收实例。
+- `GET /productions/{id}/assets/{asset}/presentation`、`GET .../presentation/content`：当前或固定展示 revision；`POST .../crop` 提交 owner/source/asset revision/presentation revision，原图不改。
+- `GET /assets/{asset}/content?owner_type=panel&owner_id=...`：对应画面展示；原图仍从 image-version content 读取。
+- `GET /productions/{id}/export/fields`：独立字段 allowlist，回收/永久删除/待映射字段退出。文档导出 `fields` 参数控制 XLSX/DOCX/PDF/CSV；PDF `preview=true&page=N` 返回实际成品页 PNG 与 `X-Page-Count`，CORS 明确暴露此头。
+- `GET/POST .../export/templates`、`PATCH .../export/templates/{template}`：交付字段模板，稳定列 ID /角色权限/expected revision/项目锁/audit/outbox。全部导出格式统一检查角色权限。
+- 普通列删除新增规则可达：内置列也可回收与恢复；builtin Purge API 拒绝。预设 Purge 完整闭包仍未完成，不开放危险入口。
+
+上述是本轮原生实现范围，不代表完整分享、成员权限、所有媒体组件或导出任务队列已完成。
+
+
 ## Infrastructure ownership note (2026-10-02)
 
 The infrastructure remediation did not add or claim Legacy API route parity. `apps/api` remains the VNext HTTP/authentication owner; production configuration requires explicit secrets and database URLs, and Alembic owns schema changes. The Web production client defaults to same-origin API routing, with Nginx routing `/api` and WebSocket upgrades. CI validates API contracts and a clean PostgreSQL-to-Alembic-head rehearsal; a passing migration job is not evidence of data backfill or production cutover. Authentication implementation details and current CI status are recorded in [ACTIVE_WORKSTREAMS.md](ACTIVE_WORKSTREAMS.md) and [CANONICAL_OWNER_MATRIX.md](CANONICAL_OWNER_MATRIX.md).

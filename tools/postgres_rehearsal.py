@@ -10,7 +10,7 @@ from pathlib import Path
 import sys
 
 from sqlalchemy import DateTime, func, inspect, select, text
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DBAPIError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "apps/api"))
 from app.core.config import settings
@@ -20,6 +20,7 @@ from app.models import Production, Role, Shot, User
 from app.models.collaboration import AuditLog, Comment, CommentEvent
 from app.models.command import OutboxEvent
 from app.models.field import ProjectColumn, ShotColumnValue
+from app.models.export_template import ExportTemplate
 from app.schemas.review import ReviewCommentCreate
 from app.services.production_revision_service import ProductionRevisionService, ProductionRevisions
 from app.services.review_service import ReviewService
@@ -59,9 +60,35 @@ async def persisted_check():
         assert await db.scalar(select(func.count(CommentEvent.id))) == 1
         assert await db.scalar(select(func.count(OutboxEvent.id))) == 1
         assert await db.scalar(select(func.count(AuditLog.id))) == 1
+        template = await db.get(ExportTemplate, "pg-export-template")
+        assert template is not None and template.field_ids == ["pg-column"] and template.revision == 1
         reader = await db.get(User, "pg-reader")
         assert (await ReviewService.read_state(db, "pg-shot-a", reader))["unread_count"] == 0
-    print("PASS: committed revisions, UTC instant, events and personal read state survived")
+    print("PASS: committed revisions, UTC instant, events, read state and stable export field IDs survived")
+
+
+async def builtin_protection_check():
+    async with AsyncSessionLocal() as db:
+        field = ProjectColumn(id="pg-builtin-protection", production_id="pg-rehearsal-a", key="builtin:name",
+            label="标题", origin="builtin", column_class="builtin", binding_kind="entity", binding_key="shot.name")
+        db.add(field); await db.flush()
+        for mutation in (
+            "UPDATE project_columns SET column_class='custom', origin='custom'",
+            "UPDATE project_columns SET state='purging', deleted_at=now()",
+            "UPDATE project_columns SET field_type='number'",
+            "DELETE FROM project_columns",
+        ):
+            try:
+                async with db.begin_nested():
+                    await db.execute(text(mutation + " WHERE id='pg-builtin-protection'"))
+            except DBAPIError:
+                pass
+            else:
+                raise AssertionError("Builtin protection bypassed: " + mutation)
+        await db.execute(text("UPDATE project_columns SET state='trashed', deleted_at=now() WHERE id='pg-builtin-protection'"))
+        await db.execute(text("UPDATE project_columns SET state='active', deleted_at=NULL WHERE id='pg-builtin-protection'"))
+        await db.rollback()
+    print("PASS: PostgreSQL protects builtin identity/type/class/purge/hard-delete and permits trash/restore")
 
 
 async def exercise():
@@ -79,6 +106,8 @@ async def exercise():
         db.add_all([Shot(id="pg-shot-a", production_id="pg-rehearsal-a"),
                     Shot(id="pg-shot-b", production_id="pg-rehearsal-b")])
         db.add(ProjectColumn(id="pg-column", production_id="pg-rehearsal-a", key="fixture", label="Synthetic"))
+        db.add(ExportTemplate(id="pg-export-template", production_id="pg-rehearsal-a", name="Synthetic export",
+            field_ids=["pg-column"], created_by="pg-author"))
 
     async with AsyncSessionLocal() as db:
         db.add(ShotColumnValue(production_id="pg-rehearsal-a", shot_id="pg-shot-b", column_id="pg-column", value="fixture"))
@@ -138,6 +167,7 @@ async def main(restored: bool):
     try:
         schema_check()
         await (persisted_check() if restored else exercise())
+        await builtin_protection_check()
     finally:
         await async_engine.dispose()
         sync_engine.dispose()

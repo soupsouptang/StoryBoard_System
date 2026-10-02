@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 
+from typing import Literal
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +15,7 @@ from app.models.asset import Asset
 from app.models.production import Production
 from app.models.user import User
 from app.services.panel_media_service import PanelMediaService, ShotRevisionConflict, MEDIA_ROOT
+from app.services.image_crop_service import ImageCropService
 
 router = APIRouter(tags=["Panel Media"])
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
@@ -59,6 +61,8 @@ async def upload_panel_image(
 @router.get("/assets/{asset_id}/content")
 async def read_asset_content(
     asset_id: str,
+    owner_type: Literal["asset", "panel", "production"] = "asset",
+    owner_id: str | None = None,
     db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
@@ -72,8 +76,10 @@ async def read_asset_content(
     )).scalar_one_or_none()
     if asset is None:
         raise HTTPException(404, detail={"code": "NOT_FOUND", "message": "图片不存在"})
-    root = MEDIA_ROOT.resolve()
-    path = (root / asset.storage_key).resolve()
-    if not path.is_relative_to(root) or not path.is_file():
-        raise HTTPException(404, detail={"code": "NOT_FOUND", "message": "图片文件不存在"})
-    return FileResponse(path, media_type=asset.mime_type, headers={"Cache-Control": "private, no-cache", "ETag": '"' + asset.hash_sha256 + '"', "X-Content-Type-Options": "nosniff"})
+    try:
+        content, mime, digest = await ImageCropService.rendered(db, asset, MEDIA_ROOT, owner_type=owner_type, owner_id=owner_id)
+        response = Response if isinstance(content, bytes) else FileResponse
+        return response(content, media_type=mime, headers={"Cache-Control": "private, no-cache",
+            "ETag": '"' + digest + '"', "X-Content-Type-Options": "nosniff"})
+    except DomainError as error:
+        raise HTTPException(404, detail={"code": error.code, "message": error.message}) from error

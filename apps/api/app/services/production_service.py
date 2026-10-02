@@ -85,6 +85,9 @@ class ProductionService:
         )
         db.add(production)
         await db.flush()
+        from app.services.column_catalog import builtin_definitions
+        db.add_all(builtin_definitions(production.id, user_id))
+        await db.flush()
         ProductionService._audit(db, user_id, "production.create", production.id, {"name": production.name})
         return production
 

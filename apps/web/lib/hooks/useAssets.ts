@@ -27,6 +27,12 @@ export function useAssets(productionId: string, filters: { state?: 'active' | 't
 }
 
 export interface ImageCrop { x: number; y: number; width: number; height: number }
+export interface MediaPresentation {
+  revision: number; source_version_id: string;
+  transform: { crop: ImageCrop; rotation: 0 | 90 | 180 | 270; aspect_ratio: string | null; output_width: number;
+    scale: number; translation_x: number; translation_y: number; straighten_degrees: number;
+    perspective_horizontal: number; perspective_vertical: number; flip_horizontal: boolean; flip_vertical: boolean };
+}
 export interface ImageVersion {
   id: string; version_number: number; width: number; height: number;
   rotation: 0 | 90 | 180 | 270; aspect_ratio: string; crop: ImageCrop | null; current: boolean;
@@ -41,14 +47,14 @@ export function assetError(error: unknown) {
     if (error.status === 403) return '你没有管理此素材的权限。';
     if (error.status === 401) return '登录已过期，请重新登录后重试。';
   }
-  return error instanceof Error ? error.message : '操作失败，请重试。';
+  return error instanceof Error ? error.message : typeof error === 'string' ? error : '操作失败，请重试。';
 }
 type AssetCommand =
   | { kind: 'upload'; file: File; signal?: AbortSignal }
   | { kind: 'update'; assetId: string; revision: number; display_name: string; category: string }
   | { kind: 'delete' | 'restore'; assetId: string; revision: number }
-  | { kind: 'crop'; assetId: string; revision: number; source_version_id: string; crop: ImageCrop;
-      rotation: 0 | 90 | 180 | 270; aspect_ratio: string; output_width: number };
+  | ({ kind: 'crop'; assetId: string; revision: number; presentation_revision: number; source_version_id: string;
+      owner_type?: 'asset' | 'panel' | 'production'; owner_id?: string } & MediaPresentation['transform']);
 export function useAssetMutation(productionId: string) {
   const client = useQueryClient();
   return useMutation({
@@ -73,6 +79,7 @@ export function useAssetMutation(productionId: string) {
         ...(command.kind === 'upload' ? [] : [client.invalidateQueries({ queryKey: ['asset-image', command.assetId] })]),
         client.invalidateQueries({ queryKey: ['assets', productionId] }),
         client.invalidateQueries({ queryKey: ['asset-versions', productionId] }),
+        client.invalidateQueries({ queryKey: ['asset-presentation', productionId] }),
         client.invalidateQueries({ queryKey: ['asset-references', productionId] }),
         client.invalidateQueries({ queryKey: ['shots', productionId] }),
         client.invalidateQueries({ queryKey: ['project-version-state', productionId] }),

@@ -1,4 +1,5 @@
 export const SHOT_TABLE_COLUMN_LABELS = {
+  display_number: '镜号',
   panel_image: '分镜画面',
   shot_reference: '镜头',
   tc_in: '时码 TC',
@@ -74,7 +75,7 @@ export const SHOT_TABLE_COLUMN_OPTIONS: Record<string, string[]> = {
   camera_angle: ['平视','俯视','仰视','鸟瞰','斜角'],
 };
 
-export const DEFAULT_SHOT_TABLE_COLUMN_ORDER = Object.keys(SHOT_TABLE_COLUMN_LABELS) as ShotTableColumnKey[];
+export const DEFAULT_SHOT_TABLE_COLUMN_ORDER = Object.keys(SHOT_TABLE_COLUMN_LABELS).filter(key => key !== 'display_number') as ShotTableColumnKey[];
 
 export const DEFAULT_SHOT_TABLE_COLUMN_WIDTHS = Object.fromEntries(DEFAULT_SHOT_TABLE_COLUMN_ORDER.map(column => [column,
   column === 'panel_image' ? 128 : ['description', 'voice_over', 'replacement'].includes(column) ? 260 : column === 'tc_in' ? 132 : 112
@@ -96,7 +97,7 @@ export interface ShotTablePresentationPreferences {
   rowHeight: ShotTableRowHeight;
 }
 
-const COLUMN_KEYS = new Set<ShotTableColumnKey>(DEFAULT_SHOT_TABLE_COLUMN_ORDER);
+const COLUMN_KEYS = new Set<ShotTableColumnKey>([...DEFAULT_SHOT_TABLE_COLUMN_ORDER, 'display_number']);
 const ROW_HEIGHTS = new Set<ShotTableRowHeight>(['compact', 'standard', 'comfortable', 'auto']);
 
 export function clampShotTableColumnWidth(column: string, width: number) {

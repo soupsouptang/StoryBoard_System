@@ -1,4 +1,5 @@
-"""Explicit VNext builtin bindings; pending names never guess entity storage."""
+"""Official catalog; project instances and their values have separate identities."""
+BUILTIN_KEYS = frozenset({"display_number", "panel_image", "tc_in", "duration_frames", "name", "sequence_id", "description", "primary_method", "status"})
 BUILTIN_BINDINGS = {
     "display_number": ("镜号", "entity", "shot.display_number", "text"),
     "tc_in": ("时码 TC", "derived", "timecode.tc_in", "timecode"),
@@ -26,3 +27,16 @@ BUILTIN_BINDINGS = {
         ("execution_method", "执行方式"),
     )},
 }
+PRESET_KEYS = frozenset(BUILTIN_BINDINGS) - BUILTIN_KEYS
+
+
+def column_class(key):
+    return "builtin" if key in BUILTIN_KEYS else "preset"
+
+
+def builtin_definitions(production_id, user_id):
+    from app.models.field import ProjectColumn
+    return [ProjectColumn(production_id=production_id, key="builtin:" + key, label=label,
+        column_class="builtin", origin="builtin", binding_kind=kind, binding_key=binding,
+        field_type=field_type, group_name="Builtin", created_by=user_id)
+        for key, (label, kind, binding, field_type) in BUILTIN_BINDINGS.items() if key in BUILTIN_KEYS]

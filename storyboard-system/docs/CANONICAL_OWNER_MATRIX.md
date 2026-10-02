@@ -1,5 +1,13 @@
 # FRAMEFORGE canonical owner matrix
 
+## 2026-10-02 最新数据库 owner 增量
+
+- `MediaPresentation` / `ImageCropService`：每个 asset/panel/production 的展示 revision，引用不可变 AssetVersion；只追加调整记录，不覆盖源图片、不另造 source-version owner。`image_framing` 为服务端最终渲染，Canvas 仅草稿预览。
+- `project_columns.column_class`：9 内置 /20 官方可选 /N 自定义；分类创建后不可变，内置列只允许 active/trashed。列服务/API/SQL 共同拒绝 builtin Purge/hard-delete。10 个 pending 映射仍显式待处理。
+- `export_templates` / `export_template_service`：独立项目交付字段选择 owner，使用稳定列 ID 和 revision；不借 SharedView 保存导出设置，不进入内容提交。当前自定义 Purge 同事务清理模板引用；soft-delete 通过导出 allowlist 排除。
+- `document_export`：XLSX/DOCX/PDF/CSV 共用所选字段 allowlist；PDF 预览从同一成品 bytes 经现有 PDFium 逐页渲染。所有导出路由使用同一角色权限检查，完整 project membership/RBAC 仍待实施。
+
+
 ## 2026-10-02 Infrastructure ownership update
 
 | Capability | Canonical owner | Change and evidence | Current state |

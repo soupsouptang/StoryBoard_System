@@ -119,7 +119,6 @@ export function ShotTableContextMenu({
   } | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [pendingColumn, setPendingColumn] = useState<{ column: string; label: string } | null>(null);
-  const protectedDelete = Boolean(pendingColumn && ['display_number', 'tc_in', 'panel_image'].includes(pendingColumn.column));
   const [deletingColumn, setDeletingColumn] = useState(false);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const returnRegionRef = useRef<HTMLElement | null>(null);
@@ -242,17 +241,17 @@ export function ShotTableContextMenu({
         <DialogContent className="max-w-md" onEscapeKeyDown={event => { if (deletingColumn) event.preventDefault(); }}
           onInteractOutside={event => { if (deletingColumn) event.preventDefault(); }}
           onCloseAutoFocus={event => { event.preventDefault(); (returnFocusRef.current?.isConnected ? returnFocusRef.current : returnRegionRef.current)?.focus({ preventScroll: true }); }}>
-          <DialogTitle>{protectedDelete ? '无法删除此列' : '删除此列'}</DialogTitle>
-          <DialogDescription>{protectedDelete ? '镜号、时码、分镜画面不允许删除。' : <>确认删除“{pendingColumn?.label}”整列？列数据保留，可从新增列弹窗重新加入。</>}</DialogDescription>
+          <DialogTitle>删除此列</DialogTitle>
+          <DialogDescription>确认将“{pendingColumn?.label}”移入回收站？列数据保留，可从列管理恢复。内置列不能永久删除。</DialogDescription>
           {actionError && <p role="alert" className="text-sm text-destructive">{actionError}</p>}
-          <DialogFooter><Button variant="outline" disabled={deletingColumn} onClick={() => { setPendingColumn(null); setActionError(null); }}>{protectedDelete ? '知道了' : '取消'}</Button>
-            {!protectedDelete && <Button variant="destructive" disabled={deletingColumn} onClick={async () => {
+          <DialogFooter><Button variant="outline" disabled={deletingColumn} onClick={() => { setPendingColumn(null); setActionError(null); }}>取消</Button>
+            <Button variant="destructive" disabled={deletingColumn} onClick={async () => {
               if (!pendingColumn || deletingColumn) return;
               setDeletingColumn(true); setActionError(null);
               try { await onDeleteColumn(pendingColumn.column); setPendingColumn(null); }
               catch (error) { setActionError(error instanceof Error ? error.message : '删除失败，原列已保留。'); }
               finally { setDeletingColumn(false); }
-            }}>{deletingColumn ? '删除中…' : '确认删除'}</Button>}</DialogFooter>
+            }}>{deletingColumn ? '删除中…' : '确认删除'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 

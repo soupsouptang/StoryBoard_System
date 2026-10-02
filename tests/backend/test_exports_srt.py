@@ -15,7 +15,9 @@ from app.core.database import Base, get_db
 from app.core.security import create_access_token
 from app.models.production import Production
 from app.models.shot import Shot
-from app.models.user import User
+from app.models.user import Role, User
+from app.models.field import ProjectColumn
+from app.services.column_catalog import builtin_definitions
 
 
 @pytest.fixture
@@ -26,11 +28,15 @@ async def export_client(tmp_path):
         await conn.run_sync(Base.metadata.create_all)
 
     async with sessions() as session:
-        session.add(User(id="export-user", email="export@example.invalid", password_hash="unused", is_active=True))
+        session.add(User(id="export-user", email="export@example.invalid", password_hash="unused", is_active=True, role=Role(name="export-reader", permissions={"production.read": True})))
+        session.add(User(id="denied-export", email="denied@example.invalid", password_hash="unused", is_active=True))
         session.add(Production(
             id="export-production", name="My/Film: 开场", code="UNUSED", fps_num=25,
             fps_den=1, start_timecode_frames=90000, created_by="export-user",
         ))
+        await session.flush()
+        session.add_all(builtin_definitions("export-production", "export-user"))
+        session.add(ProjectColumn(production_id="export-production", key="builtin:voice_over", label="对应旁白", column_class="preset", origin="preset", binding_kind="entity", binding_key="shot.voice_over", field_type="textarea"))
         session.add_all([
             Shot(id="shot-c", production_id="export-production", sort_index=30,
                  duration_frames=25, voice_over="第二句"),
@@ -135,6 +141,14 @@ async def test_csv_export(export_client):
     assert content.startswith(b"\xef\xbb\xbf")  # UTF-8 BOM for Excel
     text = content.decode("utf-8-sig")
     assert "镜号" in text
-    assert "对应解说词旁白" in text
+    assert "对应旁白" in text
     assert "第一句" in text
 
+
+
+@pytest.mark.asyncio
+async def test_all_exports_reject_role_without_read_or_export_permission(export_client):
+    token = create_access_token({"sub": "denied-export"})
+    for suffix in ('fields', 'csv', 'xlsx', 'pdf', 'edl', 'otio', 'srt'):
+        response = await export_client.get('/api/v1/productions/export-production/export/' + suffix, headers={"Authorization": "Bearer " + token})
+        assert response.status_code == 403, suffix

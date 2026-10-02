@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Literal
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_current_user
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/productions", tags=["Assets"])
 
 def _http(error):
     code = 404 if isinstance(error, NotFoundError) else 409 if isinstance(error, ConflictError) else 403 if error.code == "FORBIDDEN" else 413 if error.code == "IMAGE_TOO_LARGE" else 415 if error.code == "INVALID_IMAGE" else 400
-    return HTTPException(code, detail={"code": "ASSET_REVISION_CONFLICT" if code == 409 else error.code,
+    return HTTPException(code, detail={"code": "ASSET_REVISION_CONFLICT" if code == 409 and error.code == "CONFLICT" else error.code,
         "message": error.message, "details": getattr(error, "details", {})})
 
 
@@ -93,9 +93,8 @@ async def thumbnail(production_id: str, asset_id: str, db=db_session, user=Depen
     try:
         AssetService.permission(user)
         asset = await AssetService.asset(db, production_id, asset_id)
-        path = media_path(MEDIA_ROOT, asset.proxy_storage_key or asset.storage_key)
-        return FileResponse(path, media_type="image/webp" if asset.proxy_storage_key else asset.mime_type,
-            headers={"Cache-Control": "private, no-cache", "ETag": '"' + asset.hash_sha256 + '"', "X-Content-Type-Options": "nosniff"})
+        content, mime, digest = await ImageCropService.rendered(db, asset, MEDIA_ROOT, thumbnail=True)
+        return _image_response(content, mime, digest)
     except DomainError as error:
         raise _http(error)
 
@@ -122,5 +121,32 @@ async def source_image(production_id: str, asset_id: str, version_id: str, db=db
 async def crop_image(production_id: str, asset_id: str, req: ImageCropRequest, db=db_session, user=Depends(get_current_user)):
     try:
         return await ImageCropService.crop(db, production_id, asset_id, req, user, MEDIA_ROOT)
+    except DomainError as error:
+        raise _http(error)
+
+
+def _image_response(content, mime, digest):
+    response = Response if isinstance(content, bytes) else FileResponse
+    return response(content, media_type=mime, headers={"Cache-Control": "private, no-cache",
+        "ETag": '"' + digest + '"', "X-Content-Type-Options": "nosniff"})
+
+
+@router.get("/{production_id}/assets/{asset_id}/presentation")
+async def presentation(production_id: str, asset_id: str, owner_type: Literal["asset", "panel", "production"] = "asset",
+    owner_id: str | None = None, db=db_session, user=Depends(get_current_user)):
+    try:
+        return await ImageCropService.presentation(db, production_id, asset_id, user, owner_type, owner_id)
+    except DomainError as error:
+        raise _http(error)
+
+
+@router.get("/{production_id}/assets/{asset_id}/presentation/content")
+async def presentation_image(production_id: str, asset_id: str, owner_type: Literal["asset", "panel", "production"] = "asset",
+    owner_id: str | None = None, revision: int | None = Query(None, ge=0), db=db_session, user=Depends(get_current_user)):
+    try:
+        AssetService.permission(user)
+        asset = await AssetService.asset(db, production_id, asset_id)
+        return _image_response(*await ImageCropService.rendered(db, asset, MEDIA_ROOT,
+            owner_type=owner_type, owner_id=owner_id, revision=revision))
     except DomainError as error:
         raise _http(error)

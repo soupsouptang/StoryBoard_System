@@ -29,6 +29,8 @@ export interface CustomFieldDefinition {
   sort_index: number;
   state: CustomFieldState;
   permanently_deleted: boolean;
+  column_class: 'builtin' | 'preset' | 'custom';
+  origin: 'builtin' | 'preset' | 'custom' | 'import';
   position: number;
   width_px: number | null;
   wrap_text: boolean;
@@ -43,6 +45,14 @@ export interface CustomFieldValueMatrix {
 }
 
 export interface BuiltinColumnState { column_key: string; state: CustomFieldState; revision: number }
+export interface CatalogColumn {
+  catalog_key: string | null; label: string; column_class: 'builtin' | 'preset' | 'custom';
+  binding_kind: string; field_type: string; instance: CustomFieldDefinition | null;
+}
+export function useColumnCatalog(productionId: string) {
+  return useQuery({ queryKey: ['column-catalog', productionId], enabled: Boolean(productionId),
+    queryFn: () => apiClient<CatalogColumn[]>(`/api/v1/productions/${productionId}/column-catalog`) });
+}
 export function useBuiltinColumnStates(productionId: string) {
   return useQuery({ queryKey: ['column-preferences', productionId], enabled: Boolean(productionId),
     queryFn: () => apiClient<BuiltinColumnState[]>(`/api/v1/productions/${productionId}/column-preferences`) });
@@ -52,7 +62,7 @@ export function useSetBuiltinColumnState(productionId: string) {
   return useMutation({ mutationFn: (input: { column: string; state: 'visible' | 'removed'; revision: number }) =>
     apiClient<BuiltinColumnState>(`/api/v1/productions/${productionId}/column-preferences/${input.column}/state`, { method: 'PATCH', json: { state: input.state, revision: input.revision } }),
     onSuccess: saved => queryClient.setQueryData<BuiltinColumnState[]>(['column-preferences', productionId], current => [...(current || []).filter(row => row.column_key !== saved.column_key), saved]),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['column-preferences', productionId] }) });
+    onSettled: () => Promise.all(['column-preferences', 'column-catalog'].map(key => queryClient.invalidateQueries({ queryKey: [key, productionId] }))) });
 }
 
 export function useInsertCustomFields(productionId: string) {
@@ -62,7 +72,7 @@ export function useInsertCustomFields(productionId: string) {
       apiClient<CustomFieldDefinition[]>(`/api/v1/productions/${productionId}/custom-fields/insert`, { method: 'POST', json: input }),
     onSuccess: saved => queryClient.setQueryData<CustomFieldDefinition[]>(['custom-fields', productionId], current =>
       [...(current || []).filter(field => !saved.some(item => item.id === field.id)), ...saved]),
-    onSettled: () => Promise.all(['custom-fields', 'column-preferences'].map(key => queryClient.invalidateQueries({ queryKey: [key, productionId] })))
+    onSettled: () => Promise.all(['custom-fields', 'column-preferences', 'column-catalog'].map(key => queryClient.invalidateQueries({ queryKey: [key, productionId] })))
   });
 }
 
@@ -73,7 +83,7 @@ export function useCopyColumn(productionId: string) {
       apiClient<{ field: CustomFieldDefinition; shot_revisions: Record<string, number> }>(`/api/v1/productions/${productionId}/custom-fields/copy-column`, { method: 'POST', json: input }),
     onSuccess: saved => queryClient.setQueryData<CustomFieldDefinition[]>(['custom-fields', productionId], current => [...(current || []), saved.field]),
     onSettled: async () => {
-      await Promise.all(['custom-fields', 'custom-field-values', 'shots'].map(key => queryClient.invalidateQueries({ queryKey: [key, productionId] })));
+      await Promise.all(['custom-fields', 'custom-field-values', 'shots', 'column-catalog'].map(key => queryClient.invalidateQueries({ queryKey: [key, productionId] })));
     }
   });
 }
@@ -137,6 +147,7 @@ export function useCreateCustomField(productionId: string) {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['custom-fields', productionId] });
+      queryClient.invalidateQueries({ queryKey: ['column-catalog', productionId] });
     }
   });
 }
@@ -183,6 +194,7 @@ export function useUpdateCustomField(productionId: string) {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['custom-fields', productionId] });
+      queryClient.invalidateQueries({ queryKey: ['column-catalog', productionId] });
     }
   });
 }
@@ -215,6 +227,7 @@ export function useSetCustomFieldState(productionId: string) {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['custom-fields', productionId] });
+      queryClient.invalidateQueries({ queryKey: ['column-catalog', productionId] });
     }
   });
 }
@@ -233,6 +246,7 @@ export function usePurgeCustomField(productionId: string) {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['custom-fields', productionId] });
+      queryClient.invalidateQueries({ queryKey: ['column-catalog', productionId] });
       queryClient.invalidateQueries({ queryKey: ['custom-field-values', productionId] });
       queryClient.invalidateQueries({ queryKey: ['saved-views', productionId] });
     }
