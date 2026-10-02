@@ -174,6 +174,7 @@ Do not introduce mirrored Legacy/VNext runtime behavior or dual-write persistenc
 
 Before editing repository code:
 
+0. At the start of every work session, first read `storyboard-system/docs/CONTINUE_WORK.md`, then the current documents it links. Update that handoff at a stopping checkpoint; never treat its historical facts as newer user authorization.
 1. Inspect current branch/HEAD and dirty work.
 2. Read `ACTIVE_WORKSTREAMS.md` and `CANONICAL_OWNER_MATRIX.md` when the task touches migration ownership.
 3. Use narrow search before broad file reading.

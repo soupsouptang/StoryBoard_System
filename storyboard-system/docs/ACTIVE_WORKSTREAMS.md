@@ -1,5 +1,7 @@
 # FrameForge VNext 原生重构工作簿
 
+每次开工先读 [续作入口](CONTINUE_WORK.md)，再核对本账本、owner 矩阵及最新用户决定。
+
 ## 2026-10-02 当前协调检查点
 
 - **最新架构决定：停止 Legacy 兼容迁移。旧工程数据库/数据不迁，旧 API/session/runtime 不兼容；VNext 直接原生重构。唯一保留的跨版本兼容面是 Legacy 导出的便携工程文件可被 VNext 映射导入，允许为此窄范围修改 Legacy exporter 源码与测试。**

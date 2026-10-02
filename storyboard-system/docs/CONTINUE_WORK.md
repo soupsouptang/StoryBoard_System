@@ -1,0 +1,83 @@
+# FRAMEFORGE 续作入口
+
+更新日期：2026-10-02（Asia/Hong_Kong）。用户要求：先上传现有代码，再上传续作 MD；**每次开始工作必须先读取本文**。本文是续作索引和检查点，不替代当前用户指令、架构规则或详细功能方案。
+
+## 1. 每次开工顺序
+
+1. 先读本文及根 `AGENTS.md`；修改具体目录时读最近的 `AGENTS.md`。
+2. 检查 `git status --short`、branch、HEAD；fetch 后核对远端增量。保留其他会话的 dirty、stash、worktree 和未知文件，禁止强推或破坏性清理。
+3. 读 [当前协调账本](ACTIVE_WORKSTREAMS.md) 与 [owner 矩阵](CANONICAL_OWNER_MATRIX.md)，再读任务涉及的下列方案。
+4. 按最新明确用户决定、实际代码和证据解决差异；历史执行记录不覆盖较新的产品决定。
+5. 选一个范围清晰的任务，追踪真实 Web → API → service → persistence 链，复用已有 owner。只用隔离合成数据，不部署或操作生产。
+6. 做针对检查和真实消费者验证，更新准确状态，提交并非强制上传；停点更新本文。新提交 SHA 用 Git 查询，不能从旧文档猜测。
+
+| 文档 | 用途 |
+| --- | --- |
+| [完整功能/UI/动画计划](FEATURE_UI_PLAN_2026-10-02.md) | 当前产品要求和实施路线，尤其 §1.1 最新决定 |
+| [VNext 数据库计划](UI_DATABASE_PLAN_2026-10-02.md) | 新系统 schema/持久化设计，仍需确认与演练 |
+| [原交接](HANDOFF_2026-10-02.md) | 其他会话交接、历史环境与尚未完成事项；历史 PID/路径不可直接当作当前值 |
+| [需求清单](CONFIRMED_UI_REQUIREMENTS_2026-10-02.md) | 原编号需求及镜号/拖拽追加要求；冲突时依最新方案处理 |
+| [执行记录](UI_REQUIREMENTS_EXECUTION_2026-10-02.md) | 已实现和实际验证证据，不等于新版方案全量完成 |
+| [视觉基线](SHADCN_UI_BASELINE.md)、[桌面验收](DESKTOP_UI_ACCEPTANCE.md) | New York/neutral 和真实浏览器验收要求 |
+| [原桌面审计](audits/DESKTOP_UI_AUDIT_2026-10-02.md) | 旧检查点的 FAIL 证据，不能因新代码上传而改成 PASS |
+
+## 2. 已上传代码检查点
+
+仓库 `soupsouptang/StoryBoard_System`，主分支 **master**。
+
+- 实现提交：`cb5a818`（document OCR、Shot commands、镜号拖拽）。
+- 合入并行文档后的上传检查点：`f172add`；上传成功，包含远端截至 `f04292b` 的架构和计划增量。
+- 后续本文/启动规则另行提交；读取时以实际 Git HEAD 和远端为准。
+- 上传只保存当前实现，不代表完整产品、全部视觉、PostgreSQL 或发布验收完成。
+
+| 已有能力 | 实际消费链 / 本轮状态 |
+| --- | --- |
+| 单选/Shift 区间/Ctrl 或 Command 多选、筛选结果全选 | 共用 workspace selection；真实合成浏览器检查过 |
+| 行内新增、冻结列、单条/成组重排 | V-Web table → V-API ShotService；已有 revision/完整顺序/事务保护；部分视觉门槛未齐 |
+| 排序后镜号连续编号 | 完整项目排序后 `001…`，内部 Shot ID/素材关联保持；真实排序和合同验证过 |
+| 镜号与六点手柄整体拖拽 | 同一个按钮，共用拖拽和点击选择；悬停统一圆角背景已有 CSS，尚缺独立悬停/叠卡拖动中截图 |
+| 右键相对插入、复制/剪切/粘贴、旁白计时 | 真实权限/revision/审计/事务和系统剪贴板；是较早菜单方案的实现，仍需按新方案调整 |
+| XLSX/DOCX/PDF 导入导出 | ImportModal/交付页 → document_import/document_export/ImportService；真实文件回读和浏览器消费；导入目前 append |
+| JPG/PNG、扫描 PDF OCR | RapidOCR 1.4.4，内置 Paddle PP-OCRv4 mobile ONNX，CPU 本地识别；JPG/PNG 仅导入识别，不提供导出 |
+| 导入图片和失败补偿 | 原图/源文本保留；图片和 Shot 由外层事务统一提交，失败清理本事务新文件；未新增 DDL |
+
+OCR 当前限制：40 MB/文件、10000 行、200 列、PDF 30 页、图片 10 MB/2000 万像素；识别结果先预览、人工映射。当前单进程共享 CPU 引擎并串行识别，持续并发应接已有任务队列。扫描表格结构自动完整还原尚未实现。
+
+## 3. 已核实证据与未通过门槛
+
+- Web TypeScript、`shot-row-drag.cjs`、`shot-context-menu.cjs`、`bulk-controls.cjs` 针对检查通过。
+- 后端定向检查覆盖 `test_document_formats.py`、`test_shot_relative_commands.py`、导入、事务回执/图片补偿、CRUD/reorder 及 patch/no-op/conflict；最后 patch 与导入回归 13 项通过。此为分批结果，不宣称全测试套件通过。
+- 真实浏览器合成项目完成排序/复制/剪切/粘贴/单条 VO 计时、Excel 和 PNG OCR 导入；实际下载 XLSX/DOCX/PDF 再解析，保留字段与图片。
+- 1440/1024/768/375/320 的表格页面检查无根页面横向溢出；列管理、表头/行菜单及窄屏菜单有部分证据。新工作按当前桌面验收范围执行，旧窄屏检查不是全功能视觉通过。
+- 悬停及叠卡拖动中截图、Dialog 完整 focus return、全部交互/明暗/动效仍未全验收。Docker 配置已改但未构建；PostgreSQL 并发与新 schema 验收未完成。
+- 真实 V4 工作簿检查因指定本机附件缺失按设计跳过；合成嵌图工作簿已验证。禁止上传真实工作簿或媒体。
+- 新增 `tools/package_boundary_gate.py` 已实际运行通过。GitHub CI 结果须下一次现场核查，不凭本地通过推断。
+
+## 4. 新架构与现有代码的差异（接手必须处理）
+
+已合入的 `577b3d2`/`f04292b` 确立 **VNext 原生重构**：旧数据库/数据不迁移，旧 API/session/runtime 兼容不做；仅保留 Legacy 便携工程 exporter → VNext importer 的文件映射。
+
+1. `legacy_import_adapter.py` 当前动态读取 Legacy 三个纯模块，容器也复制这些文件。这是上传代码的实际依赖，**不符合最终原生边界**。后续把必要纯逻辑收敛至已有应用/包 owner，删除动态 Legacy 依赖；只保留必要便携工程 exporter。不要新建 `common/shared/utils` 包，根 packages 只允许 ui/types/contracts/timecode。
+2. 当前行菜单仍有独立复制镜头、域剪切和默认向下粘贴。最新方案要求移除前两项，保留系统 Ctrl/Cmd+C/V，并提供右键向上/向下粘贴（V 默认向下）。复用现有原子相对命令/revision 检查，输入框原生文本操作不受影响。
+3. 当前默认预设列、空列/批注占位及归档入口尚未完全符合新版基础列/预设手加/无归档/回收站恢复/永久删除闭包。删除历史内容的不可逆操作须按方案确认，不能仅换按钮文案。
+4. 当前导出为真实文档字节，但六版式、字段选取、工程附件/QR/DM、便携 ZIP、可见及隐写水印仍未完整。真实文件下载不能证明这些能力已完成。
+
+## 5. 后续计划
+
+| 分类 | 下一步 | 门槛 |
+| --- | --- | --- |
+| 页面 | 先修右键与新版列显示差异；补镜号悬停/叠卡证据；按功能计划恢复 Inspector、四视图 TC/图片、共享尺寸和设置 | 每小段真实桌面 UI/键盘/焦点/保存验证；保留原 FAIL 证据 |
+| 程序 | 先收敛动态 Legacy 纯模块依赖；上下粘贴原子命令；再做导入 update/replace、便携工程文件往返、完整导出和队列 | 复用 Web/API/services；权限、409、ack、审计与失败回滚保持 |
+| 数据库 | 独立确认批注个人已读/最后用户颜色、列语义与生命周期、共享视图等 VNext schema；用户确认后用 Alembic 和空 PostgreSQL 演练 | 本轮无 DDL；不做旧 SQLite backfill；需求 11 数据设计必须最后提醒用户 |
+| 治理 | 现场核查剩余分支/PR/CI、其他会话和自动化实际状态 | 有效增量审阅整合后才删除分支；不按历史标题/PID推断 |
+
+## 6. 本地续作注意
+
+- 当前工作区仓库为 `work/StoryBoard_System`。另一个交接中的 `work/FrameForge` 和相关 worktree 属于其他环境/会话，不混用或清理。
+- 本轮 Web/API 验收地址为本机 `127.0.0.1:3001` / `127.0.0.1:8001`。服务是否仍运行、加载哪一提交需重新检查；文档不保证进程存活。API 后两处小改已测但停点前未重启加载，不应声称当前进程等于 Git HEAD。
+- 独立合成项目 `383170ee-28de-4e1a-aaed-f76edba6ba3c` 可供检查；保留用户原浏览器页和草稿。登录配置留本机，凭据不写本文或公开仓库。
+- 验收截图保存在本地 `frameforge-qa/table-{1440,1024,768,375,320}.jpg`、`mirror-drag-final.jpg`；详细证据见执行记录，不假定新主机存在这些文件。
+- 仓库有未跟踪 `:memory:.ses`，未上传、未删除；先核查来源，禁止 `git add .` 带入。
+- 本次没有新建额度等待、没有兑换重置券、没有重复创建云端任务。用户已重置额度；未来需等待时查真实 reset，仅安排单次恢复后续作，不每 15 分钟轮询。
+
+**停点结论：代码已上传，后续从本文及最新方案继续；新版功能、视觉及 VNext 数据库验收仍有待办。**
