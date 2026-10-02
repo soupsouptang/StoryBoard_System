@@ -23,3 +23,19 @@ Alembic `e18c4a7d92b0` 接在合并 head `d72a81e5c409` 后：
 2. 删除确认预览/最小 ledger、事务 receipt/outbox，历史 redaction 和 artifact/job 依赖闭包；不可用 current-values-only 冒充永久删除完成。
 3. 批注个人已读水位、事件序号与用户颜色；随后统一画板、裁剪、队列/导入/导出/水印/TTS 等表及实际服务消费。
 4. 空 PostgreSQL 在线迁移、FK/revision/并发/备份恢复演练；没有证据不标记 VERIFIED。
+
+## 3. 共享尺寸与通知：第二段
+
+Alembic `f29b6c8a01d3` 接在第一段后。SavedView 仍为唯一布局 owner：现有 VNext 消费方使用的 `config.presentation.columnWidths` 保留为宽度唯一存储，新增 validated `columnWidthModes`；本段不再创建一套可独立写入的 column_layouts 镜像。设计草案中的列 ID 全量布局切换仍待实际消费者一起接入。
+
+- SavedView 新增 schema version、bigint revision、manual/auto 行高策略、手动像素行高、measurement generation/context；新增 `view_row_layouts` 逐镜头覆盖，同项目 composite FK 和正数 CHECK。
+- create/PATCH/list 已实际读写并返回这些字段；auto 明确清除手动行覆盖，no-op 不增 revision/generation。列宽验证正整数；策略验证枚举；禁止列高配置。尺寸变化使测量 generation 失效，但本段没有假装运行字体测量器。
+- `outbox_events` 与 SavedView 变更同事务写入，只含身份、revision、共享/owner 范围，不含名称或正文；失败事务/no-op 无事件。尚无发送 worker/Redis/Web 自动订阅，不能称全员实时同步已经完成。
+- 内置列删除/恢复也改由 `project_columns` 持有身份和生命周期。仅按已有 VNext ColumnPreference 记录转入，不默认创建全部32预设。builtin:key 与 custom:key 分离，避免同名列误删；未确认语义保留 pending binding。
+- 原 private SavedView 不自动公开；已有配置原样保留。降级在存在新宽高/通知/builtin数据时拒绝，不丢弃新系统已确认写入。
+
+实际合成 API 验证：保存/刷新读取、行高覆盖→自动、409、无变化、跨项目目标、失败整体回滚、outbox 原子写入和正文不进入事件。仍需 PostgreSQL 在线并发与通知分发、字体测量、前端拖动接入及完整权限/共享范围验收。
+
+## 4. Node.js 24
+
+根 package engines 与 lock 元数据统一为 `>=24 <25`，`.nvmrc` 为24；两个 CI Node job、artifact workflow 和 Web Docker 基础镜像均改24。本机 Node 24.15.0，Codex bundled runtime 24.19.0；版本与 JSON 元数据一致性已核对。未运行 Docker 构建，未部署服务器。

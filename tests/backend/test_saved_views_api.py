@@ -11,6 +11,8 @@ from main import app
 from app.core.config import settings
 from app.core.database import Base, AsyncSessionLocal, async_engine
 from app.services.seed import seed_database
+from sqlalchemy import func, select
+from app.models.command import OutboxEvent
 
 
 @pytest.fixture(autouse=True)
@@ -22,6 +24,47 @@ async def setup_db():
         await seed_database(session)
         await session.commit()
     yield
+
+
+@pytest.mark.asyncio
+async def test_shared_dimensions_revisions_row_scope_and_atomic_outbox():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        login = await client.post("/api/v1/auth/login", json={"email": settings.INITIAL_ADMIN_EMAIL, "password": settings.INITIAL_ADMIN_PASSWORD})
+        headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+        a = (await client.post("/api/v1/productions", headers=headers, json={"name": "Shared dimensions"})).json()
+        b = (await client.post("/api/v1/productions", headers=headers, json={"name": "Other scope"})).json()
+        shot = (await client.post(f"/api/v1/productions/{a['id']}/shots", headers=headers, json={"display_number": "001"})).json()
+        other = (await client.post(f"/api/v1/productions/{b['id']}/shots", headers=headers, json={"display_number": "001"})).json()
+        root = f"/api/v1/productions/{a['id']}/saved-views"
+        config = {"presentation": {"columnWidths": {"description": 320}, "columnWidthModes": {"description": "manual"}}}
+        created = await client.post(root, headers=headers, json={"name": "Shared table", "config": config, "row_height_mode": "manual", "manual_row_height_px": 64,
+            "row_layouts": [{"shot_id": shot['id'], "height_mode": "manual", "manual_height_px": 96}]})
+        assert created.status_code == 201, created.text
+        view = created.json()
+        assert view['is_shared'] and view['manual_row_height_px'] == 64
+        assert view['row_layouts'] == [{"shot_id": shot['id'], "height_mode": "manual", "manual_height_px": 96}]
+        url = root + '/' + view['id']
+        for bad in ({"columnHeights": {"description": 60}}, {"columnWidths": {"description": -1}}, {"columnWidthModes": {"description": {}}}):
+            invalid = await client.patch(url, headers=headers, json={"revision": 1, "config": {"presentation": bad}})
+            assert invalid.status_code == 400, invalid.text
+        invalid_row = await client.patch(url, headers=headers, json={"revision": 1, "name": "Must rollback", "row_layouts": [{"shot_id": other['id'], "manual_height_px": 80}]})
+        assert invalid_row.status_code == 400
+        listed = (await client.get(root, headers=headers)).json()[0]
+        assert listed['name'] == "Shared table" and listed['revision'] == 1
+        noop = await client.patch(url, headers=headers, json={"revision": 1, "row_layouts": [{"shot_id": shot['id'], "manual_height_px": 96}]})
+        assert noop.status_code == 200 and noop.json()['revision'] == 1
+        changed = await client.patch(url, headers=headers, json={"revision": 1, "row_height_mode": "auto", "row_layouts": [{"shot_id": shot['id'], "height_mode": "auto"}]})
+        assert changed.status_code == 200, changed.text
+        assert changed.json()['row_layouts'] == [] and changed.json()['manual_row_height_px'] is None
+        assert changed.json()['measurement_generation'] == 1
+        stale = await client.patch(url, headers=headers, json={"revision": 1, "manual_row_height_px": 80})
+        assert stale.status_code == 409
+        async with AsyncSessionLocal() as db:
+            count = await db.scalar(select(func.count()).select_from(OutboxEvent))
+            assert count == 2  # create + successful change; failed/no-op commands emit nothing
+            events = list((await db.execute(select(OutboxEvent))).scalars())
+            assert all(event.published_at is None for event in events)
+            assert all("Shared table" not in str(event.entity_ids) for event in events)
 
 
 @pytest.mark.asyncio

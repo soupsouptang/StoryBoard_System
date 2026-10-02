@@ -93,3 +93,26 @@ def test_database_rejects_cross_project_and_entity_value_copies(tmp_path):
                 insert(conn, "shot_column_values", id="invalid", production_id=project, shot_id=shot, column_id=column, value='"copy"')
         insert(conn, "shot_column_values", id="valid", production_id="a", shot_id="s-a", column_id="custom", value="null")
         assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
+
+
+def test_builtin_lifecycle_and_row_height_constraints_upgrade(tmp_path):
+    db = tmp_path / "layout.sqlite"
+    migrate(db, "upgrade", COLUMNS)
+    with sqlite3.connect(db) as conn:
+        insert(conn, "productions", id="p")
+        insert(conn, "productions", id="other")
+        insert(conn, "shots", id="s", production_id="p")
+        insert(conn, "shots", id="outside", production_id="other")
+        insert(conn, "saved_views", id="view", production_id="p", is_shared=False, config='{"private":"synthetic"}')
+        insert(conn, "column_preferences", id="builtin-id", production_id="p", column_key="description", state="removed", revision=3)
+    migrate(db, "upgrade", "head")
+    with sqlite3.connect(db) as conn:
+        conn.execute("PRAGMA foreign_keys=ON")
+        assert conn.execute("SELECT id,key,state,revision FROM project_columns WHERE origin='builtin'").fetchone() == ("builtin-id", "builtin:description", "trashed", 3)
+        assert conn.execute("SELECT is_shared,config FROM saved_views WHERE id='view'").fetchone() == (0, '{"private":"synthetic"}')
+        with pytest.raises(sqlite3.IntegrityError):
+            insert(conn, "view_row_layouts", id="bad-scope", production_id="p", saved_view_id="view", shot_id="outside", height_mode="manual", manual_height_px=64)
+        with pytest.raises(sqlite3.IntegrityError):
+            insert(conn, "view_row_layouts", id="bad-height", production_id="p", saved_view_id="view", shot_id="s", height_mode="manual", manual_height_px=-1)
+        insert(conn, "view_row_layouts", id="good", production_id="p", saved_view_id="view", shot_id="s", height_mode="manual", manual_height_px=96)
+        assert conn.execute("PRAGMA foreign_key_check").fetchall() == []

@@ -24,6 +24,7 @@ from app.models.shot import Shot
 from app.models.user import User
 from app.models.view import SavedView
 from app.services.column_lifecycle import sanitize_saved_view_config
+from app.services.column_catalog import BUILTIN_BINDINGS
 from app.schemas.custom_field import (
     CustomFieldCreate,
     CustomFieldPurgeRequest,
@@ -56,10 +57,10 @@ class CustomFieldService:
     @staticmethod
     async def builtin_states(db: AsyncSession, production_id: str) -> list[dict]:
         await CustomFieldService._production(db, production_id)
-        rows = await db.execute(select(ColumnPreference).where(
-            ColumnPreference.production_id == production_id,
-            ColumnPreference.column_key.in_([*CustomFieldService.COPY_COLUMNS, 'display_number', 'tc_in', 'panel_image'])))
-        return [{'column_key': row.column_key, 'state': row.state, 'revision': row.revision} for row in rows.scalars()]
+        rows = await db.execute(select(ProjectColumn).where(
+            ProjectColumn.production_id == production_id, ProjectColumn.origin == "builtin"))
+        return [{'column_key': row.key.removeprefix('builtin:'), 'state': 'visible' if row.state == 'active' else 'removed',
+                 'revision': row.revision, 'column_id': row.id} for row in rows.scalars()]
 
     @staticmethod
     async def set_builtin_state(db: AsyncSession, production_id: str, column_key: str, req: BuiltinColumnStateUpdate, user: User) -> dict:
@@ -69,27 +70,35 @@ class CustomFieldService:
         if req.state == 'removed' and column_key in {'display_number', 'tc_in', 'panel_image'}:
             raise DomainError('镜号、时码、分镜画面不允许删除。', code='PROTECTED_COLUMN')
         await CustomFieldService._production(db, production_id, for_update=True)
-        preference = await CustomFieldService._preference(db, production_id, column_key, for_update=True)
-        revision = preference.revision if preference else 0
+        column = (await db.execute(select(ProjectColumn).where(
+            ProjectColumn.production_id == production_id, ProjectColumn.key == "builtin:" + column_key,
+        ).with_for_update())).scalar_one_or_none()
+        revision = column.revision if column else 0
         if revision != req.revision:
             raise ConflictError(message='列状态已修改，请刷新后重试。', details={'server_revision': revision})
-        if preference and preference.permanently_deleted:
+        if column and column.state == "purged":
             raise DomainError('永久删除的列不可恢复', code='FIELD_PERMANENTLY_DELETED')
-        if not preference:
-            preference = ColumnPreference(production_id=production_id, column_key=column_key,
-                state=req.state, updated_by=user.id, revision=1)
-            db.add(preference)
-        elif preference.state != req.state:
-            preference.state = req.state
-            preference.revision += 1
-            preference.updated_by = user.id
-            preference.updated_at = datetime.now(timezone.utc)
+        state = "trashed" if req.state == "removed" else "active"
+        now = datetime.now(timezone.utc)
+        if not column:
+            label, kind, binding, field_type = BUILTIN_BINDINGS[column_key]
+            column = ProjectColumn(production_id=production_id, key="builtin:" + column_key, label=label,
+                origin="builtin", binding_kind=kind, binding_key=binding, field_type=field_type,
+                group_name="Builtin", state=state, deleted_at=now if state == "trashed" else None,
+                created_by=user.id, revision=1)
+            db.add(column)
+        elif column.state != state:
+            column.state = state
+            column.deleted_at = now if state == "trashed" else None
+            column.revision += 1
+            column.updated_at = now
         else:
-            return {'column_key': column_key, 'state': preference.state, 'revision': preference.revision}
-        CustomFieldService._audit(db, user_id=user.id, action='column.delete' if req.state == 'removed' else 'column.restore',
-            field_id=column_key, production_id=production_id, metadata={'state': req.state, 'revision': preference.revision})
+            return {'column_key': column_key, 'state': req.state, 'revision': column.revision}
         await db.flush()
-        return {'column_key': column_key, 'state': preference.state, 'revision': preference.revision}
+        CustomFieldService._audit(db, user_id=user.id, action='column.delete' if req.state == 'removed' else 'column.restore',
+            field_id=column.id, production_id=production_id, metadata={'state': req.state, 'revision': column.revision})
+        await db.flush()
+        return {'column_key': column_key, 'state': req.state, 'revision': column.revision}
 
     @staticmethod
     def _retired_label(label: str) -> bool:
@@ -497,6 +506,12 @@ class CustomFieldService:
                 raise ConflictError(message="来源列已修改，请重新复制。", details={"server_revision": source.revision})
         elif req.source not in CustomFieldService.COPY_COLUMNS:
             raise DomainError("镜号、时码、分镜画面不能复制；已取消的列不可操作。", code="COLUMN_PROTECTED")
+        if not source:
+            builtin = (await db.execute(select(ProjectColumn).where(
+                ProjectColumn.production_id == production_id, ProjectColumn.key == "builtin:" + req.source,
+            ))).scalar_one_or_none()
+            if builtin and builtin.state != "active":
+                raise DomainError("来源列已删除，请恢复后重新复制。", code="COLUMN_REMOVED")
         preference = await CustomFieldService._preference(db, production_id, req.source, for_update=True)
         if preference and (preference.state == 'removed' or preference.permanently_deleted):
             raise DomainError('来源列已删除，请恢复后重新复制。', code='COLUMN_REMOVED')

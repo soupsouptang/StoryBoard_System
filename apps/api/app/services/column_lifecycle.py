@@ -20,10 +20,10 @@ async def purged_column_keys(
         )
     )
     blocked = set(result.scalars().all())
-    columns = await db.execute(select(ProjectColumn.key).where(
+    columns = await db.execute(select(ProjectColumn.key, ProjectColumn.binding_kind).where(
         ProjectColumn.production_id == production_id, ProjectColumn.state == "purged",
     ))
-    blocked.update(f"custom:{key}" for key in columns.scalars())
+    blocked.update(f"custom:{key}" if kind == "custom" else key.removeprefix("builtin:") for key, kind in columns)
     return blocked
 
 
@@ -69,14 +69,14 @@ def sanitize_saved_view_config(
     if isinstance(presentation, dict):
         for key in ("columnOrder", "displayOrder", "hiddenColumns", "visibleColumns", "columns"):
             remove_from_list(presentation, key)
-        for key in ("columnWidths", "columnLabels", "columnFormats", "widths"):
+        for key in ("columnWidths", "columnWidthModes", "columnLabels", "columnFormats", "widths"):
             remove_from_map(presentation, key)
 
     custom_columns = next_config.get("customColumns")
     if isinstance(custom_columns, dict):
         for key in ("order", "hidden", "visible", "columns"):
             remove_from_list(custom_columns, key)
-        for key in ("widths", "columnWidths"):
+        for key in ("widths", "columnWidths", "columnWidthModes"):
             remove_from_map(custom_columns, key)
 
     sort_config = next_config.get("sort")
