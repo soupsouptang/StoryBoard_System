@@ -2,6 +2,9 @@
   "name": "frameforge-monorepo",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=24 <25"
+  },
   "description": "Professional Film & Video Storyboard and Shot Production Management System",
   "workspaces": [
     "apps/*",
