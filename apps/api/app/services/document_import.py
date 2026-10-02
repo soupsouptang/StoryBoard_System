@@ -9,7 +9,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from PIL import Image, ImageOps
 from app.services.importer import parse_csv
-from app.services.legacy_import_adapter import legacy_module
+from app.services.document_parsing import PDF_IMPORT_HEADERS, parse_pdf_storyboard, parse_xlsx_package
 
 MAX_FILE_BYTES = 40 * 1024 * 1024
 MAX_ROWS = 10000
@@ -88,7 +88,7 @@ def parse_document(content: bytes, filename: str):
                         for char in match[1]: col=col*26+ord(char)-64
                         if col > MAX_COLUMNS or int(match[2]) > MAX_ROWS+1:
                             raise ValueError('工作表单元格超出 10000 行 / 200 列范围，请裁剪空白格式或拆分。')
-        rows, embedded = legacy_module('import_parsing').parse_xlsx_package(content, include_image_data=True)
+        rows, embedded = parse_xlsx_package(content, include_image_data=True)
         for item in embedded:
             if item['data_row'] < 1:
                 raise ValueError('图片位于表头，无法关联镜头，请移到对应数据行。')
@@ -141,7 +141,7 @@ def parse_document(content: bytes, filename: str):
         if reader.is_encrypted: raise ValueError('请解密 PDF 后再导入。')
         if len(reader.pages) > 30: raise ValueError('PDF 单次最多 30 页，请拆分导入。')
         warnings.append('PDF 按 SHOT 标记或页面识别，请核对镜头边界、识别文字与字段映射；保留页面原图与原文。')
-        rows = [list(legacy_module('import_parsing').PDF_IMPORT_HEADERS)]
+        rows = [list(PDF_IMPORT_HEADERS)]
         rendered = pdfium.PdfDocument(content)
         try:
             with TemporaryDirectory(prefix='frameforge-import-') as tmp:
@@ -157,7 +157,7 @@ def parse_document(content: bytes, filename: str):
                         writer = PdfWriter(); writer.add_page(page)
                         path = Path(tmp) / 'page.pdf'
                         with path.open('wb') as stream: writer.write(stream)
-                        parsed, embedded = legacy_module('import_parsing').parse_pdf_storyboard(path, preserve_source=True)
+                        parsed, embedded = parse_pdf_storyboard(path, preserve_source=True)
                         added = [header for header in parsed[0] if header not in rows[0]]
                         rows[0].extend(added)
                         for existing in rows[1:]: existing.extend([''] * len(added))

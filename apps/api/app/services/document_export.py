@@ -14,7 +14,7 @@ from app.models.shot import Shot
 from app.models.asset import Asset
 from app.models.field import ProjectColumn, ShotColumnValue
 from app.services.panel_media_service import MEDIA_ROOT
-from app.services.legacy_import_adapter import legacy_module
+from app.services.timecode_format import frames_to_tc
 
 # Only resolved persisted fields are exported; req. 11's pending semantics remain in the DB plan.
 COLUMNS = [('display_number','镜号'), ('name','镜头标题'), ('sequence','篇章'), ('tc','时码 TC'), ('duration_frames','帧数'), ('duration','时长（秒）'), ('shot_size','景别'), ('lens_mm','焦段'), ('camera_movement','运镜'), ('camera_angle','机位角度'), ('description','画面描述'), ('voice_over','对应旁白'), ('primary_method','制作方式'), ('status','状态'), ('department','责任部门'), ('performance','表演提示'), ('dialogue','对白'), ('director_notes','导演备注'), ('action','动作'), ('panel_frame','分镜图框')]
@@ -40,7 +40,7 @@ async def export_document(db, production_id, fmt, user):
     total_media = 0
     for shot in shots:
         record = {key:getattr(shot,key,None) for key,_ in COLUMNS}
-        record.update(sequence=sequences.get(shot.sequence_id,''), tc=legacy_module('delivery_exports').frames_to_tc(frame, fps, prod.drop_frame), duration=shot.duration_frames/fps)
+        record.update(sequence=sequences.get(shot.sequence_id,''), tc=frames_to_tc(frame, fps, prod.drop_frame), duration=shot.duration_frames/fps)
         frame += shot.duration_frames
         record['camera_movement'] = ' / '.join(str(v) for v in shot.camera_movement.values())
         record['primary_method'] = ' / '.join([shot.primary_method, *shot.secondary_methods])

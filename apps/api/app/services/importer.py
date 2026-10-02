@@ -7,6 +7,7 @@ from __future__ import annotations
 import csv
 import io
 import re
+from app.services.document_parsing import parse_xlsx_rows
 
 # Comprehensive Field Aliases Dictionary (Spec Section 115)
 ALIASES: dict[str, list[str]] = {
@@ -59,9 +60,8 @@ def parse_csv(content: bytes) -> list[list[str]]:
 def parse_xlsx_stdlib(content: bytes) -> list[list[str]]:
     """Zero-dependency standard library .xlsx parser using zipfile + ElementTree."""
     from app.services.document_import import check_archive
-    from app.services.legacy_import_adapter import legacy_module
     check_archive(content)
-    return legacy_module('import_parsing').parse_xlsx_rows(content)
+    return parse_xlsx_rows(content)
 
 
 def parse_table(content: bytes, filename: str) -> list[list[str]]:

@@ -15,8 +15,8 @@ from app.models.shot import Shot, Panel
 from app.models.field import ProjectColumn
 from app.schemas.custom_field import CustomFieldCreate, CustomFieldValuePatch
 from app.services.custom_field_service import CustomFieldService
+from app.services.document_parsing import build_import_custom_columns
 from app.services.document_import import validate_image, MAX_ROWS, MAX_COLUMNS
-from app.services.legacy_import_adapter import legacy_module
 from app.services.panel_media_service import PanelMediaService, MEDIA_ROOT
 from app.models.user import User
 from app.schemas.shot import ShotCreate
@@ -66,7 +66,7 @@ class ImportService:
                 raise DomainError('图片数据损坏或过大', code='VALIDATION_ERROR') from exc
             decoded_images.setdefault(index, []).append((image.get('filename', 'image.png'), data))
         fields = []
-        for column in legacy_module('import_parsing').build_import_custom_columns(headers or [], mapping):
+        for column in build_import_custom_columns(headers or [], mapping):
             if not any(column['source_col'] < len(row) and row[column['source_col']].strip() for row in rows): continue
             field = (await db.execute(select(ProjectColumn).where(ProjectColumn.production_id == production_id, ProjectColumn.key == column['key']))).scalar_one_or_none()
             if field is not None and (field.state != "active"):

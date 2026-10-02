@@ -15,8 +15,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY apps/api /app/apps/api
 COPY packages /app/packages
-# Pure shared parsers and licensed fonts only; no legacy server/database owner.
-COPY storyboard-system/import_parsing.py storyboard-system/narration_timing.py storyboard-system/delivery_exports.py /app/storyboard-system/
+# Licensed fonts used by API-generated documents.
 COPY apps/web/public/fonts /app/apps/web/public/fonts
 
 EXPOSE 8000

@@ -9,7 +9,7 @@ from app.models.production import Production
 from app.models.shot import Panel, Shot, ProductionStep
 from app.models.asset import ShotAssetLink
 from app.models.field import ShotColumnValue
-from app.services.legacy_import_adapter import legacy_module
+from app.services.narration_timing import estimate_narration_frames
 from app.models.user import User
 from app.schemas.shot import BulkUpdateShotsRequest, ShotCreate, ShotPatch, ShotReorderRequest
 
@@ -595,5 +595,5 @@ class ShotService:
         if shot.timing_locked or not (shot.voice_over or "").strip():
             raise DomainError("镜头时长已锁定或没有旁白", code="VALIDATION_ERROR")
         production = (await db.execute(select(Production).where(Production.id == shot.production_id))).scalar_one()
-        frames = legacy_module('narration_timing').estimate_narration_frames(shot.voice_over, production.fps_num / (production.fps_den or 1), req.speech_rate)
+        frames = estimate_narration_frames(shot.voice_over, production.fps_num / (production.fps_den or 1), req.speech_rate)
         return await ShotService.patch_shot(db, shot_id, ShotPatch(revision=req.revision, changes={'duration_frames': frames}), user)
