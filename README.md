@@ -65,11 +65,6 @@ docker compose up -d
 python storyboard-system/server.py
 ```
 
-### 默认登录凭证
-* **管理员邮箱**: `admin@company.internal`
-* **管理员密码**: `FrameForge2026!Admin`
-* **预载示范项目**: 天津国际农产品交易中心 · 4分30秒形象宣传片 (80 镜全量示范数据)。
-
 ---
 
 ## 🧪 自动化测试验证

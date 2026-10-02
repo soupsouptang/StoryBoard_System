@@ -1,0 +1,119 @@
+[
+  {
+    "file": "01-hub.jpg",
+    "sha256": "042b03e219f1e18881ed4b64824f6925633c3b8269cedf76e36c1d6143010b49",
+    "width": 1440,
+    "height": 900,
+    "sourceCommit": "2fde7c4f6313e7b9c7d07ffeed2083c00045e1a9",
+    "fixture": "synthetic-desktop",
+    "status": "observed-not-accepted"
+  },
+  {
+    "file": "02-shots.jpg",
+    "sha256": "b005490cbc58e5c15473df5e8e93ec44345751f6223057d2a69fc329a991a021",
+    "width": 1440,
+    "height": 900,
+    "sourceCommit": "2fde7c4f6313e7b9c7d07ffeed2083c00045e1a9",
+    "fixture": "synthetic-desktop",
+    "status": "observed-not-accepted"
+  },
+  {
+    "file": "03-column-manager.jpg",
+    "sha256": "3a8433eb9651b65f0533c58dd6822824233d872c24555c2849bef9d533092c28",
+    "width": 1440,
+    "height": 900,
+    "sourceCommit": "2fde7c4f6313e7b9c7d07ffeed2083c00045e1a9",
+    "fixture": "synthetic-desktop",
+    "status": "observed-not-accepted"
+  },
+  {
+    "file": "04-inspector.jpg",
+    "sha256": "a86f0c249394aad5fd18a71f3c166e5dcd855a500140b3b9a2dfa9316ec0d63c",
+    "width": 1440,
+    "height": 900,
+    "sourceCommit": "2fde7c4f6313e7b9c7d07ffeed2083c00045e1a9",
+    "fixture": "synthetic-desktop",
+    "status": "observed-not-accepted"
+  },
+  {
+    "file": "05-shot-context-menu.jpg",
+    "sha256": "873303326df6eddf6e77146a5074bde391ad4a87b61c8e23018f9a8fe26f91d7",
+    "width": 1440,
+    "height": 900,
+    "sourceCommit": "2fde7c4f6313e7b9c7d07ffeed2083c00045e1a9",
+    "fixture": "synthetic-desktop",
+    "status": "observed-not-accepted"
+  },
+  {
+    "file": "06-cards.jpg",
+    "sha256": "4a2bcbd3cd4e394102b0d4f829331cc5c44a26cdc8d1df9a285b6517b4d42004",
+    "width": 1440,
+    "height": 900,
+    "sourceCommit": "2fde7c4f6313e7b9c7d07ffeed2083c00045e1a9",
+    "fixture": "synthetic-desktop",
+    "status": "observed-not-accepted"
+  },
+  {
+    "file": "07-wall.jpg",
+    "sha256": "1b2b9d1727fe35705e986f4c44fc56b7a779db04ab5100681bf994eccec02b52",
+    "width": 1440,
+    "height": 900,
+    "sourceCommit": "2fde7c4f6313e7b9c7d07ffeed2083c00045e1a9",
+    "fixture": "synthetic-desktop",
+    "status": "observed-not-accepted"
+  },
+  {
+    "file": "08-timeline.jpg",
+    "sha256": "a57e92601def1fe80d56baeb2c5a71630c83baa14101dd5e48cc8853d24e0368",
+    "width": 1440,
+    "height": 900,
+    "sourceCommit": "2fde7c4f6313e7b9c7d07ffeed2083c00045e1a9",
+    "fixture": "synthetic-desktop",
+    "status": "observed-not-accepted"
+  },
+  {
+    "file": "09-review.jpg",
+    "sha256": "f65afcb112d48ddb66e262db73b51b091a9062f6ce8edd11c3001fd541c93844",
+    "width": 1440,
+    "height": 900,
+    "sourceCommit": "2fde7c4f6313e7b9c7d07ffeed2083c00045e1a9",
+    "fixture": "synthetic-desktop",
+    "status": "observed-not-accepted"
+  },
+  {
+    "file": "10-deliverables.jpg",
+    "sha256": "22c1cb3793c7003776afd9beed7b2d191e22840a9c435e234a6c2cca6a5eb2e8",
+    "width": 1440,
+    "height": 900,
+    "sourceCommit": "2fde7c4f6313e7b9c7d07ffeed2083c00045e1a9",
+    "fixture": "synthetic-desktop",
+    "status": "observed-not-accepted"
+  },
+  {
+    "file": "11-assets.jpg",
+    "sha256": "f1b1dc718258488a526e63ccf7caa14094df1c96d277b20f5f73363f703db112",
+    "width": 1440,
+    "height": 900,
+    "sourceCommit": "2fde7c4f6313e7b9c7d07ffeed2083c00045e1a9",
+    "fixture": "synthetic-desktop",
+    "status": "observed-not-accepted"
+  },
+  {
+    "file": "12-settings.jpg",
+    "sha256": "b4266a15713a481e30656969cad8bb8df0751649d0502f606536f5b348c65ec6",
+    "width": 1440,
+    "height": 900,
+    "sourceCommit": "2fde7c4f6313e7b9c7d07ffeed2083c00045e1a9",
+    "fixture": "synthetic-desktop",
+    "status": "observed-not-accepted"
+  },
+  {
+    "file": "13-column-context-menu.jpg",
+    "sha256": "1cfa659ebac1b0f6b6cf03168a505d8a5854c4704633e6a936ddd479cb9c17d9",
+    "width": 1440,
+    "height": 900,
+    "sourceCommit": "2fde7c4f6313e7b9c7d07ffeed2083c00045e1a9",
+    "fixture": "synthetic-desktop",
+    "status": "observed-not-accepted"
+  }
+]
