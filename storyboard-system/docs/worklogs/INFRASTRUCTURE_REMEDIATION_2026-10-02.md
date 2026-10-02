@@ -44,3 +44,10 @@ This is the execution record for the infrastructure audit against the repository
 - **Commit/push:** Pending.
 
 Append a dated subsection per remaining slice with exact paths, final change summary, targeted verification commands/results, any unverified items, commit SHA, and push result. Never infer CI success from local checks.
+
+## Follow-up — CI failure remediation
+
+- **Changes:** Added `SECRET_KEY` using a synthetic CI-only value to `.github/workflows/postgres-migration.yml`; documented the infra/auth/runtime ownership and test evidence in `ACTIVE_WORKSTREAMS.md`, `CANONICAL_OWNER_MATRIX.md`, and `API_ROUTE_PARITY_MATRIX.md`; added these records to the main CI path filters; updated `CONTINUE_WORK.md` with the current rerun checkpoint.
+- **Local verification:** `npm install --workspace=apps/web react-image-crop@11.1.2 --cache .npm-cache` succeeded and `npm ls react-image-crop --workspace=apps/web --depth=0` resolved 11.1.2. Regression Guard passes for the new push range based on `a518ea1`; it still reports the already-pushed original config/security diff when explicitly evaluated from `fcc3ff1`, because GitHub history is not rewritten. `git diff --check` passed for the follow-up paths. Workflow YAML parser was unavailable in the bundled Python environment during this follow-up; the workflow edit is a single env entry.
+- **Unverified:** GitHub Actions rerun, PostgreSQL migration, and previously reported runner setup failures. No `gh` CLI is installed; direct REST request failed TLS negotiation. Docker is unavailable locally.
+- **Commit/push:** Follow-up commits prepared locally; push result to be recorded after upload.

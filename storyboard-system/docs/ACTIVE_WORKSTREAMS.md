@@ -1,5 +1,14 @@
 # FrameForge VNext 原生重构工作簿
 
+## 2026-10-02 基础设施与 CI 检查点（`a518ea1`）
+
+- `a518ea1` 已推送至 `master`：API/worker/Web 运行时和镜像对齐，Python 依赖按哈希锁定，Web 采用 Next standalone 镜像，Alembic 为 schema 唯一 owner；认证使用 Argon2id/JWT、启动不再自动建表；Nginx WebSocket/CSP 与同源 API 路由已调整。
+- 本地证据：完整后端 70 项通过，Web production build、项目文件合同、静态安全守卫、Nginx 配置合同及 workflow YAML 解析通过；Docker 本机不可用，因此镜像构建交由 GitHub Actions 验证。以上不代表生产部署或生产数据库验证。
+- 首次 GitHub CI 摘要中，API/worker/Web 镜像与 Nginx 检查通过；PostgreSQL rehearsal 因缺少必需的合成 `SECRET_KEY` 失败，workflow 已补；Regression Guard 要求基础设施安全变更同时更新本账本、owner 与 API route inventory。对应文档将在后续修复提交补齐。
+- Web build 的 setup 阶段与旧版生成产物守卫当时报告 runner setup 失败，未取得可读 step log；本环境无 `gh`，GitHub REST 请求 TLS 不通，需以新推送后的 Actions 结果复核，不能断言根因或已通过。
+
+详见 [基础设施整改执行记录](worklogs/INFRASTRUCTURE_REMEDIATION_2026-10-02.md)。
+
 每次开工先读 [续作入口](CONTINUE_WORK.md)，再核对本账本、owner 矩阵及最新用户决定。
 
 ## 2026-10-02 当前协调检查点

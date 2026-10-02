@@ -55,6 +55,7 @@ jobs:
           --health-retries 10
     env:
       ENVIRONMENT: "test"
+      SECRET_KEY: "synthetic-postgres-ci-secret-key-only-not-for-use"
       DATABASE_URL: "postgresql+asyncpg://frameforge:frameforge_ci@127.0.0.1:5432/frameforge_ci"
       DATABASE_SYNC_URL: "postgresql+psycopg://frameforge:frameforge_ci@127.0.0.1:5432/frameforge_ci"
       PYTHONUNBUFFERED: "1"

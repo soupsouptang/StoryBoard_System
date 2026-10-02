@@ -1,5 +1,9 @@
 # API route inventory — Legacy reference only
 
+## Infrastructure ownership note (2026-10-02)
+
+The infrastructure remediation did not add or claim Legacy API route parity. `apps/api` remains the VNext HTTP/authentication owner; production configuration requires explicit secrets and database URLs, and Alembic owns schema changes. The Web production client defaults to same-origin API routing, with Nginx routing `/api` and WebSocket upgrades. CI validates API contracts and a clean PostgreSQL-to-Alembic-head rehearsal; a passing migration job is not evidence of data backfill or production cutover. Authentication implementation details and current CI status are recorded in [ACTIVE_WORKSTREAMS.md](ACTIVE_WORKSTREAMS.md) and [CANONICAL_OWNER_MATRIX.md](CANONICAL_OWNER_MATRIX.md).
+
 Source audit at `0826adf` (2026-09-29), with strategy superseded on 2026-10-02. Paths use `{id}` for one path segment. `L` is Legacy `storyboard-system/server.py`; `V` is canonical `apps/api`; `F` is the separate Legacy FastAPI tree. **This matrix is now an inventory of useful product behavior only: VNext does not preserve Legacy routes, sessions, response shapes, IDs, or API compatibility.** The only cross-version contract retained is the exported project file mapping described below.
 
 ## Shared contract boundary

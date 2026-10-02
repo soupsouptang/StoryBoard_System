@@ -1,5 +1,17 @@
 # FRAMEFORGE canonical owner matrix
 
+## 2026-10-02 Infrastructure ownership update
+
+| Capability | Canonical owner | Change and evidence | Current state |
+| --- | --- | --- | --- |
+| Runtime/dependencies | `apps/api`, `apps/web`, `infra` | Python 3.12 and Node 24; hashed Python locks; VNext API/worker/Web production images; npm lockfile is monorepo dependency authority | Locally verified builds; Docker image builds delegated to CI |
+| Authentication/configuration | `apps/api/app/core/config.py`, `security.py`, auth service | Argon2id and PyJWT; legacy PBKDF2 verification upgrades on successful login; required secrets/database config; no production schema creation at app startup | Backend suite locally passes; production integration not run |
+| Persistent schema | `apps/api/alembic` | Alembic owns production schema; PostgreSQL is the deployment target; SQLite is restricted to explicit tests | Empty PostgreSQL rehearsal remains a CI gate |
+| Background jobs | `apps/api` worker | RQ Queue/Worker use an explicit Redis connection | Mocked construction checked; live Redis/multi-worker behavior unverified |
+| CI/reverse proxy | `.github/workflows/*`, `infra/nginx` | CI checks Python/Web contracts, container builds, Nginx syntax, regression and migration gates; proxy handles WebSocket upgrades and same-origin app routing | `a518ea1` pushed; first CI run surfaced follow-up fixes recorded in ACTIVE_WORKSTREAMS |
+
+These are infrastructure ownership records; they do not imply VNext product cutover or production deployment.
+
 首次核对基线：2026-09-29，`7b3a24c`；2026-10-02 起本表用于记录 Legacy 功能来源与 VNext 实现归属，不再要求 Legacy API/数据库/runtime 对等。仓库配置中旧入口仍可作为当前事实存在，但目标 owner 直接是 `apps/api` / `apps/web`。唯一跨版本兼容门槛是 Legacy 便携工程文件可被 VNext 映射导入。
 
 状态：`VERIFIED` 表示事实已核实；`IMPLEMENTED_NOT_INTEGRATED` 表示 VNext 代码存在但未接通真实消费链；`INTEGRATED_NOT_CUT_OVER` 表示已有真实 VNext 消费但能力尚未完成验收；`CUTOVER_READY` / `CUT_OVER` 只描述 VNext 自身运行准备度，不再要求 Legacy API/DB parity；`LEGACY_RETIRED` 表示旧 runtime 已退出（工程文件 exporter 可按桥接需要临时保留）；`BLOCKED` 说明当前 VNext 门槛未满足。

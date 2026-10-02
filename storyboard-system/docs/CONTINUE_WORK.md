@@ -1,5 +1,9 @@
 # FRAMEFORGE 续作入口
 
+## 基础设施续作（2026-10-02）
+
+基础设施提交 `a518ea1` 已推送 `master`。首次 GitHub Actions 摘要显示 PostgreSQL rehearsal 和 Regression Guard 失败；前者已在 workflow 补合成 `SECRET_KEY`，后者已补 ACTIVE_WORKSTREAMS、owner matrix、API route inventory 三份记录。重新推送后必须复核 Actions，再报告 CI 状态；当前运行结果尚未核实。本轮不部署。执行记录见 [基础设施整改 worklog](worklogs/INFRASTRUCTURE_REMEDIATION_2026-10-02.md)。
+
 更新日期：2026-10-02（Asia/Hong_Kong）。用户要求：先上传现有代码，再上传续作 MD；**每次开始工作必须先读取本文**。本文是续作索引和检查点，不替代当前用户指令、架构规则或详细功能方案。
 
 **最新追加需求已实施并上传代码 `b2ad7b5`、`64dad10`**：表头“删除此列”及二次确认；镜号/时码/分镜画面禁止删除并提示；表格统一14px、多行18字上限与17字加“...”、标点不在新行行首。详见[本轮文档§5](SHOT_COLUMNS_MENUS_2026-10-02.md#5-用户验收后的追加需求已确认并实施)。搜索框居中、八项工具全部左侧8px间距及最新顺序见同文档§6。本批复用已有列状态，无DDL；完整新版功能与数据库设计仍有后续任务。
