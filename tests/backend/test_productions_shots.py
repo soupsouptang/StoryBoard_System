@@ -447,6 +447,9 @@ async def test_panel_frame_text_and_authenticated_image(tmp_path, monkeypatch):
         assert content.status_code == 200
         assert content.content == image_bytes
         assert content.headers["content-type"] == "image/png"
+        stored_files = {path.name for path in tmp_path.iterdir()}
+        assert len(stored_files) == 2
+        assert any(name.endswith(".thumb.webp") for name in stored_files)
 
         stale = await client.post(
             f"/api/v1/shots/{shot['id']}/panel-image", headers=headers,
@@ -460,7 +463,7 @@ async def test_panel_frame_text_and_authenticated_image(tmp_path, monkeypatch):
             files={"image": ("bad.png", b"not an image", "image/png")},
         )
         assert invalid.status_code == 415
-        assert len(list(tmp_path.iterdir())) == 1
+        assert {path.name for path in tmp_path.iterdir()} == stored_files
 
         replaced = await client.post(
             f"/api/v1/shots/{shot['id']}/panel-image", headers=headers,
