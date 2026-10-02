@@ -95,6 +95,37 @@ def test_database_rejects_cross_project_and_entity_value_copies(tmp_path):
         assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
 
 
+def test_comment_upgrade_bootstrap_scope_constraints_and_colors(tmp_path):
+    db = tmp_path / "comments.sqlite"
+    migrate(db, "upgrade", "f29b6c8a01d3")
+    with sqlite3.connect(db) as conn:
+        for project in ("a", "b"):
+            insert(conn, "productions", id=project)
+            insert(conn, "shots", id="s-" + project, production_id=project)
+        insert(conn, "users", id="user-a", email="fixture@example.com")
+        insert(conn, "comments", id="root", production_id="a", shot_id="s-a", body="historical fixture")
+        insert(conn, "comments", id="reply", production_id="a", shot_id="s-a", parent_id="root", body="reply fixture", created_at="2026-10-02 01:00:00")
+    migrate(db, "upgrade", "head")
+    with sqlite3.connect(db) as conn:
+        conn.execute("PRAGMA foreign_keys=ON")
+        assert conn.execute("SELECT comment_event_seq FROM shots WHERE id='s-a'").fetchone() == (2,)
+        assert conn.execute("SELECT comment_id,seq,event_type,actor_id FROM comment_events ORDER BY seq").fetchall() == [("root", 1, "bootstrap", None), ("reply", 2, "bootstrap", None)]
+        assert conn.execute("SELECT annotation_color,revision FROM users").fetchone() == ("#DB2777", 1)
+        with pytest.raises(sqlite3.IntegrityError):
+            conn.execute("UPDATE users SET annotation_color='#12xx00'")
+        with pytest.raises(sqlite3.IntegrityError):
+            insert(conn, "comments", id="foreign-parent", production_id="b", shot_id="s-b", parent_id="root")
+        with pytest.raises(sqlite3.IntegrityError):
+            insert(conn, "comment_events", id="foreign-event", production_id="b", shot_id="s-b", comment_id="root", seq=1, event_type="edit")
+        with pytest.raises(sqlite3.IntegrityError):
+            insert(conn, "comment_read_states", id="foreign-state", production_id="b", shot_id="s-a", user_id="user-a", last_read_seq=1)
+        assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
+    migrate(db, "downgrade", "f29b6c8a01d3")
+    migrate(db, "upgrade", "head")
+    with sqlite3.connect(db) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM comment_events").fetchone() == (2,)
+
+
 def test_builtin_lifecycle_and_row_height_constraints_upgrade(tmp_path):
     db = tmp_path / "layout.sqlite"
     migrate(db, "upgrade", COLUMNS)

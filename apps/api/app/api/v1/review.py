@@ -1,7 +1,7 @@
 """Canonical review comments and decision routes."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_current_user
@@ -16,6 +16,8 @@ from app.schemas.review import (
     ReviewDecisionCreate,
     ReviewDecisionOut,
     ReviewDecisionResult,
+    CommentReadRequest,
+    CommentReadOut,
 )
 from app.services.review_service import ReviewService
 
@@ -32,7 +34,7 @@ def _domain_http(error: DomainError) -> HTTPException:
         return HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail={
-                "code": "SHOT_REVISION_CONFLICT",
+                "code": error.code if error.code != "CONFLICT" else "SHOT_REVISION_CONFLICT",
                 "message": error.message,
                 "details": error.details,
             },
@@ -48,13 +50,19 @@ def _domain_http(error: DomainError) -> HTTPException:
     )
 
 
-def _comment_dict(comment, author_name: str = "") -> dict:
+def _comment_dict(comment, author_name: str = "", actor: User | None = None) -> dict:
     return {
         "id": comment.id,
         "production_id": comment.production_id,
         "shot_id": comment.shot_id,
         "user_id": comment.user_id,
         "author_name": author_name,
+        "author_color": actor.effective_annotation_color if actor and comment.user_id == actor.id else "",
+        "last_actor_id": comment.last_actor_id,
+        "last_actor_color": actor.effective_annotation_color if actor and comment.last_actor_id == actor.id else "",
+        "revision": comment.revision,
+        "event_seq": comment.event_seq,
+        "last_activity_seq": comment.last_activity_seq,
         "role": comment.role,
         "body": comment.body,
         "timecode": comment.timecode,
@@ -87,7 +95,7 @@ async def list_shot_comments(
     current_user: User = Depends(get_current_user),
 ):
     try:
-        return await ReviewService.list_comments(db, shot_id)
+        return await ReviewService.list_comments(db, shot_id, current_user)
     except DomainError as error:
         raise _domain_http(error)
 
@@ -108,6 +116,7 @@ async def create_shot_comment(
         return _comment_dict(
             comment,
             current_user.display_name or current_user.email,
+            current_user,
         )
     except DomainError as error:
         raise _domain_http(error)
@@ -125,7 +134,7 @@ async def update_comment(
         # Consumers refetch the canonical comment list after mutation; keep the
         # immediate response identity-safe without inventing another author's name.
         author_name = (current_user.display_name or current_user.email) if comment.user_id == current_user.id else ""
-        return _comment_dict(comment, author_name)
+        return _comment_dict(comment, author_name, current_user)
     except DomainError as error:
         raise _domain_http(error)
 
@@ -140,7 +149,7 @@ async def resolve_comment(
     try:
         comment = await ReviewService.resolve_comment(db, comment_id, req, current_user)
         author_name = (current_user.display_name or current_user.email) if comment.user_id == current_user.id else ""
-        return _comment_dict(comment, author_name)
+        return _comment_dict(comment, author_name, current_user)
     except DomainError as error:
         raise _domain_http(error)
 
@@ -148,12 +157,31 @@ async def resolve_comment(
 @router.delete("/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_comment(
     comment_id: str,
+    revision: int = Query(ge=1),
     db: AsyncSession = db_session,
     current_user: User = Depends(get_current_user),
 ):
     try:
-        await ReviewService.delete_comment(db, comment_id, current_user)
+        await ReviewService.delete_comment(db, comment_id, current_user, revision)
         return None
+    except DomainError as error:
+        raise _domain_http(error)
+
+
+@router.get("/shots/{shot_id}/comments/read-state", response_model=CommentReadOut)
+async def get_comment_read_state(shot_id: str, db: AsyncSession = db_session,
+    current_user: User = Depends(get_current_user)):
+    try:
+        return await ReviewService.read_state(db, shot_id, current_user)
+    except DomainError as error:
+        raise _domain_http(error)
+
+
+@router.patch("/shots/{shot_id}/comments/read-state", response_model=CommentReadOut)
+async def mark_comments_read(shot_id: str, req: CommentReadRequest, db: AsyncSession = db_session,
+    current_user: User = Depends(get_current_user)):
+    try:
+        return await ReviewService.read_state(db, shot_id, current_user, req.through_seq)
     except DomainError as error:
         raise _domain_http(error)
 

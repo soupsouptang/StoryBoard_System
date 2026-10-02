@@ -3,7 +3,7 @@ from app.models.user import User, Role
 from app.models.production import Production, Sequence, Scene
 from app.models.shot import Shot, Panel, ProductionStep
 from app.models.asset import Asset, AssetVersion, ShotAssetLink, StockAssetMetadata, ClientAssetRequest
-from app.models.collaboration import Comment, Approval, ReviewDecision, ShotVersion, AuditLog, Share, Export
+from app.models.collaboration import Comment, CommentEvent, CommentReadState, Approval, ReviewDecision, ShotVersion, AuditLog, Share, Export
 from app.models.view import SavedView, ViewRowLayout
 from app.models.command import OutboxEvent
 from app.models.field import ColumnPreference, ProjectColumn, ShotColumnValue
@@ -24,6 +24,8 @@ __all__ = [
     "StockAssetMetadata",
     "ClientAssetRequest",
     "Comment",
+    "CommentEvent",
+    "CommentReadState",
     "Approval",
     "ShotVersion",
     "AuditLog",

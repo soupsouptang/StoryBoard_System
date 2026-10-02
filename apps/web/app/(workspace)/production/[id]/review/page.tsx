@@ -109,7 +109,9 @@ export default function ReviewPage() {
   const [commentDrafts, setCommentDrafts] = useState<Record<string, CommentDraft>>({});
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingCommentText, setEditingCommentText] = useState('');
+  const [editingCommentRevision, setEditingCommentRevision] = useState(1);
   const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
+  const [deleteCommentRevision, setDeleteCommentRevision] = useState(1);
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
   const [restoreVersionId, setRestoreVersionId] = useState<string | null>(null);
   const [mergeVersionId, setMergeVersionId] = useState<string | null>(null);
@@ -272,7 +274,7 @@ export default function ReviewPage() {
     if (!body) return;
     setActionError(null);
     try {
-      await updateComment.mutateAsync({ id: editingCommentId, body });
+      await updateComment.mutateAsync({ id: editingCommentId, body, revision: editingCommentRevision });
       setEditingCommentId(null);
       setEditingCommentText('');
     } catch (error) {
@@ -284,7 +286,7 @@ export default function ReviewPage() {
     if (!deleteCommentId) return;
     setActionError(null);
     try {
-      await deleteComment.mutateAsync(deleteCommentId);
+      await deleteComment.mutateAsync({ id: deleteCommentId, revision: deleteCommentRevision });
       if (editingCommentId === deleteCommentId) {
         setEditingCommentId(null);
         setEditingCommentText('');
@@ -399,6 +401,7 @@ export default function ReviewPage() {
                   onClick={() => {
                     setEditingCommentId(comment.id);
                     setEditingCommentText(comment.body);
+                    setEditingCommentRevision(comment.revision);
                   }}
                 >
                   编辑
@@ -407,7 +410,10 @@ export default function ReviewPage() {
                   variant="ghost"
                   size="sm"
                   className="text-destructive hover:text-destructive"
-                  onClick={() => setDeleteCommentId(comment.id)}
+                  onClick={() => {
+                    setDeleteCommentId(comment.id);
+                    setDeleteCommentRevision(comment.revision);
+                  }}
                 >
                   删除
                 </Button>
@@ -416,7 +422,7 @@ export default function ReviewPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => resolveComment.mutate({ id: comment.id, resolved: !comment.is_resolved }, {
+              onClick={() => resolveComment.mutate({ id: comment.id, resolved: !comment.is_resolved, revision: comment.revision }, {
                 onError: error => setActionError(error instanceof Error ? error.message : '更新批注失败')
               })}
               disabled={resolveComment.isPending}

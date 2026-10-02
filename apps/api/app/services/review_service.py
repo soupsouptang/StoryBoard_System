@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, select
+from sqlalchemy.orm import aliased
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import DomainError, NotFoundError
-from app.models.collaboration import AuditLog, Comment, ReviewDecision, ShotVersion
+from app.core.exceptions import ConflictError, DomainError, NotFoundError
+from app.models.collaboration import AuditLog, Comment, CommentEvent, CommentReadState, ReviewDecision, ShotVersion
+from app.models.command import OutboxEvent
+from app.models.production import Production
 from app.models.shot import Shot
 from app.models.user import User
 from app.schemas.review import (
@@ -42,14 +46,78 @@ class ReviewService:
         return bool(permissions.get("*") or permissions.get(permission))
 
     @staticmethod
-    async def _active_shot(db: AsyncSession, shot_id: str) -> Shot:
-        result = await db.execute(
-            select(Shot).where(Shot.id == shot_id, Shot.deleted_at.is_(None))
-        )
+    async def _active_shot(db: AsyncSession, shot_id: str, *, for_update: bool = False) -> Shot:
+        scope = (await db.execute(select(Shot.production_id).where(Shot.id == shot_id, Shot.deleted_at.is_(None)))).scalar_one_or_none()
+        if scope is None:
+            raise NotFoundError("镜头不存在")
+        project_query = select(Production.id).where(Production.id == scope, Production.deleted_at.is_(None))
+        if for_update:
+            project_query = project_query.with_for_update()
+        if (await db.execute(project_query)).scalar_one_or_none() is None:
+            raise NotFoundError("项目不存在")
+        query = select(Shot).where(Shot.id == shot_id, Shot.deleted_at.is_(None))
+        if for_update:
+            query = query.with_for_update().execution_options(populate_existing=True)
+        result = await db.execute(query)
         shot = result.scalar_one_or_none()
         if not shot:
             raise NotFoundError("镜头不存在")
         return shot
+
+    @staticmethod
+    def _require_read(user: User) -> None:
+        if not any(ReviewService._has_permission(user, permission) for permission in ("production.read", "production.write", "shot.write", "review.approve")):
+            raise DomainError("当前账号没有查看批注的权限", code="FORBIDDEN")
+
+    @staticmethod
+    async def _locked_comment(db: AsyncSession, comment_id: str) -> tuple[Comment, Shot]:
+        shot_id = (await db.execute(select(Comment.shot_id).where(Comment.id == comment_id))).scalar_one_or_none()
+        if not shot_id:
+            raise NotFoundError("评论不存在")
+        shot = await ReviewService._active_shot(db, shot_id, for_update=True)
+        comment = (await db.execute(select(Comment).where(Comment.id == comment_id).with_for_update().execution_options(populate_existing=True))).scalar_one()
+        return comment, shot
+
+    @staticmethod
+    def _expected_revision(comment: Comment, revision: int) -> None:
+        if comment.revision != revision:
+            error = ConflictError("批注已被其他用户修改，请刷新后保留草稿重新操作。", details={"server_revision": comment.revision, "comment_id": comment.id})
+            error.code = "COMMENT_REVISION_CONFLICT"
+            raise error
+
+    @staticmethod
+    def _event(db: AsyncSession, shot: Shot, comment: Comment, user: User, action: str) -> None:
+        shot.comment_event_seq += 1
+        comment.last_activity_seq = shot.comment_event_seq
+        comment.last_actor_id = user.id
+        if action == "create":
+            comment.event_seq = shot.comment_event_seq
+        db.add(CommentEvent(production_id=shot.production_id, shot_id=shot.id, comment_id=comment.id,
+            seq=shot.comment_event_seq, event_type=action, actor_id=user.id))
+        db.add(OutboxEvent(production_id=shot.production_id, command_id=str(uuid.uuid4()),
+            event_type="review.comment." + action, revision=comment.revision,
+            entity_ids={"shot_id": shot.id, "comment_id": comment.id, "seq": shot.comment_event_seq}))
+
+    @staticmethod
+    async def read_state(db: AsyncSession, shot_id: str, user: User, through_seq: int | None = None) -> dict:
+        ReviewService._require_read(user)
+        shot = await ReviewService._active_shot(db, shot_id, for_update=through_seq is not None)
+        if through_seq is not None and through_seq > shot.comment_event_seq:
+            raise DomainError("已读位置超过当前批注记录，请刷新后重试。", code="INVALID_READ_WATERMARK")
+        state = (await db.execute(select(CommentReadState).where(
+            CommentReadState.shot_id == shot.id, CommentReadState.user_id == user.id))).scalar_one_or_none()
+        last_read = state.last_read_seq if state else 0
+        if through_seq is not None and through_seq > last_read:
+            if state is None:
+                db.add(CommentReadState(production_id=shot.production_id, shot_id=shot.id,
+                    user_id=user.id, last_read_seq=through_seq))
+            else:
+                state.last_read_seq = through_seq
+            last_read = through_seq
+            await db.flush()
+        unread = (await db.execute(select(func.count(Comment.id)).where(Comment.shot_id == shot.id,
+            Comment.deleted_at.is_(None), Comment.last_activity_seq > last_read))).scalar_one()
+        return {"shot_id": shot.id, "last_read_seq": last_read, "latest_seq": shot.comment_event_seq, "unread_count": unread}
 
     @staticmethod
     def _audit(
@@ -70,11 +138,14 @@ class ReviewService:
         ))
 
     @staticmethod
-    async def list_comments(db: AsyncSession, shot_id: str) -> list[dict]:
+    async def list_comments(db: AsyncSession, shot_id: str, user: User) -> list[dict]:
+        ReviewService._require_read(user)
         await ReviewService._active_shot(db, shot_id)
+        actor = aliased(User)
         result = await db.execute(
-            select(Comment, User.display_name, User.email)
+            select(Comment, User, actor)
             .outerjoin(User, Comment.user_id == User.id)
+            .outerjoin(actor, Comment.last_actor_id == actor.id)
             .where(
                 Comment.shot_id == shot_id,
                 Comment.deleted_at.is_(None),
@@ -82,13 +153,19 @@ class ReviewService:
             .order_by(Comment.created_at.asc(), Comment.id.asc())
         )
         rows: list[dict] = []
-        for comment, display_name, email in result.all():
+        for comment, author, last_actor in result.all():
             rows.append({
                 "id": comment.id,
                 "production_id": comment.production_id,
                 "shot_id": comment.shot_id,
                 "user_id": comment.user_id,
-                "author_name": display_name or email or "未知用户",
+                "author_name": (author.display_name or author.email) if author else "未知用户",
+                "author_color": author.effective_annotation_color if author else "",
+                "last_actor_id": comment.last_actor_id,
+                "last_actor_color": last_actor.effective_annotation_color if last_actor else "",
+                "revision": comment.revision,
+                "event_seq": comment.event_seq,
+                "last_activity_seq": comment.last_activity_seq,
                 "body": comment.body,
                 "role": comment.role,
                 "timecode": comment.timecode,
@@ -108,7 +185,8 @@ class ReviewService:
         req: ReviewCommentCreate,
         user: User,
     ) -> Comment:
-        shot = await ReviewService._active_shot(db, shot_id)
+        ReviewService._require_read(user)
+        shot = await ReviewService._active_shot(db, shot_id, for_update=True)
         body = req.body.strip()
         if not body:
             raise DomainError("评论内容不能为空", code="VALIDATION_ERROR")
@@ -151,6 +229,7 @@ class ReviewService:
         )
         db.add(comment)
         await db.flush()
+        ReviewService._event(db, shot, comment, user, "create")
         ReviewService._audit(
             db,
             user_id=user.id,
@@ -169,14 +248,13 @@ class ReviewService:
         req: ReviewCommentUpdate,
         user: User,
     ) -> Comment:
-        result = await db.execute(
-            select(Comment).where(Comment.id == comment_id, Comment.deleted_at.is_(None))
-        )
-        comment = result.scalar_one_or_none()
-        if not comment:
+        ReviewService._require_read(user)
+        comment, shot = await ReviewService._locked_comment(db, comment_id)
+        if comment.deleted_at is not None:
             raise NotFoundError("评论不存在")
         if comment.user_id != user.id and not ReviewService._has_permission(user, "review.approve"):
             raise DomainError("无权修改其他用户的评论", code="FORBIDDEN")
+        ReviewService._expected_revision(comment, req.revision)
 
         body = req.body.strip()
         if not body:
@@ -185,6 +263,8 @@ class ReviewService:
             return comment
 
         comment.body = body
+        comment.revision += 1
+        ReviewService._event(db, shot, comment, user, "edit")
         comment.updated_at = datetime.now(timezone.utc)
         ReviewService._audit(
             db,
@@ -204,16 +284,17 @@ class ReviewService:
         req: ReviewCommentResolve,
         user: User,
     ) -> Comment:
-        result = await db.execute(
-            select(Comment).where(Comment.id == comment_id, Comment.deleted_at.is_(None))
-        )
-        comment = result.scalar_one_or_none()
-        if not comment:
+        ReviewService._require_read(user)
+        comment, shot = await ReviewService._locked_comment(db, comment_id)
+        if comment.deleted_at is not None:
             raise NotFoundError("评论不存在")
+        ReviewService._expected_revision(comment, req.revision)
         if comment.is_resolved == req.resolved:
             return comment
 
         comment.is_resolved = req.resolved
+        comment.revision += 1
+        ReviewService._event(db, shot, comment, user, "resolve" if req.resolved else "reopen")
         comment.updated_at = datetime.now(timezone.utc)
         ReviewService._audit(
             db,
@@ -227,18 +308,19 @@ class ReviewService:
         return comment
 
     @staticmethod
-    async def delete_comment(db: AsyncSession, comment_id: str, user: User) -> bool:
-        result = await db.execute(
-            select(Comment).where(Comment.id == comment_id, Comment.deleted_at.is_(None))
-        )
-        comment = result.scalar_one_or_none()
-        if not comment:
-            return False
+    async def delete_comment(db: AsyncSession, comment_id: str, user: User, revision: int) -> bool:
+        ReviewService._require_read(user)
+        comment, shot = await ReviewService._locked_comment(db, comment_id)
         if comment.user_id != user.id and not ReviewService._has_permission(user, "review.approve"):
             raise DomainError("无权删除其他用户的评论", code="FORBIDDEN")
+        if comment.deleted_at is not None:
+            return False
+        ReviewService._expected_revision(comment, revision)
 
         comment.deleted_at = datetime.now(timezone.utc)
         comment.updated_at = comment.deleted_at
+        comment.revision += 1
+        ReviewService._event(db, shot, comment, user, "delete")
         ReviewService._audit(
             db,
             user_id=user.id,

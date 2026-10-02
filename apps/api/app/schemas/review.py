@@ -17,10 +17,12 @@ class ReviewCommentCreate(BaseModel):
 
 
 class ReviewCommentUpdate(BaseModel):
+    revision: int = Field(ge=1)
     body: str = Field(min_length=1, max_length=1000)
 
 
 class ReviewCommentResolve(BaseModel):
+    revision: int = Field(ge=1)
     resolved: bool
 
 
@@ -30,6 +32,12 @@ class ReviewCommentOut(BaseModel):
     shot_id: Optional[str] = None
     user_id: Optional[str] = None
     author_name: str = ""
+    author_color: str = ""
+    last_actor_id: Optional[str] = None
+    last_actor_color: str = ""
+    revision: int
+    event_seq: int
+    last_activity_seq: int
     role: str = "Director"
     body: str
     timecode: str = ""
@@ -39,6 +47,17 @@ class ReviewCommentOut(BaseModel):
     is_resolved: bool = False
     created_at: datetime
     updated_at: datetime
+
+
+class CommentReadRequest(BaseModel):
+    through_seq: int = Field(ge=0)
+
+
+class CommentReadOut(BaseModel):
+    shot_id: str
+    last_read_seq: int
+    latest_seq: int
+    unread_count: int
 
 
 class ReviewDecisionCreate(BaseModel):

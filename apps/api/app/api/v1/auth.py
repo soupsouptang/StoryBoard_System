@@ -10,6 +10,9 @@ from app.core.security import create_access_token
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserOut
 from app.services.auth_service import AuthService
+from app.services.user_profile_service import UserProfileService
+from app.schemas.user_profile import UserColorUpdate
+from app.core.exceptions import ConflictError
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -57,3 +60,15 @@ async def register(req: RegisterRequest, db: AsyncSession = db_session):
 @router.get("/me", response_model=UserOut)
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.patch("/me/style", response_model=UserOut)
+async def update_me_style(req: UserColorUpdate, db: AsyncSession = db_session,
+    current_user: User = Depends(get_current_user)):
+    try:
+        return await UserProfileService.update_color(db, current_user, req)
+    except ConflictError as error:
+        raise HTTPException(status_code=409, detail={"code": "USER_REVISION_CONFLICT",
+            "message": error.message, "details": error.details})
+    except DomainError as error:
+        raise _auth_error(error)

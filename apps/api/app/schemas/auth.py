@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class LoginRequest(BaseModel):
@@ -36,6 +36,8 @@ class UserOut(BaseModel):
     id: str
     email: str
     display_name: str
+    annotation_color: str = Field(validation_alias="effective_annotation_color")
+    revision: int
     role_id: Optional[str] = None
     is_active: bool
     role: Optional[RoleOut] = None

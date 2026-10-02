@@ -7,6 +7,12 @@ export interface ReviewComment {
   shot_id: string | null;
   user_id: string | null;
   author_name: string;
+  author_color: string;
+  last_actor_id: string | null;
+  last_actor_color: string;
+  revision: number;
+  event_seq: number;
+  last_activity_seq: number;
   role: string;
   body: string;
   timecode: string;
@@ -68,10 +74,10 @@ export function useCreateReviewComment(shotId: string) {
 export function useUpdateReviewComment(shotId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, body }: { id: string; body: string }) =>
+    mutationFn: ({ id, body, revision }: { id: string; body: string; revision: number }) =>
       apiClient<ReviewComment>(`/api/v1/comments/${id}`, {
         method: 'PATCH',
-        json: { body }
+        json: { body, revision }
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['review-comments', shotId] });
@@ -82,10 +88,10 @@ export function useUpdateReviewComment(shotId: string) {
 export function useResolveReviewComment(shotId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, resolved }: { id: string; resolved: boolean }) =>
+    mutationFn: ({ id, resolved, revision }: { id: string; resolved: boolean; revision: number }) =>
       apiClient<ReviewComment>(`/api/v1/comments/${id}/resolve`, {
         method: 'POST',
-        json: { resolved }
+        json: { resolved, revision }
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['review-comments', shotId] });
@@ -96,8 +102,8 @@ export function useResolveReviewComment(shotId: string) {
 export function useDeleteReviewComment(shotId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      apiClient<void>(`/api/v1/comments/${id}`, { method: 'DELETE' }),
+    mutationFn: ({ id, revision }: { id: string; revision: number }) =>
+      apiClient<void>(`/api/v1/comments/${id}?revision=${revision}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['review-comments', shotId] });
     }

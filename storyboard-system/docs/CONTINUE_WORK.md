@@ -6,6 +6,8 @@
 
 ## 1. 每次开工顺序
 
+2026-10-02 数据库续作增量：`57bea59` 统一项目列和值，`212a388` 增加共享行高策略/builtin 生命周期/outbox；新增批注个人水位/用户色/revision 实施详见 [VNext 数据库实施记录](VNEXT_DATABASE_IMPLEMENTATION_2026-10-02.md)。旧“本轮无DDL/待单独确认”是历史切片，不覆盖用户已明确授权完善数据库。最新用户确认项目级全要素版本（情绪板除外）、镜头级比较及全要素撤销重做；图片资产管理分别解耦实施。基础设施整改由 Luna 新会话推进，避免覆盖其 runtime/CI/Docker/Legacy 收敛改动。不部署。
+
 1. 先读本文及根 `AGENTS.md`；修改具体目录时读最近的 `AGENTS.md`。
 2. 检查 `git status --short`、branch、HEAD；fetch 后核对远端增量。保留其他会话的 dirty、stash、worktree 和未知文件，禁止强推或破坏性清理。
 3. 读 [当前协调账本](ACTIVE_WORKSTREAMS.md) 与 [owner 矩阵](CANONICAL_OWNER_MATRIX.md)，再读任务涉及的下列方案。
