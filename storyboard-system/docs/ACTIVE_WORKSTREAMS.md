@@ -1,5 +1,10 @@
 # FrameForge VNext 原生重构工作簿
 
+## 2026-10-03 本会话新增镜头增量
+
+执行者本会话；现有NewShotRow/NewShotModal、ShotService和表格展示owner内完成自动编号、单位输入、IN/OUT、五列名保护、分隔线及Esc整条取消。代码b856798；针对测试/构建/真实页面通过，无DDL。当前停点是GitHub具体目的地授权被自动审批拒绝；MD已准备，本机额度heartbeat已建立，不扩展旧产品待办。
+
+
 ## 2026-10-02 原生数据库 / 媒体 / 列 / 导出增量
 
 本轮原生增量：UTC PostgreSQL 在线演练；非破坏图片展示记录、实际左右图对比；9 Built-in /20 Preset /N Custom 分类和内置列 SQL/API Purge 保护；独立导出字段 allowlist、PDF 逐页预览、项目交付模板。Alembic 管 schema，既有命令 service 管事务。三列“禁止普通删除”旧规则由最新列模型合同覆盖：现允许软删除/恢复，禁止永久删除；复制/剪切保护仍保留。

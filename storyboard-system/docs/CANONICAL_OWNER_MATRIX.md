@@ -1,5 +1,10 @@
 # FRAMEFORGE canonical owner matrix
 
+## 2026-10-03 新增镜头与表格展示owner
+
+省略镜号的分配仍由ShotService在既有Production锁内负责，显式导入编号保留；时长f/s/m/h输入由Web现有shot-display模块解析，再提交原duration_frames；IN/OUT由Web表格既有累计计时+packages/timecode计算，不新增数据库字段。原始五列名保护由既有表格展示/改名入口负责，custom-field API不提供builtin改名路径。NewShotRow独占本地新增草稿及Esc取消，复用现有create hook；无新状态库、依赖或schema。代码b856798，针对检查与真实消费者通过，本批不改变整体迁移状态。
+
+
 ## 2026-10-02 最新数据库 owner 增量
 
 - `MediaPresentation` / `ImageCropService`：每个 asset/panel/production 的展示 revision，引用不可变 AssetVersion；只追加调整记录，不覆盖源图片、不另造 source-version owner。`image_framing` 为服务端最终渲染，Canvas 仅草稿预览。

@@ -135,3 +135,14 @@ Web production build/TypeScript、diff、Regression Guard通过。默认1318px�
 - 删除及确认按钮红色`#e11d48`、悬停`#be123c`，深浅主题一致；二次确认、失败错误及禁用保持。共享BulkActionToolbar同步应用于卡片/视觉墙的批量操作。
 - 工具八项顺序不变，有限宽度左侧工具可横向滚动；搜索和新增保持同一行，宽屏仍居中。1318/2400px真实页面新增/删除左缘偏差0、三按钮尺寸字号圆角相同；2400搜索中心偏差0，根页面无溢出。真实单选/5条多选与取消已核实，未执行删除。
 - `node tests/frontend/bulk-controls.cjs`边界1/9/10/99/100和原命令/失败/确认回归通过；Webpack production build/TypeScript、diff、Regression Guard通过。3002预览已更新；本机截图`shot-actions-single-2026-10-03.png`、`shot-actions-multiple-2026-10-03.png`不上传。无依赖/API/数据库改动。
+
+## 7. 2026-10-03 新增镜头与列头补充（代码 b856798）
+
+- 镜号自动预填且只读；省略编号的create由ShotService项目锁内生成，显式导入编号保留。
+- 新增行/弹窗共用f/s/m/h输入解析；裸25=25f、25s=25秒、2m=120秒，秒/分/时可用小数，最终按项目帧率取整帧。默认3s；非法输入保留草稿并提示。
+- 时码一列两行IN/OUT，OUT=IN+duration，复用累计顺序与drop-frame换算；不改数据库。
+- 五个原始列名（镜号、分镜画面、时码、时长、镜头标题）禁止改名且触发提示；保护按稳定键识别，不限制合法复制/自定义列的改名。
+- 全选、批注表头补齐与其他列一致的分隔线。
+- 新增草稿按Esc整条取消且清缓存，不再仅回退当前字段，防止blur误提交。已经发出的保存不强行取消。
+- 针对前端检查、backend7项、Webpack/TypeScript和Guard通过；真实Esc关闭/重开、五列提示、IN/OUT及320–1440px检查通过。未修改已有镜头数据。
+- 代码已本地提交；远端master上传受自动审批阻止，待明确目的地授权后继续，具体停点见CONTINUE_WORK.md。本机已设置15分钟额度检查/恢复续作heartbeat。
