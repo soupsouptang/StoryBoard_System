@@ -95,6 +95,15 @@ async def test_nonempty_import_fields_permission_and_standard_audit(tmp_path):
             assert len(audits) == 2
             assert {audit.entity_id for audit in audits} == {shot.id for shot in shots}
             assert all(audit.action == "shot.create" and audit.user_id == "writer" for audit in audits)
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            added = await client.post(path, headers=headers, json={
+                "rows": [["004", "指定镜号"], ["", "自动镜号"]],
+                "mapping": {"number": {"col": 0}, "name": {"col": 1}},
+            })
+            assert added.status_code == 201
+        async with sessions() as session:
+            numbers = (await session.execute(select(Shot.display_number).order_by(Shot.sort_index))).scalars().all()
+            assert numbers == ["010", "002", "004", "005"], 'Generated number must avoid imported numbers'
     finally:
         app.dependency_overrides.pop(get_db, None)
         await engine.dispose()

@@ -24,7 +24,7 @@ export { buttonVariants } from './components/button';
 export { cn } from './lib/utils';
 import {
   AlertTriangle, Archive, ChartNoAxesCombined, ArrowRight, ArrowUpDown, Check, ChevronLeft, ChevronRight,
-  CircleUserRound, Clapperboard, Clock, Clock3, Columns3, Copy, Download, Filter,
+  CircleUserRound, Clapperboard, Clock, Clock3, Columns3, Copy, Scissors, ClipboardPaste, Download, Filter,
   Eye, EyeOff, FileDown, Film, GripVertical, Image, Images, Layers, LayoutGrid, Lightbulb, ListVideo,
   Lock, LockOpen, MessageSquare, Mic, Moon, Palette, PanelRightOpen, Pause, Pencil, Play, Plus,
   RefreshCw, Search, Settings, SlidersHorizontal, Sun, Table2, Trash2, TriangleAlert, Undo2, X
@@ -33,7 +33,7 @@ import {
 // Keep the shared icon surface explicit so a consumer does not bundle all of Lucide.
 export const Icons = {
   AlertTriangle, Archive, ChartNoAxesCombined, ArrowRight, ArrowUpDown, Check, ChevronLeft, ChevronRight,
-  CircleUserRound, Clapperboard, Clock, Clock3, Columns3, Copy, Download, Filter,
+  CircleUserRound, Clapperboard, Clock, Clock3, Columns3, Copy, Scissors, ClipboardPaste, Download, Filter,
   Eye, EyeOff, FileDown, Film, GripVertical, Image, Images, Layers, LayoutGrid, Lightbulb, ListVideo,
   Lock, LockOpen, MessageSquare, Mic, Moon, Palette, PanelRightOpen, Pause, Pencil, Play, Plus,
   RefreshCw, Search, Settings, SlidersHorizontal, Sun, Table2, Trash2, TriangleAlert, Undo2, X

@@ -6,7 +6,10 @@ from sqlalchemy.orm import selectinload
 from app.core.exceptions import DomainError, NotFoundError, ConflictError
 from app.models.collaboration import AuditLog
 from app.models.production import Production
-from app.models.shot import Panel, Shot
+from app.models.shot import Panel, Shot, ProductionStep
+from app.models.asset import ShotAssetLink
+from app.models.field import ShotCustomFieldValue
+from app.services.legacy_import_adapter import legacy_module
 from app.models.user import User
 from app.schemas.shot import BulkUpdateShotsRequest, ShotCreate, ShotPatch, ShotReorderRequest
 
@@ -62,7 +65,7 @@ class ShotService:
     @staticmethod
     async def create_shot(db: AsyncSession, production_id: str, req: ShotCreate, user: User) -> Shot:
         ShotService._require_write(user)
-        p_res = await db.execute(select(Production).where(Production.id == production_id, Production.deleted_at.is_(None)))
+        p_res = await db.execute(select(Production).where(Production.id == production_id, Production.deleted_at.is_(None)).with_for_update())
         if not p_res.scalar_one_or_none():
             raise NotFoundError("项目不存在")
 
@@ -149,7 +152,7 @@ class ShotService:
         *,
         review_only: bool = False,
     ) -> Shot:
-        result = await db.execute(select(Shot).options(selectinload(Shot.panels)).where(Shot.id == shot_id, Shot.deleted_at.is_(None)))
+        result = await db.execute(select(Shot).options(selectinload(Shot.panels)).where(Shot.id == shot_id, Shot.deleted_at.is_(None)).with_for_update().execution_options(populate_existing=True))
         shot = result.scalar_one_or_none()
         if not shot:
             raise NotFoundError("镜头不存在")
@@ -332,11 +335,12 @@ class ShotService:
         """
 
         ShotService._require_write(user)
+        await db.execute(select(Production).where(Production.id == req.production_id).with_for_update())
         result = await db.execute(
-            select(Shot).where(
+            select(Shot).options(selectinload(Shot.panels), selectinload(Shot.steps)).where(
                 Shot.production_id == req.production_id,
                 Shot.deleted_at.is_(None),
-            )
+            ).order_by(Shot.sort_index, Shot.id).with_for_update().execution_options(populate_existing=True)
         )
         active_shots = list(result.scalars().all())
         active_shots.sort(key=lambda shot: (shot.sort_index, shot.id))
@@ -521,3 +525,75 @@ class ShotService:
             "updated_count": updated_count,
             "unchanged_count": unchanged_count,
         }
+
+
+    @staticmethod
+    async def relative_command(db, target_id, req, user):
+        """One transaction for insert/clone/cut placement; no new persistence owner."""
+        ShotService._require_write(user)
+        target = (await db.execute(select(Shot).where(Shot.id == target_id, Shot.deleted_at.is_(None)))).scalar_one_or_none()
+        if target is None: raise NotFoundError("镜头不存在")
+        production = (await db.execute(select(Production).where(Production.id == target.production_id, Production.deleted_at.is_(None)).with_for_update())).scalar_one_or_none()
+        if production is None: raise NotFoundError("项目不存在")
+        active = list((await db.execute(select(Shot).options(selectinload(Shot.panels), selectinload(Shot.steps)).where(Shot.production_id == production.id, Shot.deleted_at.is_(None)).order_by(Shot.sort_index, Shot.id).with_for_update().execution_options(populate_existing=True))).scalars().all())
+        ids = [s.id for s in active]
+        if req.base_order != ids or any(req.revisions.get(s.id) != s.revision for s in active):
+            raise ConflictError("镜头或顺序已变化，请刷新后重试。")
+        by_id = {s.id: s for s in active}
+        if len(req.source_ids) != len(set(req.source_ids)) or any(sid not in by_id for sid in req.source_ids):
+            raise DomainError("剪贴板镜头不属于当前项目或已删除", code="VALIDATION_ERROR")
+        sources = [s for s in active if s.id in req.source_ids]
+        if req.action in {'insert_before', 'insert_after'} and sources:
+            raise DomainError("插入新镜头不接受复制来源", code="VALIDATION_ERROR")
+        if req.action in {'duplicate', 'paste', 'cut_paste'} and not sources:
+            raise DomainError("剪贴板为空", code="VALIDATION_ERROR")
+        if req.action == 'cut_paste' and target_id in req.source_ids:
+            raise DomainError("不能在剪切镜头自身后粘贴", code="VALIDATION_ERROR")
+        moving = []
+        if req.action == 'cut_paste':
+            moving = sources
+        else:
+            for source in sources or [None]:
+                used = {s.display_number for s in active}
+                n = 1
+                while f"{n:03d}" in used: n += 1
+                values = {field: getattr(source, field) for field in ShotCreate.model_fields if hasattr(source, field)} if source else {'name': '新镜头', 'duration_frames': max(1, round(3 * production.fps_num / (production.fps_den or 1)))}
+                values['display_number'] = f"{n:03d}"
+                new = await ShotService.create_shot(db, production.id, ShotCreate(**values), user)
+                if source:
+                    for field in ShotService.PATCH_FIELDS - set(ShotCreate.model_fields): setattr(new, field, getattr(source, field))
+                    for panel in list(new.panels): await db.delete(panel)
+                    new.panels.clear()
+                    for panel in source.panels:
+                        if panel.deleted_at is None:
+                            new.panels.append(Panel(display_number=panel.display_number, sort_index=panel.sort_index, asset_id=panel.asset_id, duration_frames=panel.duration_frames, description=panel.description))
+                    for step in source.steps:
+                        if step.deleted_at is None:
+                            db.add(ProductionStep(shot_id=new.id, **{key: getattr(step, key) for key in ['type','department','owner_id','status','sort_index','input_asset_id','output_asset_id','notes']}))
+                    for link in (await db.execute(select(ShotAssetLink).where(ShotAssetLink.shot_id == source.id))).scalars().all():
+                        db.add(ShotAssetLink(shot_id=new.id, asset_id=link.asset_id, role=link.role))
+                    for value in (await db.execute(select(ShotCustomFieldValue).where(ShotCustomFieldValue.shot_id == source.id))).scalars().all():
+                        db.add(ShotCustomFieldValue(shot_id=new.id, field_definition_id=value.field_definition_id, value=value.value, updated_by=user.id))
+                    ShotService._audit_shot_mutation(db, user_id=user.id, action='shot.clone', shot_id=new.id, metadata={'source_id': source.id})
+                active.append(new); moving.append(new)
+            await db.flush()
+        moving_ids = [s.id for s in moving]
+        remaining = [s.id for s in active if s.id not in moving_ids]
+        position = remaining.index(target_id) + (0 if req.action == 'insert_before' else 1)
+        order = remaining[:position] + moving_ids + remaining[position:]
+        base = sorted(active, key=lambda s: (s.sort_index, s.id))
+        revisions = {s.id: s.revision for s in active}
+        reorder = ShotReorderRequest(production_id=production.id, base_order=[s.id for s in base], items=[{'id': sid, 'revision': revisions[sid], 'sort_index': (i+1)*1000} for i,sid in enumerate(order)])
+        await ShotService.reorder_shots(db, reorder, user)
+        return {'ok': True, 'shot_ids': moving_ids}
+
+    @staticmethod
+    async def auto_time_shot(db, shot_id, req, user):
+        ShotService._require_write(user)
+        shot = (await db.execute(select(Shot).where(Shot.id == shot_id, Shot.deleted_at.is_(None)))).scalar_one_or_none()
+        if shot is None: raise NotFoundError("镜头不存在")
+        if shot.timing_locked or not (shot.voice_over or "").strip():
+            raise DomainError("镜头时长已锁定或没有旁白", code="VALIDATION_ERROR")
+        production = (await db.execute(select(Production).where(Production.id == shot.production_id))).scalar_one()
+        frames = legacy_module('narration_timing').estimate_narration_frames(shot.voice_over, production.fps_num / (production.fps_den or 1), req.speech_rate)
+        return await ShotService.patch_shot(db, shot_id, ShotPatch(revision=req.revision, changes={'duration_frames': frames}), user)

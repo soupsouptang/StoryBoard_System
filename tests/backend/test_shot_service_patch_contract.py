@@ -31,9 +31,12 @@ class _Shot:
     production_id = _Field()
     deleted_at = _Field()
     panels = _Field()
+    steps = _Field()
+    sort_index = _Field()
 
     def __init__(self, shot_id="shot-1", revision=3, department="camera"):
         self.id = shot_id
+        self.display_number = shot_id.rsplit('-', 1)[-1].zfill(3)
         self.production_id = "production-1"
         self.created_by = "creator-1"
         self.created_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
@@ -53,6 +56,15 @@ class _Select:
         return self
 
     def where(self, *conditions):
+        return self
+
+    def order_by(self, *fields):
+        return self
+
+    def with_for_update(self):
+        return self
+
+    def execution_options(self, **options):
         return self
 
 
@@ -137,6 +149,7 @@ def _service_class():
         "ShotReorderRequest": object,
         "BulkUpdateShotsRequest": object,
         "Shot": _Shot,
+        "Production": SimpleNamespace(id=_Field()),
         "User": object,
         "AuditLog": _AuditLog,
         "select": lambda model: _Select(),

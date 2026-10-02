@@ -98,7 +98,7 @@ def map_headers(headers: list[str]) -> dict[str, dict]:
 PDF_IMPORT_HEADERS = ["镜号", "镜头标题", "景别", "焦段", "机位/运镜", "机位角度", "画面描述", "对应旁白", "时长", "备注"]
 
 
-def parse_pdf_storyboard(source: Path, *, with_metadata: bool = False) -> tuple[list[list[str]], list[dict]] | tuple[list[list[str]], list[dict], dict]:
+def parse_pdf_storyboard(source: Path, *, with_metadata: bool = False, preserve_source: bool = False) -> tuple[list[list[str]], list[dict]] | tuple[list[list[str]], list[dict], dict]:
     """Recognize card-style storyboard PDFs as one shot per card/page."""
     try:
         from pypdf import PdfReader
@@ -117,6 +117,7 @@ def parse_pdf_storyboard(source: Path, *, with_metadata: bool = False) -> tuple[
 
     rows: list[list[str]] = [PDF_IMPORT_HEADERS]
     images: list[dict] = []
+    source_blocks: list[str] = []
     text_page_count = 0
     rendered_page_count = 0
     shot_sizes = ("大全景", "中全景", "中近景", "大特写", "全景", "中景", "近景", "特写")
@@ -143,7 +144,7 @@ def parse_pdf_storyboard(source: Path, *, with_metadata: bool = False) -> tuple[
             number = number_match.group(1).zfill(3) if number_match else str(len(rows)).zfill(3)
             size = next((item for item in shot_sizes if item in joined), "")
             lens_match = re.search(r"(?i)(?:建议|焦段|镜头)?\s*[:：]?\s*(\d{1,3}(?:\.\d+)?)\s*mm", joined)
-            duration_match = re.search(r"(?i)(?:时长|duration)\s*[:：]?\s*(\d+(?:\.\d+)?)\s*(?:s|秒)?", joined)
+            duration_match = re.search(r"(?i)(?:时长(?:[（(]秒[)）])?|duration)\s*[:：]?\s*(\d+(?:\.\d+)?)\s*(?:s|秒)?", joined)
             labelled: dict[str, str] = {}
             free_lines: list[str] = []
             for line in lines:
@@ -155,6 +156,7 @@ def parse_pdf_storyboard(source: Path, *, with_metadata: bool = False) -> tuple[
             title = labelled.get("标题") or labelled.get("镜头标题") or (free_lines[0] if free_lines else f"镜头 {number}")
             description = labelled.get("画面描述") or labelled.get("画面") or "\n".join(free_lines[1:] if free_lines and free_lines[0] == title else free_lines)
             notes = [f"{key}：{value}" for key, value in labelled.items() if key not in {"标题", "镜头标题", "画面描述", "画面", "运镜", "机位", "机位角度", "旁白", "对应旁白", "时长", "焦段"}]
+            source_blocks.append(joined)
             rows.append([
                 number, title, size, f"{lens_match.group(1)}mm" if lens_match else "",
                 labelled.get("运镜", ""), labelled.get("机位", labelled.get("机位角度", "")),
@@ -165,6 +167,7 @@ def parse_pdf_storyboard(source: Path, *, with_metadata: bool = False) -> tuple[
             # Scanned/image-only storyboard pages still represent real shots.
             # Keep the page as an importable row and let the preview show the
             # page image instead of failing the whole PDF.
+            source_blocks.append(raw_text)
             rows.append([str(len(rows)).zfill(3), f"PDF 第 {page_index + 1} 页", "", "", "", "", "", "", "", ""])
         candidates = []
         try:
@@ -206,6 +209,23 @@ def parse_pdf_storyboard(source: Path, *, with_metadata: bool = False) -> tuple[
                         raise ValueError(f"PDF 第 {page_index + 1} 页含多镜头，图片无法可靠定位；请使用单镜头分页 PDF 或带 SHOT 编号的图片")
                     row_index = page_row_start + 1 + matches[0]
                 images.append({"data_row": row_index, "filename": _clean_import_filename(Path(image_name).name), "mime": mime, "size": len(raw), "raw": raw})
+    if preserve_source:
+        # Keep the shared PDF recognizer, while exposing original labelled
+        # values and source text to the canonical mapping/preview pipeline.
+        extra_headers: list[str] = []
+        labels_per_row = []
+        for block in source_blocks:
+            labels = {}
+            for line in block.splitlines():
+                match = re.match(r'^([^:：]{1,40})\s*[:：]\s*(.*)$', line)
+                if match:
+                    label = match[1].strip()
+                    if label not in PDF_IMPORT_HEADERS:
+                        labels[label] = match[2].strip()
+                        if label not in extra_headers: extra_headers.append(label)
+            labels_per_row.append(labels)
+        rows[0] = [*PDF_IMPORT_HEADERS, *extra_headers, 'PDF 原文']
+        rows[1:] = [row + [labels.get(h, '') for h in extra_headers] + [block] for row, labels, block in zip(rows[1:],labels_per_row,source_blocks)]
     if len(rows) == 1:
         raise ValueError("PDF 未识别到可导入内容；请确认文件未损坏或已包含可读取页面")
     if with_metadata:
@@ -329,7 +349,7 @@ def parse_xlsx_package(source: bytes | Path, include_image_data: bool = False) -
             drawing_ref = next(iter(root.iter(f"{ns}drawing")), None)
             drawing_target = rel_targets.get(drawing_ref.get(f"{office_rel_ns}id")) if drawing_ref is not None else None
             if drawing_target:
-                drawing_name = posixpath.normpath(posixpath.join(posixpath.dirname(sheet_name), drawing_target))
+                drawing_name = posixpath.normpath(posixpath.join(posixpath.dirname(sheet_name), drawing_target)).lstrip("/")
                 drawing_rel = posixpath.join(posixpath.dirname(drawing_name), "_rels", posixpath.basename(drawing_name) + ".rels")
                 if drawing_name in names and drawing_rel in names:
                     drawing_root = ET.fromstring(zf.read(drawing_name))
@@ -348,7 +368,7 @@ def parse_xlsx_package(source: bytes | Path, include_image_data: bool = False) -
                         media_target = media_targets.get(blip.get(f"{office_rel_ns}embed"))
                         if not media_target:
                             continue
-                        media_name = posixpath.normpath(posixpath.join(posixpath.dirname(drawing_name), media_target))
+                        media_name = posixpath.normpath(posixpath.join(posixpath.dirname(drawing_name), media_target)).lstrip("/")
                         if media_name not in names:
                             continue
                         add_image(int(row_node.text), media_name)
@@ -393,7 +413,7 @@ def parse_xlsx_package(source: bytes | Path, include_image_data: bool = False) -
                     row_match = re.search(r"(\d+)$", ref)
                     if not target or row_match is None:
                         continue
-                    media_name = posixpath.normpath(posixpath.join("xl/richData", target))
+                    media_name = posixpath.normpath(posixpath.join("xl/richData", target)).lstrip("/")
                     add_image(int(row_match.group(1)) - 1, media_name)
             except (ET.ParseError, OSError, ValueError, IndexError):
                 # A malformed optional rich-data part must not prevent the

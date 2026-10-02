@@ -20,9 +20,11 @@ export default function DeliverablesPage() {
   const exportFormats = [
     {
       id: 'csv',
-      title: '分镜制作表（CSV / Excel）',
+      title: '分镜制作表（CSV）',
       desc: '包含完整制作字段、景别、运镜、时码及旁白的 UTF-8 表格，兼容 Excel。'
     },
+    { id: 'xlsx', title: '分镜制作表（Excel）', desc: '导出真实 XLSX 表格，保留镜头字段、自定义列及分镜图片。' },
+    { id: 'docx', title: '分镜制作表（Word）', desc: '导出可编辑 DOCX 表格，包含镜头信息及分镜图片。' },
     {
       id: 'edl',
       title: '时间线交换表（CMX 3600 EDL）',
@@ -41,11 +43,11 @@ export default function DeliverablesPage() {
     {
       id: 'pdf',
       title: '分镜图版（PDF）',
-      desc: '导出用于审片的高清分镜图版（排版引擎迁移中）。'
+      desc: '按镜头分页导出 PDF，包含分镜图片与制作字段。'
     }
   ];
 
-  const supportedFormats = new Set(['csv', 'edl', 'otio', 'srt']);
+  const supportedFormats = new Set(['csv', 'edl', 'otio', 'srt', 'xlsx', 'docx', 'pdf']);
 
   const handleExport = async (formatId: string) => {
     if (!supportedFormats.has(formatId) || downloading) return;

@@ -23,6 +23,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.resolve(__dirname, '.
 });
 const called = [];
 const props = {
+  commands: { canWrite: true, pending: false, clipboard: null, run: (...args) => called.push(args), copy: (...args) => called.push(args) }, canAutoTime: true, onSelectShot: id => called.push(id),
   productionId: 'synthetic', sortKey: 'default', sortDirection: 'asc', wrappedColumns: [],
   onOpenChange() {}, onOpenInspector: id => called.push(id), onClearSelection() {},
   onSort() {}, onClearSort() {}, onAutoFitColumn() {}, onHideColumn() {},
@@ -34,13 +35,15 @@ const render = target => {
   return renderToStaticMarkup(React.createElement(exportsObject.ShotTableContextMenu, { ...props, target }));
 };
 let html = render({ kind: 'row', shotId: 's1', shotIds: ['s1'], displayNumber: '001', cellValue: '', cellLabel: '旁白' });
-assert.match(html, /编辑镜头/);
-assert.match(html, /复制旁白文本/); // Empty values remain copyable.
-actions.find(action => action.label.includes('复制旁白')).onSelect();
-assert.equal(called.pop(), '');
+assert.match(html, /SHOT 001/);
+assert.doesNotMatch(html, /编辑制作方式|编辑镜头/);
+assert.match(html, /单条旁白自动计时/);
+actions.find(action => action.label.includes('在前面插入')).onSelect();
+assert.deepEqual(called.pop(), ['insert_before', 's1']);
 html = render({ kind: 'row', shotId: 's1', shotIds: ['s1', 's2'], displayNumber: '001' });
-assert.doesNotMatch(html, /编辑镜头/);
-assert.match(html, /清除多选/);
+assert.match(html, /选中 SHOT 001/);
+actions.find(action => action.label.includes('复制此镜头')).onSelect();
+assert.deepEqual(called.pop(), ['duplicate', 's1', ['s1','s2']]);
 html = render({ kind: 'custom-column', fieldId: 'f1', revision: 4, label: '拍摄日' });
 actions.find(action => action.label.includes('归档此列')).onSelect();
 assert.deepEqual(called.pop(), ['f1', 4, 'removed']);

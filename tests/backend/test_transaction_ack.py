@@ -11,9 +11,11 @@ from app.core import database
 
 
 @pytest.mark.asyncio
-async def test_commit_precedes_response_and_failure_is_not_success(monkeypatch):
+async def test_commit_precedes_response_and_failure_is_not_success(monkeypatch, tmp_path):
     events = []
+    tracked = tmp_path / 'synthetic-media'; tracked.write_bytes(b'new synthetic file')
     class Session:
+        info = {'created_media_files':[tracked]}
         async def __aenter__(self): return self
         async def __aexit__(self, *args): pass
         async def commit(self):
@@ -38,3 +40,4 @@ async def test_commit_precedes_response_and_failure_is_not_success(monkeypatch):
         response = await client.post('/write')
         assert response.status_code == 500
         assert events == ['write', 'commit', 'rollback', 'close']
+        assert not tracked.exists(), 'Failed outer commit must compensate created media'

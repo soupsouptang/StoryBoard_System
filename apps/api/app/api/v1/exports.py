@@ -144,3 +144,20 @@ async def export_csv(
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"}
     )
+
+
+@router.get('/{document_format}')
+async def export_office_document(production_id: str, document_format: str, db: AsyncSession = db_session, current_user: User = Depends(get_current_user)):
+    from app.services.document_export import export_document, MIMES
+    from app.core.exceptions import DomainError, NotFoundError
+    if document_format not in MIMES:
+        raise HTTPException(404, detail={"code": "NOT_FOUND", "message": "不支持该导出格式"})
+    try:
+        title, content = await export_document(db, production_id, document_format, current_user)
+    except NotFoundError as exc:
+        raise HTTPException(404, detail={"code": exc.code, "message": exc.message})
+    except DomainError as exc:
+        raise HTTPException(403 if exc.code == 'FORBIDDEN' else 400, detail={"code": exc.code, "message": exc.message})
+    safe_name = re.sub(r'[\\/:*?"<>|\x00-\x1f]', '_', title).strip(' .')[:160] or 'Storyboard'
+    filename = urllib.parse.quote(f'{safe_name}.{document_format}')
+    return Response(content=content, media_type=MIMES[document_format], headers={'Content-Disposition': f"attachment; filename*=UTF-8''{filename}"})

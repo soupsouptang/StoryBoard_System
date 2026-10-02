@@ -1,8 +1,6 @@
 """Authenticated image storage for the first storyboard panel of a shot."""
 from __future__ import annotations
 
-import os
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
@@ -15,10 +13,9 @@ from app.core.exceptions import NotFoundError
 from app.models.asset import Asset
 from app.models.production import Production
 from app.models.user import User
-from app.services.panel_media_service import PanelMediaService, ShotRevisionConflict
+from app.services.panel_media_service import PanelMediaService, ShotRevisionConflict, MEDIA_ROOT
 
 router = APIRouter(tags=["Panel Media"])
-MEDIA_ROOT = Path(os.environ.get("FRAMEFORGE_MEDIA_DIR", Path(__file__).resolve().parents[3] / "media"))
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
 

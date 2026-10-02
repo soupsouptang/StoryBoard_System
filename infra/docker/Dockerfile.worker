@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app/apps/api
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl ffmpeg \
+    curl ffmpeg libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY apps/api/requirements.txt /app/requirements.txt
@@ -16,5 +16,8 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY apps/api /app/apps/api
 COPY apps/worker /app/apps/worker
 COPY packages /app/packages
+# Pure shared parsers and licensed fonts only; no legacy server/database owner.
+COPY storyboard-system/import_parsing.py storyboard-system/narration_timing.py storyboard-system/delivery_exports.py /app/storyboard-system/
+COPY apps/web/public/fonts /app/apps/web/public/fonts
 
 CMD ["python", "apps/worker/worker.py"]

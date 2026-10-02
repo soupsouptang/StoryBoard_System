@@ -12,6 +12,7 @@ interface ImportModalProps {
   onClose: () => void;
 }
 
+type ImportImage = {row_index: number; filename: string; mime: string; data_base64: string};
 type ImportMapping = Record<string, { col: number; raw_header: string; confidence: number; manual?: boolean }>;
 
 const IMPORT_FIELDS = [
@@ -19,6 +20,7 @@ const IMPORT_FIELDS = [
   ['voiceover', '对应旁白'], ['duration', '时长（秒）'], ['duration_frames', '帧数'],
   ['shot_size', '景别'], ['lens_mm', '焦段'], ['movement', '机位/运镜'],
   ['camera_angle', '机位角度'], ['primary_method', '制作方式'],
+  ['dialogue', '对白'], ['performance', '表演提示'], ['action', '动作'], ['panel_frame', '分镜图框'], ['status', '状态'],
   ['department', '责任部门'], ['owner_id', '负责人'], ['director_notes', '导演备注']
 ] as const;
 
@@ -32,6 +34,8 @@ export function ImportModal({ production, isOpen, onClose }: ImportModalProps) {
   const [importedCount, setImportedCount] = useState<number | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<ImportMapping>({});
+  const [images, setImages] = useState<ImportImage[]>([]);
+  const [warnings, setWarnings] = useState<string[]>([]);
   const [rawRows, setRawRows] = useState<string[][]>([]);
   const totalRows = rawRows.filter(row => row.some(cell => cell.trim())).length;
   const samplePreview = useMemo(() => rawRows.slice(0, 10).map(row =>
@@ -41,10 +45,11 @@ export function ImportModal({ production, isOpen, onClose }: ImportModalProps) {
   const previewFile = async (selected: File) => {
     if (isLoading) return;
     setError(null);
-    if (!/\.(xlsx|csv)$/i.test(selected.name)) {
-      setError('请选择 .xlsx 或 .csv 文件；旧版 .xls 请先另存为 .xlsx。');
+    if (!/\.(xlsx|csv|docx|pdf|jpg|jpeg|png)$/i.test(selected.name)) {
+      setError('支持 Excel（XLSX）、Word（DOCX）、PDF、JPG、PNG、CSV；旧版 XLS/DOC 请先另存为新版。');
       return;
     }
+    if (selected.size > 40 * 1024 * 1024) { setError('文件不得超过 40 MB。'); return; }
     setIsLoading(true);
     setImportedCount(null);
     try {
@@ -55,7 +60,7 @@ export function ImportModal({ production, isOpen, onClose }: ImportModalProps) {
         reader.onabort = () => reject(new Error('文件读取已取消。'));
         reader.readAsDataURL(selected);
       });
-      const res = await apiClient<{ headers: string[]; mapping: ImportMapping; raw_rows: string[][] }>(
+      const res = await apiClient<{ headers: string[]; mapping: ImportMapping; raw_rows: string[][]; images: ImportImage[]; warnings: string[] }>(
         `/api/v1/productions/${production.id}/import-preview`, {
           method: 'POST', json: { filename: selected.name, file_base64: dataUrl.split(',')[1] }
         }
@@ -65,7 +70,7 @@ export function ImportModal({ production, isOpen, onClose }: ImportModalProps) {
       setMapping(Object.fromEntries(Object.entries(res.mapping).filter(([field]) =>
         IMPORT_FIELDS.some(([key]) => key === field)
       )));
-      setRawRows(res.raw_rows);
+      setRawRows(res.raw_rows); setImages(res.images); setWarnings(res.warnings);
       setStep(2);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '解析表格失败');
@@ -87,13 +92,14 @@ export function ImportModal({ production, isOpen, onClose }: ImportModalProps) {
     try {
       const result = await apiClient<{ ok: boolean; imported_count: number }>(
         `/api/v1/productions/${production.id}/import-commit`, {
-          method: 'POST', json: { rows: rawRows, mapping }
+          method: 'POST', json: { rows: rawRows, mapping, headers, images }
         }
       );
       if (!result.ok) throw new Error('导入未完成，请重试。');
       setImportedCount(result.imported_count);
       await queryClient.invalidateQueries({ queryKey: ['shots', production.id] });
       await queryClient.invalidateQueries({ queryKey: ['production', production.id] });
+      for (const key of ['assets','custom-fields','custom-field-values']) await queryClient.invalidateQueries({ queryKey: [key, production.id] });
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '导入入库失败');
     } finally {
@@ -109,6 +115,8 @@ export function ImportModal({ production, isOpen, onClose }: ImportModalProps) {
             setStep(1);
             setMapping({});
             setRawRows([]);
+            setImages([]);
+            setWarnings([]);
             setFileName('');
             setImportedCount(null);
           }
@@ -130,7 +138,9 @@ export function ImportModal({ production, isOpen, onClose }: ImportModalProps) {
           <span className={`${step === 3 ? 'text-foreground font-bold' : ''}`}>3. 数据预览与确认入库</span>
         </div>
 
-        {error && <p role="alert" className="shrink-0 px-4 pt-3 text-sm text-destructive sm:px-6">{error}</p>}
+        {images.length > 0 && <p className="px-6 py-2 text-xs text-muted-foreground">保留 {images.length} 张分镜图片；未映射列保留为导入原文。</p>}
+          {warnings.map((warning,index) => <p key={index} role="status" className="px-6 py-2 text-xs text-muted-foreground">{warning}</p>)}
+          {error && <p role="alert" className="shrink-0 px-4 pt-3 text-sm text-destructive sm:px-6">{error}</p>}
         {importedCount !== null && <p role="status" className="shrink-0 px-4 pt-3 text-sm sm:px-6">成功导入 {importedCount} 个分镜镜头。</p>}
 
         {/* Content Area */}
@@ -147,13 +157,13 @@ export function ImportModal({ production, isOpen, onClose }: ImportModalProps) {
               <Icons.FileDown className="h-12 w-12 text-foreground mb-4" />
               <h4 className="text-sm font-bold text-foreground mb-1">选择或拖放分镜制作表</h4>
               <p className="text-muted-foreground mb-6 max-w-sm leading-relaxed">
-                支持 Excel (.xlsx) 首个工作表及 CSV 文件。上传后核对表头映射，再预览确认导入。
+                支持 Excel（首个工作表）、Word 表格、PDF 与扫描 PDF、JPG/PNG、CSV。识别后核对字段映射，再预览确认导入。
               </p>
               <Button variant="default" size="sm" disabled={isLoading} onClick={() => inputRef.current?.click()}>
                 浏览本地文件
               </Button>
-              <input ref={inputRef} type="file" accept=".xlsx,.csv" onChange={handleFileChange} hidden aria-label="分镜制作表文件" />
-              {isLoading && <span className="mt-4 font-mono text-foreground">正在解析表格结构...</span>}
+              <input ref={inputRef} type="file" accept=".xlsx,.csv,.docx,.pdf,.jpg,.jpeg,.png" onChange={handleFileChange} hidden aria-label="分镜制作表文件" />
+              {isLoading && <span className="mt-4 font-mono text-foreground">正在解析文档与识别文字…</span>}
             </div>
           )}
 
@@ -182,7 +192,7 @@ export function ImportModal({ production, isOpen, onClose }: ImportModalProps) {
                         label={`${label}的表格列`}
                         value={info ? String(info.col) : '__none__'}
                         disabled={isLoading || importedCount !== null}
-                        options={[{ value: '__none__', label: '不导入' }, ...headers.map((header, index) => ({
+                        options={[{ value: '__none__', label: '不映射（保留原文）' }, ...headers.map((header, index) => ({
                           value: String(index), label: `[${index + 1}列] ${header || '空表头'}`
                         }))]}
                         onChange={value => setMapping(current => {

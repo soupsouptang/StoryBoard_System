@@ -19,7 +19,7 @@ from app.schemas.shot import (
     ShotCreate,
     ShotOut,
     ShotPatch,
-    ShotReorderRequest
+    ShotReorderRequest, ShotRelativeCommand, ShotAutoTimingRequest
 )
 from app.services.shot_service import ShotService
 from app.core.exceptions import DomainError, NotFoundError, ConflictError
@@ -239,3 +239,26 @@ async def bulk_update_shots(
         )
     except DomainError as e:
         raise _domain_http(e)
+
+
+@router.post("/shots/{id}/relative-command")
+async def relative_shot_command(id: str, req: ShotRelativeCommand, db: AsyncSession = db_session, current_user: User = Depends(get_current_user)):
+    try:
+        return await ShotService.relative_command(db, id, req, current_user)
+    except NotFoundError as error:
+        raise HTTPException(404, detail={"code": error.code, "message": error.message})
+    except ConflictError as error:
+        raise HTTPException(409, detail={"code": error.code, "message": error.message})
+    except DomainError as error:
+        raise _domain_http(error)
+
+@router.post("/shots/{id}/auto-timing", response_model=ShotOut)
+async def auto_time_shot(id: str, req: ShotAutoTimingRequest, db: AsyncSession = db_session, current_user: User = Depends(get_current_user)):
+    try:
+        return await ShotService.auto_time_shot(db, id, req, current_user)
+    except NotFoundError as error:
+        raise HTTPException(404, detail={"code": error.code, "message": error.message})
+    except ConflictError as error:
+        raise HTTPException(409, detail={"code": error.code, "message": error.message})
+    except DomainError as error:
+        raise _domain_http(error)

@@ -7,8 +7,6 @@ from __future__ import annotations
 import csv
 import io
 import re
-import zipfile
-from xml.etree import ElementTree as ET
 
 # Comprehensive Field Aliases Dictionary (Spec Section 115)
 ALIASES: dict[str, list[str]] = {
@@ -16,17 +14,22 @@ ALIASES: dict[str, list[str]] = {
     "name": ["镜头标题", "标题", "内容", "镜头内容", "shot title", "title", "name", "镜头名称"],
     "chapter": ["篇章", "章节", "幕", "chapter", "act", "sequence", "seq", "篇章名称"],
     "scene": ["场景", "地点", "场景/地点", "scene", "location", "int/ext", "内外景"],
-    "description": ["画面描述", "画面内容", "画面", "分镜画面", "description", "visual", "action", "画面设计", "画面构图"],
-    "voiceover": ["对应旁白", "旁白", "解说词", "配音", "voiceover", "vo", "narration", "dialogue", "对白", "台词"],
+    "description": ["画面描述", "画面内容", "画面", "description", "visual", "画面设计", "画面构图"],
+    "voiceover": ["对应旁白", "旁白", "解说词", "配音", "voiceover", "vo", "narration"],
     "duration": ["时长", "时长(秒)", "时长（秒）", "duration", "seconds", "sec", "length", "建议时长"],
     "duration_frames": ["帧数", "frames", "frame count", "duration frames", "规划帧数"],
     "shot_size": ["景别", "shot size", "framing", "size", "镜头景别"],
-    "lens_mm": ["焦段", "建议焦段", "镜头焦段", "镜头", "lens", "focal", "镜头毫米数"],
+    "lens_mm": ["焦段", "建议焦段", "镜头焦段", "lens", "focal", "镜头毫米数"],
     "movement": ["机位/运镜", "运镜", "镜头运动", "movement", "camera movement", "camera", "机位运镜", "运镜方式"],
     "camera_angle": ["机位角度", "角度", "angle", "camera angle", "拍摄角度"],
     "primary_method": ["制作方式", "执行方式", "拍摄方式", "制作类型", "method", "production method", "execution", "制作属性"],
     "department": ["责任部门", "责任组", "部门", "department", "dept", "制作部门"],
     "owner_id": ["负责人", "执行人", "owner", "assignee", "artist", "责任人"],
+    "dialogue": ["对白", "dialogue", "台词"],
+    "performance": ["表演提示", "performance"],
+    "action": ["动作", "action"],
+    "panel_frame": ["分镜图框", "panel frame"],
+    "status": ["状态", "status"],
     "director_notes": ["备注", "制作备注", "导演备注", "notes", "director notes", "comment", "注意事项"],
     "vfx": ["vfx", "特效", "视效", "cg", "vfx requirement", "视效需求"]
 }
@@ -49,53 +52,16 @@ def parse_csv(content: bytes) -> list[list[str]]:
     rows: list[list[str]] = []
     for r in reader:
         if any(c.strip() for c in r):
-            rows.append([c.strip() for c in r])
+            rows.append(list(r))
     return rows
 
 
 def parse_xlsx_stdlib(content: bytes) -> list[list[str]]:
     """Zero-dependency standard library .xlsx parser using zipfile + ElementTree."""
-    rows: list[list[str]] = []
-    try:
-        with zipfile.ZipFile(io.BytesIO(content)) as zf:
-            # 1. Read shared strings if present
-            shared_strings: list[str] = []
-            if "xl/sharedStrings.xml" in zf.namelist():
-                ss_tree = ET.fromstring(zf.read("xl/sharedStrings.xml"))
-                for si in ss_tree.findall(".//{http://schemas.openxmlformats.org/spreadsheetml/2006/main}si"):
-                    t_nodes = si.findall(".//{http://schemas.openxmlformats.org/spreadsheetml/2006/main}t")
-                    shared_strings.append("".join(t.text or "" for t in t_nodes))
-
-            # 2. Read first sheet
-            sheet_name = "xl/worksheets/sheet1.xml"
-            if sheet_name not in zf.namelist():
-                # find first sheet
-                for name in zf.namelist():
-                    if name.startswith("xl/worksheets/sheet") and name.endswith(".xml"):
-                        sheet_name = name
-                        break
-
-            if sheet_name in zf.namelist():
-                sheet_tree = ET.fromstring(zf.read(sheet_name))
-                for row_node in sheet_tree.findall(".//{http://schemas.openxmlformats.org/spreadsheetml/2006/main}row"):
-                    row_cells: list[str] = []
-                    for c_node in row_node.findall("{http://schemas.openxmlformats.org/spreadsheetml/2006/main}c"):
-                        cell_type = c_node.get("t")
-                        v_node = c_node.find("{http://schemas.openxmlformats.org/spreadsheetml/2006/main}v")
-                        val = v_node.text if v_node is not None and v_node.text else ""
-
-                        if cell_type == "s" and val.isdigit():
-                            idx = int(val)
-                            val = shared_strings[idx] if idx < len(shared_strings) else val
-
-                        row_cells.append(str(val).strip())
-
-                    if any(row_cells):
-                        rows.append(row_cells)
-    except Exception as exc:
-        print(f"Error parsing xlsx via stdlib: {exc}")
-
-    return rows
+    from app.services.document_import import check_archive
+    from app.services.legacy_import_adapter import legacy_module
+    check_archive(content)
+    return legacy_module('import_parsing').parse_xlsx_rows(content)
 
 
 def parse_table(content: bytes, filename: str) -> list[list[str]]:
@@ -114,6 +80,7 @@ def map_headers(headers: list[str]) -> dict[str, dict]:
 
     for col_idx, raw_header in enumerate(headers):
         clean = re.sub(r"[\s_（）()\-_]+", "", str(raw_header).lower())
+        if clean in {'镜头','分镜画面','时码tc'}: continue
         if not clean:
             continue
 

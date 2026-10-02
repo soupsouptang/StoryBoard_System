@@ -2,30 +2,42 @@
 from __future__ import annotations
 
 import base64
-from typing import Any
+from typing import Any, Annotated
+from starlette.concurrency import run_in_threadpool
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.deps import get_current_user
 from app.core.database import db_session
 from app.core.exceptions import DomainError, NotFoundError
 from app.models.user import User
-from app.services.importer import map_headers, parse_table
+from app.services.importer import map_headers
+from app.services.document_import import parse_document, MAX_FILE_BYTES
 from app.services.import_service import ImportService
 
 router = APIRouter(prefix="/productions/{production_id}", tags=["Imports"])
 
 
 class ImportPreviewRequest(BaseModel):
-    filename: str
-    file_base64: str
+    filename: str = Field(max_length=255)
+    file_base64: str = Field(max_length=(MAX_FILE_BYTES + 2) // 3 * 4)
 
+
+Cell = Annotated[str, Field(max_length=10000)]
+
+class ImportImagePayload(BaseModel):
+    row_index: int = Field(ge=0, le=9999, strict=True)
+    filename: str = Field(default='image.png', max_length=255)
+    mime: str | None = Field(default=None, max_length=128)
+    data_base64: str = Field(max_length=14*1024*1024)
 
 class ImportCommitRequest(BaseModel):
-    rows: list[list[str]]
+    rows: list[Annotated[list[Cell], Field(max_length=200)]] = Field(max_length=10000)
     mapping: dict[str, dict[str, Any]]
     sequence_id: str | None = None
+    headers: list[Annotated[str, Field(max_length=1000)]] | None = Field(default=None, max_length=200)
+    images: list[ImportImagePayload] = Field(default_factory=list, max_length=1000)
 
 
 @router.post("/import-preview")
@@ -37,11 +49,24 @@ async def preview_table_import(
 ):
     """Parse uploaded Excel/CSV file, match headers, and return preview sample."""
     try:
-        content = base64.b64decode(req.file_base64)
+        await ImportService.require_production(db, production_id, current_user)
+    except NotFoundError as exc:
+        raise HTTPException(404, detail={"code": exc.code, "message": exc.message})
+    except DomainError as exc:
+        raise HTTPException(403, detail={"code": exc.code, "message": exc.message})
+    if len(req.file_base64) > (MAX_FILE_BYTES + 2) // 3 * 4:
+        raise HTTPException(413, detail={"code": "FILE_TOO_LARGE", "message": "文件不得超过 40 MB"})
+    try:
+        content = base64.b64decode(req.file_base64, validate=True)
     except Exception:
         raise HTTPException(status_code=400, detail={"code": "INVALID_FILE", "message": "文件 Base64 解码失败"})
 
-    rows = parse_table(content, req.filename)
+    try:
+        parsed = await run_in_threadpool(parse_document, content, req.filename)
+    except Exception as exc:
+        message = str(exc) if isinstance(exc, ValueError) else '文档损坏、格式不受支持或无法识别，请检查文件。'
+        raise HTTPException(400, detail={"code": "INVALID_FILE", "message": message}) from exc
+    rows = parsed['rows']
     if not rows:
         raise HTTPException(status_code=400, detail={"code": "EMPTY_TABLE", "message": "无法解析表格内容或表格为空"})
 
@@ -62,7 +87,7 @@ async def preview_table_import(
         "headers": headers,
         "mapping": mapping,
         "sample_preview": preview_sample,
-        "raw_rows": data_rows
+        "raw_rows": data_rows, "images": parsed["images"], "warnings": parsed["warnings"]
     }
 
 
@@ -77,7 +102,7 @@ async def commit_table_import(
     try:
         return await ImportService.commit_table_import(
             db, production_id, rows=req.rows, mapping=req.mapping,
-            sequence_id=req.sequence_id, user=current_user,
+            sequence_id=req.sequence_id, user=current_user, headers=req.headers, images=[image.model_dump() for image in req.images],
         )
     except NotFoundError as exc:
         raise HTTPException(404, detail={"code": exc.code, "message": exc.message})

@@ -8,6 +8,8 @@ import { framesToTimecode } from '@frameforge/timecode';
 import { useParams } from 'next/navigation';
 import type { Sequence, Shot } from '@frameforge/types';
 import { useProduction, useReorderShots, useShots, useUpdateShot } from '@/lib/hooks/useProduction';
+import { useShotCommands } from '@/lib/hooks/useShotCommands';
+import { ImportModal } from '@/components/storyboard/ImportModal';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useCustomFields, useCustomFieldValues, useSetCustomFieldState } from '@/lib/hooks/useCustomFields';
 import { MethodBadge } from '@/components/shot/MethodBadge';
@@ -104,6 +106,8 @@ export default function ShotListPage() {
   const updateShot = useUpdateShot(id);
   const setCustomFieldState = useSetCustomFieldState(id);
   const reorderShots = useReorderShots(id);
+  const commands = useShotCommands(id, shots);
+  const [isImportOpen, setImportOpen] = useState(false);
 
   const [isTrashOpen, setIsTrashOpen] = useState(false);
   const [wrappedColumns, setWrappedColumns] = useState<ShotTableColumnKey[]>([]);
@@ -129,6 +133,7 @@ export default function ShotListPage() {
     x: number;
     y: number;
   } | null>(null);
+  const suppressReorderClickRef = useRef(false);
   const reorderDragRef = useRef<{
     pointerId: number;
     sourceId: string;
@@ -425,6 +430,7 @@ export default function ShotListPage() {
     y: number,
     cellElement?: HTMLElement
   ) => {
+    void commands.refreshClipboard();
     const validSelectedIds = selectedShotIds.filter(selectedId =>
       shots.some(candidate => candidate.id === selectedId)
     );
@@ -699,6 +705,7 @@ export default function ShotListPage() {
     event: React.PointerEvent<HTMLButtonElement>
   ) => {
     event.stopPropagation();
+    suppressReorderClickRef.current = false;
     if (sortKey !== 'default' || sortDirection !== 'asc' || groupMode !== 'none' || reorderShots.isPending) return;
 
     event.preventDefault();
@@ -810,6 +817,7 @@ export default function ShotListPage() {
     if (!drag || drag.pointerId !== event.pointerId) return;
 
     if (drag.active) {
+      suppressReorderClickRef.current = true;
       event.preventDefault();
       event.stopPropagation();
     }
@@ -912,6 +920,7 @@ export default function ShotListPage() {
           </div>
 
           <div className="flex min-w-0 flex-wrap items-center gap-1">
+            <Button variant="ghost" size="sm" disabled={!commands.canWrite} onClick={() => setImportOpen(true)}><Icons.FileDown className="h-3.5 w-3.5" />导入</Button>
             <Button
               variant={showFilters || activeFilterCount > 0 || groupMode !== 'none' ? 'secondary' : 'ghost'}
               size="sm"
@@ -1285,6 +1294,14 @@ export default function ShotListPage() {
                         );
                       }}
                       onKeyDown={event => {
+                        if ((event.target as HTMLElement).closest('input,textarea,select,[contenteditable="true"]')) return;
+                        if ((event.metaKey || event.ctrlKey) && ['c','x','v'].includes(event.key.toLowerCase())) {
+                          event.preventDefault(); event.stopPropagation();
+                          const ids = selectedShotIds.includes(shot.id) ? selectedShotIds : [shot.id];
+                          if (event.key.toLowerCase() === 'v') void commands.paste(shot.id);
+                          else if (event.key.toLowerCase() === 'c' || commands.canWrite) void commands.copy(ids, event.key.toLowerCase() === 'x');
+                          return;
+                        }
                         if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
                           event.preventDefault();
                           const rect = event.currentTarget.getBoundingClientRect();
@@ -1327,7 +1344,6 @@ export default function ShotListPage() {
                           isSelected ? 'bg-accent' : 'bg-card group-hover:bg-accent'
                         }`}
                       >
-                        <div className="flex min-w-0 items-center gap-1">
                           <button
                             type="button"
                             aria-label={
@@ -1340,8 +1356,11 @@ export default function ShotListPage() {
                                 ? '拖动调整镜头顺序；聚焦后使用 ↑ / ↓ 微调'
                                 : '清除分组并恢复默认升序后可调整镜头顺序'
                             }
-                            disabled={!canReorder || reorderShots.isPending}
-                            onClick={event => event.stopPropagation()}
+                            onClick={event => {
+                              event.stopPropagation();
+                              if (!suppressReorderClickRef.current) selectShot(shot.id, event.shiftKey, event.ctrlKey || event.metaKey, visibleShotIds);
+                              suppressReorderClickRef.current = false;
+                            }}
                             onDoubleClick={event => event.stopPropagation()}
                             onPointerDown={event => beginShotReorder(shot.id, event)}
                             onPointerMove={moveShotReorder}
@@ -1358,12 +1377,11 @@ export default function ShotListPage() {
                                 void moveShotByKeyboard(shot.id, 1);
                               }
                             }}
-                            className="flex h-6 w-5 shrink-0 cursor-grab items-center justify-center rounded-sm text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-25"
+                            className={`flex h-7 w-full min-w-0 items-center gap-1 rounded-md px-1 text-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring ${canReorder && !reorderShots.isPending ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
                           >
-                            <Icons.GripVertical className="h-3.5 w-3.5" aria-hidden="true" />
+                            <Icons.GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                            <span className="min-w-0 truncate">{shot.display_number}</span>
                           </button>
-                          <span className="min-w-0 truncate">{shot.display_number}</span>
-                        </div>
                       </td>
                       {visibleColumns.map(column => {
                         if (PENDING_SHOT_TABLE_COLUMNS.has(column)) return <td data-shot-column={column} key={column} className={`px-3 ${rowPadding} text-muted-foreground`} title="此列暂不可编辑">—</td>;
@@ -1548,7 +1566,12 @@ export default function ShotListPage() {
         )}
       </div>
 
+      {production && <ImportModal production={production} isOpen={isImportOpen} onClose={() => setImportOpen(false)} />}
+      {commands.error && <p role="alert" className="px-3 py-2 text-xs text-destructive">{commands.error}</p>}
       <ShotTableContextMenu
+        commands={commands}
+        canAutoTime={contextTarget?.kind === 'row' && Boolean(shots.find(shot => shot.id === contextTarget.shotId && !shot.timing_locked && shot.voice_over?.trim()))}
+        onSelectShot={shotId => selectShot(shotId, false, false, visibleShotIds)}
         productionId={production.id}
         target={contextTarget}
         sortKey={sortKey}

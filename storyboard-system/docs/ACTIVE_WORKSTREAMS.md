@@ -1,5 +1,13 @@
 # FrameForge 并行迁移工作簿
 
+## 2026-10-02 已确认需求实施
+
+| 范围 | 当前 owner / 证据 | 剩余门槛 | 状态 |
+| --- | --- | --- | --- |
+| 镜头表及右键命令 | V-Web 单一选择、行内草稿、冻结列、镜号/六点统一拖拽；V-API ShotService 完整顺序/revision/审计事务及连续编号；真实合成浏览器复制/粘贴/剪切/计时与五种宽度检查，详见执行记录 | 叠卡拖动中截图、悬停视觉、多 Panel/完整基线对等 | INTEGRATED_NOT_CUT_OVER；部分视觉门槛未齐 |
+| 文档及 OCR | V-Web ImportModal/交付导出 → V-API document_import/document_export/ImportService；复用三个 Legacy 纯模块；三格式下载回读、Excel/PNG 浏览器入库、扫描 PDF/JPG 后端真实 OCR、失败文件回滚 | append 以外导入模式、生产 OCR 队列/媒体持久迁移、容器构建 | INTEGRATED_NOT_CUT_OVER |
+| 数据库待确认 | 需求 8 个人已读/颜色；需求 11 待确认语义。独立方案 UI_DATABASE_PLAN_2026-10-02.md | 用户单独确认后执行数据库设计与迁移 | BLOCKED；本轮无 DDL |
+
 ## 2026-09-30 增量
 
 - 数据库 URL 配对、ProductionService/AuthService 拆分、镜头图片/文字图框、项目封面、项目起始时码和 Alembic head 合并均已上传；GitHub 写权限已恢复。`9611be3` 的 CI、Regression Guard 与 PostgreSQL 空库升级通过，实际数据副本迁移仍未完成。

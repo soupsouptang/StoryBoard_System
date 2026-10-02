@@ -69,6 +69,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.commit()
         except Exception:
             await session.rollback()
+            for path in getattr(session, "info", {}).get("created_media_files", []):
+                path.unlink(missing_ok=True)
             raise
         finally:
             await session.close()

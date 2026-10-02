@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
   Icons
 } from '@frameforge/ui';
+import type { useShotCommands } from '@/lib/hooks/useShotCommands';
 import { useBulkTrashShots } from '@/lib/hooks/useProduction';
 import {
   SHOT_TABLE_COLUMN_LABELS,
@@ -60,6 +61,9 @@ export type ShotTableContextTarget =
 
 interface ShotTableContextMenuProps {
   productionId: string;
+  commands: ReturnType<typeof useShotCommands>;
+  canAutoTime: boolean;
+  onSelectShot: (id: string) => void;
   target: ShotTableContextTarget | null;
   sortKey: string;
   sortDirection: 'asc' | 'desc';
@@ -98,6 +102,7 @@ function isManagedColumn(
 
 export function ShotTableContextMenu({
   productionId,
+  commands, canAutoTime, onSelectShot,
   target,
   sortKey,
   sortDirection,
@@ -260,61 +265,30 @@ export function ShotTableContextMenu({
           {target?.kind === 'row' && (
             <>
               <DropdownMenuLabel>
-                {target.shotIds.length > 1
-                  ? '已选 ' + target.shotIds.length + ' 个镜头'
-                  : 'SHOT ' + target.displayNumber + (target.name ? ' · ' + target.name : '')}
+                <span className="block text-xs text-muted-foreground">镜头操作</span>
+                SHOT {target.displayNumber}{target.name ? ' · ' + target.name : ''}
               </DropdownMenuLabel>
-
-              {target.shotIds.length === 1 && (
-                <DropdownMenuItem
-                  onSelect={() => onOpenInspector(target.shotId)}
-                >
-                  <Icons.PanelRightOpen className="mr-2 h-4 w-4" />
-                  编辑镜头 / 制作方式
-                  <DropdownMenuShortcut>Enter</DropdownMenuShortcut>
-                </DropdownMenuItem>
-              )}
-
-              {target.cellValue !== undefined && (
-                <DropdownMenuItem onSelect={() => onCopyCell(target.cellValue!)}>
-                  <Icons.Copy className="mr-2 h-4 w-4" />
-                  复制{target.cellLabel || '单元格'}文本
-                </DropdownMenuItem>
-              )}
-
-              {target.shotIds.length > 1 && (
-                <DropdownMenuItem onSelect={onClearSelection}>
-                  <Icons.X className="mr-2 h-4 w-4" />
-                  清除多选
-                </DropdownMenuItem>
-              )}
-
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onSelect={() =>
-                  requestTrash(
-                    target.shotIds,
-                    target.shotIds.length > 1
-                      ? target.shotIds.length + ' 个镜头'
-                      : 'SHOT ' + target.displayNumber
-                  )
-                }
-              >
-                <Icons.Trash2 className="mr-2 h-4 w-4" />
-                {target.shotIds.length > 1
-                  ? '将已选 ' + target.shotIds.length + ' 个镜头移入废纸篓…'
-                  : '移入废纸篓…'}
+              <DropdownMenuItem onSelect={() => onSelectShot(target.shotId)}><Icons.Check className="mr-2 h-4 w-4" />选中 SHOT {target.displayNumber}</DropdownMenuItem>
+              <DropdownMenuItem disabled={!canAutoTime || !commands.canWrite || commands.pending} onSelect={() => commands.run('auto_timing', target.shotId)}><Icons.Clock3 className="mr-2 h-4 w-4" />单条旁白自动计时</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled={!commands.canWrite || commands.pending} onSelect={() => commands.run('insert_before', target.shotId)}><span className="mr-2 w-4 text-center">↑</span>在前面插入镜头</DropdownMenuItem>
+              <DropdownMenuItem disabled={!commands.canWrite || commands.pending} onSelect={() => commands.run('insert_after', target.shotId)}><span className="mr-2 w-4 text-center">↓</span>在后面插入镜头</DropdownMenuItem>
+              <DropdownMenuItem disabled={!commands.canWrite || commands.pending} onSelect={() => commands.run('duplicate', target.shotId, target.shotIds)}><Icons.Copy className="mr-2 h-4 w-4" />复制此镜头</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => void commands.copy(target.shotIds)}><Icons.Copy className="mr-2 h-4 w-4" />复制到剪贴板<DropdownMenuShortcut>Ctrl/Cmd+C</DropdownMenuShortcut></DropdownMenuItem>
+              <DropdownMenuItem disabled={!commands.canWrite || commands.pending} onSelect={() => void commands.copy(target.shotIds, true)}><Icons.Scissors className="mr-2 h-4 w-4" />剪切到剪贴板<DropdownMenuShortcut>Ctrl/Cmd+X</DropdownMenuShortcut></DropdownMenuItem>
+              <DropdownMenuItem disabled={!commands.canWrite || commands.pending || !commands.clipboard || (commands.clipboard.cut && commands.clipboard.sources.some(source => source.id === target.shotId))} onSelect={() => void commands.paste(target.shotId)}><Icons.ClipboardPaste className="mr-2 h-4 w-4" />在此镜头后粘贴<DropdownMenuShortcut>Ctrl/Cmd+V</DropdownMenuShortcut></DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled={!commands.canWrite || commands.pending} className="text-destructive focus:text-destructive" onSelect={() => requestTrash(target.shotIds, target.shotIds.length > 1 ? target.shotIds.length + ' 个镜头' : 'SHOT ' + target.displayNumber)}>
+                <Icons.Trash2 className="mr-2 h-4 w-4" />{target.shotIds.length > 1 ? '删除所选镜头' : '删除此镜头'}
               </DropdownMenuItem>
             </>
           )}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={onNewShot}>
-            <Icons.Plus className="mr-2 h-4 w-4" />新建镜头…
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={onOpenTrash}>
-            <Icons.Trash2 className="mr-2 h-4 w-4" />打开废纸篓 / 恢复镜头…
-          </DropdownMenuItem>
+          {target?.kind !== 'row' && <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem disabled={!commands.canWrite} onSelect={onNewShot}><Icons.Plus className="mr-2 h-4 w-4" />新建镜头…</DropdownMenuItem>
+            <DropdownMenuItem onSelect={onOpenTrash}><Icons.Trash2 className="mr-2 h-4 w-4" />打开废纸篓 / 恢复镜头…</DropdownMenuItem>
+          </>}
         </DropdownMenuContent>
       </DropdownMenu>
 

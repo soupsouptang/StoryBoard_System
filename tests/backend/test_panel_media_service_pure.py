@@ -26,7 +26,7 @@ class Model:
 class Session:
     def __init__(self, shot=None, fail_commit=False):
         self.shot, self.fail_commit = shot, fail_commit
-        self.added = []
+        self.added = []; self.info = {}; self.flushed = False
         self.committed = self.rolled_back = False
 
     async def execute(self, query):
@@ -35,17 +35,17 @@ class Session:
     def add(self, value):
         self.added.append(value)
 
-    async def commit(self):
+    async def flush(self):
         if self.fail_commit:
             raise RuntimeError("Synthetic commit failure")
-        self.committed = True
+        self.flushed = True
 
     async def rollback(self):
         self.rolled_back = True
 
 
 # Execute the actual service with inert query/models; never import the database module.
-scope = dict(AsyncSession=Session, Shot=Model, Panel=Model, Asset=Model,
+scope = dict(__file__=str(ROOT / "apps/api/app/services/panel_media_service.py"), AsyncSession=Session, Shot=Model, Panel=Model, Asset=Model,
              ShotAssetLink=Model, AuditLog=Model, select=lambda *args: Query(),
              delete=lambda *args: Query())
 exec(compile((ROOT / "apps/api/app/core/exceptions.py").read_text(), "exceptions", "exec"), scope)
@@ -85,10 +85,10 @@ async def check():
             try:
                 result = await Service.save_panel_image(db, **args)
             except RuntimeError:
-                assert fail_commit and db.rolled_back
+                assert fail_commit and not db.committed
                 assert list(root.iterdir()) == [], "Failed commit must remove written files"
             else:
-                assert not fail_commit and db.committed
+                assert not fail_commit and db.flushed and not db.committed
                 assert result["revision"] == 5
                 assert (root / f'{result["asset_id"]}.png').read_bytes() == b"synthetic"
                 assert db.added[1].filename == "frame.png"

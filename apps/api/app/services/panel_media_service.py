@@ -1,6 +1,7 @@
 """Panel image storage and Shot/Asset persistence commands."""
 from __future__ import annotations
 
+import os
 import hashlib
 import uuid
 from datetime import datetime, timezone
@@ -14,6 +15,8 @@ from app.models.asset import Asset, ShotAssetLink
 from app.models.collaboration import AuditLog
 from app.models.shot import Panel, Shot
 
+
+MEDIA_ROOT = Path(os.environ.get("FRAMEFORGE_MEDIA_DIR", Path(__file__).resolve().parents[2] / "media"))
 
 class ShotRevisionConflict(ConflictError):
     def __init__(self, server_revision: int, client_revision: int):
@@ -64,9 +67,10 @@ class PanelMediaService:
         extension: str,
         user_id: str,
         media_root: Path,
+        panel: Panel | None = None,
     ) -> dict[str, str | int]:
         shot_id = shot.id
-        panel = (await db.execute(
+        panel = panel or (await db.execute(
             select(Panel).where(Panel.shot_id == shot_id, Panel.deleted_at.is_(None))
             .order_by(Panel.sort_index, Panel.id).limit(1)
         )).scalar_one_or_none()
@@ -96,10 +100,12 @@ class PanelMediaService:
                 created_by=user_id,
             )
             db.add(asset)
-            await db.execute(delete(ShotAssetLink).where(
-                ShotAssetLink.shot_id == shot_id,
-                ShotAssetLink.role == "storyboard",
-            ))
+            if getattr(panel, 'asset_id', None):
+                await db.execute(delete(ShotAssetLink).where(
+                    ShotAssetLink.shot_id == shot_id,
+                    ShotAssetLink.role == "storyboard",
+                    ShotAssetLink.asset_id == panel.asset_id,
+                ))
             db.add(ShotAssetLink(shot_id=shot_id, asset_id=asset_id, role="storyboard"))
             panel.asset_id = asset_id
             shot.revision += 1
@@ -111,9 +117,9 @@ class PanelMediaService:
                 entity_id=shot_id,
                 metadata_json={"asset_id": asset_id, "revision": shot.revision},
             ))
-            await db.commit()
+            db.info.setdefault("created_media_files", []).append(target)
+            await db.flush()
         except Exception:
-            await db.rollback()
             temporary.unlink(missing_ok=True)
             target.unlink(missing_ok=True)
             raise
