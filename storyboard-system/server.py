@@ -34,6 +34,7 @@ from delivery_exports import (
     frames_to_tc, tc_to_frames, generate_cmx3600_edl, generate_otio_json,
     generate_fcpxml, generate_srt_subtitles, generate_vtt_subtitles,
 )
+from portable_project_export import export_portable_project
 from shot_updates import ShotConflict, ShotNotFound, ShotUpdateError, update_single_shot
 from shot_bulk_updates import BulkShotConflict, BulkShotError, update_bulk_shots
 from asset_cleanup import asset_usage_reasons, project_asset_cleanup_plan
@@ -945,6 +946,7 @@ def export_project_backup(db, project_id):
     bundle = project_bundle(db, project_id, include_deleted=True)
     if not bundle:
         raise ValueError("项目不存在")
+    bundle["_portable_project"] = export_portable_project(bundle)
     records = {}
     for table in BACKUP_PROJECT_TABLES:
         key = "id" if table == "projects" else "project_id"
