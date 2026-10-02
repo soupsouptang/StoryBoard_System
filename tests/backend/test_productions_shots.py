@@ -1,5 +1,6 @@
 """Pytest Suite for Productions, Shots, Soft Delete, Reordering, and Revision Conflicts."""
 import asyncio
+import base64
 import os
 import sys
 from datetime import datetime
@@ -411,7 +412,7 @@ async def test_production_write_permission_and_soft_delete():
 @pytest.mark.asyncio
 async def test_panel_frame_text_and_authenticated_image(tmp_path, monkeypatch):
     monkeypatch.setattr(panel_media, "MEDIA_ROOT", tmp_path)
-    image_bytes = b"\x89PNG\r\n\x1a\n" + b"panel-frame-test"
+    image_bytes = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgZGIGAAAOAAfXb+R4AAAAAElFTkSuQmCC")
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         login = await client.post("/api/v1/auth/login", json={
             "email": "admin@company.internal",
