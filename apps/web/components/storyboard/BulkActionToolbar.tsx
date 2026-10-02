@@ -56,7 +56,7 @@ export function BulkActionToolbar({ production }: BulkActionToolbarProps) {
     <div
       role="toolbar"
       aria-label="镜头批量操作"
-      className="flex w-full shrink-0 flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-3 py-2.5 text-xs md:px-4"
+      className="flex w-full shrink-0 flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-4 py-2.5 text-xs"
     >
       <div className="flex shrink-0 items-center gap-2 pr-3">
         <span className="flex h-5 w-7 items-center justify-center rounded-md bg-blue-500 px-1 font-mono tabular-nums text-[11px] font-bold text-white">
@@ -136,7 +136,7 @@ export function BulkActionToolbar({ production }: BulkActionToolbarProps) {
         />
       </div>
 
-      <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5 border-l border-border pl-3">
+      <div className="ml-auto mr-6 flex flex-wrap items-center justify-end gap-2 border-l border-border pl-3">
 
 
         {confirmingTrash ? (
@@ -147,7 +147,7 @@ export function BulkActionToolbar({ production }: BulkActionToolbarProps) {
               size="sm"
               disabled={isBusy}
               onClick={() => void handleBulkTrash()}
-              className="h-8 text-xs"
+              className="h-9 w-[100px] bg-[#e11d48] text-sm tracking-normal hover:bg-[#be123c] dark:bg-[#e11d48] dark:hover:bg-[#be123c]"
             >
               {bulkTrash.isPending ? '处理中…' : '确认'}
             </Button>
@@ -156,7 +156,7 @@ export function BulkActionToolbar({ production }: BulkActionToolbarProps) {
               size="sm"
               disabled={isBusy}
               onClick={() => setConfirmingTrash(false)}
-              className="h-8 text-xs"
+              className="h-9 w-[100px] text-sm tracking-normal"
             >
               取消
             </Button>
@@ -168,9 +168,9 @@ export function BulkActionToolbar({ production }: BulkActionToolbarProps) {
             disabled={isBusy}
             onClick={() => setConfirmingTrash(true)}
             aria-label={`删除 ${selectedShotIds.length} 个镜头`}
-            className="flex h-8 w-[122px] shrink-0 items-center justify-center gap-0.5 text-xs"
+            className="flex h-9 w-[100px] shrink-0 items-center justify-center gap-0 bg-[#e11d48] text-sm tracking-normal hover:bg-[#be123c] dark:bg-[#e11d48] dark:hover:bg-[#be123c]"
           >
-            删除<span className="inline-block w-[2ch] text-center font-mono tabular-nums">{Math.min(selectedShotIds.length, 99)}</span><span className="inline-block w-[1em] text-center">{selectedShotIds.length > 99 ? '+' : '个'}</span>镜头
+            {selectedShotIds.length === 1 ? '删除镜头' : <>删除<span className="inline-block w-[2ch] text-center tabular-nums">{selectedShotIds.length > 99 ? '···' : selectedShotIds.length}</span>镜</>}
           </Button>
         )}
         <Button
@@ -182,7 +182,7 @@ export function BulkActionToolbar({ production }: BulkActionToolbarProps) {
             setActionError(null);
             clearSelection();
           }}
-          className="h-8 text-xs text-muted-foreground"
+          className="h-9 w-[100px] text-sm tracking-normal text-muted-foreground"
         >
           取消选择
         </Button>

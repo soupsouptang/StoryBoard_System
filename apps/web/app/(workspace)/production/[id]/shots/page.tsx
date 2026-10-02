@@ -1046,7 +1046,7 @@ export default function ShotListPage() {
             </span>
           </div>
         </div>
-        <div className="grid min-w-0 grid-cols-[minmax(max-content,1fr)_minmax(11rem,20rem)_minmax(max-content,1fr)] items-center gap-2 overflow-x-auto [&_button]:h-9 [&_button]:text-sm [&_svg]:h-4 [&_svg]:w-4" role="group" aria-label="镜头查询与工具">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_11rem_max-content] items-center gap-2 overflow-x-auto 2xl:grid-cols-[minmax(max-content,1fr)_minmax(11rem,20rem)_minmax(max-content,1fr)] [&_button]:h-9 [&_button]:text-sm [&_svg]:h-4 [&_svg]:w-4" role="group" aria-label="镜头查询与工具">
           <div className="relative col-start-2 row-start-1 w-full min-w-0">
             <Icons.Search aria-hidden="true" className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -1058,7 +1058,7 @@ export default function ShotListPage() {
               className="w-full min-w-0 pl-8"
             />
           </div>
-          <div className="col-start-1 row-start-1 flex w-max flex-nowrap items-center justify-start gap-2">
+          <div className="col-start-1 row-start-1 flex w-max max-w-full flex-nowrap items-center justify-start gap-2 overflow-x-auto">
             <Button variant="ghost" size="sm" disabled={!commands.canWrite} onClick={() => setImportOpen(true)}><Icons.FileDown className="h-3.5 w-3.5" />导入</Button>
             <Button
               variant={showFilters || activeFilterCount > 0 || groupMode !== 'none' ? 'secondary' : 'ghost'}
@@ -1125,7 +1125,7 @@ export default function ShotListPage() {
               </span>
             )}
           </div>
-          <Button size="sm" className="col-start-3 row-start-1 mr-6 justify-self-end" onClick={() => setNewShotRowOpen(true)}>
+          <Button size="sm" className="col-start-3 row-start-1 mr-[132px] h-9 w-[100px] justify-self-end text-sm tracking-normal" onClick={() => setNewShotRowOpen(true)}>
             <Icons.Plus aria-hidden="true" />新增镜头
           </Button>
         </div>

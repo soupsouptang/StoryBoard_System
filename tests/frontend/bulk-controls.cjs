@@ -78,6 +78,7 @@ const textIncludes = (value, node = tree) => {
 };
 const flush = () => new Promise(resolve => setImmediate(resolve));
 const plain = value => JSON.parse(JSON.stringify(value));
+const text = node => node == null ? '' : typeof node === 'object' ? (node.children || []).map(text).join('') : String(node);
 
 async function main() {
   render();
@@ -94,8 +95,10 @@ async function main() {
     render();
     const deletion = buttons().find(node => node.props['aria-label'] === `删除 ${count} 个镜头`);
     assert.ok(deletion);
-    assert.match(deletion.props.className, /w-\[122px\]/);
-    assert.ok(textIncludes(count > 99 ? '+' : '个', deletion));
+    assert.match(deletion.props.className, /h-9 w-\[100px\]/);
+    assert.equal(text(deletion), count === 1 ? '删除镜头' : `删除${count > 99 ? '···' : count}镜`);
+    assert.match(button('取消选择').props.className, /h-9 w-\[100px\]/);
+    if (count > 1) assert.ok(all(node => node.type === 'span' && node.props.className.includes('w-[2ch]'), deletion).length === 1);
     assert.ok(!textIncludes('个镜头已选'));
   }
   selectedShotIds = ['shot-A', 'shot-C'];
