@@ -1,7 +1,7 @@
 """Asset, AssetVersion, ShotAssetLink, StockAssetMetadata and ClientAssetRequest Models."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -86,7 +86,7 @@ class ClientAssetRequest(Base):
 
     shot_id: Mapped[str] = mapped_column(ForeignKey("shots.id", ondelete="CASCADE"), index=True)
     requested_from: Mapped[str] = mapped_column(String(255), default="")
-    requested_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    requested_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
     received_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     status: Mapped[str] = mapped_column(String(64), default="requested")
     notes: Mapped[str] = mapped_column(Text, default="")

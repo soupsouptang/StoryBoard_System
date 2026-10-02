@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import AsyncGenerator
 from fastapi import Depends
-from sqlalchemy import MetaData, create_engine
+from sqlalchemy import DateTime, MetaData, create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 from app.core.config import settings
@@ -21,6 +21,7 @@ convention = {
 
 class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=convention)
+    type_annotation_map = {datetime: DateTime(timezone=True)}
 
     id: Mapped[str] = mapped_column(primary_key=True, default=lambda: str(uuid.uuid4()))
     created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))

@@ -12,6 +12,7 @@ on:
       - "apps/api/requirements-dev.lock"
       - "apps/api/pyproject.toml"
       - "apps/api/uv.lock"
+      - "tools/postgres_rehearsal.py"
       - ".github/workflows/postgres-migration.yml"
   pull_request:
     branches: [master]
@@ -24,6 +25,7 @@ on:
       - "apps/api/requirements-dev.lock"
       - "apps/api/pyproject.toml"
       - "apps/api/uv.lock"
+      - "tools/postgres_rehearsal.py"
       - ".github/workflows/postgres-migration.yml"
   workflow_dispatch:
 
@@ -45,19 +47,19 @@ jobs:
         env:
           POSTGRES_USER: frameforge
           POSTGRES_PASSWORD: frameforge_ci
-          POSTGRES_DB: frameforge_ci
+          POSTGRES_DB: frameforge_ci_rehearsal
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U frameforge -d frameforge_ci"
+          --health-cmd "pg_isready -U frameforge -d frameforge_ci_rehearsal"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
       ENVIRONMENT: "test"
       SECRET_KEY: "synthetic-postgres-ci-secret-key-only-not-for-use"
-      DATABASE_URL: "postgresql+asyncpg://frameforge:frameforge_ci@127.0.0.1:5432/frameforge_ci"
-      DATABASE_SYNC_URL: "postgresql+psycopg://frameforge:frameforge_ci@127.0.0.1:5432/frameforge_ci"
+      DATABASE_URL: "postgresql+asyncpg://frameforge:frameforge_ci@127.0.0.1:5432/frameforge_ci_rehearsal"
+      DATABASE_SYNC_URL: "postgresql+psycopg://frameforge:frameforge_ci@127.0.0.1:5432/frameforge_ci_rehearsal"
       PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -73,23 +75,15 @@ jobs:
       - name: Upgrade fresh PostgreSQL database to head
         working-directory: apps/api
         run: python -m alembic -c alembic.ini upgrade head
-      - name: Verify canonical tables and Alembic version
-        working-directory: apps/api
+      - name: Verify PostgreSQL ORM writes, constraints, locks and rollback
+        run: python tools/postgres_rehearsal.py --disposable
+      - name: Rehearse synthetic backup and recovery
+        env:
+          PGPASSWORD: frameforge_ci
         run: |
-          python - <<'PY'
-          from sqlalchemy import create_engine, inspect, text
-          from app.core.config import settings
-
-          engine = create_engine(settings.DATABASE_SYNC_URL)
-          with engine.connect() as connection:
-              tables = set(inspect(connection).get_table_names())
-              required = {"alembic_version", "users", "productions", "shots", "audit_logs"}
-              missing = sorted(required - tables)
-              if missing:
-                  raise SystemExit(f"missing migrated tables: {missing}")
-              revision = connection.execute(text("select version_num from alembic_version")).scalar_one()
-              if not revision:
-                  raise SystemExit("alembic_version is empty")
-              print(f"PASS: PostgreSQL migrated to {revision}; {len(tables)} tables present")
-          engine.dispose()
-          PY
+          pg_dump -h 127.0.0.1 -U frameforge -Fc frameforge_ci_rehearsal -f "$RUNNER_TEMP/rehearsal.dump"
+          createdb -h 127.0.0.1 -U frameforge frameforge_restore_rehearsal
+          pg_restore -h 127.0.0.1 -U frameforge -d frameforge_restore_rehearsal --exit-on-error "$RUNNER_TEMP/rehearsal.dump"
+          DATABASE_URL="postgresql+asyncpg://frameforge:frameforge_ci@127.0.0.1:5432/frameforge_restore_rehearsal" \
+          DATABASE_SYNC_URL="postgresql+psycopg://frameforge:frameforge_ci@127.0.0.1:5432/frameforge_restore_rehearsal" \
+          python tools/postgres_rehearsal.py --disposable --verify-restored
