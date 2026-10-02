@@ -269,7 +269,7 @@ CREATE TABLE column_layouts (
 | creative_boards | id、production_id/kind/name text、schema_version integer、width/height numeric、settings/environment JSONB、deleted_at NULL | unique(project,id)；kind=moodboard/lighting；尺寸>0；project/kind索引；Board revision统一 |
 | board_shot_links | production_id/board_id/shot_id text | PK(board,shot)；双composite FK；project/shot索引；Shot软删保留，硬删先解绑 |
 | board_objects | id、production_id/board_id/kind text、schema_version integer、sort_index numeric、x/y/z numeric NULL、rotation/scale/properties JSONB、asset_version_id NULL、deleted_at NULL | unique(project,id)、board内原对象ID唯一；board/asset FK；board/order索引；Moodboard z NULL，Lighting有限cm |
-| media_crops | id、production_id/asset_version_id text、panel_id/board_object_id NULL、x/y/w/h numeric、ratio_num/den integer、fit_mode text、rotation_degrees numeric | owner恰一个且unique；asset/owner FK；0≤x,y<1，w,h>0，x+w/y+h≤1，ratio>0；crop revision不覆盖原图 |
+| media_presentations | id、production_id/asset_version_id text、owner_type/owner_id text、crop_x/crop_y/crop_w/crop_h numeric、scale/translation_x/translation_y numeric、ratio_num/ratio_den integer、fit_mode text、rotation_degrees/straighten_degrees/perspective_horizontal/perspective_vertical numeric、flip_horizontal/flip_vertical boolean、revision bigint | unique(project,owner_type,owner_id)；asset/owner同项目校验；crop 使用0～1归一化坐标并受边界约束；presentation revision只描述显示变换，永不覆盖 AssetVersion 原始字节；Panel/封面等不同 owner 可独立构图 |
 | provider_profiles | id、production_id NULL、capability/name/provider_kind/model_version text、config JSONB、secret_reference NULL、enabled/local_default boolean | scope/capability/name unique（系统NULL scope需partial unique）；kind local/external；不存secret正文；配置不是外发许可 |
 | external_processing_grants | id、production_id/actor_id/provider_profile_id/capability/input_digest text、scope JSONB、expires_at、revoked_at NULL | provider/actor FK；project/provider/expiry索引；绑定已审阅正文范围/版本与目的；撤销阻断queued发送 |
 | processing_jobs | id、production_id/kind/actor_id/command_id/input_digest text、input_ref/expected_revisions/checkpoint JSONB、schema_revision/purge_epoch bigint、status text、attempt/max_attempts integer、lease_until/cancelled_at NULL、error_code/grant_id NULL | unique(project,actor,command)，project/id unique；grant FK；status/lease与project/time索引；revision CAS；不把正文放公共日志 |
@@ -283,6 +283,10 @@ CREATE TABLE column_layouts (
 | tts_renders | id、production_id/provider_profile_id/input_digest/voice/model/language/pronunciation_version text、rate numeric、shot_id/column_id/version_id/audio_artifact_id NULL、duration_ms/sample_count bigint NULL、sample_rate integer NULL、sample_kind/status text | 缓存唯一键含scope+输入+provider/model/voice/rate/lang/词典；FK同项目；rate>0；project/shot/column索引；真实duration绑定audio |
 | command_receipts | production_id/actor_id/command_id/request_digest text、result_ref JSONB、committed_at | PK(project,actor,command)；同事务，无value副本；重试结果按现权限/tombstone再过滤 |
 | outbox_events | id、production_id/command_id/event_type text、entity_ids JSONB、revision bigint、published_at NULL、attempt integer | unique(project,command,type)；未发布time索引；同事务写提交后发，不含正文/秘密 |
+
+媒体编辑的数据合同采用“immutable source + versioned presentation”：上传后的原始文件与 AssetVersion 为不可变事实；裁剪、缩放、平移、旋转、拉直、透视和翻转只更新 media_presentations。编辑 command 记录 expected presentation revision，成功后 revision +1；Undo/Redo 恢复 presentation 状态而不是复制旧文件。“恢复原图”表示回到 identity presentation，不删除历史 AssetVersion。
+
+Review 的 Before/After 读取两个明确 revision 的 AssetVersion + media presentation，并渲染成实际图片供视觉比较。数据库可以保存参数用于可复现渲染、审计和版本恢复，但 Review API/UI 不以 crop 数值或 transform JSON 作为用户主要差异展示。派生缩略图/预览是可失效 artifact，presentation revision 改变后必须按 dependency 使旧缓存失效并允许 GC；不得把派生图当新的原图版本。
 
 旧 exports 先引用 job/artifact，消费者迁完后变兼容投影并退出，不能长期两套 export 状态机。全套表不是一次上线要求；具体迁移批次、源数据回填与回滚演练尚待完善，见交接文档。schema 确认后才写 Alembic。
 
