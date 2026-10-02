@@ -1,4 +1,5 @@
 import uuid
+import re
 from datetime import datetime, timezone
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -75,15 +76,21 @@ class ShotService:
         max_sort = max_res.scalar() or 0.0
         new_sort = max_sort + 1000.0
 
+        display_number = req.display_number
+        if display_number is None:
+            numbers = (await db.execute(select(Shot.display_number).where(
+                Shot.production_id == production_id, Shot.deleted_at.is_(None)))).scalars()
+            display_number = f"{max((int(number) for number in numbers if re.fullmatch(r'[0-9]+', number)), default=0) + 1:03d}"
+
         sid = str(uuid.uuid4())
         shot = Shot(
             id=sid,
             production_id=production_id,
             sequence_id=req.sequence_id,
             scene_id=req.scene_id,
-            display_number=req.display_number,
+            display_number=display_number,
             sort_index=new_sort,
-            name=req.name,
+            name=req.name or (f"镜头 {display_number}" if req.display_number is None else req.name),
             description=req.description,
             panel_frame=req.panel_frame,
             action=req.action,

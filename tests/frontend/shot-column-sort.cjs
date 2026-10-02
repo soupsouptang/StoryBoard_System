@@ -20,7 +20,8 @@ assert(!layout.columnOrder.includes('panel_frame'));
 assert(!layout.columnOrder.includes('original_number'));
 assert.deepEqual(Array.from(layout.displayOrder), ['custom:take','name']);
 assert.equal(layout.columnWidths['custom:take'], 560);
-assert.equal(layout.columnLabels.name, '标题');
+assert.equal(layout.columnLabels.name, undefined, 'Original system column names cannot be replaced by saved layouts');
+assert.equal(normalize({columnLabels:{'custom:title': '镜头标题'}}).columnLabels['custom:title'], '镜头标题');
 assert(!layout.columnLabels.movement_reference);
 console.log('Column numeric/text/pinyin ordering, empty values and retired-column layout checks passed.');
 

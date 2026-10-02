@@ -18,6 +18,7 @@ import {
 import type { ProductionMethod, Production, Sequence } from '@frameforge/types';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useCreateShot } from '@/lib/hooks/useProduction';
+import { parseShotDuration } from '@/lib/shot-display';
 
 interface NewShotModalProps {
   production: Production;
@@ -48,7 +49,7 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
   const [description, setDescription] = useState('');
   const [voiceover, setVoiceover] = useState('');
   const [primaryMethod, setProductionMethod] = useState<ProductionMethod>('live');
-  const [durationSeconds, setDurationSeconds] = useState(3.0);
+  const [durationInput, setDurationInput] = useState('3s');
   const [shotSize, setShotSize] = useState('全景');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,26 +57,15 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (isSubmitting) return;
-    const number = displayNumber.trim();
-    const durationFrames = Math.round(durationSeconds * fps);
+    let durationFrames: number;
     const selectedSequenceId = sequenceId && sequenceId !== 'unassigned' ? sequenceId : null;
     setError(null);
-    if (!number || number.length > 64) {
-      setError('请输入 1–64 个字符的镜号。');
-      return;
-    }
-    if (existingNumbers?.some(value => value.trim() === number)) {
-      setError('此镜号已存在，请使用其他镜号。');
-      return;
-    }
     if (name.trim().length > 255) {
       setError('镜头标题不能超过 255 个字符。');
       return;
     }
-    if (!Number.isFinite(durationSeconds) || durationSeconds < 0.1 || !Number.isSafeInteger(durationFrames) || durationFrames < 1) {
-      setError('请输入有效的规划时长，至少 0.1 秒且不少于一帧。');
-      return;
-    }
+    try { durationFrames = parseShotDuration(durationInput, fps); }
+    catch (cause) { setError((cause as Error).message); return; }
     if (selectedSequenceId && !sequences.some(sequence => sequence.id === selectedSequenceId)) {
       setError('所选篇章已不可用，请重新选择。');
       return;
@@ -83,9 +73,8 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
     try {
       setIsSubmitting(true);
       await createShot.mutateAsync({
-        display_number: number,
         sequence_id: selectedSequenceId,
-        name: name.trim() || `镜头 ${number}`,
+        name: name.trim() || undefined,
         description,
         voice_over: voiceover,
         primary_method: primaryMethod,
@@ -135,11 +124,10 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
               <Field label="镜号 (Display Number)">
                 <Input
                   type="text"
-                  required
+                  readOnly
                   maxLength={64}
                   value={displayNumber}
-                  onChange={event => setDisplayNumber(event.target.value)}
-                  placeholder="例如：081"
+                  title="镜号自动生成，排序后自动更新"
                   className="font-mono font-bold"
                 />
               </Field>
@@ -204,14 +192,12 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
                 />
               </Field>
 
-              <Field label="规划时长 (秒)">
+              <Field label="规划时长（f帧 / s秒 / m分 / h时）">
                 <Input
-                  type="number"
-                  step="0.1"
-                  min="0.1"
+                  type="text"
                   required
-                  value={durationSeconds}
-                  onChange={event => setDurationSeconds(Number(event.target.value))}
+                  value={durationInput}
+                  onChange={event => setDurationInput(event.target.value)}
                   className="font-mono"
                 />
               </Field>

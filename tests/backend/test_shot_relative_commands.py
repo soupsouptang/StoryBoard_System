@@ -51,3 +51,21 @@ async def test_relative_commands_clone_move_number_and_reject_stale(tmp_path):
         reader = User(role=Role(permissions={}))
         with pytest.raises(DomainError, match='权限'): await ShotService.relative_command(db, first.id, stale, reader)
     await engine.dispose()
+
+@pytest.mark.asyncio
+async def test_automatic_number_is_assigned_by_server_and_explicit_import_number_preserved(tmp_path):
+    engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path/'automatic.db'}")
+    async with engine.begin() as conn: await conn.run_sync(Base.metadata.create_all)
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+    async with sessions() as db:
+        user = User(email='auto@example.invalid', password_hash='unused', role=Role(name='writer',permissions={'shot.write':True}))
+        prod = Production(name='Synthetic')
+        db.add_all([user,prod]); await db.flush()
+        first = await ShotService.create_shot(db,prod.id,ShotCreate(),user)
+        second = await ShotService.create_shot(db,prod.id,ShotCreate(),user)
+        assert (first.display_number,second.display_number)==('001','002')
+        imported = await ShotService.create_shot(db,prod.id,ShotCreate(display_number='015'),user)
+        third = await ShotService.create_shot(db,prod.id,ShotCreate(),user)
+        assert imported.display_number=='015' and third.display_number=='016'
+        assert third.name=='镜头 016' and third.sort_index>imported.sort_index
+    await engine.dispose()

@@ -57,7 +57,7 @@ class ProductionOut(BaseModel):
 
 
 class ShotCreate(BaseModel):
-    display_number: str = "001"
+    display_number: Optional[str] = None
     sequence_id: Optional[str] = None
     scene_id: Optional[str] = None
     name: Optional[str] = None

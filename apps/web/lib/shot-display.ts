@@ -1,5 +1,16 @@
 import type { Shot } from '@frameforge/types';
 
+export function parseShotDuration(input: string, fps: number): number {
+  const match = /^(\d+(?:\.\d+)?|\.\d+)\s*([fsmh]?)$/i.exec(input.trim());
+  const value = match ? Number(match[1]) : NaN;
+  const unit = match?.[2].toLowerCase() || 'f';
+  const frames = unit === 'f' ? value : Math.round(value * fps * (unit === 'h' ? 3600 : unit === 'm' ? 60 : 1));
+  if (!Number.isFinite(fps) || fps <= 0 || !Number.isSafeInteger(frames) || frames < Math.max(1, Math.ceil(0.1 * fps))) {
+    throw new Error('请输入有效时长：25或25f为帧数，25s为秒，2m为分钟，1h为小时；至少0.1秒。');
+  }
+  return frames;
+}
+
 export function shotMovementLabel(
   shot: Pick<Shot, 'camera_movement'>,
   fallback = '固定'

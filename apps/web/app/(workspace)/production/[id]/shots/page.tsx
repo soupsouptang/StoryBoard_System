@@ -37,6 +37,7 @@ import { shotMovementLabel, shotMethodValues, groupShotsByMethod } from '@/lib/s
 import {
   DEFAULT_SHOT_TABLE_COLUMN_ORDER,
   SHOT_TABLE_COLUMN_LABELS,
+  PROTECTED_SHOT_COLUMN_NAMES,
   PENDING_SHOT_TABLE_COLUMNS,
   clampShotTableColumnWidth,
   compareShotColumnValues,
@@ -681,17 +682,17 @@ export default function ShotListPage() {
   );
 
   const shotTimecodes = useMemo(() => {
-    const result: Record<string, string> = {};
+    const result: Record<string, { in: string; out: string }> = {};
     let frame = production?.start_timecode_frames || 0;
     const rate = production ? production.fps_num / (production.fps_den || 1) : 24;
-    for (const shot of canonicalShots) { result[shot.id] = framesToTimecode(frame, rate, production?.drop_frame); frame += shot.duration_frames; }
+    for (const shot of canonicalShots) { result[shot.id] = { in: framesToTimecode(frame, rate, production?.drop_frame), out: framesToTimecode(frame + shot.duration_frames, rate, production?.drop_frame) }; frame += shot.duration_frames; }
     return result;
   }, [canonicalShots, production]);
 
   const valueForColumn = (shot: Shot, column: string) => {
     const field = customFields.find(field => field.column_key === column);
     return field ? (customFieldValueMatrix?.values[shot.id]?.[field.id] === undefined ? field.default_value : customFieldValueMatrix?.values[shot.id]?.[field.id])
-      : column === 'tc_in' ? shotTimecodes[shot.id] : shotColumnValue(shot, column as ShotTableContextColumnKey);
+      : column === 'tc_in' ? shotTimecodes[shot.id]?.in : shotColumnValue(shot, column as ShotTableContextColumnKey);
   };
   const placeColumns = (columns: string[], reference: string, after: boolean, shownBuiltins: ShotTableColumnKey[] = []) => {
     commitTablePresentation(current => {
@@ -749,6 +750,7 @@ export default function ShotListPage() {
     } catch (cause) { setClipboardMessage(cause instanceof Error ? cause.message : '粘贴失败，原数据已保留。'); }
   };
   const openColumnDialog = (column: string, mode: 'insert' | 'rename', after = false, returnFocus: HTMLElement | null = contextTarget?.returnFocus || null) => {
+    if (mode === 'rename' && PROTECTED_SHOT_COLUMN_NAMES.has(column)) { setClipboardMessage('该列名称无法修改。'); return; }
     if (!commands.canWrite) { setClipboardMessage('当前账号没有修改列的权限。'); return; }
     if (freezeClickTimer.current) clearTimeout(freezeClickTimer.current);
     setColumnDialog({ column, mode, after, returnFocus });
@@ -763,6 +765,7 @@ export default function ShotListPage() {
     const { column, mode, after } = columnDialog;
     if (isRetiredShotColumnLabel(name)) throw new Error('该列已取消，不能使用此名称。');
     if (mode === 'rename') {
+      if (PROTECTED_SHOT_COLUMN_NAMES.has(column)) throw new Error('该列名称无法修改。');
       if (!name) throw new Error('列名不能为空。');
       const field = customFields.find(field => field.column_key === column);
       if (field) await updateCustomField.mutateAsync({ id: field.id, revision: field.revision, label: name });
@@ -1257,14 +1260,14 @@ export default function ShotListPage() {
             >
               <thead onClick={freezeHeader} onKeyDownCapture={freezeHeader} className="sticky top-0 z-10 border-b border-border bg-card text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
                 <tr>
-                  <th data-shot-column="selection" scope="col" tabIndex={0} style={frozenStyle('selection', true)} className={`w-10 px-2 py-2.5 ${selectedPins.includes('selection') ? 'font-bold underline' : ''}`}><span className="sr-only">勾选</span>
+                  <th data-shot-column="selection" scope="col" tabIndex={0} style={frozenStyle('selection', true)} className={`relative w-10 px-2 py-2.5 ${selectedPins.includes('selection') ? 'font-bold underline' : ''}`}><span className="sr-only">勾选</span><span aria-hidden="true" className="pointer-events-none absolute inset-y-1 right-0 w-px bg-border" />
                     <input style={selectedPins.includes('selection') ? { borderBottom: '2px solid currentColor', outlineOffset: 3 } : undefined} type="checkbox" aria-label="全选所有镜头"
                       checked={visibleShotIds.length > 0 && visibleShotIds.every(id => selectedShotIds.includes(id))}
                       ref={element => { if (element) element.indeterminate = visibleShotIds.some(id => selectedShotIds.includes(id)) && !visibleShotIds.every(id => selectedShotIds.includes(id)); }}
                       onChange={() => visibleShotIds.length > 0 && visibleShotIds.every(id => selectedShotIds.includes(id)) ? clearSelection() : selectAllShots(visibleShotIds)}
                       className="h-4 w-4 cursor-pointer accent-foreground" />
                   </th>
-                  <th data-shot-column="annotations" scope="col" tabIndex={0} style={frozenStyle('annotations', true)} className={`w-10 px-1 py-2.5 ${selectedPins.includes('annotations') ? 'font-bold underline' : ''}`} title="批注提示">批注</th>
+                  <th data-shot-column="annotations" scope="col" tabIndex={0} style={frozenStyle('annotations', true)} className={`relative w-10 px-1 py-2.5 ${selectedPins.includes('annotations') ? 'font-bold underline' : ''}`} title="批注提示">批注<span aria-hidden="true" className="pointer-events-none absolute inset-y-1 right-0 w-px bg-border" /></th>
                   {showShotNumber && <th
                     style={{ width: columnWidths.display_number, ...frozenStyle('display_number', true) }} data-shot-column="display_number" scope="col"
                     tabIndex={0}
@@ -1522,7 +1525,10 @@ export default function ShotListPage() {
                       {orderColumnElements([...visibleColumns.map(column => {
                         if (PENDING_SHOT_TABLE_COLUMNS.has(column)) return <td data-shot-column={column} key={column} className={`px-3 ${rowPadding} text-muted-foreground`} title="此列暂不可编辑">—</td>;
                         if (column === 'primary_method') return <td data-shot-column={column} key={column} className={`px-3 ${rowPadding}`}><div className="flex flex-wrap gap-1">{shotMethodValues(shot).map(method => <MethodBadge key={method} method={method} size="sm" />)}</div></td>;
-                        if (column === 'tc_in') return <td data-shot-column={column} key={column} className={`px-3 ${rowPadding} font-mono`}>{shotTimecodes[shot.id] || '—'}</td>;
+                        if (column === 'tc_in') return <td data-shot-column={column} key={column} className={`px-3 ${rowPadding} font-mono`}>
+                          <div className="flex items-center gap-2 whitespace-nowrap" aria-label={`起始时码 ${shotTimecodes[shot.id]?.in || '—'}`}><span className="w-[3ch] shrink-0 text-muted-foreground" title="起始时码">IN</span>{shotTimecodes[shot.id]?.in || '—'}</div>
+                          <div className="flex items-center gap-2 whitespace-nowrap" aria-label={`结束时码 ${shotTimecodes[shot.id]?.out || '—'}`}><span className="w-[3ch] shrink-0 text-muted-foreground" title="结束时码">OUT</span>{shotTimecodes[shot.id]?.out || '—'}</div>
+                        </td>;
                         if (column === 'sequence_id') return <td data-shot-column={column} key={column} className={`px-3 ${rowPadding}`}>{sequences.find(sequence => sequence.id === shot.sequence_id)?.name || '—'}</td>;
                         if (['name', 'camera_angle', 'performance', 'dialogue', 'action'].includes(column)) return <td data-shot-column={column} key={column} className={`px-3 ${rowPadding}`}><InlineEditCell productionId={production.id} shot={shot} field={column as keyof Shot} value={String(shot[column as keyof Shot] || '')} placeholder={`双击输入${SHOT_TABLE_COLUMN_LABELS[column]}`} /></td>;
 

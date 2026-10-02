@@ -1,3 +1,5 @@
+export const PROTECTED_SHOT_COLUMN_NAMES = new Set(['display_number', 'panel_image', 'tc_in', 'duration_frames', 'name']);
+
 export const SHOT_TABLE_COLUMN_LABELS = {
   display_number: '镜号',
   panel_image: '分镜画面',
@@ -78,9 +80,9 @@ export const SHOT_TABLE_COLUMN_OPTIONS: Record<string, string[]> = {
 export const DEFAULT_SHOT_TABLE_COLUMN_ORDER = Object.keys(SHOT_TABLE_COLUMN_LABELS).filter(key => key !== 'display_number') as ShotTableColumnKey[];
 
 export const DEFAULT_SHOT_TABLE_COLUMN_WIDTHS = Object.fromEntries(DEFAULT_SHOT_TABLE_COLUMN_ORDER.map(column => [column,
-  column === 'panel_image' ? 128 : ['description', 'voice_over', 'replacement'].includes(column) ? 260 : column === 'tc_in' ? 132 : 112
+  column === 'panel_image' ? 128 : ['description', 'voice_over', 'replacement'].includes(column) ? 260 : column === 'tc_in' ? 176 : 112
 ])) as Record<ShotTableColumnKey, number>;
-const SHOT_TABLE_COLUMN_MIN_WIDTHS = Object.fromEntries(DEFAULT_SHOT_TABLE_COLUMN_ORDER.map(column => [column, column === 'panel_image' ? 112 : 80])) as Record<ShotTableColumnKey, number>;
+const SHOT_TABLE_COLUMN_MIN_WIDTHS = Object.fromEntries(DEFAULT_SHOT_TABLE_COLUMN_ORDER.map(column => [column, column === 'panel_image' ? 112 : column === 'tc_in' ? 160 : 80])) as Record<ShotTableColumnKey, number>;
 const SHOT_TABLE_COLUMN_MAX_WIDTHS = Object.fromEntries(DEFAULT_SHOT_TABLE_COLUMN_ORDER.map(column => [column, 560])) as Record<ShotTableColumnKey, number>;
 
 // These headings are confirmed; their domain mapping is deferred to the database review.
@@ -173,7 +175,7 @@ export function normalizeShotTablePresentationPreferences(
     columnWidths,
     displayOrder: Array.isArray(parsed.displayOrder) ? [...new Set(parsed.displayOrder.filter(isShotTableLayoutColumn))] : [],
     columnLabels: Object.fromEntries(Object.entries(parsed.columnLabels || {}).filter(([column, label]) =>
-      isShotTableLayoutColumn(column) && typeof label === 'string' && label.trim().length > 0 && label.length <= 80)),
+      isShotTableLayoutColumn(column) && !PROTECTED_SHOT_COLUMN_NAMES.has(column) && typeof label === 'string' && label.trim().length > 0 && label.length <= 80)),
     columnFormats: Object.fromEntries(Object.entries(parsed.columnFormats || {}).filter(([column, format]) => isShotTableLayoutColumn(column) && typeof format === 'string' && isShotTableLayoutColumn(format))),
     rowHeight:
       typeof parsed.rowHeight === 'string' &&

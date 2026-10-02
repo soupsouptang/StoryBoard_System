@@ -113,6 +113,10 @@ async def test_column_delete_restore_revision_and_preserved_values():
         assert sum(row['column_class'] == 'preset' for row in catalog) == 20
         assert all(row['instance'] for row in catalog if row['column_class'] == 'builtin')
         assert all(not row['instance'] for row in catalog if row['column_class'] == 'preset')
+        for key in ('display_number','tc_in','panel_image','duration_frames','name'):
+            instance = next(row['instance'] for row in catalog if row['catalog_key']==key)
+            renamed = await client.patch(root+f"/custom-fields/{instance['id']}",headers=headers,json={'revision':instance['revision'],'label':'修改名称'})
+            assert renamed.status_code==404, 'System definitions are not editable through the custom-field endpoint'
         for key in ('display_number', 'tc_in', 'panel_image', 'name'):
             path = root + f"/column-preferences/{key}/state"
             instance = next(row['instance'] for row in catalog if row['catalog_key'] == key)
