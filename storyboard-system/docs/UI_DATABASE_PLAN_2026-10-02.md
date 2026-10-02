@@ -2,14 +2,14 @@
 
 ## 1. 范围、依据与最新确认
 
-本文以本地 `master` / `2fde7c4` 的源码阅读为依据，只设计 VNext 数据结构与契约。没有据此修改模型/服务、生成 Alembic 文件、实施数据删除或部署；方案稿已交主线程分段上传。**最新决定取消 Legacy 数据库/旧工程数据迁移，本文不再设计 SQLite→PostgreSQL backfill/cutover。**下文 DDL、接口、作业和验收均为拟实施设计，不代表功能已完成。
+本文以 VNext 源码与当前产品决策为依据，只设计 VNext 数据结构与契约。没有据此修改模型/服务、生成 Alembic 文件、实施数据删除或部署。**最新决定取消 Legacy 数据库/旧工程数据迁移，本文不再设计 SQLite→PostgreSQL backfill/cutover。**列模型的最新 canonical 需求见 [COLUMN_MODEL_REQUIREMENTS_2026-10-02.md](COLUMN_MODEL_REQUIREMENTS_2026-10-02.md)：业务列分为内置、预设、自定义三类，覆盖本文早先“所有业务列均可永久删除”的旧规则。下文 DDL、接口、作业和验收均为拟实施设计，不代表功能已完成。
 
 功能基线为 `5e86a0bb11a20ecd631d9c2af66260a73d7c92e7`，保留其 WHAT；当前用户明确修改的行为优先。已阅读根 [AGENTS.md](../../AGENTS.md)、Legacy [AGENTS.md](../AGENTS.md)、[确认需求](CONFIRMED_UI_REQUIREMENTS_2026-10-02.md)、[执行记录](UI_REQUIREMENTS_EXECUTION_2026-10-02.md)、[Owner 矩阵](CANONICAL_OWNER_MATRIX.md)、[当前工作](ACTIVE_WORKSTREAMS.md)、[现状架构](ARCHITECTURE.md)、[迁移契约](ARCHITECTURE_MIGRATION.md) 和 [生命周期](LIFECYCLE_ARCHITECTURE_PLAN.md)。旧文档中的暂缓/归档规则在本文按最新确认覆盖，未改动其他文件。
 
 已确认，不再作为待答复事项：
 
-1. 基础业务列默认显示；预设字段可手动添加；可添加更多自定义列。预设不是第二套字段数据 owner。所有可见业务列都可删除到回收站及永久删除；内部 ID、revision、权限等保留且不作为业务列显示。
-2. 列管理已去掉归档：**删除是软删除进入回收站，保留历史快照；永久删除必须经用户确认，清除当前及历史中的该列内容**。可见性属于共享视图设置，不是另一生命周期。不能将业务值改名为“内部字段”留存。
+1. 业务列正式分为 **9 个内置列 + 20 个官方预设列 + N 个项目自定义列**。默认显示集合与列类别分开；预设字段可手动添加，自定义列可继续创建。内置列是核心 owner，**只允许隐藏、删除到回收站和恢复，不允许永久删除/Purge**；预设与自定义支持永久删除。
+2. 列管理继续不设“归档”：隐藏只改共享视图；删除是软删除进入回收站。**只有预设列和自定义列在回收站提供永久删除**，永久删除需明确确认并清除当前及受控历史中的该项目列内容。内置列删除时保留 canonical 值和历史，以保证核心工作流不被破坏；其是否进入交付文件由导出页独立 allowlist 决定。
 3. 自定义列宽、自动列宽、自定义行高、自动行高，项目共享视图同步给所有用户；**不能自定义列高**。权限、revision、异步保存确认统一。
 4. 隐写水印必须实际嵌入、可追溯并验证裁剪/截图；metadata 签名不替代嵌入水印。文字和媒体采用不同载体。
 5. TTS 提供可播放语速样例、缓存 audio，用实际音频预估朗读 duration；provider 可配置且默认本地，未经许可不外发用户正文。
@@ -30,7 +30,7 @@ PostgreSQL 是 VNext 持久化目标，Alembic 是 schema 历史唯一 owner。L
 | `api/v1/shares.py` | expiry/revoke、固定 snapshot；token_hash 当前实际存原 token；业务在 router | 哈希 token、项目授权、密码、fieldallowlist、受权 media/export；不能据字段名宣称已有安全实现 |
 | `services/import_service.py`、`importer.py` | 表格映射后调用 ShotService 创建；部分无效值会默认 75 帧/live 等 | 全格式识别、更新/替换预览和原子保存未齐；不静默使用默认值掩盖错误 |
 | Legacy `server.py`、`schema_migrations.py` | projects/shots/project_snapshots/share_links、原始导入列、富文本、变更事件 | 与目标表名/类型不同；必须逐项映射，不直接照抄旧 DTO |
-| Legacy `field_lifecycle.py`，含 golden 源码 | computed number/tc/duration 旧例外；历史快照不改；thumb 解除引用 | 最新永久删除覆盖旧例外；软删除保留历史，purge 显式脱敏历史 |
+| Legacy `field_lifecycle.py`，含 golden 源码 | computed number/tc/duration 旧例外；历史快照不改；thumb 解除引用 | 最新规则按列类别分流：内置列不允许 purge；预设/自定义软删除保留历史，purge 显式脱敏受控历史 |
 | Legacy `creative_boards.py` | 项目 JSON 聚合 revision；Moodboard V1/Lighting V2；50 板/500 总对象；Lighting z 高度、cm | 拆实体保留 ID/serializer/限制，2D/3D 不各存一套位置 |
 | Legacy `import_parsing.py`、`import_staging.py`、`project_pdf_roundtrip.py` | XLSX/嵌图、私有 staging；工程 PDF backup 附件、摘要 QR、不可见文字来源标记 | 摘要 QR 不等于工程多码，文字来源提示不等于抗截图隐写 |
 | `apps/web/lib/shot-table-presentation.ts` | 当前显示列名、pending 集合、默认隐藏负责人 | 有 UI key 不代表确定字段语义/存储；默认全列宽度表不是共享自动尺寸方案 |
@@ -58,15 +58,15 @@ flowchart LR
 - 成功 HTTP 响应只在 commit 成功后确认。外部文件先私有 staging 写完/hash，再 DB 发布引用；不假称对象存储与 DB 有跨系统 ACID。失败文件仅在确认无引用后异步清理。
 - job 创建成功只代表排队事务提交；audio/export/symbol artifact 需生成、验证、发布事务成功才可播放/下载。durable WS 修改也遵守同一权限/revision/审计。
 - dirty→saving→acknowledged/failed/conflict；异步 cache 允许 optimistic draft，但 pending 不叫 saved。失败保留草稿，refetch 不覆盖 dirty。409 以 base/server/draft 三方 rebase；同字段冲突由用户选择，新 revision 重试，purged 字段不能重放。
-- 排序用既有 sort_index；提交完整项目活动 Shot 集合，筛选只决定插入目标，不丢隐藏行。同事务按全顺序重编 001、002……；镜号已永久删除时不再重建该值。ShotID、素材/批注关联不变。version_number 是快照序号，不等于并发 revision。
+- 排序用既有 sort_index；提交完整项目活动 Shot 集合，筛选只决定插入目标，不丢隐藏行。同事务按全顺序重编 001、002……。镜号属于内置列，即使从普通表格删除到回收站也保留 canonical `display_number` 并继续随排序更新；交付页可选择不输出镜号。ShotID、素材/批注关联不变。version_number 是快照序号，不等于并发 revision。
 
-## 4. 列身份、预设与 32 项映射
+## 4. 列身份、内置/预设/自定义与字段映射
 
-统一 project_columns 是业务列的定义、绑定、类型、生命周期 owner；内置绑定已有实体属性/派生规则，custom 值放 shot_column_values。预设仅保存版本化定义模板，手动添加时复用已存在 binding 或新建一个定义，不能复制内置值到另一存储。
+最新列分类以 [COLUMN_MODEL_REQUIREMENTS_2026-10-02.md](COLUMN_MODEL_REQUIREMENTS_2026-10-02.md) 为准：**9 Built-in + 20 Preset + N Custom**。统一 `project_columns` 仍可作为项目列定义/绑定/生命周期 owner，但必须显式表达 `column_class`；预设 catalog 与项目实例分开，自定义/导入列使用项目自己的定义和值 owner。
 
-column_id 稳定，改名、翻译、列宽、顺序、回收/恢复不变；原 custom definition ID 原样保留。key 项目内固定，purge 后占位不复用，同名新列使用新 ID/key。binding 只能由受审计服务器白名单解释，不能用标签拼 SQL。默认基础列只在初始化时应用；用户已有可见性、顺序和 tombstone 优先，默认列表不能补回删除列。
+内置 column identity 稳定，改名显示、翻译、列宽、顺序、删除/恢复不改变 identity，且不能进入 purging/purged。预设/自定义 project column 在 purge 后旧 identity/tombstone 不复用；同一官方预设或同名自定义以后重新添加时创建新的项目实例 ID/key，不恢复旧值。binding 只能由受审计服务器白名单解释，不能用标签拼 SQL。默认显示集合只在初始化/模板应用时决定，不等于列类别。
 
-32 项名称和首次出现顺序为已确认目录。以下“可复用”指源码有明确属性，仍需单位/枚举/空值核对；待定项在确认前不自动创建或写入相似字段。
+下表保留此前 32 项来源映射作为历史/导入语义参考，**不再代表目标列目录或统一生命周期**。当前普通产品列目录为 29 项；“原镜号 / 原描述 / 分镜图框 / 机位/运镜”等历史来源字段仅用于导入映射或 Import/Custom 列，不自动进入内置/预设 catalog。
 
 | 序 | 名称 | 源码属性/候选 binding | 类型/归属与映射决策 |
 | --- | --- | --- | --- |
@@ -100,22 +100,23 @@ column_id 稳定，改名、翻译、列宽、顺序、回收/恢复不变；原
 | 28 | 原描述 | original_description/原始导入列 | 来源 text，与当前描述/快照分开 |
 | 29 | 分镜图框 | panel_frame | 当前为 Shot text，不等于 Panel/图片 crop/ratio |
 | 30 | 机位/运镜 | movement_reference/原始导入列 | 组合结构/text 待定，不合并 camera_angle/movement |
-| 31 | 镜号 | display_number；Legacy number | 业务显示值，非 row ID；全项目重编、可永久删除 |
+| 31 | 镜号 | display_number；Legacy number | **内置列**；业务显示值，非 row ID；全项目重编；可删除到回收站但不可永久删除，交付页可排除 |
 | 32 | 执行方式 | execution_method/原始导入列 | 与 production_steps/制作方式关系待定 |
 
-alias 记录 source_format/header/schema_version→column_id+converter_version；仅已确认别名自动映射。名称相近仅作建议；同名 UI 去重不丢源表列号/表头。NULL、空字符串、0、false 分开。负责人为现有可选业务列，适用同一生命周期；复选/批注提示/操作是系统控件，ID/FK/revision/安全字段不放列管理。
+alias 记录 source_format/header/schema_version→column_id+converter_version；仅已确认别名自动映射。名称相近仅作建议；同名 UI 去重不丢源表列号/表头。NULL、空字符串、0、false 分开。负责人属于官方预设列，适用预设生命周期；复选/批注提示/操作是系统控件，ID/FK/revision/安全字段不放列管理。
 
-## 5. 删除、永久删除与历史内容
+## 5. 按列类别执行删除、永久删除与历史内容处理
 
 ### 5.1 生命周期与确认流程
 
-| 操作 | 当前值/历史 | 恢复与保存 |
+| 操作 | 内置列 | 预设/自定义列 |
 | --- | --- | --- |
-| 共享视图可见性 | 值/历史不变，只改所有用户的显示 | 不是安全权限或归档；视图 commit 后同步 |
-| 删除到回收站 | 定义 state=trashed；值保留，停止普通编辑/新导入；历史快照保留 | 可恢复原 ID，恢复有权限/revision；没有 archive 动作 |
-| 永久删除 | 当前值、该列历史内容、已登记引用和受控副本清理；最小 tombstone 保留 | 必须明确确认，不支持用版本 restore 撤销；未完成清理不称完成 |
+| 共享视图隐藏 | 值/历史不变，只改所有用户的显示 | 值/历史不变，只改所有用户的显示 |
+| 删除到回收站 | `state=trashed`；**canonical 值和历史保留**；可恢复原 identity | `state=trashed`；当前值/历史保留；可恢复原项目列 identity |
+| 永久删除 | **禁止；UI/API/服务端均不得提供可达 purge 路径** | 允许；清当前值、受控历史内容、登记引用和受控副本；保留最小 tombstone/删除记录 |
+| 导出交付 | active 时也允许逐列取消导出；trashed 内置列默认且强制不进入新的普通列型交付 | active 时可逐列取消；trashed 默认不出；purged 必须从模板/任务引用清除 |
 
-拟定标准流程：PurgePreview(project,column IDs)→统计影响 Shot/版本/项目快照/批注线程/审计 old-new/导出缓存/工程副本/媒体依赖及存储清理→AlertDialog 展示实际范围与数量→用户明确确认→PurgeColumnsCommand。产品不增加关于外部副本/备份的免责声明；技术能力边界只在本方案/内部清理报告记载。
+以下 Purge 流程**只适用于预设列和自定义列**。内置列只能 Delete/Restore，不进入 PurgePreview。标准流程：PurgePreview(project,column IDs)→服务端先拒绝任何 builtin ID→统计影响 Shot/版本/项目快照/批注线程/审计 old-new/导出缓存/工程副本/媒体依赖及存储清理→AlertDialog 展示实际范围与数量→用户明确确认→PurgeColumnsCommand。产品不增加关于外部副本/备份的免责声明；技术能力边界只在本方案/内部清理报告记载。
 
 preview 返回短时一次性 confirm_token、preview_digest、expected_project/schema/column revision 和 purge_epoch。token 服务端保存 hash，或签名后配一次性 receipt；绑定 actor、项目、column IDs、删除闭包、计数、内容高水位和有效期（拟 5 分钟），不含 value。仅按权限取得 token 不算确认，最终命令必须从 AlertDialog 明确提交 token 和 expected_revision。
 
@@ -143,11 +144,11 @@ purge 取锁后重验权限、token 未用未过期、scope/digest/revisions/高
 
 ### 5.3 核心 NOT NULL 业务列与备份方案
 
-duration/name/status/display_number 等当前非空约束/默认规则须先迁 nullable 或统一 fieldstorage，服务端 schema 能表达 missing。永久删除不以假 0/75 帧/draft/空影子字段留存代替。仅技术 ID、顺序身份、revision、权限、删除元记录获保留。
+`duration_frames / name / status / display_number / sequence_id / description / primary_method / panel_image / tc_in` 按最新分类属于内置列，因此**不再为了支持列 Purge 而迁成 nullable 或清空业务值**。它们从 Shot Table 删除只改变列生命周期/呈现，不改变核心 canonical owner；相关时间线、Review、排序、Panel/Asset、项目层级等功能继续按真实值工作。
 
-删除 duration 清 Shot/相关 Panel 同业务副本，派生 TC/总时长不可用，后续未知时码不能当 0；时间线/EDL 对缺值真实校验。删除镜号清当前/历史业务号，排序只更新内部 sort_index。删除 TC 清原始/物化 TC 并禁呈现该列，其他未删帧率/时长可保留但不承诺无法人工推算。删除 status 不生成新 draft 值；安全 authorization 不依赖可删业务状态。默认创建/required 校验在 tombstone 存在时不得重建值。
+内置列不允许通过“永久删除”制造假 0、空值或第二套隐藏字段。是否出现在 PDF/Word/XLSX/CSV/分镜表等普通交付中由导出字段 allowlist 独立决定；从表格删除到回收站的内置列默认且强制不进入新的普通列型交付。协议型 EDL/OTIO/SRT 的格式必需数据与表格字段开关分开标识。
 
-Scene/Sequence 的共用 binding 需确认继承与 override；purge 清相应业务内容、保留内部 FK，预览关联列/实体影响。同名/相近语义未确认时不共用存储。本方案不宣称现有所有列已支持 purge。
+Scene/Sequence 等绑定的继承/override 仍需单独确认。只有被归类为预设/自定义的项目列才进入 purge 删除闭包；同名/相近语义未确认时不共用存储。本方案不宣称现有实现已经符合最新分类。
 
 备份采用两条候选路线：可改受控备份重新生成脱敏包并清存储历史版本/副本；不可变备份遵循受限保留期限、ledger 恢复过滤和经批准物理销毁。可研究 per-field crypto erase：每项目/column/purge epoch 独立随机 DEK 包封，当前值/历史/副本/备份不得含明文，销毁相应全部 key 副本后其他字段仍可读。单纯轮换 KEK/签名 key、仍保留旧 DEK、已有明文旧备份或 artifact 都不等于擦除。现有明文不能追溯地自动 crypto erase；密钥与备份恢复实测/审批后才可交付，不承诺本轮已有此能力。
 
