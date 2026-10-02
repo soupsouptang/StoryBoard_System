@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import DomainError
-from app.core.security import get_password_hash, verify_password
+from app.core.security import get_password_hash, password_needs_rehash, verify_password
 from app.models.user import Role, User
 from app.schemas.auth import RegisterRequest
 
@@ -20,6 +20,9 @@ class AuthService:
             raise DomainError("邮箱或密码错误", code="UNAUTHORIZED")
         if not user.is_active:
             raise DomainError("账号已被停用", code="FORBIDDEN")
+        if password_needs_rehash(user.password_hash):
+            user.password_hash = get_password_hash(password)
+            await db.flush()
         return user
 
     @staticmethod

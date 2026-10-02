@@ -7,6 +7,7 @@ from httpx import ASGITransport, AsyncClient
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "apps" / "api"))
 
 from main import app
+from app.core.config import settings
 from app.core.database import AsyncSessionLocal, Base, async_engine
 from app.services.seed import seed_database
 
@@ -33,7 +34,7 @@ async def test_ai_status_and_proposal_pipeline():
         # 1. Login
         login_res = await client.post("/api/v1/auth/login", json={
             "email": "admin@company.internal",
-            "password": "FrameForge2026!Admin"
+            "password": settings.INITIAL_ADMIN_PASSWORD
         })
         token = login_res.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
@@ -104,7 +105,7 @@ async def test_presence_and_cell_lock_pipeline():
         # 1. Login Admin
         login_res = await client.post("/api/v1/auth/login", json={
             "email": "admin@company.internal",
-            "password": "FrameForge2026!Admin"
+            "password": settings.INITIAL_ADMIN_PASSWORD
         })
         token = login_res.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}

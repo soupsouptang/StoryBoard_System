@@ -144,11 +144,11 @@ npm run dev
 安装并启动 VNext API：
 
 ```bash
-python -m pip install -r apps/api/requirements.txt
+python -m pip install --require-hashes -r apps/api/requirements-dev.lock
 npm run dev:api
 ```
 
-数据库、认证和媒体目录等运行参数按环境配置提供。生产 schema 由 **Alembic** 管理；应用启动时的 `Base.metadata.create_all(...)` 只允许用于明确的开发/测试场景。
+数据库、认证和媒体目录等运行参数按环境配置提供。开发和生产 schema 均由 **Alembic** 管理；应用启动不会自动建表。API/worker 使用 Python 3.12，精确依赖版本和包哈希记录在 `apps/api/uv.lock` 与导出的 lock requirements 中。
 
 ## 验证
 
@@ -169,4 +169,4 @@ npm run build
 
 ## License
 
-FRAMEFORGE OS 为私有项目，保留所有权利。
+The GitHub repository is public and currently has no declared license.

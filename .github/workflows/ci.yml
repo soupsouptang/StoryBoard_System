@@ -8,6 +8,11 @@ on:
       - "packages/**"
       - "tests/**"
       - "tools/**"
+      - "infra/**"
+      - "apps/api/pyproject.toml"
+      - "apps/api/uv.lock"
+      - "apps/api/requirements-*.lock"
+      - ".dockerignore"
       - "storyboard-system/portable_project_export.py"
       - "package.json"
       - "package-lock.json"
@@ -19,6 +24,11 @@ on:
       - "packages/**"
       - "tests/**"
       - "tools/**"
+      - "infra/**"
+      - "apps/api/pyproject.toml"
+      - "apps/api/uv.lock"
+      - "apps/api/requirements-*.lock"
+      - ".dockerignore"
       - "storyboard-system/portable_project_export.py"
       - "package.json"
       - "package-lock.json"
@@ -44,10 +54,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Enforce canonical root packages
         run: python tools/package_boundary_gate.py
 
@@ -56,16 +66,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: pip
-          cache-dependency-path: apps/api/requirements.txt
+          cache-dependency-path: apps/api/requirements-dev.lock
       - name: Install API dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r apps/api/requirements.txt
+        run: python -m pip install --require-hashes -r apps/api/requirements-dev.lock
       - name: Run API contract tests
         run: python -m pytest tests/backend -q
 
@@ -74,8 +82,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-node@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           node-version: "24"
           cache: npm
@@ -96,12 +104,45 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Verify the versioned synthetic file bridge
         run: python -m unittest tests.contracts.test_portable_project_contract -v
+
+  container-build:
+    name: Build deployable container images
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [api, worker, web]
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Build ${{ matrix.image }} image
+        run: docker build --file "infra/docker/Dockerfile.${{ matrix.image }}" --tag "frameforge/${{ matrix.image }}:ci" .
+
+  nginx-config:
+    name: Validate Nginx proxy configurations
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Create disposable syntax-check certificate
+        run: |
+          mkdir -p "$RUNNER_TEMP/nginx-ssl"
+          openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
+            -keyout "$RUNNER_TEMP/nginx-ssl/external.key" \
+            -out "$RUNNER_TEMP/nginx-ssl/external.crt" \
+            -subj /CN=localhost
+      - name: Check both Nginx configurations
+        run: >-
+          docker run --rm
+          --volume "$GITHUB_WORKSPACE/infra/nginx:/etc/nginx/conf.d:ro"
+          --volume "$RUNNER_TEMP/nginx-ssl:/etc/nginx/ssl:ro"
+          nginx:alpine nginx -t
 
   ci-gate:
     name: CI gate
@@ -111,6 +152,8 @@ jobs:
       - vnext-backend
       - vnext-web
       - portable-project-contract
+      - container-build
+      - nginx-config
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -120,10 +163,14 @@ jobs:
           BACKEND_RESULT: ${{ needs.vnext-backend.result }}
           WEB_RESULT: ${{ needs.vnext-web.result }}
           PORTABLE_CONTRACT_RESULT: ${{ needs.portable-project-contract.result }}
+          CONTAINER_BUILD_RESULT: ${{ needs.container-build.result }}
+          NGINX_CONFIG_RESULT: ${{ needs.nginx-config.result }}
         run: |
-          printf 'architecture=%s\nbackend=%s\nweb=%s\nportable-contract=%s\n' \
-            "$ARCHITECTURE_RESULT" "$BACKEND_RESULT" "$WEB_RESULT" "$PORTABLE_CONTRACT_RESULT"
+          printf 'architecture=%s\nbackend=%s\nweb=%s\nportable-contract=%s\ncontainer-build=%s\nnginx=%s\n' \
+            "$ARCHITECTURE_RESULT" "$BACKEND_RESULT" "$WEB_RESULT" "$PORTABLE_CONTRACT_RESULT" "$CONTAINER_BUILD_RESULT" "$NGINX_CONFIG_RESULT"
           test "$ARCHITECTURE_RESULT" = "success"
           test "$BACKEND_RESULT" = "success"
           test "$WEB_RESULT" = "success"
           test "$PORTABLE_CONTRACT_RESULT" = "success"
+          test "$CONTAINER_BUILD_RESULT" = "success"
+          test "$NGINX_CONFIG_RESULT" = "success"

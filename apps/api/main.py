@@ -24,7 +24,7 @@ from app.api.v1.shares import router as shares_router
 from app.api.v1.shots import router as shots_router
 from app.api.v1.versions import router as versions_router
 from app.core.config import settings
-from app.core.database import AsyncSessionLocal, Base, async_engine
+from app.core.database import AsyncSessionLocal, async_engine
 from app.services.seed import seed_database
 
 logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO))
@@ -33,18 +33,15 @@ logger = logging.getLogger("frameforge")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Initialize tables in development/test; in production Alembic owns schema
+    # Alembic is the only schema owner in every environment.
     if settings.ENVIRONMENT != "production":
-        logger.info("Development/Test mode: Initializing database schema...")
-        async with async_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
+        logger.info("Development/Test mode: schema must be applied by Alembic before startup.")
         async with AsyncSessionLocal() as session:
             await seed_database(session)
             await session.commit()
-        logger.info("Database initialized and development seed data confirmed.")
+        logger.info("Development seed data confirmed.")
     else:
-        logger.info("Production mode: Schema ownership belongs to Alembic migrations; skipping Base.metadata.create_all.")
+        logger.info("Production mode: schema ownership belongs to Alembic migrations.")
 
     yield
     # Shutdown
@@ -55,9 +52,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="FrameForge Professional Storyboard OS API",
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    docs_url=None if settings.ENVIRONMENT == "production" else "/docs",
+    redoc_url=None if settings.ENVIRONMENT == "production" else "/redoc",
+    openapi_url=None if settings.ENVIRONMENT == "production" else "/openapi.json",
     lifespan=lifespan
 )
 

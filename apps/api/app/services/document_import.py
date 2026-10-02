@@ -28,17 +28,18 @@ def check_archive(content: bytes):
 def ocr_engine():
     import onnxruntime
     onnxruntime.disable_telemetry_events()
-    from rapidocr_onnxruntime import RapidOCR
-    return RapidOCR(intra_op_num_threads=2, inter_op_num_threads=1)
+    from rapidocr import RapidOCR
+    return RapidOCR()
 
 
 def recognize(data: bytes):
     # ponytail: one CPU engine per process; use the existing job queue for sustained OCR traffic.
     with OCR_LOCK:
-        result, _ = ocr_engine()(data)
-    if not result:
+        with Image.open(io.BytesIO(data)) as source:
+            result = ocr_engine()(source.convert("RGB"))
+    if result is None or not result.txts:
         return '', 0.0
-    return '\n'.join(item[1] for item in result), round(min(float(item[2]) for item in result), 3)
+    return '\n'.join(result.txts), round(min(float(score) for score in result.scores), 3)
 
 
 def validate_image(data: bytes):

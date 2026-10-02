@@ -1,0 +1,14 @@
+.git
+**/node_modules
+**/.next
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+.env
+.env.*
+storyboard-system
+tests
+_cut_review
+*.xlsx

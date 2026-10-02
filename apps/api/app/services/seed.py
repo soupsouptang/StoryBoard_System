@@ -33,21 +33,22 @@ async def seed_database(db: AsyncSession) -> None:
 
     await db.flush()
 
-    # 2. Seed Admin User
-    admin_res = await db.execute(select(User).where(User.email == settings.INITIAL_ADMIN_EMAIL.lower()))
-    if not admin_res.scalar_one_or_none():
-        role_res = await db.execute(select(Role).where(Role.name == "admin"))
-        admin_role = role_res.scalar_one_or_none()
-        admin_user = User(
-            id=str(uuid.uuid4()),
-            email=settings.INITIAL_ADMIN_EMAIL.lower(),
-            display_name=settings.INITIAL_ADMIN_NAME,
-            password_hash=get_password_hash(settings.INITIAL_ADMIN_PASSWORD),
-            role_id=admin_role.id if admin_role else None,
-            is_active=True
-        )
-        db.add(admin_user)
-        await db.flush()
+    # 2. Seed an admin only when the operator explicitly supplies a password.
+    if settings.INITIAL_ADMIN_PASSWORD:
+        admin_res = await db.execute(select(User).where(User.email == settings.INITIAL_ADMIN_EMAIL.lower()))
+        if not admin_res.scalar_one_or_none():
+            role_res = await db.execute(select(Role).where(Role.name == "admin"))
+            admin_role = role_res.scalar_one_or_none()
+            admin_user = User(
+                id=str(uuid.uuid4()),
+                email=settings.INITIAL_ADMIN_EMAIL.lower(),
+                display_name=settings.INITIAL_ADMIN_NAME,
+                password_hash=get_password_hash(settings.INITIAL_ADMIN_PASSWORD),
+                role_id=admin_role.id if admin_role else None,
+                is_active=True
+            )
+            db.add(admin_user)
+            await db.flush()
 
     # 3. Demo product data is optional. Normal development/test startup must
     # stay product-neutral unless DEMO_SEED_ENABLED is explicitly enabled.

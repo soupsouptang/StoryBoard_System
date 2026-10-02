@@ -9,6 +9,7 @@ from httpx import ASGITransport, AsyncClient
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "apps" / "api"))
 
 from main import app
+from app.core.config import settings
 from app.core.database import Base, async_engine, AsyncSessionLocal
 from app.services.seed import seed_database
 
@@ -42,7 +43,7 @@ async def test_admin_login_and_me():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         res = await client.post("/api/v1/auth/login", json={
             "email": "admin@company.internal",
-            "password": "FrameForge2026!Admin"
+            "password": settings.INITIAL_ADMIN_PASSWORD
         })
         assert res.status_code == 200
         data = res.json()

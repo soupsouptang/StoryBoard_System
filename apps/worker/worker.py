@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import logging
 import redis
-from rq import Connection, Queue, Worker
+from rq import Queue, Worker
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("frameforge_worker")
@@ -15,10 +15,10 @@ listen_queues = ["default", "exports", "proxies"]
 
 def run_worker():
     conn = redis.from_url(REDIS_URL)
-    with Connection(conn):
-        worker = Worker(map(Queue, listen_queues))
-        logger.info(f"FrameForge Background Worker listening on {listen_queues}...")
-        worker.work()
+    queues = [Queue(name, connection=conn) for name in listen_queues]
+    worker = Worker(queues, connection=conn)
+    logger.info(f"FrameForge Background Worker listening on {listen_queues}...")
+    worker.work()
 
 
 if __name__ == "__main__":

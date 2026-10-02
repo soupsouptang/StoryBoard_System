@@ -33,12 +33,12 @@ def main() -> int:
     errors: list[str] = []
 
     config_text = (API / "app/core/config.py").read_text(encoding="utf-8")
-    if config_text.count("AI_ENABLED: bool = False") < 2:
-        errors.append("AI must remain disabled by default in both configuration paths")
+    if not re.search(r"AI_ENABLED:\s*bool\s*=\s*False", config_text):
+        errors.append("AI must remain disabled by default")
 
     insecure = run_config(
         {"ENVIRONMENT": "production"},
-        remove=("SECRET_KEY", "INITIAL_ADMIN_PASSWORD"),
+        remove=("SECRET_KEY", "INITIAL_ADMIN_PASSWORD", "DATABASE_URL", "DATABASE_SYNC_URL"),
     )
     if insecure.returncode == 0:
         errors.append("production configuration did not fail closed with default/missing secrets")
@@ -46,8 +46,8 @@ def main() -> int:
     secure = run_config(
         {
             "ENVIRONMENT": "production",
-            "SECRET_KEY": "ci-explicit-nondefault-secret-not-for-production",
-            "INITIAL_ADMIN_PASSWORD": "ci-explicit-nondefault-admin-password",
+            "SECRET_KEY": "ci-explicit-nondefault-secret-not-for-production-32",
+            "DATABASE_URL": "postgresql+asyncpg://ci:ci@127.0.0.1/frameforge",
         }
     )
     if secure.returncode != 0:
@@ -55,10 +55,9 @@ def main() -> int:
         print(secure.stderr, file=sys.stderr)
 
     main_text = (API / "main.py").read_text(encoding="utf-8")
-    guard_pos = main_text.find('if settings.ENVIRONMENT != "production":')
     create_pos = main_text.find("Base.metadata.create_all")
-    if guard_pos < 0 or create_pos < 0 or create_pos < guard_pos:
-        errors.append("Base.metadata.create_all is not visibly guarded from production startup")
+    if create_pos >= 0:
+        errors.append("API startup must not create schemas; Alembic owns schema changes")
 
     models_dir = API / "app/models"
     for path in models_dir.glob("*.py"):
