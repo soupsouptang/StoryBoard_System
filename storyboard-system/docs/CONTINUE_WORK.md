@@ -2,7 +2,7 @@
 
 ## 基础设施续作（2026-10-02）
 
-基础设施提交 `a518ea1` 已推送 `master`。首次 GitHub Actions 摘要显示 PostgreSQL rehearsal 和 Regression Guard 失败；前者已在 workflow 补合成 `SECRET_KEY`，后者已补 ACTIVE_WORKSTREAMS、owner matrix、API route inventory 三份记录。重新推送后必须复核 Actions，再报告 CI 状态；当前运行结果尚未核实。本轮不部署。执行记录见 [基础设施整改 worklog](worklogs/INFRASTRUCTURE_REMEDIATION_2026-10-02.md)。
+基础设施提交 `a518ea1` 与修复提交 `7229447`、`07bcc4c` 已推送 `master`。修复包括 PostgreSQL rehearsal 合成 `SECRET_KEY`、Regression Guard 所需三份台账、Web 裁剪依赖和文档变更触发 CI。修复后 Actions 结果因 GitHub API TLS 与浏览器读取失败而尚未核实。本轮不部署。执行记录见 [基础设施整改 worklog](worklogs/INFRASTRUCTURE_REMEDIATION_2026-10-02.md)。
 
 更新日期：2026-10-02（Asia/Hong_Kong）。用户要求：先上传现有代码，再上传续作 MD；**每次开始工作必须先读取本文**。本文是续作索引和检查点，不替代当前用户指令、架构规则或详细功能方案。
 
