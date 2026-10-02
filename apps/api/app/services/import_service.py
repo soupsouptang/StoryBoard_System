@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import DomainError, NotFoundError
 from app.models.production import Production, Sequence
 from app.models.shot import Shot, Panel
-from app.models.field import CustomFieldDefinition
+from app.models.field import ProjectColumn
 from app.schemas.custom_field import CustomFieldCreate, CustomFieldValuePatch
 from app.services.custom_field_service import CustomFieldService
 from app.services.document_import import validate_image, MAX_ROWS, MAX_COLUMNS
@@ -68,12 +68,12 @@ class ImportService:
         fields = []
         for column in legacy_module('import_parsing').build_import_custom_columns(headers or [], mapping):
             if not any(column['source_col'] < len(row) and row[column['source_col']].strip() for row in rows): continue
-            field = (await db.execute(select(CustomFieldDefinition).where(CustomFieldDefinition.production_id == production_id, CustomFieldDefinition.key == column['key']))).scalar_one_or_none()
-            if field is not None and (field.is_purged or not field.is_active):
+            field = (await db.execute(select(ProjectColumn).where(ProjectColumn.production_id == production_id, ProjectColumn.key == column['key']))).scalar_one_or_none()
+            if field is not None and (field.state != "active"):
                 raise DomainError('源字段已归档或永久删除，请先核对自定义列。', code='FIELD_KEY_PURGED')
             if field is None:
                 created = await CustomFieldService.create_field(db, production_id, CustomFieldCreate(key=column['key'], label=column['label'], field_type='textarea', group_name='导入原文', description=f"源列 {column['source_col']+1}：{headers[column['source_col']]}"[:1000]), user)
-                field = await db.get(CustomFieldDefinition, created['id'])
+                field = await db.get(ProjectColumn, created['id'])
             fields.append((column['source_col'], field.id))
         fps = prod.fps_num / (prod.fps_den or 1)
 

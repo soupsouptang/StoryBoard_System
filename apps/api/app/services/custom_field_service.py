@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, DomainError, NotFoundError
 from app.models.collaboration import AuditLog
-from app.models.field import ColumnPreference, CustomFieldDefinition, ShotCustomFieldValue
+from app.models.field import ColumnPreference, ProjectColumn, ShotColumnValue
 from app.models.production import Production, Sequence
 from app.models.shot import Shot
 from app.models.user import User
@@ -133,13 +133,14 @@ class CustomFieldService:
         *,
         for_update: bool = False,
         include_purged: bool = False,
-    ) -> CustomFieldDefinition:
-        query = select(CustomFieldDefinition).where(
-            CustomFieldDefinition.id == field_id,
-            CustomFieldDefinition.production_id == production_id,
+    ) -> ProjectColumn:
+        query = select(ProjectColumn).where(
+            ProjectColumn.id == field_id,
+            ProjectColumn.production_id == production_id,
+            ProjectColumn.binding_kind == "custom",
         )
         if not include_purged:
-            query = query.where(CustomFieldDefinition.is_purged.is_(False))
+            query = query.where(ProjectColumn.state != "purged")
         if for_update:
             query = query.with_for_update()
 
@@ -167,7 +168,7 @@ class CustomFieldService:
         return result.scalar_one_or_none()
 
     @staticmethod
-    def _column_key(field: CustomFieldDefinition) -> str:
+    def _column_key(field: ProjectColumn) -> str:
         return f"custom:{field.key}"
 
     @staticmethod
@@ -287,7 +288,7 @@ class CustomFieldService:
     @staticmethod
     async def _projection(
         db: AsyncSession,
-        fields: list[CustomFieldDefinition],
+        fields: list[ProjectColumn],
     ) -> list[dict]:
         if not fields:
             return []
@@ -320,10 +321,8 @@ class CustomFieldService:
                 "required": field.required,
                 "default_value": field.default_value,
                 "sort_index": field.sort_index,
-                "state": preference.state if preference else "visible",
-                "permanently_deleted": (
-                    bool(preference.permanently_deleted) if preference else field.is_purged
-                ),
+                "state": "removed" if field.state in {"trashed", "purging", "purged"} else (preference.state if preference else "visible"),
+                "permanently_deleted": field.state == "purged",
                 "position": preference.position if preference else field.sort_index,
                 "width_px": preference.width_px if preference else 180,
                 "wrap_text": preference.wrap_text if preference else field.field_type == "textarea",
@@ -341,15 +340,16 @@ class CustomFieldService:
     ) -> list[dict]:
         await CustomFieldService._production(db, production_id)
         result = await db.execute(
-            select(CustomFieldDefinition)
+            select(ProjectColumn)
             .where(
-                CustomFieldDefinition.production_id == production_id,
-                CustomFieldDefinition.is_purged.is_(False),
+                ProjectColumn.production_id == production_id,
+                ProjectColumn.state != "purged",
+                ProjectColumn.binding_kind == "custom",
             )
             .order_by(
-                CustomFieldDefinition.sort_index.asc(),
-                CustomFieldDefinition.created_at.asc(),
-                CustomFieldDefinition.id.asc(),
+                ProjectColumn.sort_index.asc(),
+                ProjectColumn.created_at.asc(),
+                ProjectColumn.id.asc(),
             )
         )
         return await CustomFieldService._projection(db, list(result.scalars().all()))
@@ -369,20 +369,20 @@ class CustomFieldService:
             raise DomainError("自定义列名称不能为空", code="VALIDATION_ERROR")
         if label in CustomFieldService.PROTECTED_LABELS or (CustomFieldService._retired_label(label) and req.group_name != "导入原文"):
             raise DomainError("镜号、时码、分镜画面不能重复新增；已取消的列不能新增。", code="COLUMN_PROTECTED")
-        existing_labels = await db.execute(select(CustomFieldDefinition.label).where(
-            CustomFieldDefinition.production_id == production_id, CustomFieldDefinition.is_purged.is_(False)))
+        existing_labels = await db.execute(select(ProjectColumn.label).where(
+            ProjectColumn.production_id == production_id, ProjectColumn.state != "purged"))
         label = CustomFieldService._unique_label(label, set(existing_labels.scalars()))
 
         key = CustomFieldService._normalize_key(req.key)
         existing_result = await db.execute(
-            select(CustomFieldDefinition).where(
-                CustomFieldDefinition.production_id == production_id,
-                CustomFieldDefinition.key == key,
+            select(ProjectColumn).where(
+                ProjectColumn.production_id == production_id,
+                ProjectColumn.key == key,
             )
         )
         existing = existing_result.scalar_one_or_none()
         if existing:
-            if existing.is_purged:
+            if existing.state == "purged":
                 raise DomainError(
                     "该列键已被永久删除，不能由旧配置或新建操作重新激活",
                     code="FIELD_KEY_PURGED",
@@ -402,14 +402,14 @@ class CustomFieldService:
         )
 
         max_sort_result = await db.execute(
-            select(func.coalesce(func.max(CustomFieldDefinition.sort_index), 0)).where(
-                CustomFieldDefinition.production_id == production_id,
-                CustomFieldDefinition.is_purged.is_(False),
+            select(func.coalesce(func.max(ProjectColumn.sort_index), 0)).where(
+                ProjectColumn.production_id == production_id,
+                ProjectColumn.state != "purged",
             )
         )
         sort_index = int(max_sort_result.scalar() or 0) + 100
 
-        field = CustomFieldDefinition(
+        field = ProjectColumn(
             production_id=production_id,
             key=key,
             label=label,
@@ -420,8 +420,9 @@ class CustomFieldService:
             required=req.required,
             default_value=default_value,
             sort_index=sort_index,
-            is_active=True,
-            is_purged=False,
+            state="active",
+            origin="import" if req.group_name == "导入原文" else "custom",
+            binding_kind="custom",
             created_by=user.id,
             revision=1,
         )
@@ -481,13 +482,15 @@ class CustomFieldService:
             raise ConflictError(message="镜头数据已修改，请刷新后重新复制整列。", details={})
         source = None
         if req.source.startswith("custom:"):
-            result = await db.execute(select(CustomFieldDefinition).where(
-                CustomFieldDefinition.production_id == production_id,
-                CustomFieldDefinition.key == req.source[7:],
-                CustomFieldDefinition.is_purged.is_(False)).with_for_update())
+            result = await db.execute(select(ProjectColumn).where(
+                ProjectColumn.production_id == production_id,
+                ProjectColumn.key == req.source[7:],
+                ProjectColumn.state != "purged").with_for_update())
             source = result.scalar_one_or_none()
             if not source:
                 raise NotFoundError("来源列不存在")
+            if source.state != "active" or source.binding_kind != "custom":
+                raise DomainError("请先恢复来源列再复制", code="FIELD_TRASHED")
             if CustomFieldService._retired_label(source.label):
                 raise DomainError("该列已取消，不能复制。", code="COLUMN_RETIRED")
             if source.revision != req.field_revision:
@@ -499,8 +502,8 @@ class CustomFieldService:
             raise DomainError('来源列已删除，请恢复后重新复制。', code='COLUMN_REMOVED')
         source_values = {}
         if source:
-            result = await db.execute(select(ShotCustomFieldValue).where(
-                ShotCustomFieldValue.field_definition_id == source.id))
+            result = await db.execute(select(ShotColumnValue).where(
+                ShotColumnValue.column_id == source.id))
             source_values = {row.shot_id: row.value for row in result.scalars()}
         values = {}
         for shot in shots:
@@ -537,7 +540,7 @@ class CustomFieldService:
         preference.wrap_text = req.wrap_text
         for shot in shots:
             value = values[shot.id]
-            db.add(ShotCustomFieldValue(shot_id=shot.id, field_definition_id=created["id"], value=value, updated_by=user.id))
+            db.add(ShotColumnValue(production_id=production_id, shot_id=shot.id, column_id=created["id"], value=value, updated_by=user.id))
             shot.revision += 1
             shot.updated_at = datetime.now(timezone.utc)
             db.add(AuditLog(user_id=user.id, action="shot.column.copy", entity_type="shot", entity_id=shot.id,
@@ -555,6 +558,7 @@ class CustomFieldService:
         user: User,
     ) -> dict:
         CustomFieldService._require_write(user)
+        await CustomFieldService._production(db, production_id, for_update=True)
         field = await CustomFieldService._field(
             db,
             production_id,
@@ -577,11 +581,11 @@ class CustomFieldService:
             raise DomainError("不支持的自定义列类型", code="INVALID_FIELD_TYPE")
         type_changed = next_field_type != field.field_type
 
-        value_rows: list[ShotCustomFieldValue] = []
+        value_rows: list[ShotColumnValue] = []
         if type_changed or req.options is not None:
             values_result = await db.execute(
-                select(ShotCustomFieldValue)
-                .where(ShotCustomFieldValue.field_definition_id == field.id)
+                select(ShotColumnValue)
+                .where(ShotColumnValue.column_id == field.id)
                 .with_for_update()
             )
             value_rows = list(values_result.scalars().all())
@@ -737,6 +741,7 @@ class CustomFieldService:
         user: User,
     ) -> dict:
         CustomFieldService._require_write(user)
+        await CustomFieldService._production(db, production_id, for_update=True)
         field = await CustomFieldService._field(
             db,
             production_id,
@@ -781,15 +786,19 @@ class CustomFieldService:
             db.add(preference)
             await db.flush()
 
-        if preference.state == req.state:
+        target_state = "trashed" if req.state == "removed" else "active"
+        target_visibility = "hidden" if req.state == "removed" else req.state
+        if preference.state == target_visibility and field.state == target_state:
             return (await CustomFieldService._projection(db, [field]))[0]
 
-        preference.state = req.state
+        preference.state = target_visibility
         preference.updated_by = user.id
         preference.revision += 1
         preference.updated_at = datetime.now(timezone.utc)
         field.revision += 1
         field.updated_at = preference.updated_at
+        field.state = target_state
+        field.deleted_at = preference.updated_at if target_state == "trashed" else None
 
         CustomFieldService._audit(
             db,
@@ -819,6 +828,7 @@ class CustomFieldService:
         user: User,
     ) -> bool:
         CustomFieldService._require_write(user)
+        await CustomFieldService._production(db, production_id, for_update=True)
         field = await CustomFieldService._field(
             db,
             production_id,
@@ -826,7 +836,7 @@ class CustomFieldService:
             for_update=True,
             include_purged=True,
         )
-        if field.is_purged:
+        if field.state == "purged":
             return False
         if field.revision != req.revision:
             raise ConflictError(
@@ -845,29 +855,32 @@ class CustomFieldService:
             column_key,
             for_update=True,
         )
-        if not preference or preference.state != "removed":
+        if field.state != "trashed":
             raise DomainError(
-                "只能永久删除已归档的自定义列",
-                code="FIELD_NOT_ARCHIVED",
+                "请先将该列移入回收站，再确认永久删除",
+                code="FIELD_NOT_TRASHED",
             )
 
         await db.execute(
-            delete(ShotCustomFieldValue).where(
-                ShotCustomFieldValue.field_definition_id == field.id
+            delete(ShotColumnValue).where(
+                ShotColumnValue.column_id == field.id
             )
         )
 
         now = datetime.now(timezone.utc)
-        field.is_active = False
-        field.is_purged = True
+        field.state = "purged"
+        field.purged_at = now
+        field.label = ""
+        field.description = ""
+        field.group_name = ""
+        field.options = []
+        field.default_value = None
+        field.required = False
         field.revision += 1
         field.updated_at = now
 
-        preference.state = "removed"
-        preference.permanently_deleted = True
-        preference.updated_by = user.id
-        preference.revision += 1
-        preference.updated_at = now
+        if preference:
+            await db.delete(preference)
 
         views_result = await db.execute(
             select(SavedView)
@@ -908,9 +921,9 @@ class CustomFieldService:
         await CustomFieldService._production(db, production_id)
 
         field_result = await db.execute(
-            select(CustomFieldDefinition.id).where(
-                CustomFieldDefinition.production_id == production_id,
-                CustomFieldDefinition.is_purged.is_(False),
+            select(ProjectColumn.id).where(
+                ProjectColumn.production_id == production_id,
+                ProjectColumn.state != "purged",
             )
         )
         field_ids = set(field_result.scalars().all())
@@ -918,13 +931,13 @@ class CustomFieldService:
             return {"values": {}}
 
         rows_result = await db.execute(
-            select(ShotCustomFieldValue).where(
-                ShotCustomFieldValue.field_definition_id.in_(field_ids)
+            select(ShotColumnValue).where(
+                ShotColumnValue.column_id.in_(field_ids)
             )
         )
         values: dict[str, dict[str, Any]] = {}
         for row in rows_result.scalars().all():
-            values.setdefault(row.shot_id, {})[row.field_definition_id] = row.value
+            values.setdefault(row.shot_id, {})[row.column_id] = row.value
         return {"values": values}
 
     @staticmethod
@@ -937,6 +950,12 @@ class CustomFieldService:
     ) -> dict:
         CustomFieldService._require_write(user)
 
+        scope_result = await db.execute(select(Shot.production_id).where(Shot.id == shot_id, Shot.deleted_at.is_(None)))
+        production_id = scope_result.scalar_one_or_none()
+        if not production_id:
+            raise NotFoundError("镜头不存在")
+        await CustomFieldService._production(db, production_id, for_update=True)
+        field = await CustomFieldService._field(db, production_id, field_id, for_update=True)
         shot_result = await db.execute(
             select(Shot)
             .where(Shot.id == shot_id, Shot.deleted_at.is_(None))
@@ -946,19 +965,13 @@ class CustomFieldService:
         if not shot:
             raise NotFoundError("镜头不存在")
 
-        field = await CustomFieldService._field(
-            db,
-            shot.production_id,
-            field_id,
-            for_update=True,
-        )
         preference = await CustomFieldService._preference(
             db,
             shot.production_id,
             CustomFieldService._column_key(field),
         )
-        if preference and preference.state == "removed":
-            raise DomainError("归档列不能继续写入", code="FIELD_ARCHIVED")
+        if field.state != "active":
+            raise DomainError("回收站中的列请先恢复后再编辑", code="FIELD_TRASHED")
         if preference and preference.permanently_deleted:
             raise DomainError("永久删除的列不能继续写入", code="FIELD_PERMANENTLY_DELETED")
 
@@ -981,9 +994,9 @@ class CustomFieldService:
             raise DomainError("必填自定义列不能为空", code="FIELD_REQUIRED")
 
         value_result = await db.execute(
-            select(ShotCustomFieldValue).where(
-                ShotCustomFieldValue.shot_id == shot.id,
-                ShotCustomFieldValue.field_definition_id == field.id,
+            select(ShotColumnValue).where(
+                ShotColumnValue.shot_id == shot.id,
+                ShotColumnValue.column_id == field.id,
             )
         )
         value_row = value_result.scalar_one_or_none()
@@ -1002,13 +1015,11 @@ class CustomFieldService:
                 "revision": shot.revision,
             }
 
-        if normalized is None:
-            if value_row is not None:
-                await db.delete(value_row)
-        elif value_row is None:
-            db.add(ShotCustomFieldValue(
+        if value_row is None:
+            db.add(ShotColumnValue(
+                production_id=shot.production_id,
                 shot_id=shot.id,
-                field_definition_id=field.id,
+                column_id=field.id,
                 value=normalized,
                 updated_by=user.id,
             ))

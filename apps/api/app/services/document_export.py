@@ -12,7 +12,7 @@ from app.core.exceptions import DomainError, NotFoundError
 from app.models.production import Production, Sequence
 from app.models.shot import Shot
 from app.models.asset import Asset
-from app.models.field import CustomFieldDefinition, ShotCustomFieldValue
+from app.models.field import ProjectColumn, ShotColumnValue
 from app.services.panel_media_service import MEDIA_ROOT
 from app.services.legacy_import_adapter import legacy_module
 
@@ -29,8 +29,8 @@ async def export_document(db, production_id, fmt, user):
     if prod is None: raise NotFoundError('项目不存在')
     shots = list((await db.execute(select(Shot).options(selectinload(Shot.panels)).where(Shot.production_id == production_id, Shot.deleted_at.is_(None)).order_by(Shot.sort_index, Shot.id).limit(2001))).scalars())
     if len(shots) > 2000: raise DomainError('单次文档导出最多 2000 镜头，请拆分项目或使用 CSV。', code='VALIDATION_ERROR')
-    fields = list((await db.execute(select(CustomFieldDefinition).where(CustomFieldDefinition.production_id == production_id, CustomFieldDefinition.is_purged.is_(False)).order_by(CustomFieldDefinition.sort_index, CustomFieldDefinition.id))).scalars())
-    values = {(value.shot_id,value.field_definition_id): value.value for value in (await db.execute(select(ShotCustomFieldValue).join(Shot, Shot.id == ShotCustomFieldValue.shot_id).where(Shot.production_id == production_id, Shot.deleted_at.is_(None)))).scalars()}
+    fields = list((await db.execute(select(ProjectColumn).where(ProjectColumn.production_id == production_id, ProjectColumn.state == "active").order_by(ProjectColumn.sort_index, ProjectColumn.id))).scalars())
+    values = {(value.shot_id,value.column_id): value.value for value in (await db.execute(select(ShotColumnValue).join(Shot, Shot.id == ShotColumnValue.shot_id).where(Shot.production_id == production_id, Shot.deleted_at.is_(None)))).scalars()}
     sequences = {s.id:s.name for s in (await db.execute(select(Sequence).where(Sequence.production_id == production_id))).scalars()}
     assets = {a.id:a for a in (await db.execute(select(Asset).where(Asset.production_id == production_id, Asset.deleted_at.is_(None)))).scalars()}
     fps = prod.fps_num / (prod.fps_den or 1)

@@ -6,7 +6,7 @@ import copy
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.field import ColumnPreference
+from app.models.field import ColumnPreference, ProjectColumn
 
 
 async def purged_column_keys(
@@ -19,7 +19,12 @@ async def purged_column_keys(
             ColumnPreference.permanently_deleted.is_(True),
         )
     )
-    return set(result.scalars().all())
+    blocked = set(result.scalars().all())
+    columns = await db.execute(select(ProjectColumn.key).where(
+        ProjectColumn.production_id == production_id, ProjectColumn.state == "purged",
+    ))
+    blocked.update(f"custom:{key}" for key in columns.scalars())
+    return blocked
 
 
 def sanitize_saved_view_config(

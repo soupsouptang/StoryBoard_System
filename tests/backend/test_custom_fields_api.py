@@ -1,4 +1,4 @@
-"""Integration coverage for custom-field archive/purge tombstone semantics."""
+"""Integration coverage for custom-field trash/purge tombstone semantics."""
 from pathlib import Path
 import sys
 
@@ -280,7 +280,7 @@ async def test_custom_field_archive_restore_purge_is_irreversible_and_scrubs_sav
             json={"revision": 2, "value": "不应该写入"},
         )
         assert blocked_write.status_code == 400
-        assert blocked_write.json()["error"]["code"] == "FIELD_ARCHIVED"
+        assert blocked_write.json()["error"]["code"] == "FIELD_TRASHED"
 
         restored = await client.patch(
             f"/api/v1/productions/{production_id}/custom-fields/{field['id']}/state",

@@ -5,7 +5,7 @@ from app.models.shot import Shot, Panel, ProductionStep
 from app.models.asset import Asset, AssetVersion, ShotAssetLink, StockAssetMetadata, ClientAssetRequest
 from app.models.collaboration import Comment, Approval, ReviewDecision, ShotVersion, AuditLog, Share, Export
 from app.models.view import SavedView
-from app.models.field import ColumnPreference, CustomFieldDefinition, ShotCustomFieldValue
+from app.models.field import ColumnPreference, ProjectColumn, ShotColumnValue
 
 __all__ = [
     "Base",
@@ -30,6 +30,6 @@ __all__ = [
     "Export",
     "SavedView",
     "ColumnPreference",
-    "CustomFieldDefinition",
-    "ShotCustomFieldValue"
+    "ProjectColumn",
+    "ShotColumnValue"
 ]

@@ -8,7 +8,7 @@ from app.models.collaboration import AuditLog
 from app.models.production import Production
 from app.models.shot import Panel, Shot, ProductionStep
 from app.models.asset import ShotAssetLink
-from app.models.field import ShotCustomFieldValue
+from app.models.field import ShotColumnValue
 from app.services.legacy_import_adapter import legacy_module
 from app.models.user import User
 from app.schemas.shot import BulkUpdateShotsRequest, ShotCreate, ShotPatch, ShotReorderRequest
@@ -572,8 +572,8 @@ class ShotService:
                             db.add(ProductionStep(shot_id=new.id, **{key: getattr(step, key) for key in ['type','department','owner_id','status','sort_index','input_asset_id','output_asset_id','notes']}))
                     for link in (await db.execute(select(ShotAssetLink).where(ShotAssetLink.shot_id == source.id))).scalars().all():
                         db.add(ShotAssetLink(shot_id=new.id, asset_id=link.asset_id, role=link.role))
-                    for value in (await db.execute(select(ShotCustomFieldValue).where(ShotCustomFieldValue.shot_id == source.id))).scalars().all():
-                        db.add(ShotCustomFieldValue(shot_id=new.id, field_definition_id=value.field_definition_id, value=value.value, updated_by=user.id))
+                    for value in (await db.execute(select(ShotColumnValue).where(ShotColumnValue.shot_id == source.id))).scalars().all():
+                        db.add(ShotColumnValue(production_id=production.id, shot_id=new.id, column_id=value.column_id, value=value.value, updated_by=user.id))
                     ShotService._audit_shot_mutation(db, user_id=user.id, action='shot.clone', shot_id=new.id, metadata={'source_id': source.id})
                 active.append(new); moving.append(new)
             await db.flush()

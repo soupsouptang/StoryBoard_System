@@ -3,13 +3,14 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import BigInteger, Boolean, Float, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import BigInteger, Boolean, Float, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 
 
 class Shot(Base):
     __tablename__ = "shots"
+    __table_args__ = (UniqueConstraint("production_id", "id", name="uq_shots_production_id"),)
 
     production_id: Mapped[str] = mapped_column(ForeignKey("productions.id", ondelete="CASCADE"), index=True)
     sequence_id: Mapped[Optional[str]] = mapped_column(ForeignKey("sequences.id", ondelete="SET NULL"), nullable=True, index=True)
