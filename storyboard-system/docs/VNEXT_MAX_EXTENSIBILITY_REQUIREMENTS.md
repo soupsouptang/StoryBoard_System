@@ -144,7 +144,10 @@ Standalone Production    # 允许完全不使用 Work / Episode
 - 广告、单支短片、简单分镜项目：可以直接创建 standalone Production，默认不暴露多集功能；
 - 剧集、栏目、系列内容：可以先建 Work / Episode，再创建或挂接 Production；
 - 已存在的多个 Production 可以后续归组到 Episode / Work，实现“多项目合并为剧集文件夹后统一管理”；
-- 归组是**组织关系与聚合视图**，不得物理复制、合并或改写各 Production 的 canonical 数据、Revision、History 和权限 owner；
+- **支持 Work 合并**：多个既有 Work 可以通过显式 Merge 操作合并到一个目标 Work；
+- Work Merge 的本质是**重归属/聚合**：把源 Work 下的 Episode 与直接挂载的 Production 迁移到目标 Work，不复制 Production canonical 数据；
+- 合并后源 Work 默认进入 archived/merged 状态并保留可追溯记录，不允许静默硬删除；
+- 归组与 Work Merge 都不得物理复制、合并或改写各 Production 的 canonical 数据、Revision、History 和权限 owner；
 - 上层容器允许提供跨 Production 的聚合查询、人员冲突、场次统计、资产汇总、排期概览和批量管理，但所有写操作仍进入目标 Production 的正常 Command 边界。
 
 `Production` 内部继续拥有：
@@ -176,6 +179,61 @@ Production
    - 是否需要单独查询/权限/生命周期；
    - 是否参与 Import/Export/History/Automation；
    - 与哪些 Entity 建立关系。
+
+### 3.1 Work Merge 合同
+
+固定层级继续保持：
+
+```text
+Work → Episode → Production
+```
+
+不增加任意嵌套 Collection/Folder。为了支持系列重组、项目归档整合和后期管理，Work 必须支持合并。
+
+建议业务动作：
+
+```text
+MergeWorkCommand
+source_work_ids[]
+target_work_id
+expected_revisions
+conflict_decisions
+```
+
+合并流程：
+
+```text
+Preview
+↓
+权限 / Revision 检查
+↓
+检测 Episode / Production 冲突
+↓
+重归属到 target Work
+↓
+写 Audit / History / Outbox
+↓
+源 Work 标记 MERGED / ARCHIVED
+↓
+COMMIT
+```
+
+必须满足：
+
+- 至少 2 个 Work 才允许进入 Merge；
+- 目标 Work 必须明确指定，不能靠名称猜测；
+- Episode 与 Production 保持原 ID，不创建复制品；
+- Production 的 Revision、History、Asset、Review、Task、Schedule、权限 owner 不因 Work Merge 被重写；
+- 若源 Work 中存在直接挂载 Production，可保持直接挂载到目标 Work，也可由用户在 Preview 中选择放入某 Episode，但不得自动猜；
+- Episode 重名不等于同一 Episode，默认只重归属，不自动做 Episode Merge；
+- 如未来需要 Episode Merge，应作为独立 Command/Preview，不隐含在 Work Merge 中；
+- 跨 Work 的成员、权限、Preset、Provider 配置若存在冲突，必须在 Preview 中明确展示，禁止静默覆盖；
+- 合并为原子事务；任一关键冲突未解决时不得产生半完成状态；
+- 合并完成后，所有旧链接/引用若指向源 Work，应能解析到 merged state，并提供目标 Work 的可追溯跳转；
+- 源 Work 默认保留 tombstone/merged record，用于 Audit、历史链接和恢复/排错，不进行即时硬删除；
+- Work Merge 事件可触发索引、聚合视图、缓存和统计重算，但这些作为 Event Consumer 执行，不扩大主事务。
+
+Work Merge 是“容器级重组”，不是“把多个 Production 变成一个 Production”。如果用户想把两个 Production 的 Shot/Scene/Asset 真正合并成一个项目，应走另一套显式 Project Merge/Import 流程，不能借 Work Merge 偷偷完成。
 
 ---
 
@@ -1444,7 +1502,7 @@ result/failure
 
 1. **Scene ↔ Shot：采用 typed many-to-many。** 一个 Shot 允许归属于多个 Scene，例如回忆、跨场景或其他叙事关系；目标为 `SceneShot` 关系，支持 0..N Scene，并定义 relation_type / primary / order 的稳定语义。
 2. **User / Person / Character：彻底分开。** User=登录身份，Person=现实中的人，Character=叙事角色；`CastAssignment` 连接 Character ↔ Person；`ProductionMember` 负责 Person 在项目中的职责与权限，并可选关联 User。
-3. **Work / Episode：纳入 Production 上层。** 它们是可选组织容器；简单项目可通过创建预设隐藏/跳过，剧集/系列项目可启用。已有多个 Production 可以后续归组到 Episode / Work 后做聚合管理，但不得复制或物理合并其 canonical 数据。
+3. **Work / Episode：纳入 Production 上层，并支持 Work Merge。** 固定层级为 `Work → Episode → Production`，不增加任意嵌套 Collection/Folder；简单项目可通过创建预设隐藏/跳过，剧集/系列项目可启用。已有多个 Production 可以后续归组到 Episode / Work；多个 Work 也可以通过显式 Merge 合并到目标 Work。Work Merge 只做容器级重归属/聚合，不复制或物理合并 Production canonical 数据。
 4. **Take：当前不实现，只保留扩展 seam。** 当前产品聚焦前期制作，以及拍摄中期的分镜查看、人员/场次调度。现在不新建 Take ORM/table/API/UI 空壳；未来进入现场场记、多机位实拍、Take 圈选、Take→Media 链路时，再按独立 Domain 正式引入。
 
 ### 25.2 Take 的未来扩展合同
@@ -1568,8 +1626,13 @@ result/failure
 - 创建 standalone Production 时完全不要求填写 Work / Episode；
 - 通过系列/剧集预设创建 Work → Episode → Production；
 - 将多个既有 Production 后续归组到同一个 Episode / Work；
+- 将 Work A + Work B 合并到 Work C，并保持所有 Episode / Production 原 ID；
+- Work Merge 前可 Preview Episode 重名、直接挂载 Production、权限/配置冲突；
+- 未解决冲突时 Merge 不产生半完成状态；
+- Merge 后源 Work 进入 merged/archived，可从历史链接追溯到目标 Work；
+- Episode 同名默认不自动合并；
 - 上层聚合查看跨项目人员、场次、资产和进度；
-- 归组/移动容器不修改子 Production 的 Shot ID、Revision、History、媒体引用或内部权限 owner；
+- 归组/Work Merge 不修改子 Production 的 Shot ID、Revision、History、媒体引用或内部权限 owner；
 - 从 Episode / Work 发起批量操作时，最终写入仍逐个经过目标 Production 的权限与 Command 边界。
 
 ### 28.3 二次 Import
@@ -1635,6 +1698,7 @@ new canonical project
 “最大化扩展性基础完成”至少意味着：
 
 - Work / Episode 可以作为可选上层容器组织多个 Production，而 standalone Production 不受影响；
+- 多个 Work 可以通过显式 Work Merge 重组到目标 Work，且不会复制或合并子 Production 的 canonical 数据；
 - 一个 Shot 可以通过 SceneShot 关系稳定归属 0..N 个 Scene；
 - User / Person / Character 身份与职责边界彻底分离；
 - 当前不实现 Take，但未来加入 Take 不需要推翻 Shot / Asset / Media 核心；
