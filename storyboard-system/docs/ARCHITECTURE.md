@@ -1,5 +1,12 @@
 # FrameForge 架构与开发入口（审计增强版）
 
+## 2026-10-04 最大化扩展性目标合同
+
+VNext 后续架构扩展必须遵循 [VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)。该文档定义长期目标，不把计划写成当前事实。核心原则：**Strong Core + Explicit Extension Points**；Production 是工作区 scope，不是万能业务对象；新能力优先通过 Entity / Typed Relation / Command / Event Consumer / Provider / UI Contribution 接入。
+
+明确目标包括：Entity-scoped Fields（但不做万能 EAV）、ProductionStep 与 Task 分离、Task Dependency DAG、ProductionMember 项目级权限、Command/Revision/Audit/History/Outbox、Event→Rule→Command 自动化、无模板智能 Import + Provenance、Deliverable Profile、Storage/AI/Queue Provider、Capability Registry、持久配置 schema_version+migrator。继续禁止旧数据库迁移、旧 API/runtime 兼容和 packages 无限增长。
+
+
 ## 2026-10-03 当前VNext命令历史增量
 
 已确认项目操作由API原unit of work commit前写HistoryService日志，PG持久history_states/history_entries/workspace_layouts，Alembic a83f02c1d765。正常写入仍归既有域service；Web快捷键/按钮/个人布局消费真实API，没有Legacy桥接或第二个持久undo owner。稳定ID补偿、revision增长、权限/冲突/审计/outbox及purge边界见[实施记录](PROJECT_HISTORY_2026-10-03.md)。此为本机当前已集成事实，不代表生产运行权或完整产品cutover。
