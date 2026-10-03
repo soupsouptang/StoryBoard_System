@@ -163,6 +163,7 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
 
             <div className="grid gap-3 sm:grid-cols-3">
               <Field label="制作方式">
+                <span aria-hidden="true" className="hidden h-4 sm:block" />
                 <Select
                   label="制作方式"
                   value={primaryMethod}
@@ -184,6 +185,7 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
               </Field>
 
               <Field label="标准景别">
+                <span aria-hidden="true" className="hidden h-4 sm:block" />
                 <Select
                   label="标准景别"
                   value={shotSize}
@@ -199,8 +201,10 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
                 />
               </Field>
 
-              <Field label="规划时长（f帧 / s秒 / m分 / h时）">
+              <Field label="规划时长">
+                <span id="new-shot-duration-hint" className="whitespace-nowrap text-xs font-normal leading-4 text-muted-foreground">f帧 / s秒 / m分 / h时</span>
                 <Input
+                  aria-describedby="new-shot-duration-hint"
                   aria-label="新增镜头时长 / 帧数（必填）"
                   type="text"
                   required
