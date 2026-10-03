@@ -582,6 +582,15 @@ A new package is not justified merely because code is reusable in theory. Prefer
 
 ## 22. Parallel/Sub-Agent Work
 
+### Confirmed UI and concurrent-edit boundary
+
+- Preserve explicit accepted UI requirements, including the storyboard workbench table view and controls, its layout/style/interactions, and the project-entry photographic cover rows. Do not impose a global UI freeze: agents may work on UI when their active assignment authorizes it, while preserving accepted requirements. A backend task alone does not authorize redesigning those surfaces.
+- If the active task says no UI changes, do not edit Web components, page markup, styles, UI packages, or frontend dependency files. Keep existing unfinished frontend drafts separate and do not include them in backend commits. Report any missing frontend consumer as a remaining integration gate.
+- Every agent assignment must declare its allowed files, excluded surfaces, owner, and verification scope before editing. Concurrent agents must have disjoint write sets; coordinate shared routers, model registration, schema migrations, and canonical ledgers through the integrating agent.
+- Inspect current local and remote changes before touching an assigned file. Do not overwrite another agent's edits, reverse an accepted UI change, or mix unrelated work into a commit. Rebase/integrate reviewed remote increments while preserving local drafts.
+- Backend changes must document their frontend integration gaps, contract changes, affected consumers, and acceptance gates in a handoff ledger. Record the allowed write set and current owner before another agent resumes that integration; never push an older frontend draft over newer work. Stage explicit files and re-check the remote diff before publishing.
+- If a necessary fix crosses the declared boundary, present the concrete affected surface and obtain explicit authorization before making that change. Backend contracts should retain existing consumer compatibility where it is safe to do so; passing backend checks must not be described as UI acceptance.
+
 Use parallel agents only for genuinely separable investigation or verification.
 
 Good scopes include:

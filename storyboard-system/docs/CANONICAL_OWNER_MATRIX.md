@@ -1,5 +1,9 @@
 # FRAMEFORGE canonical owner matrix
 
+## 2026-10-04 新模块整合边界
+
+画板服务/模型/迁移为新增后端owner，复用现有HistoryService作为唯一持久命令历史；灯光进入project_snapshot，情绪板不进入内容版本。导入导出继续复用ImportService/document_export，不另建并行owner。本轮仅后端，UI缺口与接手边界记录于 [后端衔接账本](BACKEND_FRONTEND_HANDOFF_2026-10-04.md)；新模块仍在验证，不能依据本段判为cutover。
+
 ## 2026-10-03 持久命令历史owner
 
 HistoryService独占确认日志/补偿/游标，get_db原unit of work在commit前finish；正常写入仍归既有域service。history_context仅解析可信路由/项目，客户端不提交inverse。PG三表由Alembic a83f02c1d765拥有；用户＋项目100步、对象revision冲突、purge历史边界。WorkspaceLayout独占确认个人布局，useWorkspaceLayout消费，旧localStorage仅首次初始化；ProjectHistoryControls拥有展示/快捷键/反馈，输入/构图局部草稿保留键盘所有权。权限/AuditLog/OutboxEvent沿用，无revision/源文件回退。现有原生操作已真实接通验证，INTEGRATED_NOT_CUT_OVER；完整成员RBAC/worker/画板/灯光等待办不因此完成。详见[实施记录](PROJECT_HISTORY_2026-10-03.md)。
