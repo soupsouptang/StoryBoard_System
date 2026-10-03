@@ -2,7 +2,7 @@
 
 ## 2026-10-03 项目撤销与重做
 
-用户确认的现有VNext操作持久undo/redo已接通：用户＋项目最近100步，通用快捷键，个人列布局PG确认，列新增/复制＋位置一条事务。HistoryService/get_db沿用既有service/权限/审计/outbox，Alembic a83f02c1d765；冲突整步409、purge清全项目历史、源文件不变。完整后端137 passed，Next生产构建/TypeScript、PG空库/副本、真实浏览器五宽度通过。代码74f76a2本地提交，续作MD随后提交；本次push被自动审批拒绝，需用户明确授权soupsouptang仓库master，未上传且不换remote绕过。详见CONTINUE_WORK；下方状态是历史检查点。原生Moodboard/Lighting、完整项目restore/merge及既有RBAC/发送worker等待办不因此完成。详见[实施记录](PROJECT_HISTORY_2026-10-03.md)。
+用户确认的现有VNext操作持久undo/redo已接通：用户＋项目最近100步，通用快捷键，个人列布局PG确认，列新增/复制＋位置一条事务。HistoryService/get_db沿用既有service/权限/审计/outbox，Alembic a83f02c1d765；冲突整步409、purge清全项目历史、源文件不变。完整后端137 passed，Next生产构建/TypeScript、PG空库/副本、真实浏览器五宽度通过。用户已明确授权soupsouptang仓库master；重新fetch核对后成功快进上传至1d6018a，包含代码74f76a2、续作MD和此前未同步提交，历史未改写。最终同步状态MD另行上传；下方待授权/未上传状态是历史检查点，最新以CONTINUE_WORK为准。原生Moodboard/Lighting、完整项目restore/merge及既有RBAC/发送worker等待办不因此完成。详见[实施记录](PROJECT_HISTORY_2026-10-03.md)。
 
 ## 2026-10-03 已选数量对齐
 

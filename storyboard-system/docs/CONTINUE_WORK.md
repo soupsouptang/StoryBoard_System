@@ -1,6 +1,6 @@
 # FRAMEFORGE 续作入口
 
-## 2026-10-03 持久撤销与重做已实施（代码 `74f76a2`，上传待确切目的地授权）
+## 2026-10-03 持久撤销与重做已实施并上传（代码 `74f76a2`）
 
 最新用户要求“继续完成并上传同步，遵循GitHub搭建规则”。先读本文/根及适用AGENTS，fetch两个已配置remote后核实：GitHub此前仅有图片构图局部草稿undo/redo，没有贯穿项目的持久历史；远端最新规则与本地相同，未发现需要合并的新增提交。本次遵循apps/web＋apps/api＋PostgreSQL＋Alembic原生owner，不接回Legacy架构、不生产部署。
 
@@ -12,9 +12,9 @@ HistoryService/get_db原事务拥有日志/补偿，现有域service仍拥有正
 
 **浏览器预览**：3002和API8002已重启载入最新构建/源码，PG55432保留。独立验收项目 `54374ea3-0b02-46c6-97c4-0fe9bfb3930a`，1镜头及“可撤销列”保留；入口 `http://127.0.0.1:3002/production/54374ea3-0b02-46c6-97c4-0fe9bfb3930a/shots`。独立验收tab关闭、临时视口恢复，用户原页面保留。视频样本97镜头和原106镜头项目未改动。
 
-**上传阻挡**：代码及canonical台账已本地提交 `74f76a27e9d2df46a3140330455cdde87627b2ca`，本文随后本地提交。已按用户最新“上传同步”尝试非强制推送至既有 `soupsouptang/StoryBoard_System master`，自动审批再次拒绝：用户虽授权上传，未明确指定/验证这个确切仓库与默认master分支，写入共享分支可能影响其他协作者。本地配置还存在origin（montblanc08仓库）；不能自行换remote或绕过拒绝。需要用户明确确认允许把本次代码/MD及此前未同步提交推送至 `https://github.com/soupsouptang/StoryBoard_System.git` 的 `master`。在得到该确切授权前不重试、不宣称上传完成。最后fetch的soupsouptang/master为 `9e1f69c8daad9b0aed0297c8c60947cadc71acd7`；没有远端新功能需合入。CI未运行本次提交，不宣称远端CI通过。
+**上传完成**：用户在确切目的地确认后回复“强制上传GitHub”，本次明确授权已承接。重新fetch核实远端无新增提交、规则无变化，Regression Guard通过；随后正常快进上传 `soupsouptang/StoryBoard_System master`，远端从 `9e1f69c`更新到 `1d6018a`。包含代码 `74f76a27e9d2df46a3140330455cdde87627b2ca`、续作MD `1d6018a`及此前未同步的16个提交；保留原远端历史，没有改写或换remote。此前自动审批阻挡已解除，本段覆盖下方历史“尚未上传/等待授权”状态。最终上传状态MD随后单独提交并上传；当前远端SHA以Git查询为准。未宣称本次GitHub CI已通过。
 
-**下一次开工**：先读本文/AGENTS、检查Git状态及远端，不重做已完成实现。若用户明确确认上述目的地，先fetch检查新提交，必要时安全整合，再非强制上传代码检查点及续作MD，最后核实远端SHA并更新MD。若没有新产品需求，不扩展下方历史待办。未知`:memory:.ses`原样保留、未入Git。
+**下一次开工**：先读本文、适用AGENTS及最新动态台账，检查Git状态并fetch远端；不重做本次已完成实现。当前已确认撤销/重做修改和GitHub同步完成，没有新需求时不扩展下方旧产品待办。未知`:memory:.ses`原样保留、未入Git。
 
 实施范围与owner/验收详见[项目历史记录](PROJECT_HISTORY_2026-10-03.md)。现有操作已接通，仍为INTEGRATED_NOT_CUT_OVER；原生Moodboard/Lighting、完整项目restore/merge、成员RBAC、outbox发送和媒体GC是旧产品待办，不因此完成，也不在本次自动扩展。
 
