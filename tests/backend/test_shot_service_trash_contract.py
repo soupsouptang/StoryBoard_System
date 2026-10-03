@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 import unittest
+from unittest.mock import AsyncMock, patch
 
 
 class _Field:
@@ -176,7 +177,11 @@ class ShotServiceTrashContractTest(unittest.TestCase):
         self.assertEqual(db.added[-1].action, "shot.restore")
 
         shot.deleted_at = datetime(2026, 1, 2, tzinfo=timezone.utc)
-        self.assertTrue(asyncio.run(service.purge_shot(db, shot.id, self.actor())))
+        # This dependency-light fixture owns only Shot rows; real journal
+        # transaction/barrier behavior is covered in test_command_history.
+        with patch('app.services.history_service.HistoryService.barrier', new_callable=AsyncMock) as barrier:
+            self.assertTrue(asyncio.run(service.purge_shot(db, shot.id, self.actor())))
+            barrier.assert_awaited_once_with(db, 'production-1')
         self.assertEqual(db.delete_count, 1)
         self.assertEqual(db.added[-1].action, "shot.purge")
 

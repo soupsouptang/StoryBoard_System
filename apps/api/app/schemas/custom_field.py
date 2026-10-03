@@ -91,10 +91,19 @@ class CustomFieldValueMatrix(BaseModel):
     values: dict[str, dict[str, Any]]
 
 
+class ColumnPlacement(BaseModel):
+    revision: int = Field(ge=0, strict=True)
+    config: dict
+    reference: str = Field(min_length=1, max_length=120)
+    after: bool = True
+    columns: list[str] = Field(default_factory=list, max_length=100)
+
+
 class CustomFieldInsert(BaseModel):
     fields: list[CustomFieldCreate] = Field(default_factory=list, max_length=100)
     restore: dict[str, int] = Field(default_factory=dict, max_length=100)
     restore_columns: dict[str, NonNegativeInt] = Field(default_factory=dict, max_length=100)
+    placement: ColumnPlacement | None = None
 
 
 class ColumnCopyRequest(BaseModel):
@@ -106,6 +115,7 @@ class ColumnCopyRequest(BaseModel):
     wrap_text: bool = False
     existing_labels: list[str] = Field(default_factory=list, max_length=200)
     options: list[str] = Field(default_factory=list, max_length=100)
+    placement: ColumnPlacement | None = None
 
 
 class ColumnCopyResult(BaseModel):

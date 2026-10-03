@@ -8,6 +8,7 @@ import { Button, Dialog, DialogContent, DialogTitle, DialogDescription, Input, S
 import { apiClient, apiDownload } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/authStore';
 import { drawMediaPreview } from '@/lib/media-preview';
+import { historyShortcut } from '@/lib/history-shortcuts';
 import { assetError, assetPath, useAssetMutation, type AssetLibraryItem, type MediaPresentation, type ImageVersion } from '@/lib/hooks/useAssets';
 
 type Transform = MediaPresentation['transform'];
@@ -131,7 +132,8 @@ function CropEditor({ productionId, asset, owner, onClose, onPending }: {
     { key: 'scale', label: '缩放', min: 1, max: 10, step: .01 }, { key: 'straighten_degrees', label: '拉直', min: -45, max: 45, step: .1 },
     { key: 'perspective_horizontal', label: '水平透视', min: -30, max: 30, step: .1 }, { key: 'perspective_vertical', label: '垂直透视', min: -30, max: 30, step: .1 }];
   return <div className="space-y-4" onKeyDown={event => {
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !(event.target as HTMLElement).closest('input,textarea')) { event.preventDefault(); history(!event.shiftKey); }
+    const direction = historyShortcut(event.nativeEvent, true);
+    if (direction && !mutation.isPending) { event.preventDefault(); history(direction === 'undo'); }
   }}>
     {(presentation.isPending || versions.isPending || loading) && <p role="status">正在读取图片…</p>}
     {(presentation.error || versions.error || imageError) && <div role="alert">{assetError(presentation.error || versions.error || imageError)} <Button variant="outline" onClick={() => { void presentation.refetch(); void versions.refetch(); setRetry(n => n + 1); }}>重试</Button></div>}

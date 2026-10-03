@@ -493,6 +493,10 @@ class CustomFieldService:
             restored.append(await CustomFieldService.set_state(db, production_id, field_id,
                 CustomFieldStateUpdate(revision=revision, state="visible"), user))
         created = [await CustomFieldService.create_field(db, production_id, field, user) for field in req.fields]
+        if req.placement:
+            from app.services.history_service import HistoryService
+            await HistoryService.place_columns(db, production_id, user, req.placement,
+                [row['column_key'] for row in restored + created])
         return restored + created
 
     @staticmethod
@@ -577,6 +581,10 @@ class CustomFieldService:
             db.add(AuditLog(user_id=user.id, action="shot.column.copy", entity_type="shot", entity_id=shot.id,
                 metadata_json={"field_id": created["id"], "source": req.source, "revision": shot.revision}))
         await db.flush()
+        if req.placement:
+            from app.services.history_service import HistoryService
+            await HistoryService.place_columns(db, production_id, user, req.placement,
+                [created['column_key']], req.source, req.width_px)
         return {"field": (await CustomFieldService._projection(db, [await CustomFieldService._field(db, production_id, created["id"])]))[0],
                 "shot_revisions": {shot.id: shot.revision for shot in shots}}
 
@@ -944,6 +952,16 @@ class CustomFieldService:
                 template.field_ids = [identity for identity in template.field_ids if identity != field.id]
                 template.revision += 1
                 template.updated_at = now
+
+        from app.models.history import WorkspaceLayout
+        from app.services.history_service import HistoryService
+        layouts = await db.scalars(select(WorkspaceLayout).where(WorkspaceLayout.production_id == production_id).with_for_update())
+        for layout in layouts:
+            sanitized, changed = sanitize_saved_view_config(layout.config, {column_key})
+            if changed:
+                layout.config = sanitized
+                layout.revision += 1
+        await HistoryService.barrier(db, production_id)
 
         CustomFieldService._audit(
             db,

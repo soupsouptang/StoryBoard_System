@@ -263,6 +263,8 @@ class ShotService:
         )
         await db.delete(shot)
         await db.flush()
+        from app.services.history_service import HistoryService
+        await HistoryService.barrier(db, shot.production_id)
         return True
 
     @staticmethod

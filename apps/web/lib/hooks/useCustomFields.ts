@@ -45,6 +45,7 @@ export interface CustomFieldValueMatrix {
 }
 
 export interface BuiltinColumnState { column_key: string; state: CustomFieldState; revision: number }
+export interface ColumnPlacement { revision: number; config: Record<string, unknown>; reference: string; after: boolean; columns?: string[] }
 export interface CatalogColumn {
   catalog_key: string | null; label: string; column_class: 'builtin' | 'preset' | 'custom';
   binding_kind: string; field_type: string; instance: CustomFieldDefinition | null;
@@ -68,22 +69,22 @@ export function useSetBuiltinColumnState(productionId: string) {
 export function useInsertCustomFields(productionId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { fields: { label: string; field_type: CustomFieldType; options?: string[] }[]; restore: Record<string, number>; restore_columns?: Record<string, number> }) =>
+    mutationFn: (input: { fields: { label: string; field_type: CustomFieldType; options?: string[] }[]; restore: Record<string, number>; restore_columns?: Record<string, number>; placement?: ColumnPlacement }) =>
       apiClient<CustomFieldDefinition[]>(`/api/v1/productions/${productionId}/custom-fields/insert`, { method: 'POST', json: input }),
     onSuccess: saved => queryClient.setQueryData<CustomFieldDefinition[]>(['custom-fields', productionId], current =>
       [...(current || []).filter(field => !saved.some(item => item.id === field.id)), ...saved]),
-    onSettled: () => Promise.all(['custom-fields', 'column-preferences', 'column-catalog'].map(key => queryClient.invalidateQueries({ queryKey: [key, productionId] })))
+    onSettled: () => Promise.all(['custom-fields', 'column-preferences', 'column-catalog', 'workspace-layout'].map(key => queryClient.invalidateQueries({ queryKey: [key, productionId] })))
   });
 }
 
 export function useCopyColumn(productionId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { source: string; label: string; field_revision?: number; shot_revisions: Record<string, number>; width_px: number; wrap_text: boolean; existing_labels: string[] }) =>
+    mutationFn: (input: { source: string; label: string; field_revision?: number; shot_revisions: Record<string, number>; width_px: number; wrap_text: boolean; existing_labels: string[]; placement?: ColumnPlacement }) =>
       apiClient<{ field: CustomFieldDefinition; shot_revisions: Record<string, number> }>(`/api/v1/productions/${productionId}/custom-fields/copy-column`, { method: 'POST', json: input }),
     onSuccess: saved => queryClient.setQueryData<CustomFieldDefinition[]>(['custom-fields', productionId], current => [...(current || []), saved.field]),
     onSettled: async () => {
-      await Promise.all(['custom-fields', 'custom-field-values', 'shots', 'column-catalog'].map(key => queryClient.invalidateQueries({ queryKey: [key, productionId] })));
+      await Promise.all(['custom-fields', 'custom-field-values', 'shots', 'column-catalog', 'workspace-layout'].map(key => queryClient.invalidateQueries({ queryKey: [key, productionId] })));
     }
   });
 }

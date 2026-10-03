@@ -13,6 +13,7 @@ from app.api.v1.assets import router as assets_router
 from app.api.v1.custom_fields import router as custom_fields_router
 from app.api.v1.exports import router as exports_router
 from app.api.v1.health import router as health_router
+from app.api.v1.history import router as history_router
 from app.api.v1.imports import router as imports_router
 from app.api.v1.ai import router as ai_router
 from app.api.v1.presence import router as presence_router
@@ -115,6 +116,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Mount API Routes
 app.include_router(health_router, prefix="")
 app.include_router(health_router, prefix=settings.API_V1_PREFIX)
+app.include_router(history_router, prefix=settings.API_V1_PREFIX)
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(custom_fields_router, prefix=settings.API_V1_PREFIX)
 app.include_router(productions_router, prefix=settings.API_V1_PREFIX)

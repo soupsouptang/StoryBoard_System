@@ -1,5 +1,9 @@
 # FRAMEFORGE Screen Parity Matrix
 
+## 2026-10-03 项目撤销重做实际消费
+
+项目设置左侧共享Button撤销/重做。Chrome3002独立合成项目真实验证创建undo/快捷键redo、列宽恢复、刷新后Ctrl+Y、后插列一次undo/redo、弹窗原生输入undo/Esc、键盘焦点及列管理/表头右键菜单。1440/1024/768/375/320无根溢出，14px/32px按钮可见；截图outputs/project-undo-redo-2026-10-03.png仅留工作区。INTEGRATED_NOT_CUT_OVER，不提升全站视觉或原生画板/灯光状态。[实施记录](PROJECT_HISTORY_2026-10-03.md)。
+
 ## 2026-10-03 centered cards acceptance (`0e12efa`)
 
 The latest user request moves new-Shot authoring and bottom notifications into centered cards. The actual shots route now mounts the existing NewShotModal; bottom NewShotRow is removed. Feedback and bulk-trash confirmation use root shared Dialog. Card/Wall creation continues consuming the same modal. Existing floating dialogs allow Esc; unsent draft/deletion cancellation causes no request, while already-submitted requests are not falsely rolled back.

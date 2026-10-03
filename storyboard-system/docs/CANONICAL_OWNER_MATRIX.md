@@ -1,5 +1,9 @@
 # FRAMEFORGE canonical owner matrix
 
+## 2026-10-03 持久命令历史owner
+
+HistoryService独占确认日志/补偿/游标，get_db原unit of work在commit前finish；正常写入仍归既有域service。history_context仅解析可信路由/项目，客户端不提交inverse。PG三表由Alembic a83f02c1d765拥有；用户＋项目100步、对象revision冲突、purge历史边界。WorkspaceLayout独占确认个人布局，useWorkspaceLayout消费，旧localStorage仅首次初始化；ProjectHistoryControls拥有展示/快捷键/反馈，输入/构图局部草稿保留键盘所有权。权限/AuditLog/OutboxEvent沿用，无revision/源文件回退。现有原生操作已真实接通验证，INTEGRATED_NOT_CUT_OVER；完整成员RBAC/worker/画板/灯光等待办不因此完成。详见[实施记录](PROJECT_HISTORY_2026-10-03.md)。
+
 ## 2026-10-03 新增镜头、表格展示与悬浮卡片 owner
 
 本次统计`cc1a213`：ProductionShotSummary拥有项目栏统计展示，ShotViewNavigation拥有导航数量展示；两者只派生React Query现有活动镜头/项目/custom values与workspace filters。Web shot-display独占表/卡片筛选纯函数及整数帧累计，packages/timecode独占HH:MM:SS:FF/drop-frame格式。旧页面内联筛选退出并改用纯函数，保留各视图已有语义；顶部不再另建筛选/累计状态。API ProductionService聚合与Shot列表原有deleted_at过滤继续权威，ShotService及现有hook失效策略拥有写后更新，无新增API/schema/cache owner。针对合成检查与真实消费者/五宽度已验证，整体迁移状态与GitHub授权阻挡不变。

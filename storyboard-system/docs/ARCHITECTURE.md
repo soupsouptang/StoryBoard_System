@@ -1,5 +1,9 @@
 # FrameForge 架构与开发入口（审计增强版）
 
+## 2026-10-03 当前VNext命令历史增量
+
+已确认项目操作由API原unit of work commit前写HistoryService日志，PG持久history_states/history_entries/workspace_layouts，Alembic a83f02c1d765。正常写入仍归既有域service；Web快捷键/按钮/个人布局消费真实API，没有Legacy桥接或第二个持久undo owner。稳定ID补偿、revision增长、权限/冲突/审计/outbox及purge边界见[实施记录](PROJECT_HISTORY_2026-10-03.md)。此为本机当前已集成事实，不代表生产运行权或完整产品cutover。
+
 > 审计日期：2026-09-29（基于本地 `7b3a24c` 与入口/导入盘点）
 > 原始基线：`ARCHITECTURE.md`（2026-09-24 之后持续维护版本）  
 > 文档定位：**当前仓库事实文档 / 开发入口 / 架构边界说明 / 维护约束**  

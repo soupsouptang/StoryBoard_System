@@ -67,6 +67,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         try:
             yield session
+            from app.services.history_service import HistoryService
+            await HistoryService.finish(session)
             await session.commit()
         except Exception:
             await session.rollback()

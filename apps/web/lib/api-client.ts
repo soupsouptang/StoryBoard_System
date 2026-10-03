@@ -42,7 +42,10 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
   }
 
   const res = await fetch(url, { ...options, headers });
-  if (res.status === 204) return null as T;
+  if (res.status === 204) {
+    notifyMutation(options.method);
+    return null as T;
+  }
 
   const type = res.headers.get('content-type') || '';
   const data = type.includes('json') ? await res.json() : await res.text();
@@ -58,7 +61,14 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}): 
     throw new ApiError(res.status, message, code, details);
   }
 
+  notifyMutation(options.method);
   return data as T;
+}
+
+function notifyMutation(method?: string) {
+  if (typeof window !== 'undefined' && method && !['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())) {
+    window.dispatchEvent(new Event('frameforge:mutation'));
+  }
 }
 
 export async function apiDownload(path: string, fallbackFilename: string): Promise<{ blob: Blob; filename: string; pageCount: number }> {

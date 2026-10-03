@@ -1,5 +1,9 @@
 # API route inventory — Legacy reference only
 
+## 2026-10-03 原生项目历史接口
+
+新增V-API GET `/api/v1/productions/{id}/history`、POST `.../history/{undo|redo}`（仅方向与expected游标）、GET/PUT `.../workspace-layout`（个人布局＋revision）。现有列insert/copy-column可选placement同事务处理，get_db commit前写日志，失败/no-op不入历史；冲突409整步回滚，每次复核权限，原purge服务清全项目历史。Alembic a83f02c1d765、真实HTTP与Web/PG接入已验证；没有Legacy兼容路径或任意客户端inverse快照接口。[实施记录](PROJECT_HISTORY_2026-10-03.md)。
+
 ## 2026-10-02 新增 / 变更原生路由
 
 - `GET /productions/{id}/column-catalog`：9 Built-in /20 Preset /N Custom 与活动/回收实例。

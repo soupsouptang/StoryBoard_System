@@ -8,6 +8,7 @@ import { framesToTimecode } from '@frameforge/timecode';
 import { useParams } from 'next/navigation';
 import type { Sequence, Shot } from '@frameforge/types';
 import { useProduction, useReorderShots, useShots, useUpdateShot } from '@/lib/hooks/useProduction';
+import { useWorkspaceLayout } from '@/lib/hooks/useWorkspaceLayout';
 import { useShotCommands } from '@/lib/hooks/useShotCommands';
 import { ImportModal } from '@/components/storyboard/ImportModal';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
@@ -48,7 +49,6 @@ import {
   defaultShotTablePresentationPreferences,
   loadShotTablePresentationPreferences,
   normalizeShotTablePresentationPreferences,
-  saveShotTablePresentationPreferences,
   type ShotTableColumnKey,
   type ShotTablePresentationPreferences,
   type ShotTableRowHeight
@@ -106,6 +106,7 @@ export default function ShotListPage() {
   const params = useParams();
   const id = typeof params?.id === 'string' ? params.id : '';
 
+  const layout = useWorkspaceLayout(id);
   const { data: production } = useProduction(id);
   const { data: shots = [], isLoading } = useShots(id);
   const { data: customFields = [] } = useCustomFields(id);
@@ -133,6 +134,13 @@ export default function ShotListPage() {
   const [tablePresentation, setTablePresentation] = useState<ShotTablePresentationPreferences>(
     () => defaultShotTablePresentationPreferences()
   );
+  const presentationRef = useRef(tablePresentation);
+  const wrappedRef = useRef(wrappedColumns);
+  const initializingLayout = useRef('');
+  const resizeCleanup = useRef<(() => void) | null>(null);
+  useEffect(() => () => resizeCleanup.current?.(), []);
+  presentationRef.current = tablePresentation;
+  wrappedRef.current = wrappedColumns;
   const [freezeEnabled, setFreezeEnabled] = useState(false);
   const [selectedPins, setSelectedPins] = useState<string[]>([]);
   // Retain the rendered positions after unpinning until horizontal scrolling resumes.
@@ -203,25 +211,43 @@ export default function ShotListPage() {
 
 
   useEffect(() => {
-    if (!id || typeof window === 'undefined') return;
-    setTablePresentation(loadShotTablePresentationPreferences(id, window.localStorage));
-    try {
-      const saved: unknown = JSON.parse(window.localStorage.getItem(`frameforge:shot-wrap:${id}`) || '[]');
-      setWrappedColumns(Array.isArray(saved) ? saved.filter((column): column is ShotTableColumnKey =>
-        DEFAULT_SHOT_TABLE_COLUMN_ORDER.includes(column)) : []);
-    } catch { setWrappedColumns([]); }
-  }, [id]);
+    if (!id || !layout.data || layout.isSaving || resizeCleanup.current) return;
+    if (layout.data.config) {
+      const config = layout.data.config;
+      const next = normalizeShotTablePresentationPreferences(config.presentation);
+      const wrap = Array.isArray(config.wrappedColumns) ? config.wrappedColumns.filter((column): column is ShotTableColumnKey => DEFAULT_SHOT_TABLE_COLUMN_ORDER.includes(column)) : [];
+      presentationRef.current = next;
+      wrappedRef.current = wrap;
+      setTablePresentation(next);
+      setWrappedColumns(wrap);
+    } else if (initializingLayout.current !== id) {
+      initializingLayout.current = id;
+      const next = loadShotTablePresentationPreferences(id, window.localStorage);
+      let wrap: ShotTableColumnKey[] = [];
+      try {
+        const stored: unknown = JSON.parse(window.localStorage.getItem(`frameforge:shot-wrap:${id}`) || '[]');
+        wrap = Array.isArray(stored) ? stored.filter((column): column is ShotTableColumnKey => DEFAULT_SHOT_TABLE_COLUMN_ORDER.includes(column)) : [];
+      } catch { /* Start with the existing default wrapping. */ }
+      setTablePresentation(next);
+      setWrappedColumns(wrap);
+      void layout.save({presentation:next,wrappedColumns:wrap},true).catch(error=>setClipboardMessage(error instanceof Error ? error.message : '表格布局未保存，请刷新重试。'));
+    }
+  }, [id, layout.data, layout.isSaving]);
 
+  const persistLayout = (next: ShotTablePresentationPreferences, wrap = wrappedRef.current) => {
+    if (!layout.data?.config) {setClipboardMessage('表格布局尚未载入，请稍后重试。');return;}
+    void layout.save({presentation:next,wrappedColumns:wrap}).catch(error=>setClipboardMessage(error instanceof Error ? error.message : '表格布局未保存，请重试。'));
+  };
   const commitTablePresentation = (
     updater: (current: ShotTablePresentationPreferences) => ShotTablePresentationPreferences
   ) => {
-    setTablePresentation(current => {
-      const next = updater(current);
-      if (id && typeof window !== 'undefined') {
-        saveShotTablePresentationPreferences(id, next, window.localStorage);
-      }
-      return next;
-    });
+    if (!layout.data?.config) {setClipboardMessage('表格布局尚未载入，请稍后重试。');return;}
+    const current = presentationRef.current;
+    const next = updater(current);
+    if (JSON.stringify(next) === JSON.stringify(current)) return;
+    presentationRef.current = next;
+    setTablePresentation(next);
+    persistLayout(next);
   };
 
   const handleColumnVisibleChange = (column: ShotTableColumnKey, visible: boolean) => {
@@ -255,26 +281,24 @@ export default function ShotListPage() {
 
   const resetColumnLayout = () => {
     const next = { ...defaultShotTablePresentationPreferences(), columnLabels: tablePresentation.columnLabels };
+    presentationRef.current = next;
+    wrappedRef.current = [];
     setTablePresentation(next);
     setWrappedColumns([]);
-    window.localStorage.removeItem(`frameforge:shot-wrap:${id}`);
-    if (id && typeof window !== 'undefined') {
-      saveShotTablePresentationPreferences(id, next, window.localStorage);
-    }
+    persistLayout(next, []);
   };
 
   const applySavedTableView = (config: Record<string, unknown>) => {
     const presentation = normalizeShotTablePresentationPreferences(config.presentation);
     setTablePresentation(presentation);
-    if (id && typeof window !== 'undefined') {
-      saveShotTablePresentationPreferences(id, presentation, window.localStorage);
-    }
+    presentationRef.current = presentation;
 
     const savedWrap = config.wrappedColumns;
     const nextWrap = Array.isArray(savedWrap) ? savedWrap.filter((column): column is ShotTableColumnKey =>
       DEFAULT_SHOT_TABLE_COLUMN_ORDER.includes(column)) : [];
     setWrappedColumns(nextWrap);
-    window.localStorage.setItem(`frameforge:shot-wrap:${id}`, JSON.stringify(nextWrap));
+    wrappedRef.current = nextWrap;
+    persistLayout(presentation, nextWrap);
     resetFilters();
     const savedFilters = isRecord(config.filters) ? config.filters : {};
     setFilter(
@@ -359,6 +383,7 @@ export default function ShotListPage() {
 
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
+    document.body.dataset.historyGesture = 'resize';
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
       latestWidth = clampShotTableColumnWidth(
@@ -374,27 +399,24 @@ export default function ShotListPage() {
       }));
     };
 
-    const finishResize = () => {
+    const cleanup = () => {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', finishResize);
       window.removeEventListener('pointercancel', finishResize);
       document.body.style.cursor = previousCursor;
       document.body.style.userSelect = previousUserSelect;
-
-      setTablePresentation(current => {
-        const next = {
-          ...current,
-          columnWidths: {
-            ...current.columnWidths,
-            [column]: latestWidth
-          }
-        };
-        if (id && typeof window !== 'undefined') {
-          saveShotTablePresentationPreferences(id, next, window.localStorage);
-        }
-        return next;
-      });
+      delete document.body.dataset.historyGesture;
+      resizeCleanup.current = null;
     };
+    const finishResize = () => {
+      cleanup();
+
+      const next = {...presentationRef.current, columnWidths:{...presentationRef.current.columnWidths,[column]:latestWidth}};
+      presentationRef.current = next;
+      setTablePresentation(next);
+      if (latestWidth !== startWidth) persistLayout(next);
+    };
+    resizeCleanup.current = cleanup;
 
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', finishResize, { once: true });
@@ -680,6 +702,11 @@ export default function ShotListPage() {
       return { ...current, displayOrder: order, columnOrder: [...order.filter(key => DEFAULT_SHOT_TABLE_COLUMN_ORDER.includes(key as ShotTableColumnKey)), ...current.columnOrder.filter(key => !order.includes(key))] as ShotTableColumnKey[], hiddenColumns: current.hiddenColumns.filter(key => !shownBuiltins.includes(key)) };
     });
   };
+  const columnPlacement = (reference: string, after: boolean, columns: string[] = []) => {
+    if (!layout.data?.config || layout.isSaving) throw new Error('表格布局正在保存，请稍后重试。');
+    return {revision:layout.data.revision,reference,after,columns,
+      config:{presentation:{...presentationRef.current,displayOrder:['display_number',...orderedColumns]},wrappedColumns:wrappedRef.current}};
+  };
   const refreshColumnClipboard = async () => {
     try {
       const value = JSON.parse(await navigator.clipboard.readText());
@@ -715,14 +742,10 @@ export default function ShotListPage() {
         placeColumns([clip.source], target, true);
         setColumnClipboard(null); setCutColumn(null); await navigator.clipboard.writeText('').catch(() => {});
       } else {
-        const result = await copyColumn.mutateAsync({ ...clip, existing_labels: Object.values(columnLabels) });
-        const saved = result.field;
+        const result = await copyColumn.mutateAsync({ ...clip, existing_labels: Object.values(columnLabels), placement:columnPlacement(target,true) });
         const refreshed = { ...clip, shot_revisions: result.shot_revisions };
         setColumnClipboard(refreshed);
         await navigator.clipboard.writeText(JSON.stringify(refreshed)).catch(() => {});
-        placeColumns([saved.column_key], target, true);
-        commitTablePresentation(current => ({ ...current, columnWidths: { ...current.columnWidths, [saved.column_key]: clip.width_px },
-          columnFormats: { ...current.columnFormats, [saved.column_key]: current.columnFormats[clip.source] || clip.source } }));
       }
       setClipboardMessage('列已向后粘贴。');
     } catch (cause) { setClipboardMessage(cause instanceof Error ? cause.message : '粘贴失败，原数据已保留。'); }
@@ -756,9 +779,10 @@ export default function ShotListPage() {
       if (nextName.length > 80) throw new Error('列名不能超过 80 个字符。');
       const hidden = keys.map(key => customFields.find(field => field.column_key === key)).filter(field => !!field);
       const restore_columns = Object.fromEntries(keys.filter(key => removedColumns.has(key)).map(key => [key, builtinColumnStates.find(row => row.column_key === key)?.revision || 0]));
-      const saved = name || hidden.length || Object.keys(restore_columns).length ? await insertFields.mutateAsync({ fields: name ? [{ label: nextName, field_type: 'text' }] : [], restore: Object.fromEntries(hidden.map(field => [field.id, field.revision])), restore_columns }) : [];
+      const persisted = Boolean(name || hidden.length || Object.keys(restore_columns).length);
+      if (persisted) await insertFields.mutateAsync({ fields: name ? [{ label: nextName, field_type: 'text' }] : [], restore: Object.fromEntries(hidden.map(field => [field.id, field.revision])), restore_columns, placement:columnPlacement(column,after,keys) });
       const builtins = keys.filter(key => DEFAULT_SHOT_TABLE_COLUMN_ORDER.includes(key as ShotTableColumnKey)) as ShotTableColumnKey[];
-      placeColumns([...keys, ...saved.filter(field => !keys.includes(field.column_key)).map(field => field.column_key)], column, after, builtins);
+      if (!persisted) placeColumns(keys, column, after, builtins);
     }
     setColumnDialog(null);
   };
@@ -1695,7 +1719,8 @@ export default function ShotListPage() {
         onToggleWrap={column => {
           const next = wrappedColumns.includes(column) ? wrappedColumns.filter(item => item !== column) : [...wrappedColumns, column];
           setWrappedColumns(next);
-          window.localStorage.setItem(`frameforge:shot-wrap:${id}`, JSON.stringify(next));
+          wrappedRef.current = next;
+          persistLayout(presentationRef.current,next);
         }}
         onCopyCell={value => {
           void Promise.resolve().then(() => navigator.clipboard.writeText(value)).then(

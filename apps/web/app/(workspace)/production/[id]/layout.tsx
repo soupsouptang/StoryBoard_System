@@ -8,6 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useProduction } from '@/lib/hooks/useProduction';
 import { TopBar } from '@/components/app-shell/TopBar';
 import { ProductionShotSummary } from '@/components/shot/ProductionShotSummary';
+import { ProjectHistoryControls } from '@/components/app-shell/ProjectHistoryControls';
 import { NavRail } from '@/components/app-shell/NavRail';
 
 export default function ProductionLayout({
@@ -42,6 +43,7 @@ export default function ProductionLayout({
         <div className="flex flex-1 flex-col items-center justify-center text-center p-8">
           <Icons.TriangleAlert className="h-12 w-12 text-destructive mb-3" />
           <h2 className="text-base font-bold text-foreground mb-2">未找到该项目</h2>
+          <ProjectHistoryControls productionId={id} />
           <p className="text-xs text-muted-foreground mb-6 max-w-sm">
             该项目可能已被归档或删除，或者当前账号未获得访问权限。
           </p>
@@ -73,7 +75,10 @@ export default function ProductionLayout({
               <h1 className="truncate text-sm font-semibold">{production.name}</h1>
               <ProductionShotSummary production={production} />
             </div>
-            <Button asChild variant="ghost" size="sm"><Link href={`/production/${production.id}/settings`}><Icons.Settings aria-hidden="true" />项目设置</Link></Button>
+            <div className="flex flex-wrap items-center gap-1">
+              <ProjectHistoryControls productionId={production.id} />
+              <Button asChild variant="ghost" size="sm"><Link href={`/production/${production.id}/settings`}><Icons.Settings aria-hidden="true" />项目设置</Link></Button>
+            </div>
           </div>
           <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">{children}</div>
         </main>

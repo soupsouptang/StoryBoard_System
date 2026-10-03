@@ -1,5 +1,9 @@
 # FrameForge VNext 原生重构工作簿
 
+## 2026-10-03 项目撤销与重做
+
+用户确认的现有VNext操作持久undo/redo已接通：用户＋项目最近100步，通用快捷键，个人列布局PG确认，列新增/复制＋位置一条事务。HistoryService/get_db沿用既有service/权限/审计/outbox，Alembic a83f02c1d765；冲突整步409、purge清全项目历史、源文件不变。完整后端137 passed，Next生产构建/TypeScript、PG空库/副本、真实浏览器五宽度通过。代码及MD同步由本轮处理，最终SHA/上传结果见CONTINUE_WORK；下方上传阻挡是历史检查点。原生Moodboard/Lighting、完整项目restore/merge及既有RBAC/发送worker等待办不因此完成。详见[实施记录](PROJECT_HISTORY_2026-10-03.md)。
+
 ## 2026-10-03 已选数量对齐
 
 代码`eeddeb5`仅调整表格页视图导航与“已选 N”的共同flex容器为垂直居中。实际1440px两段文字top／height／center一致，五宽度无根溢出，原字号／颜色／计数保持。针对检查、生产构建与Regression Guard通过，3002预览已更新；详情见CONTINUE_WORK。代码和MD仅本地提交，GitHub目的地／分支审批限制仍在，未知`:memory:.ses`保留。

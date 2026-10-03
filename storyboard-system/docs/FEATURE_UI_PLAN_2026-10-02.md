@@ -172,6 +172,8 @@ motion owner 为根共享 UI；建议 tokens `instant=0ms/quick=80ms/fast=120ms/
 
 ### 3.3 Undo / Redo（标准命令的 inverse）
 
+**2026-10-03实施增量覆盖本节“canonical尚无owner”的历史状态：**现有VNext操作已由HistoryService/get_db事务拥有持久日志/补偿，用户＋项目最近100步，通用快捷键和工作区按钮接通。409整步保留历史，purge设置全项目边界；列新增/复制＋位置同一命令，个人布局改由PG拥有。证据及未接通的原生画板/灯光范围见[实施记录](PROJECT_HISTORY_2026-10-03.md)。下文产品目标保留，不能冒充所有域均已完成。
+
 入口：工作区项目操作区 `撤销`、`重做`；快捷键 Ctrl/Cmd+Z、Ctrl+Shift+Z/Cmd+Shift+Z（Windows 可兼容 Ctrl+Y）。文本输入有原生 undo 时不截获。按钮显示待撤销动作短名称，不展示内部 command 实现。
 
 历史项记录 commandId、actor、project、受影响稳定 ID、before/after、expected revisions、inverse command、资源引用、是否可撤销。先执行普通命令且获服务端确认后进 undo 栈；撤销发送 inverse 命令，依然走权限/revision/audit/事务，成功才移动栈；redo 重新执行 forward command，成功才移动。新动作清空 redo；409 保留历史项并进入比较流程，不能把其他用户的新值静默改回。
