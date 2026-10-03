@@ -6,10 +6,11 @@ import { Button, Icons } from '@frameforge/ui';
 type ShotView = 'table' | 'cards' | 'wall' | 'timeline';
 
 /** Product views share routes and the same shot state; these are not new data owners. */
-export function ShotViewNavigation({ productionId, active, count }: {
+export function ShotViewNavigation({ productionId, active, count, displayedCount = count }: {
   productionId: string;
   active: ShotView;
   count?: number;
+  displayedCount?: number;
 }) {
   const base = `/production/${productionId}`;
   const views = [
@@ -20,7 +21,7 @@ export function ShotViewNavigation({ productionId, active, count }: {
   ] as const;
 
   return (
-    <nav aria-label="分镜视图" className="flex shrink-0 items-center gap-1">
+    <nav aria-label="分镜视图" className="flex min-w-0 flex-wrap items-center gap-1">
       {views.map(view => (
         <Button key={view.key} asChild variant={active === view.key ? 'secondary' : 'ghost'} size="sm">
           <Link href={view.href} aria-current={active === view.key ? 'page' : undefined}>
@@ -28,7 +29,10 @@ export function ShotViewNavigation({ productionId, active, count }: {
           </Link>
         </Button>
       ))}
-      {count != null && <span className="ml-2 whitespace-nowrap text-xs tabular-nums text-muted-foreground">{count} 镜头</span>}
+      {count != null && <span aria-label="镜头数量统计" className="ml-2 text-xs tabular-nums text-muted-foreground">
+        <span className="inline-block whitespace-nowrap">总共 <span className="inline-block w-[4ch] text-right">{count}</span> 镜头</span>
+        <span className="inline-block whitespace-nowrap">（其中显示 <span className="inline-block w-[4ch] text-right">{displayedCount}</span> 镜头）</span>
+      </span>}
     </nav>
   );
 }

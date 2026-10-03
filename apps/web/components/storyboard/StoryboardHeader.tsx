@@ -42,7 +42,7 @@ export function StoryboardHeader({
     <header className="z-10 shrink-0 border-b border-border bg-background">
       <div className="flex items-center justify-between gap-4 px-4 py-3">
         <div className="min-w-0">
-          <ShotViewNavigation productionId={production.id} active={activeView} count={shots.length} />
+          <ShotViewNavigation productionId={production.id} active={activeView} count={shots.length} displayedCount={filteredShots.length} />
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Button variant="outline" onClick={() => setImportModalOpen(true)}>

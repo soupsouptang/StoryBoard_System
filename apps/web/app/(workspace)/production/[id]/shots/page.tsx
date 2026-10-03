@@ -34,7 +34,7 @@ import {
 } from '@/components/shot/ShotTableContextMenu';
 import { BulkActionToolbar } from '@/components/storyboard/BulkActionToolbar';
 import { getMethodLabel, getStatusBadge } from '@/lib/media-resolver';
-import { shotMovementLabel, shotMethodValues, groupShotsByMethod } from '@/lib/shot-display';
+import { shotMovementLabel, shotMethodValues, groupShotsByMethod, filterShotsForView } from '@/lib/shot-display';
 import {
   DEFAULT_SHOT_TABLE_COLUMN_ORDER,
   SHOT_TABLE_COLUMN_LABELS,
@@ -517,30 +517,7 @@ export default function ShotListPage() {
   );
 
   const visibleShots = useMemo(() => {
-    const query = filters.searchQuery.trim().toLowerCase();
-    const filtered = shots.filter(item => {
-      if (query) {
-        const builtInMatch = [
-          item.display_number,
-          item.name,
-          item.description,
-          item.voice_over,
-          item.owner_id,
-          item.department,
-          item.status,
-          item.primary_method
-        ].some(value => String(value || '').toLowerCase().includes(query));
-        const customMatch = Object.values(
-          customFieldValueMatrix?.values[item.id] || {}
-        ).some(value => String(value ?? '').toLowerCase().includes(query));
-        if (!builtInMatch && !customMatch) return false;
-      }
-
-      if (filters.primaryMethod !== 'all' && !shotMethodValues(item).includes(filters.primaryMethod)) return false;
-      if (filters.department !== 'all' && item.department !== filters.department) return false;
-      if (filters.status !== 'all' && item.status !== filters.status) return false;
-      return true;
-    });
+    const filtered = filterShotsForView(shots, filters, 'table', customFieldValueMatrix?.values);
 
     if (sortKey === 'default') return filtered;
 
@@ -1043,11 +1020,8 @@ export default function ShotListPage() {
         <h1 className="text-lg font-semibold">分镜制作</h1>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-baseline gap-3">
-            <ShotViewNavigation productionId={production.id} active="table" count={shots.length} />
-            <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
-              显示 {visibleShots.length} / {shots.length}
-              {selectedShotIds.length > 0 && ` · 已选 ${selectedShotIds.length}`}
-            </span>
+            <ShotViewNavigation productionId={production.id} active="table" count={shots.length} displayedCount={visibleShots.length} />
+            {selectedShotIds.length > 0 && <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">已选 {selectedShotIds.length}</span>}
           </div>
         </div>
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_11rem_max-content] items-center gap-2 overflow-x-auto 2xl:grid-cols-[minmax(max-content,1fr)_minmax(11rem,20rem)_minmax(max-content,1fr)] [&_button]:h-9 [&_button]:text-sm [&_svg]:h-4 [&_svg]:w-4" role="group" aria-label="镜头查询与工具">

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useProduction } from '@/lib/hooks/useProduction';
 import { TopBar } from '@/components/app-shell/TopBar';
+import { ProductionShotSummary } from '@/components/shot/ProductionShotSummary';
 import { NavRail } from '@/components/app-shell/NavRail';
 
 export default function ProductionLayout({
@@ -70,7 +71,7 @@ export default function ProductionLayout({
             <div className="flex min-w-0 flex-wrap items-center gap-3">
               {production.code && <Badge variant="outline" className="shrink-0">{production.code}</Badge>}
               <h1 className="truncate text-sm font-semibold">{production.name}</h1>
-              <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{production.shot_count ?? 0} 镜头 · {Number((production.fps_num / (production.fps_den || 1)).toFixed(3))} fps · {production.aspect_ratio}</span>
+              <ProductionShotSummary production={production} />
             </div>
             <Button asChild variant="ghost" size="sm"><Link href={`/production/${production.id}/settings`}><Icons.Settings aria-hidden="true" />项目设置</Link></Button>
           </div>

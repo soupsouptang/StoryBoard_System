@@ -6,6 +6,7 @@ import React, { Suspense, useMemo, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import type { Sequence, Shot } from '@frameforge/types';
 import { useProduction, useShots } from '@/lib/hooks/useProduction';
+import { filterShotsForView } from '@/lib/shot-display';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { StoryboardHeader } from '@/components/storyboard/StoryboardHeader';
 import { StoryboardGrid } from '@/components/storyboard/StoryboardGrid';
@@ -93,32 +94,7 @@ function StoryboardWorkspace() {
 
   // Filtered shots
   const filteredShots = useMemo(() => {
-    return enrichedShots.filter(s => {
-      if (filters.sequenceId !== 'all' && s.sequence_id !== filters.sequenceId) {
-        return false;
-      }
-      if (filters.primaryMethod !== 'all' && (s.primary_method || '').toLowerCase() !== filters.primaryMethod.toLowerCase()) {
-        return false;
-      }
-      if (filters.status !== 'all' && (s.status || '').toLowerCase() !== filters.status.toLowerCase()) {
-        return false;
-      }
-      if (filters.department !== 'all' && s.department !== filters.department) return false;
-      if (filters.timingLocked !== null && s.timing_locked !== filters.timingLocked) return false;
-      if (filters.vfxRequired !== null && s.vfx_required !== filters.vfxRequired) return false;
-      if (filters.searchQuery) {
-        const q = filters.searchQuery.toLowerCase();
-        const matchNum = (s.display_number || '').toLowerCase().includes(q);
-        const matchName = (s.name || '').toLowerCase().includes(q);
-        const matchDesc = (s.description || '').toLowerCase().includes(q);
-        const matchVo = (s.voice_over || '').toLowerCase().includes(q);
-        const matchOwner = (s.owner_id || '').toLowerCase().includes(q);
-        if (!matchNum && !matchName && !matchDesc && !matchVo && !matchOwner) {
-          return false;
-        }
-      }
-      return true;
-    });
+    return filterShotsForView(enrichedShots, filters, 'storyboard');
   }, [enrichedShots, filters]);
 
   const allFilteredIds = useMemo(() => filteredShots.map(s => s.id), [filteredShots]);
