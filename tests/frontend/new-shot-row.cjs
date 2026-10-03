@@ -11,8 +11,9 @@ const mod = {exports:{}};
 const display = {exports:{}};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('apps/web/lib/shot-display.ts','utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText, {module:display,exports:display.exports,Error});
 const parse = display.exports.parseShotDuration;
-for (const [value, frames] of [['25',25],['25f',25],['25s',625],['2m',3000],['1h',90000],['1.5s',38],['1.5m',2250],['0.5h',45000],[' 2 M ',3000]]) assert.equal(parse(value,25),frames);
+for (const [value, frames] of [['25',625],['25f',25],['25s',625],['1.5',38],['.5',13],['0.1',3],['2m',3000],['1h',90000],['1.5s',38],['1.5m',2250],['0.5h',45000],[' 2 M ',3000]]) assert.equal(parse(value,25),frames);
 assert.equal(parse('1s',30000/1001),30);
+assert.equal(parse('1',30000/1001),30);
 for (const value of ['', '0', '-2s', '2.5f', '1e3', '2x', '25seconds', 'Infinity', '1h30m', '999999999999999999h']) assert.throws(()=>parse(value,25));
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('apps/web/components/storyboard/NewShotModal.tsx','utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.React,esModuleInterop:true}}).outputText, {
   module:mod,exports:mod.exports,Error,BigInt,
@@ -35,6 +36,8 @@ const submit=()=>find(node=>node.type==='form').props.onSubmit({preventDefault()
   set('帧数','0');await submit(); assert.equal(calls.length,0,'Invalid duration rejected');
   set('帧数','2m');set('分镜图框','16:9');await submit();
   assert.equal(calls.length,1);assert.equal(calls[0].display_number,undefined);assert.equal(calls[0].duration_frames,2880);assert.equal(calls[0].panel_frame,'16:9');assert.equal(open,false);
+  openDialog();set('帧数','25');await submit();
+  assert.equal(calls.length,2);assert.equal(calls[1].duration_frames,600,'Bare number submits seconds converted at production fps');assert.equal(open,false);
   assert.equal(mod.exports.nextAvailableShotNumber(['001','010']), '011');
   console.log('Centered new shot: units, auto number, invalid input, Escape discards draft and explicit creation passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

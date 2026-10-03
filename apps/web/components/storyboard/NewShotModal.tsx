@@ -118,7 +118,7 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
             新增镜头
           </DialogTitle>
           <DialogDescription className="sr-only">
-            镜号自动生成；填写镜头信息后点击创建，Esc取消。
+            镜号自动生成；时长无单位默认为秒；填写镜头信息后点击创建，Esc取消。
           </DialogDescription>
         </DialogHeader>
 
@@ -163,7 +163,7 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
 
             <div className="grid gap-3 sm:grid-cols-3">
               <Field label="制作方式">
-                <span aria-hidden="true" className="hidden h-4 sm:block" />
+                <span aria-hidden="true" className="hidden h-5 sm:block" />
                 <Select
                   label="制作方式"
                   value={primaryMethod}
@@ -185,7 +185,7 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
               </Field>
 
               <Field label="标准景别">
-                <span aria-hidden="true" className="hidden h-4 sm:block" />
+                <span aria-hidden="true" className="hidden h-5 sm:block" />
                 <Select
                   label="标准景别"
                   value={shotSize}
@@ -202,10 +202,13 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
               </Field>
 
               <Field label="规划时长">
-                <span id="new-shot-duration-hint" className="whitespace-nowrap text-xs font-normal leading-4 text-muted-foreground">f帧 / s秒 / m分 / h时</span>
+                <span id="new-shot-duration-hint" className="flex w-full items-center justify-between whitespace-nowrap text-base font-normal leading-5 text-muted-foreground">
+                  {['f帧', '/', 's秒', '/', 'm分', '/', 'h时'].map((unit, index) => <span key={index}>{unit}</span>)}
+                </span>
                 <Input
                   aria-describedby="new-shot-duration-hint"
                   aria-label="新增镜头时长 / 帧数（必填）"
+                  title="无单位默认为秒；f帧 / s秒 / m分 / h时"
                   type="text"
                   required
                   placeholder="请输入时长"
