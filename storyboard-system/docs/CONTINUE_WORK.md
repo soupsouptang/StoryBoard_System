@@ -1,5 +1,22 @@
 # FRAMEFORGE 续作入口
 
+## 2026-10-04 行下详情卡片、图片预览及追加视觉要求（代码已上传）
+
+**最新用户决定和实现**：表格详情由侧滑改为镜头行下展开，顶部删除镜头、右下保存/取消、取消原X；集中当前镜头字段、灰色只读隐藏列、必填FF0082，显式保存成功不收起。实际改值才dirty；第一次Cancel/Esc询问、确认框Cancel/Esc丢弃并收起，返回编辑保留；另一镜头触发只关闭当前，需再次触发打开。保存内置、自定义值与暂存图片为一条事务/一历史步；409/失败留草稿/no-op不写。表格已有图单击预览、空图上传，详情图片直接暂存上传/替换；放大50–300%、slider/25%按钮、icon下载/替换、Esc，固定内容区（排除导航）居中，宽约一半。
+
+**用户本轮追加覆盖早期草稿**：卡片不再受小viewport挤压成两行；本体=max(352px, 实测镜头行高×3)，短屏借内容区纵向滚动，末行展开完整footer可见。大缩略图桌面240×144px，短字段/宽标题/长文本分区。留白是内容与卡片边缘的**内部**留白（body24px），外侧额外空白已取消；Card贴齐可视内容区，不受表格横向滚动影响。浮窗图片以**画面中心为缩放基点**，每次zoom重定位至中心，不从左上角放大。最终截图outputs/shot-detail-2026-10-04.png及shot-image-preview-2026-10-04.png保留工作区、不入Git。
+
+**核验与同步**：合入soupsouptang最新e778c1c的8个增量，另fetch origin/master=c93ba17，后者完全为当前祖先、无未合入UI；保留画板后端及扩展性文档，没有回写旧UI或改项目入口/导航/画板/导入导出UI。完整后端146 passed、Webpack生产构建/TypeScript、6份针对前端检查、diff及Regression Guard通过。真实3002合成12镜头/8类字段验证Save+一次undo、改回原值clean、取消焦点回TR、dirty Esc和filter guard、末行上滚、五宽度、隐藏字段、菜单/列管理、预览50/300及中心200%（X/Y偏移0）。最终五宽度Card均352px、body24px、root/body无横向溢出，footer桌面约899px／小屏739px可见。
+
+**代码先上传完成**：正常快进push到soupsouptang/StoryBoard_System master，远端回执为`3e7d651689ef7a369c0e5e3bcffaba1fd4e7b70e`；没有force、改写历史或绕过审批。代码含相应owner/API/screen/product/UI台账与[详细实施MD](SHOT_DETAIL_2026-10-04.md)。本文随后单独提交并上传，最终MD SHA以Git远端查询为准；不宣称GitHub CI已通过。
+
+**本机部署**：最新Web3002 `.next/detail-center` standalone保留，入口http://127.0.0.1:3002/productions；显式同源API proxy→8002，未放宽CORS/PNA。API8002 PID13309、PG55432继续保留本会话本地环境，不涉及公网/生产。8002未重启合入后新画板启动代码，本机未执行c14f8a63b920在线DDL；后续重启最新API须按画板独立PG迁移门槛演练，不能把本次前端预览说成新画板部署完成。
+
+**实际文件操作门槛尚待用户环境**：Chrome扩展Allow access to file URLs关闭，实际选图/替换提交未完成；接口/合成消费者已验证Atomic image Save。下载按钮已实际点击但Chrome自动化未返回完成回执，真实下载收据未核验。两个门槛BLOCKED_VISUAL，已说明且未替用户放宽权限/绕过浏览器限制。用户开启ChatGPT Chrome扩展文件URL权限后可补实际上传/替换；下载以用户实际收到文件复核。共享reduced-motion CSS保留，未改系统设置做专项切换。其余本轮代码和页面检查已完成，整体INTEGRATED_NOT_CUT_OVER、不扩展其他旧待办。未知`:memory:.ses`原样保留未上传。
+
+**下次开工**：先读本文/最新AGENTS/动态台账，检查local与两个remote；按用户新反馈继续，保留montblanc08最新UI。不要重做已完成代码或借后端任务重写工作台。当前确认需求的剩余是上述两个文件操作验收门槛；代码及本轮MD同步已按次序处理，没有恢复额度券或新建heartbeat。
+
+
 ## 2026-10-03 持久撤销与重做已实施并上传（代码 `74f76a2`）
 
 最新用户要求“继续完成并上传同步，遵循GitHub搭建规则”。先读本文/根及适用AGENTS，fetch两个已配置remote后核实：GitHub此前仅有图片构图局部草稿undo/redo，没有贯穿项目的持久历史；远端最新规则与本地相同，未发现需要合并的新增提交。本次遵循apps/web＋apps/api＋PostgreSQL＋Alembic原生owner，不接回Legacy架构、不生产部署。
