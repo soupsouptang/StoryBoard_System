@@ -146,3 +146,9 @@ Web production build/TypeScript、diff、Regression Guard通过。默认1318px�
 - 新增草稿按Esc整条取消且清缓存，不再仅回退当前字段，防止blur误提交。已经发出的保存不强行取消。
 - 针对前端检查、backend7项、Webpack/TypeScript和Guard通过；真实Esc关闭/重开、五列提示、IN/OUT及320–1440px检查通过。未修改已有镜头数据。
 - 代码已本地提交；远端master上传受自动审批阻止，待明确目的地授权后继续，具体停点见CONTINUE_WORK.md。本机已设置15分钟额度检查/恢复续作heartbeat。
+
+## 10. 2026-10-03 居中新增与提示、Esc关闭（代码0e12efa）
+
+最新明确要求覆盖底部新增输入行：两个新增入口共用NewShotModal，删除NewShotRow；自动镜号、单位时长和既有字段保留，确认创建才提交，Esc/取消放弃未提交草稿。底部剪贴板/操作错误改为ShotFeedbackDialog，删除二次确认居中显示；批量工具栏仍保留。所有已有Dialog可Esc关闭，包括pending时的UI关闭；不取消已经发出的服务器命令，不改变权限/revision/审计。其他表格行内编辑原规则保持。
+
+前端三项定向检查、生产Webpack/类型/diff/Regression Guard及1440/1024/768/375/320真实布局检查通过；真实新增、提示、删除确认、导入、废纸篓、保存视图、自定义列Esc关闭，焦点返回正确，没有新增或删除数据。375×667卡片内滚动与取消键盘可达；3002最新预览保留。本机截图centered-new-shot-2026-10-03.png不上传。无数据库/依赖变动；本地提交及GitHub授权阻挡详见CONTINUE_WORK。

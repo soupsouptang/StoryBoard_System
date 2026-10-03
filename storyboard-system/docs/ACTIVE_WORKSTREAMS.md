@@ -1,9 +1,8 @@
 # FrameForge VNext 原生重构工作簿
 
-## 2026-10-03 本会话新增镜头增量
+## 2026-10-03 本会话新增镜头与悬浮卡片增量
 
-执行者本会话；现有NewShotRow/NewShotModal、ShotService和表格展示owner内完成自动编号、单位输入、IN/OUT、五列名保护、分隔线及Esc整条取消。代码b856798；针对测试/构建/真实页面通过，无DDL。当前停点是GitHub具体目的地授权被自动审批拒绝；MD已准备，本机额度heartbeat已建立，不扩展旧产品待办。
-
+执行者本会话；自动编号/单位/IN-OUT/列名保护/分隔线沿用已完成b856798。最新卡片需求由V-Web现有NewShotModal/store接管两个新增入口，删除NewShotRow；底部反馈和删除确认改居中Dialog，已有悬浮卡片Esc关闭。现有create/commands/revision为写入owner，未改API/DDL。针对前端、生产构建、Regression Guard及五宽度真实UI检查通过，3002最新预览运行。代码本地提交0e12efa，MD随后提交；GitHub具体目的地/分支仍受自动审批拒绝阻挡，等待用户授权，不扩展旧产品待办。证据与续作步骤见CONTINUE_WORK。
 
 ## 2026-10-02 原生数据库 / 媒体 / 列 / 导出增量
 

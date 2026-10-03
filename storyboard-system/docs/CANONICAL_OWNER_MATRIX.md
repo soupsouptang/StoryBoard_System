@@ -1,9 +1,8 @@
 # FRAMEFORGE canonical owner matrix
 
-## 2026-10-03 新增镜头与表格展示owner
+## 2026-10-03 新增镜头、表格展示与悬浮卡片 owner
 
-省略镜号的分配仍由ShotService在既有Production锁内负责，显式导入编号保留；时长f/s/m/h输入由Web现有shot-display模块解析，再提交原duration_frames；IN/OUT由Web表格既有累计计时+packages/timecode计算，不新增数据库字段。原始五列名保护由既有表格展示/改名入口负责，custom-field API不提供builtin改名路径。NewShotRow独占本地新增草稿及Esc取消，复用现有create hook；无新状态库、依赖或schema。代码b856798，针对检查与真实消费者通过，本批不改变整体迁移状态。
-
+省略镜号由ShotService现有Production锁分配；单位解析由Web shot-display，IN/OUT由原累计计时及packages/timecode；五列名保护由既有表格改名入口。最新卡片要求：NewShotModal独占新增表单草稿，workspace store独占开关，表/卡片入口共用同一create hook；删除NewShotRow，避免两个草稿owner。ShotFeedbackDialog只展示既有命令/排序/剪贴板/批量错误，明确关闭清除源错误；BulkActionToolbar仍负责选中条目的操作，删除确认通过现有Dialog居中呈现。根UI Dialog/Radix负责层级、焦点与键盘，各consumer的pending guard明确放行Esc关闭；服务器请求并不随关闭作虚假撤销。无新状态库、依赖或schema。代码0e12efa；针对检查/真实消费者、构建和Guard通过；整体迁移状态不变，GitHub上传待具体授权。
 
 ## 2026-10-02 最新数据库 owner 增量
 
