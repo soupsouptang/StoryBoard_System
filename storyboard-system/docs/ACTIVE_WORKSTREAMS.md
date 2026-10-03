@@ -2,7 +2,7 @@
 
 ## 2026-10-03 本会话新增镜头与悬浮卡片增量
 
-执行者本会话；自动编号/单位/IN-OUT/列名保护/分隔线沿用已完成b856798。最新卡片需求由V-Web现有NewShotModal/store接管两个新增入口，删除NewShotRow；底部反馈和删除确认改居中Dialog，已有悬浮卡片Esc关闭。现有create/commands/revision为写入owner，未改API/DDL。针对前端、生产构建、Regression Guard及五宽度真实UI检查通过，3002最新预览运行。代码本地提交0e12efa；追加7ae7929将单位说明拆到12px灰色第二行、三项标题/控件分别对齐，生产构建/五宽度页面通过。MD随后提交；GitHub具体目的地/分支仍受自动审批拒绝阻挡，等待用户授权，不扩展旧产品待办。证据与续作步骤见CONTINUE_WORK。
+执行者本会话；V-Web现有NewShotModal/store与create hook独占新增路径，居中卡片、Esc及原自动编号/IN-OUT/列名保护沿用。最新代码`997c7af`覆盖历史时长规则：新增纯数字默认秒，显式f仍帧，提交仍是duration_frames；单位说明16px/20px均匀铺满输入宽度，右边缘对齐，桌面控件齐平。现有new-shot-row针对检查、生产构建/TypeScript、五宽度真实页面与Esc检查通过；3002最新预览运行，无API/DDL改动。代码已本地提交，MD随后提交；GitHub具体目的地/分支仍受自动审批拒绝阻挡，等待用户授权。额度heartbeat已删除，不扩展旧产品待办。证据与续作步骤见CONTINUE_WORK。
 
 ## 2026-10-02 原生数据库 / 媒体 / 列 / 导出增量
 
