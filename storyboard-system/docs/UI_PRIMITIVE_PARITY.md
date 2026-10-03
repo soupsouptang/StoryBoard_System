@@ -1,5 +1,10 @@
 # UI primitive parity ledger
 
+## 2026-10-04 详情图片缩放图标消费
+
+UI-root仅显式追加Lucide ZoomIn/ZoomOut导出，真实ShotImagePreview通过Icons消费；不新增图标库或业务primitive。详情/预览继续使用既有Button/Input/Select/Checkbox/Dialog，焦点、Esc和reduced-motion沿用共享owner。新增inline卡片是apps/web局部feature，未冒充全站primitive cutover；本轮五宽度、键盘/菜单验收和未取得的文件操作证据见[记录](SHOT_DETAIL_2026-10-04.md)。
+
+
 更新基线：2026-10-02。**视觉/primitive 基线是 [SHADCN_UI_BASELINE.md](SHADCN_UI_BASELINE.md) 所定义的 shadcn/ui `new-york` + neutral semantic theme；功能/交互基线是 `5e86a0b`，实现目标是当前 `master`。** Legacy primitive 只作行为参考，不要求 VNext API/component 兼容，也不要求旧工作区改为消费根包。VNext 以 shadcn/Radix 的视觉、focus、overlay 和 accessibility 语义原生重建，不复制 Legacy CSS。
 
 | Primitive | Old owner / L 消费数 | New owner / V 消费数 | API compatibility | Visual compatibility | Focus behavior | Accessibility | Tests / evidence | Cutover |

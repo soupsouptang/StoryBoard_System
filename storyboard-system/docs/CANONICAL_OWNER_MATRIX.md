@@ -1,5 +1,12 @@
 # FRAMEFORGE canonical owner matrix
 
+## 2026-10-04 详情命令与显示owner
+
+表格真实consumer改用ShotDetailSlot（纵向占位、可视内容区宽度与末行滚动）、ShotDetailCard（本地字段/文件草稿及dirty guard）；workspace store继续独占选择/详情开关。Card/Wall旧Inspector保留，未全局替换。详情字段贡献为Web应用内封闭adapter，不引入全局万能schema/第二套实体状态。useSaveShotDetail发出一条multipart命令；API ShotDetailService编排既有ShotService、CustomFieldService、PanelMediaService；权限/CAS/审计/outbox/事务ack/项目History继续由原owner负责，媒体源版本不覆盖。HTTP新字段明确allowlist，无DDL。
+
+ShotImagePreview拥有临时zoom与对象URL；当前展示媒体仍通过资产内容端点及Panel presentation owner读取，下载使用同一展示blob。表格已有图片单击预览、空图片上传；详情选图仅暂存，确认才写；旧Inspector明确保留上传模式。Shared Dialog继续拥有模态层/焦点/Esc；inline card补上关闭后的镜头行焦点返回。INTEGRATED_NOT_CUT_OVER；浏览器文件选择/下载收据门槛未完全验证，不更改画板、RBAC或全站cutover状态。[证据](SHOT_DETAIL_2026-10-04.md)。
+
+
 ## 2026-10-04 新模块整合边界
 
 BoardService 拥有画板命令/图片 pin，HistoryService 拥有唯一持久游标/补偿；后端定向 18 项通过，新 UI 消费者尚待接入与桌面验收。新增页面允许写集为 lighting/moodboard 新路由、components/boards、useBoards 与所需依赖；导航仅追加两入口。现有表格/入口/设置和 `montblanc08` 最新修改不替换。

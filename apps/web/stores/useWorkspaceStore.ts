@@ -73,14 +73,27 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   setCardSize: cardSize => set({ cardSize }),
   setGroupBySequence: groupBySequence => set({ groupBySequence }),
 
-  setFilter: (key, value) =>
-    set(state => ({
-      filters: { ...state.filters, [key]: value }
-    })),
+  setFilter: (key, value) => {
+    if (get().filters[key] === value) return;
+    // Filtering can unmount the inspected row. Resolve its draft first.
+    if (get().isInspectorOpen) {
+      get().closeInspector();
+      if (get().isInspectorOpen) return;
+    }
+    set(state => ({ filters: { ...state.filters, [key]: value } }));
+  },
 
-  resetFilters: () => set({ filters: DEFAULT_FILTERS }),
+  resetFilters: () => {
+    if (get().isInspectorOpen) {
+      get().closeInspector();
+      if (get().isInspectorOpen) return;
+    }
+    set({ filters: DEFAULT_FILTERS });
+  },
 
   selectShot: (id, isShift = false, isCtrlOrCmd = false, allIds = []) => {
+    const state = get();
+    if (state.isInspectorOpen && state.inspectedShotId !== id) state.closeInspector();
     const { selectedShotIds, lastSelectedId } = get();
 
     if (isShift && lastSelectedId && allIds.length > 0) {
@@ -111,7 +124,11 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   selectAllShots: allIds => set({ selectedShotIds: [...new Set(allIds)], lastSelectedId: allIds[0] ?? null }),
   clearSelection: () => set({ selectedShotIds: [], lastSelectedId: null }),
 
-  openInspector: shotId => set({ inspectedShotId: shotId, isInspectorOpen: true }),
+  openInspector: shotId => {
+    const state = get();
+    if (state.isInspectorOpen && state.inspectedShotId !== shotId) { state.closeInspector(); return; }
+    set({ inspectedShotId: shotId, isInspectorOpen: true });
+  },
   setInspectorCloseGuard: inspectorCloseGuard => set({ inspectorCloseGuard }),
   closeInspector: () => {
     if (get().inspectorCloseGuard?.() === false) return;

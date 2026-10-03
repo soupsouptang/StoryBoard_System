@@ -341,7 +341,7 @@ export function ShotInspector({ shot, production, onClose }: ShotInspectorProps)
           <>
             <div className="space-y-2">
               <p className="font-medium text-muted-foreground">分镜画面</p>
-              <ShotImageCell key={shot.id} shot={shot} disabled={isDirty || anyPending} />
+              <ShotImageCell preview={false} key={shot.id} shot={shot} disabled={isDirty || anyPending} />
               <p className="text-muted-foreground">{isDirty ? '请先保存镜头修改，再更换画面。' : '点击画面上传或更换，上传后立即保存。'}</p>
             </div>
             <div>

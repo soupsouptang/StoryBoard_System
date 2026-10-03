@@ -44,6 +44,7 @@ async def begin_request_history(db, request, user):
         elif '/restore' in path: label = '恢复镜头'
         elif '/relative-command' in path: label = '插入或粘贴镜头'
         elif '/auto-timing' in path: label = '修改镜头时长'
+        elif path.endswith('/detail'): label = '编辑镜头详情'
     elif path.rstrip('/').split('/')[-2:-1] == ['productions']:
         project = params.get('id')
         label, permission = '修改项目设置', 'production.write'

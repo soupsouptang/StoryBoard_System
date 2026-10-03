@@ -15,7 +15,9 @@ import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useCustomFields, useCustomFieldValues, useSetCustomFieldState, useUpdateCustomField, useInsertCustomFields, useCopyColumn, useBuiltinColumnStates, useSetBuiltinColumnState } from '@/lib/hooks/useCustomFields';
 import { MethodBadge } from '@/components/shot/MethodBadge';
 import { StatusBadge } from '@/components/shot/StatusBadge';
-import { ShotInspector } from '@/components/shot/ShotInspector';
+import { ShotDetailCard } from '@/components/shot/ShotDetailCard';
+import { ShotDetailSlot } from '@/components/shot/ShotDetailSlot';
+import { shotDetailFields } from '@/lib/shot-detail-fields';
 import { ShotTrashModal } from '@/components/shot/ShotTrashModal';
 import { InlineEditCell } from '@/components/shot/InlineEditCell';
 import { CustomFieldCell } from '@/components/shot/CustomFieldCell';
@@ -106,11 +108,14 @@ export default function ShotListPage() {
   const params = useParams();
   const id = typeof params?.id === 'string' ? params.id : '';
 
+  const tableViewport = useRef<HTMLDivElement>(null);
+  const closedByRowClick = useRef<string | null>(null);
   const layout = useWorkspaceLayout(id);
   const { data: production } = useProduction(id);
   const { data: shots = [], isLoading } = useShots(id);
-  const { data: customFields = [] } = useCustomFields(id);
-  const { data: customFieldValueMatrix } = useCustomFieldValues(id);
+  const { data: customFieldDefinitions, isLoading: detailFieldsLoading, isError: detailFieldsError } = useCustomFields(id);
+  const customFields = customFieldDefinitions || [];
+  const { data: customFieldValueMatrix, isLoading: detailValuesLoading, isError: detailValuesError } = useCustomFieldValues(id);
   const updateShot = useUpdateShot(id);
   const setCustomFieldState = useSetCustomFieldState(id);
   const { data: builtinColumnStates = [], isLoading: columnStatesLoading } = useBuiltinColumnStates(id);
@@ -122,15 +127,30 @@ export default function ShotListPage() {
   const updateCustomField = useUpdateCustomField(id);
   const reorderShots = useReorderShots(id);
   const commands = useShotCommands(id, shots);
+  const detailUnavailable = detailFieldsLoading || detailValuesLoading || columnStatesLoading || (detailFieldsError && !customFieldDefinitions) || (detailValuesError && !customFieldValueMatrix);
+  useEffect(() => {
+    if (!detailUnavailable) return;
+    const cancel = (event: KeyboardEvent) => { if (event.key === 'Escape' && !event.defaultPrevented) useWorkspaceStore.getState().closeInspector(); };
+    window.addEventListener('keydown', cancel);
+    return () => window.removeEventListener('keydown', cancel);
+  }, [detailUnavailable]);
   const [isImportOpen, setImportOpen] = useState(false);
 
   const [isTrashOpen, setIsTrashOpen] = useState(false);
   const [wrappedColumns, setWrappedColumns] = useState<ShotTableColumnKey[]>([]);
   const [clipboardMessage, setClipboardMessage] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [sortKey, setSortKey] = useState<'default' | ShotTableContextColumnKey>('default');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [groupMode, setGroupMode] = useState<ShotTableGroupMode>('none');
+  const [sortKey, updateSortKey] = useState<'default' | ShotTableContextColumnKey>('default');
+  const [sortDirection, updateSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [groupMode, updateGroupMode] = useState<ShotTableGroupMode>('none');
+  const resolveDetailBeforeLayout = () => {
+    const state = useWorkspaceStore.getState();
+    if (state.isInspectorOpen) state.closeInspector();
+    return !useWorkspaceStore.getState().isInspectorOpen;
+  };
+  const setSortKey = (value: typeof sortKey) => { if (value !== sortKey && resolveDetailBeforeLayout()) updateSortKey(value); };
+  const setSortDirection = (value: typeof sortDirection) => { if (value !== sortDirection && resolveDetailBeforeLayout()) updateSortDirection(value); };
+  const setGroupMode = (value: ShotTableGroupMode) => { if (value !== groupMode && resolveDetailBeforeLayout()) updateGroupMode(value); };
   const [tablePresentation, setTablePresentation] = useState<ShotTablePresentationPreferences>(
     () => defaultShotTablePresentationPreferences()
   );
@@ -289,6 +309,7 @@ export default function ShotListPage() {
   };
 
   const applySavedTableView = (config: Record<string, unknown>) => {
+    if (!resolveDetailBeforeLayout()) return;
     const presentation = normalizeShotTablePresentationPreferences(config.presentation);
     setTablePresentation(presentation);
     presentationRef.current = presentation;
@@ -607,6 +628,9 @@ export default function ShotListPage() {
   const orderedColumns = [...new Set([...tablePresentation.displayOrder, ...availableColumns])].filter(column => availableColumns.includes(column as ShotTableColumnKey) && column !== 'display_number');
   const columnLabels: Record<string, string> = { ...SHOT_TABLE_COLUMN_LABELS,
     ...Object.fromEntries(customFields.map(field => [field.column_key, field.label])), ...tablePresentation.columnLabels };
+  const detailVisibleKeys = [...(showShotNumber ? ['display_number'] : []), ...orderedColumns];
+  const detailKeys = [...new Set([...detailVisibleKeys, ...builtinColumnStates.filter(row => row.state !== 'removed').map(row => row.column_key), ...customFields.filter(field => field.state !== 'removed' && !field.permanently_deleted && !isRetiredShotColumnLabel(field.label)).map(field => field.column_key)])];
+  const detailFields = shotDetailFields(detailKeys, detailVisibleKeys, columnLabels, customFields);
   const frozenOffsets: Record<string, number> = {};
   let frozenWidth = 0;
   for (const column of ['selection', 'annotations', ...(showShotNumber ? ['display_number'] : []), ...orderedColumns]) {
@@ -1039,7 +1063,7 @@ export default function ShotListPage() {
   };
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
+    <div className={`flex h-full w-full min-w-0 flex-col overflow-hidden ${isInspectorOpen ? 'min-h-min' : 'min-h-0'}`}>
       <div className="z-10 shrink-0 space-y-3 border-b border-border bg-background px-4 py-3">
         <h1 className="text-lg font-semibold">分镜制作</h1>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1104,7 +1128,7 @@ export default function ShotListPage() {
               onClick={() => isInspectorOpen ? closeInspector() : selectedShotIds[0] && openInspector(selectedShotIds[0])}
               className="shrink-0"
             >
-              <Icons.PanelRightOpen className={`h-4 w-4 ${isInspectorOpen ? 'scale-x-[-1]' : ''}`} />
+              <Icons.PanelRightOpen className={`h-4 w-4 ${isInspectorOpen ? '-rotate-90' : 'rotate-90'}`} />
               详情
             </Button>
 
@@ -1234,8 +1258,10 @@ export default function ShotListPage() {
       )}
 
       <ShotFeedbackDialog message={reorderShots.error ? (reorderShots.error instanceof Error ? reorderShots.error.message : '排序保存失败，请刷新后重试。') : null} onClose={() => reorderShots.reset()} />
-      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden" style={{ minHeight: isInspectorOpen ? 440 : undefined }}>
         <div
+          ref={tableViewport}
+          data-shots-content
           onScroll={event => {
             setContextTarget(null);
             if (event.currentTarget.scrollLeft !== lastScrollLeft.current) {
@@ -1408,10 +1434,11 @@ export default function ShotListPage() {
                   const durationSec = ((shot.duration_frames || 0) / fps).toFixed(1);
 
                   return (
-                    <tr
-                      key={shot.id}
+                    <React.Fragment key={shot.id}><tr
                       data-shot-id={shot.id}
                       onClick={event => {
+                        if (event.detail === 1) closedByRowClick.current = null;
+                        if (useWorkspaceStore.getState().isInspectorOpen && useWorkspaceStore.getState().inspectedShotId !== shot.id) closedByRowClick.current = shot.id;
                         selectShot(
                           shot.id,
                           event.shiftKey,
@@ -1419,7 +1446,7 @@ export default function ShotListPage() {
                           visibleShotIds
                         );
                       }}
-                      onDoubleClick={() => openInspector(shot.id)}
+                      onDoubleClick={() => { if (closedByRowClick.current === shot.id) { closedByRowClick.current = null; return; } openInspector(shot.id); }}
                       onContextMenu={event => {
                         event.preventDefault();
                         openRowContextMenu(
@@ -1664,6 +1691,8 @@ export default function ShotListPage() {
                         </td>
                       ))])}
                     </tr>
+                    {isInspectorOpen && isInspected && group.key === shotGroups.find(candidate => candidate.shots.some(item => item.id === shot.id))?.key && <tr data-shot-detail-row={shot.id}><td colSpan={tableColumnCount} className="p-0 align-top"><ShotDetailSlot viewport={tableViewport}>{height => detailUnavailable ? <div role="status" style={{ height }} className="border-y border-border bg-card p-3 text-sm text-muted-foreground">{detailFieldsError || detailValuesError ? '详情加载失败，请刷新后重试。' : '加载详情…'}<Button variant="outline" size="sm" onClick={closeInspector} className="ml-3">取消</Button></div> : <ShotDetailCard key={shot.id} shot={shot} production={production} fields={detailFields} customValues={customFieldValueMatrix?.values[shot.id] || {}} sequences={sequences} timecode={shotTimecodes[shot.id]} height={height} canWrite={commands.canWrite} onClose={closeInspector} />}</ShotDetailSlot></td></tr>}
+                    </React.Fragment>
                   );
                     })}
                   </React.Fragment>
@@ -1673,22 +1702,7 @@ export default function ShotListPage() {
           )}
         </div>
 
-        {isInspectorOpen && inspectedShot && (
-          <>
-            <div
-              className="fixed inset-0 z-40 bg-background/70 lg:hidden"
-              onClick={closeInspector}
-              aria-hidden="true"
-            />
-            <div className="fixed inset-x-2 top-[58px] bottom-[calc(env(safe-area-inset-bottom)+8px)] z-50 min-w-0 overflow-hidden rounded-lg border border-border bg-card shadow-2xl [&>aside]:h-full [&>aside]:w-full lg:static lg:inset-auto lg:z-auto lg:w-[380px] lg:shrink-0 lg:rounded-none lg:border-0 lg:shadow-none lg:[&>aside]:w-[380px]">
-              <ShotInspector
-                shot={inspectedShot}
-                production={production}
-                onClose={closeInspector}
-              />
-            </div>
-          </>
-        )}
+
       </div>
 
       {production && <ImportModal production={production} isOpen={isImportOpen} onClose={() => setImportOpen(false)} />}

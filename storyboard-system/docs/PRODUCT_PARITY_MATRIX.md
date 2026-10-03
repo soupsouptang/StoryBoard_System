@@ -1,5 +1,10 @@
 # FRAMEFORGE Product Parity Matrix
 
+## 2026-10-04 用户确认的详情交互覆盖
+
+表格详情按最新用户明确要求改为行下卡片，集中当前横向镜头字段、只读隐藏列及一次显式保存；取消旧表格侧滑Inspector/分节X，不构成未经授权的能力删除。Card/Wall仍保留原Inspector。字段、custom values与staged图片一次事务/一历史步；dirty guard、409留草稿、真正no-op和图预览中心缩放已接通。文件上传/下载实机证据仍有浏览器权限/回执门槛，整体INTEGRATED_NOT_CUT_OVER，不改变其他产品恢复门槛。[记录](SHOT_DETAIL_2026-10-04.md)。
+
+
 ## 2026-10-04 新画板后端增量
 
 Lighting/Moodboard 已有原生可持久画板文档、同项目镜头与图片版本引用、对象锁、删除/恢复/确认 purge，唯一项目 HistoryService 覆盖确认后 undo/redo。lighting 进入项目比较；moodboard 不改变内容 hash。跨用户画板关联和历史图片 pin 阻止不安全的父项创建撤销。18 项 API/迁移/历史定向检查通过；前端新页面仍在接入，不标记视觉完成。最新用户允许只补完全缺失页面，现有 UI 以 `montblanc08` 修改为准。

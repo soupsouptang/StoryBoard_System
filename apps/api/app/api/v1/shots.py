@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, File, Form, UploadFile
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -93,6 +93,39 @@ async def patch_shot(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"code": "SHOT_REVISION_CONFLICT", "message": e.message, "details": e.details})
     except DomainError as e:
         raise _domain_http(e)
+
+
+@router.post("/shots/{id}/detail", response_model=ShotOut)
+async def save_shot_detail(
+    id: str, payload: str = Form(...), image: UploadFile | None = File(None),
+    db: AsyncSession = db_session, current_user: User = Depends(get_current_user),
+):
+    from pydantic import ValidationError
+    from app.schemas.shot_detail import ShotDetailSave
+    from app.services.shot_detail_service import ShotDetailService
+    from app.services.panel_media_service import MEDIA_ROOT
+    if len(payload.encode('utf-8')) > 1024 * 1024:
+        raise HTTPException(413, detail={"code": "DETAIL_TOO_LARGE", "message": "详情内容过大"})
+    try:
+        req = ShotDetailSave.model_validate_json(payload)
+    except ValidationError as error:
+        raise HTTPException(422, detail={"code": "INVALID_DETAIL", "message": "详情字段格式不正确，请检查输入"}) from error
+    data = None
+    filename = 'panel-image'
+    if image is not None:
+        filename = image.filename or filename
+        data = await image.read(10 * 1024 * 1024 + 1)
+        await image.close()
+        if len(data) > 10 * 1024 * 1024:
+            raise HTTPException(413, detail={"code": "IMAGE_TOO_LARGE", "message": "图片不得超过 10 MB"})
+    try:
+        return await ShotDetailService.save(db, id, req, current_user, image=data, filename=filename, media_root=MEDIA_ROOT)
+    except NotFoundError as error:
+        raise HTTPException(404, detail={"code": error.code, "message": error.message}) from error
+    except ConflictError as error:
+        raise HTTPException(409, detail={"code": "SHOT_REVISION_CONFLICT", "message": error.message, "details": error.details}) from error
+    except DomainError as error:
+        raise _domain_http(error) from error
 
 
 @router.delete("/shots/{id}", status_code=status.HTTP_204_NO_CONTENT)

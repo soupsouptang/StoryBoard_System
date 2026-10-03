@@ -1,5 +1,12 @@
 # API route inventory — Legacy reference only
 
+## 2026-10-04 原子镜头详情保存
+
+新增V-API `POST /api/v1/shots/{id}/detail`：multipart `payload`为封闭ShotDetailSave（expected Shot revision、可修改Shot字段、custom_values的定义revision）；可选image≤10MiB，payload≤1MiB。ShotDetailService先锁项目/Shot并复核权限与CAS，再经既有三个service写入；function-scoped get_db在commit及History确认后才返回ShotOut。401/403权限、404对象、409 revision、422格式、400领域及413大小均不冒充成功。真实ASGI覆盖内置＋自定义＋图片一事务、一undo/redo、无值变更no-op、晚期无效图片整步回滚、定义/镜头冲突及必填校验；新路由已被真实Web详情保存消费。沿用原schema/媒体存储owner，无Legacy对等或新DDL。完整后端146 passed；新画板远端增量保持独立，未宣称其Web集成。[记录](SHOT_DETAIL_2026-10-04.md)。
+
+本机Web预览可显式配置FRAMEFORGE_LOCAL_API_PROXY为http loopback API，未配置则关闭；本轮3002采用同源/api转发8002，未放宽CORS或浏览器私网保护。不改变生产Nginx/部署安全策略。
+
+
 ## 2026-10-04 原生画板接口
 
 `GET/POST /api/v1/productions/{id}/boards`、`GET/PATCH/DELETE .../boards/{board}`、`POST .../{restore|undo|redo}` 与 `GET .../media/{version}` 已注册。kind 为 lighting/moodboard，同项目 Shot/AssetVersion 校验、revision CAS、严格 no-op、删除/确认永久删除及历史媒体引用保护；局部 undo/redo 要求 board revision + history_revision 且最近项目操作只涉及此画板，复用 HistoryService。lighting 纳入内容快照，moodboard 排除；永久删除清历史屏障及内容快照。18 项画板/迁移/项目历史定向检查通过；项目成员权限、PG 在线演练、真实 UI 接入仍待验收。

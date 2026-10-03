@@ -27,7 +27,7 @@ import {
   CircleUserRound, Clapperboard, Clock, Clock3, Columns3, Copy, Scissors, ClipboardPaste, Download, Filter,
   Eye, EyeOff, FileDown, Film, GripVertical, Image, Images, Layers, LayoutGrid, Lightbulb, ListVideo,
   Lock, LockOpen, MessageSquare, Mic, Moon, Palette, PanelRightOpen, Pause, Pencil, Play, Plus,
-  RefreshCw, Search, Settings, SlidersHorizontal, Sun, Table2, Trash2, TriangleAlert, Undo2, X
+  RefreshCw, Search, Settings, SlidersHorizontal, Sun, Table2, Trash2, TriangleAlert, Undo2, X, ZoomIn, ZoomOut
 } from 'lucide-react';
 
 // Keep the shared icon surface explicit so a consumer does not bundle all of Lucide.
@@ -36,7 +36,7 @@ export const Icons = {
   CircleUserRound, Clapperboard, Clock, Clock3, Columns3, Copy, Scissors, ClipboardPaste, Download, Filter,
   Eye, EyeOff, FileDown, Film, GripVertical, Image, Images, Layers, LayoutGrid, Lightbulb, ListVideo,
   Lock, LockOpen, MessageSquare, Mic, Moon, Palette, PanelRightOpen, Pause, Pencil, Play, Plus,
-  RefreshCw, Search, Settings, SlidersHorizontal, Sun, Table2, Trash2, TriangleAlert, Undo2, X
+  RefreshCw, Search, Settings, SlidersHorizontal, Sun, Table2, Trash2, TriangleAlert, Undo2, X, ZoomIn, ZoomOut
 };
 
 export { Textarea } from './components/textarea';

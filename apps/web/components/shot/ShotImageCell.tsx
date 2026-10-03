@@ -4,15 +4,17 @@ import { useRef, useState } from 'react';
 import type { Shot } from '@frameforge/types';
 import { Button, Icons } from '@frameforge/ui';
 import { useUploadPanelImage } from '@/lib/hooks/useProduction';
-import { ShotPanelImage } from './ShotPanelImage';
+import { ShotPanelImage, primaryPanelAssetId } from './ShotPanelImage';
+import { ShotImagePreview } from './ShotImagePreview';
 
-export function ShotImageCell({ shot, disabled = false }: { shot: Shot; disabled?: boolean }) {
+export function ShotImageCell({ shot, disabled = false, preview = true }: { shot: Shot; disabled?: boolean; preview?: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const upload = useUploadPanelImage(shot.production_id);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1" onClick={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()}>
       <input
         ref={inputRef}
         type="file"
@@ -36,9 +38,9 @@ export function ShotImageCell({ shot, disabled = false }: { shot: Shot; disabled
         variant="outline"
         size="sm"
         disabled={disabled || upload.isPending}
-        aria-label={`${shot.panels?.some(panel => panel.asset_id) ? '更换' : '上传'}镜头 ${shot.display_number} 分镜画面`}
-        title="上传或更换分镜画面"
-        onClick={event => { event.stopPropagation(); inputRef.current?.click(); }}
+        aria-label={`${primaryPanelAssetId(shot) ? (preview ? '预览' : '更换') : '上传'}镜头 ${shot.display_number} 分镜画面`}
+        title={primaryPanelAssetId(shot) && preview ? "放大预览分镜画面" : "上传或更换分镜画面"}
+        onClick={event => { event.stopPropagation(); if (primaryPanelAssetId(shot) && preview) setPreviewOpen(true); else inputRef.current?.click(); }}
         onDoubleClick={event => event.stopPropagation()}
         className="relative h-auto w-full overflow-hidden p-0"
       >
@@ -51,6 +53,7 @@ export function ShotImageCell({ shot, disabled = false }: { shot: Shot; disabled
           </ShotPanelImage>
         </span>
       </Button>
+      {preview && <ShotImagePreview shot={shot} open={previewOpen} onClose={() => setPreviewOpen(false)} onReplace={() => inputRef.current?.click()} disabled={disabled || upload.isPending} />}
       {error && <span role="alert" className="block text-[10px] text-destructive">{error}</span>}
     </div>
   );

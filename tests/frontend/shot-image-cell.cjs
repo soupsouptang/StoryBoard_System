@@ -11,7 +11,8 @@ const dependencies = {
   'react/jsx-runtime': { jsx, jsxs: jsx },
   '@frameforge/ui': { Button: 'Button', Icons: { Image: 'Image' } },
   '@/lib/hooks/useProduction': { useUploadPanelImage: () => upload },
-  './ShotPanelImage': { ShotPanelImage: 'ShotPanelImage' }
+  './ShotPanelImage': { ShotPanelImage: 'ShotPanelImage', primaryPanelAssetId: () => null },
+  './ShotImagePreview': { ShotImagePreview: 'ShotImagePreview' }
 };
 const loaded = { exports: {} };
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('apps/web/components/shot/ShotImageCell.tsx', 'utf8'), {
