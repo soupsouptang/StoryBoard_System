@@ -1,5 +1,13 @@
 # 2026-10-04 分镜详情卡片与图片预览实施记录
 
+## 最新追加：信息合列、制作方式整体与直角外框
+
+用户最新截图要求覆盖下面标题跨两列方案：镜号和时码作为同一网格项，保留各自名称/只读/IN/OUT，组内紧凑排列；镜头标题只占一列，仍可通过输入光标阅读完整值。制作方式在三列以上固定于首行最右列并跨两行，主方式选择与辅助方式复选构成整体；窄屏按正常文档流排列。辅助项由密集横向流改为整齐网格，列宽至少260px时两列，否则一列，间距8px，区域最大96px，保留10项并支持内部滚动及键盘选择。卡片四角0px，只有Card一个1px外框；Slot/td/tr没有叠加矩形框，输入框和按钮的既有造型保留。
+
+允许写集仅ShotDetailCard及本文/ACTIVE/续作MD，render owner不变；没有修改业务状态/请求/保存命令、API、数据库、导航或其他页。发布前核对两remote，当前无未合入增量，保留未知`:memory:.ses`。现有shot-detail-card草稿/保存/冲突/取消检查及最终Webpack/TypeScript通过。真实3002合成项目2560/1440/1024/768/375/320均352px、root/body横向溢出0、圆角0px、镜号/时码X相同；1440标题与单轨宽均173px、制作方式row 1 / span 2，2560复选网格两列，较窄单列。末尾TYPE选项实际滚动可达（辅助区域scrollTop176），Esc提示/再次Esc丢弃，重开false，未写入测试/客户数据。末行footer完整可见，临时viewport已恢复。
+
+本机Web3002最终构建`.next/detail-grouped-final`，8002/PG和画板迁移停点维持；截图工作区outputs/shot-detail-grouped-2026-10-04.png不入Git。此前文件上传/下载实机门槛未因此解除，不宣称全站cutover。代码先正常快进上传指定soupsouptang master，续作MD随后独立同步，回执见CONTINUE_WORK最新前缀。
+
 ## 最新追加：五列布局与均等间距
 
 用户确认先试用缩略图旁约五列，并要求每个独立项周围留有均等合理空间。本轮只修改 `apps/web/components/shot/ShotDetailCard.tsx` 和本文/ACTIVE/续作MD；render owner仍为该Card，字段/草稿/保存/权限等owner不变，未修改API、数据库、共享primitive或其他页面。
