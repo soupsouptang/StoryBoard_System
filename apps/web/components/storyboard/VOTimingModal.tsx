@@ -88,7 +88,7 @@ export function VOTimingModal({ production, shots }: VOTimingModalProps) {
 
   return (
     <Dialog open={isVOTimingModalOpen} onOpenChange={open => { if (!isApplying) setVOTimingModalOpen(open); }}>
-      <DialogContent hideCloseButton={isApplying} className="flex h-[85dvh] max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl" onOpenAutoFocus={() => setError(null)}>
+      <DialogContent onEscapeKeyDown={event => { event.preventDefault(); setVOTimingModalOpen(false); }} hideCloseButton={isApplying} className="flex h-[85dvh] max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl" onOpenAutoFocus={() => setError(null)}>
         <DialogHeader className="shrink-0 border-b border-border p-6 pr-12">
           <DialogTitle className="flex items-center gap-2">
             <Icons.Clock3 className="h-4 w-4" aria-hidden="true" />

@@ -82,9 +82,7 @@ export function ShotTrashModal({ productionId, onClose }: ShotTrashModalProps) {
       <DialogContent
         hideCloseButton
         className="flex max-h-[80vh] max-w-2xl flex-col gap-0 overflow-hidden p-0"
-        onEscapeKeyDown={event => {
-          if (actingOn) event.preventDefault();
-        }}
+        onEscapeKeyDown={event => { event.preventDefault(); onClose(); }}
         onInteractOutside={event => {
           if (actingOn) event.preventDefault();
         }}

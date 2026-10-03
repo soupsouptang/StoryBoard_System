@@ -24,7 +24,7 @@ export function ShotColumnDialog({ mode, label, candidates, existingLabels, retu
   };
   return <Dialog open onOpenChange={open => { if (!open && !pending) onCancel(); }}>
     <DialogContent className="max-w-md" onCloseAutoFocus={event => { event.preventDefault(); returnFocus?.focus({ preventScroll: true }); }}
-      onEscapeKeyDown={event => { if (pending) event.preventDefault(); }} onInteractOutside={event => { if (pending) event.preventDefault(); }}>
+      onEscapeKeyDown={event => { event.preventDefault(); onCancel(); }} onInteractOutside={event => { if (pending) event.preventDefault(); }}>
       <DialogTitle>{mode === 'rename' ? '修改列名' : '新增列'}</DialogTitle>
       <DialogDescription>{mode === 'rename' ? '修改列名不会改变列的数据和功能。只有点击确认才保存。' : '选择尚未显示的列，或输入一个新列名。确认后插入指定位置。'}</DialogDescription>
       {candidates.length > 0 && <div className="max-h-56 space-y-2 overflow-y-auto rounded-md border p-3">

@@ -238,7 +238,7 @@ export function ShotTableContextMenu({
       </DropdownMenu>
 
       <Dialog open={Boolean(pendingColumn)} onOpenChange={open => { if (!open && !deletingColumn) { setPendingColumn(null); setActionError(null); } }}>
-        <DialogContent className="max-w-md" onEscapeKeyDown={event => { if (deletingColumn) event.preventDefault(); }}
+        <DialogContent className="max-w-md" onEscapeKeyDown={event => { event.preventDefault(); setPendingColumn(null); setActionError(null); }}
           onInteractOutside={event => { if (deletingColumn) event.preventDefault(); }}
           onCloseAutoFocus={event => { event.preventDefault(); (returnFocusRef.current?.isConnected ? returnFocusRef.current : returnRegionRef.current)?.focus({ preventScroll: true }); }}>
           <DialogTitle>删除此列</DialogTitle>
@@ -270,9 +270,7 @@ export function ShotTableContextMenu({
             event.preventDefault();
             returnFocusRef.current?.focus({ preventScroll: true });
           }}
-          onEscapeKeyDown={event => {
-            if (bulkTrash.isPending) event.preventDefault();
-          }}
+          onEscapeKeyDown={event => { event.preventDefault(); setPendingTrash(null); setActionError(null); }}
           onInteractOutside={event => {
             if (bulkTrash.isPending) event.preventDefault();
           }}

@@ -243,7 +243,7 @@ export function ShotSavedViews({
           }
         }}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" onEscapeKeyDown={event => { event.preventDefault(); setCreateOpen(false); setViewName(''); setActionError(null); }}>
           <DialogTitle>保存当前视图</DialogTitle>
           <DialogDescription>
             保存当前镜头表的列布局、行高、筛选条件和排序。镜头数据本身不会被复制。
@@ -309,7 +309,7 @@ export function ShotSavedViews({
           }
         }}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" onEscapeKeyDown={event => { event.preventDefault(); setPendingDelete(null); setActionError(null); }}>
           <DialogTitle>删除保存视图</DialogTitle>
           <DialogDescription>
             {pendingDelete

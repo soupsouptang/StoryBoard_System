@@ -109,7 +109,7 @@ export function ImportModal({ production, isOpen, onClose }: ImportModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={open => { if (!open && !isLoading) onClose(); }}>
-      <DialogContent hideCloseButton={isLoading} className="flex h-[80dvh] max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl"
+      <DialogContent onEscapeKeyDown={event => { event.preventDefault(); onClose(); }} hideCloseButton={isLoading} className="flex h-[80dvh] max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl"
         onOpenAutoFocus={() => {
           if (importedCount !== null) {
             setStep(1);

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button, Icons, Select } from '@frameforge/ui';
+import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle, Select } from '@frameforge/ui';
+import { ShotFeedbackDialog } from '@/components/shot/ShotFeedbackDialog';
 import type { Production } from '@frameforge/types';
 import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useBulkTrashShots, useBulkUpdateShots } from '@/lib/hooks/useProduction';
@@ -139,29 +140,6 @@ export function BulkActionToolbar({ production }: BulkActionToolbarProps) {
       <div className="ml-auto mr-6 flex flex-wrap items-center justify-end gap-2 border-l border-border pl-3">
 
 
-        {confirmingTrash ? (
-          <>
-            <span className="px-1 text-[11px] text-destructive">确认移入废纸篓？</span>
-            <Button
-              variant="destructive"
-              size="sm"
-              disabled={isBusy}
-              onClick={() => void handleBulkTrash()}
-              className="h-9 w-[100px] bg-[#e11d48] text-sm tracking-normal hover:bg-[#be123c] dark:bg-[#e11d48] dark:hover:bg-[#be123c]"
-            >
-              {bulkTrash.isPending ? '处理中…' : '确认'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={isBusy}
-              onClick={() => setConfirmingTrash(false)}
-              className="h-9 w-[100px] text-sm tracking-normal"
-            >
-              取消
-            </Button>
-          </>
-        ) : (
           <Button
             variant="destructive"
             size="sm"
@@ -172,7 +150,6 @@ export function BulkActionToolbar({ production }: BulkActionToolbarProps) {
           >
             {selectedShotIds.length === 1 ? '删除镜头' : <>删除<span className="inline-block w-[2ch] text-center tabular-nums">{selectedShotIds.length > 99 ? '···' : selectedShotIds.length}</span>镜</>}
           </Button>
-        )}
         <Button
           variant="ghost"
           size="sm"
@@ -188,20 +165,18 @@ export function BulkActionToolbar({ production }: BulkActionToolbarProps) {
         </Button>
       </div>
 
-      {actionError && (
-        <div role="alert" className="flex basis-full items-start gap-2 border-t border-border pt-2 text-[11px] text-destructive">
-          <Icons.AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span className="min-w-0 flex-1">{actionError}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setActionError(null)}
-            className="h-6 px-2 text-[11px] text-destructive"
-          >
-            关闭
-          </Button>
-        </div>
-      )}
+      <Dialog open={confirmingTrash} onOpenChange={setConfirmingTrash}>
+        <DialogContent className="sm:max-w-md">
+          <DialogTitle>删除镜头</DialogTitle>
+          <DialogDescription>确认将所选 {selectedShotIds.length} 个镜头移入废纸篓？之后可恢复。</DialogDescription>
+          {actionError && <p role="alert" className="text-sm text-destructive">{actionError}</p>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmingTrash(false)}>取消</Button>
+            <Button variant="destructive" disabled={isBusy} onClick={() => void handleBulkTrash()}>{bulkTrash.isPending ? '处理中…' : '确认'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <ShotFeedbackDialog message={confirmingTrash ? null : actionError} onClose={() => setActionError(null)} />
     </div>
   );
 }

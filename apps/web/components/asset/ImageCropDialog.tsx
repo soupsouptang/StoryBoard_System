@@ -22,7 +22,7 @@ export function ImageCropDialog({ productionId, asset, open, onOpenChange, owner
 }) {
   const [pending, setPending] = useState(false);
   const returnFocus = useRef<HTMLElement | null>(typeof document === 'undefined' ? null : document.activeElement as HTMLElement);
-  return <Dialog open={open} onOpenChange={value => { if (!pending) onOpenChange(value); }}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl"
+  return <Dialog open={open} onOpenChange={value => { if (!pending) onOpenChange(value); }}><DialogContent onEscapeKeyDown={event => { event.preventDefault(); onOpenChange(false); }} className="max-h-[90vh] overflow-y-auto sm:max-w-5xl"
     onCloseAutoFocus={event => { event.preventDefault(); if (returnFocus.current?.isConnected) returnFocus.current.focus(); }}>
     <DialogTitle>裁剪与构图 · {asset.display_name || asset.filename}</DialogTitle>
     <DialogDescription>拖动边角裁剪，切换“移动画面”重新构图，滚轮或双指缩放。原图和历史调整均保留。</DialogDescription>

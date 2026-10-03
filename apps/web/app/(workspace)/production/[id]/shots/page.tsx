@@ -25,7 +25,8 @@ import { ShotCustomFieldManager } from '@/components/shot/ShotCustomFieldManager
 import { ShotSavedViews } from '@/components/shot/ShotSavedViews';
 import { ShotTableText } from '@/components/shot/ShotTableText';
 import { ShotColumnDialog } from '@/components/shot/ShotColumnDialog';
-import { NewShotRow } from '@/components/shot/NewShotRow';
+import { NewShotModal, nextAvailableShotNumber } from '@/components/storyboard/NewShotModal';
+import { ShotFeedbackDialog } from '@/components/shot/ShotFeedbackDialog';
 import {
   ShotTableContextMenu,
   type ShotTableContextColumnKey,
@@ -132,7 +133,6 @@ export default function ShotListPage() {
   const [tablePresentation, setTablePresentation] = useState<ShotTablePresentationPreferences>(
     () => defaultShotTablePresentationPreferences()
   );
-  const [isNewShotRowOpen, setNewShotRowOpen] = useState(false);
   const [freezeEnabled, setFreezeEnabled] = useState(false);
   const [selectedPins, setSelectedPins] = useState<string[]>([]);
   // Retain the rendered positions after unpinning until horizontal scrolling resumes.
@@ -169,6 +169,7 @@ export default function ShotListPage() {
 
   const {
     filters,
+    setNewShotModalOpen,
     setFilter,
     resetFilters,
     selectedShotIds,
@@ -1128,7 +1129,7 @@ export default function ShotListPage() {
               </span>
             )}
           </div>
-          <Button size="sm" className="col-start-3 row-start-1 mr-[132px] h-9 w-[100px] justify-self-end text-sm tracking-normal" onClick={() => setNewShotRowOpen(true)}>
+          <Button size="sm" className="col-start-3 row-start-1 mr-[132px] h-9 w-[100px] justify-self-end text-sm tracking-normal" onClick={() => setNewShotModalOpen(true)}>
             <Icons.Plus aria-hidden="true" />新增镜头
           </Button>
         </div>
@@ -1234,7 +1235,7 @@ export default function ShotListPage() {
         />
       )}
 
-      {reorderShots.error && <p role="alert" className="px-3 py-2 text-xs text-destructive">{reorderShots.error instanceof Error ? reorderShots.error.message : '排序保存失败，请刷新后重试。'}</p>}
+      <ShotFeedbackDialog message={reorderShots.error ? (reorderShots.error instanceof Error ? reorderShots.error.message : '排序保存失败，请刷新后重试。') : null} onClose={() => reorderShots.reset()} />
       <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
         <div
           onScroll={event => {
@@ -1669,7 +1670,6 @@ export default function ShotListPage() {
                     })}
                   </React.Fragment>
                 ))}
-                {isNewShotRowOpen && <NewShotRow production={production} shots={shots} columns={orderedColumns} onDone={() => setNewShotRowOpen(false)} />}
               </tbody>
             </table>
           )}
@@ -1694,7 +1694,8 @@ export default function ShotListPage() {
       </div>
 
       {production && <ImportModal production={production} isOpen={isImportOpen} onClose={() => setImportOpen(false)} />}
-      {commands.error && <p role="alert" className="px-3 py-2 text-xs text-destructive">{commands.error}</p>}
+      <NewShotModal production={production} sequences={sequences} nextNumber={nextAvailableShotNumber(shots.map(shot => shot.display_number))} existingNumbers={shots.map(shot => shot.display_number)} />
+      <ShotFeedbackDialog message={commands.error} onClose={commands.clearError} />
       <ShotTableContextMenu
         commands={commands}
         canAutoTime={contextTarget?.kind === 'row' && Boolean(shots.find(shot => shot.id === contextTarget.shotId && !shot.timing_locked && shot.voice_over?.trim()))}
@@ -1708,7 +1709,7 @@ export default function ShotListPage() {
         }}
         onOpenInspector={openInspector}
         onClearSelection={clearSelection}
-        onNewShot={() => setNewShotRowOpen(true)}
+        onNewShot={() => setNewShotModalOpen(true)}
         onOpenTrash={() => setIsTrashOpen(true)}
         columnLabels={columnLabels}
         canPasteColumn={Boolean(columnClipboard)}
@@ -1759,12 +1760,7 @@ export default function ShotListPage() {
         existingLabels={Object.entries(columnLabels).filter(([key]) => key !== columnDialog.column).map(([, label]) => label)}
         returnFocus={columnDialog.returnFocus} onCancel={() => setColumnDialog(null)} onConfirm={confirmColumnDialog} />}
 
-      {clipboardMessage && (
-        <div role="status" className="shrink-0 border-t border-border bg-card px-3 py-2 text-xs">
-          {clipboardMessage}
-          <Button variant="ghost" size="sm" onClick={() => setClipboardMessage(null)}>关闭</Button>
-        </div>
-      )}
+      <ShotFeedbackDialog message={clipboardMessage} onClose={() => setClipboardMessage(null)} />
 
 
     </div>

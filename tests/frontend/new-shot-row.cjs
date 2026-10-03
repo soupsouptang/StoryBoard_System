@@ -1,12 +1,12 @@
-// Synthetic draft lifecycle: node tests/frontend/new-shot-row.cjs
+// Synthetic new shot dialog lifecycle: node tests/frontend/new-shot-row.cjs
 const assert = require('node:assert/strict'), fs = require('node:fs'), vm = require('node:vm'), ts = require('typescript');
-let cursor = 0, effects = [], calls = [], done = 0, slots = [], storage = new Map();
+let cursor = 0, calls = [], slots = [], open = true;
 const React = {
   createElement: (type, props, ...children) => ({type, props: props || {}, children: children.flat(Infinity)}),
-  useState(initial) { const index = cursor++; if (!(index in slots)) slots[index] = initial; return [slots[index], value => { slots[index] = typeof value === 'function' ? value(slots[index]) : value; }]; },
-  useRef(initial) { return slots[cursor++] ??= {current: initial}; },
-  useEffect(effect, deps) { const index = cursor++; if (!slots[index] || deps.some((v,i) => !Object.is(v,slots[index][i]))) { slots[index] = deps; effects.push(effect); } }
+  useState(initial) { const index = cursor++; if (!(index in slots)) slots[index] = initial; return [slots[index], value => { slots[index] = typeof value === 'function' ? value(slots[index]) : value; }]; }
 };
+const ui = Object.fromEntries(['Button','Dialog','DialogContent','DialogDescription','DialogFooter','DialogHeader','DialogTitle','Field','Input','Select','TextArea'].map(name=>[name,name]));
+ui.Icons = new Proxy({}, {get: (_,name)=>name});
 const mod = {exports:{}};
 const display = {exports:{}};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('apps/web/lib/shot-display.ts','utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText, {module:display,exports:display.exports,Error});
@@ -14,25 +14,27 @@ const parse = display.exports.parseShotDuration;
 for (const [value, frames] of [['25',25],['25f',25],['25s',625],['2m',3000],['1h',90000],['1.5s',38],['1.5m',2250],['0.5h',45000],[' 2 M ',3000]]) assert.equal(parse(value,25),frames);
 assert.equal(parse('1s',30000/1001),30);
 for (const value of ['', '0', '-2s', '2.5f', '1e3', '2x', '25seconds', 'Infinity', '1h30m', '999999999999999999h']) assert.throws(()=>parse(value,25));
-vm.runInNewContext(ts.transpileModule(fs.readFileSync('apps/web/components/shot/NewShotRow.tsx','utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.React,esModuleInterop:true}}).outputText, {
-  module:mod,exports:mod.exports,Error,
-  localStorage:{getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)},
-  require:name=>({'react':React,'@frameforge/ui':{Button:'Button',Input:'Input'},'@/lib/shot-display':display.exports,'@/components/storyboard/NewShotModal':{nextAvailableShotNumber:()=> '002'},'@/lib/hooks/useProduction':{useCreateShot:()=>({isPending:false,mutateAsync:async value=>{calls.push(value);}})}}[name])
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('apps/web/components/storyboard/NewShotModal.tsx','utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.React,esModuleInterop:true}}).outputText, {
+  module:mod,exports:mod.exports,Error,BigInt,
+  require:name=>({'react':React,'@frameforge/ui':ui,'@/lib/shot-display':display.exports,'@/stores/useWorkspaceStore':{useWorkspaceStore:()=>({isNewShotModalOpen:open,setNewShotModalOpen:value=>{open=value;}})},'@/lib/hooks/useProduction':{useCreateShot:()=>({isPending:false,mutateAsync:async value=>{calls.push(value);}})}}[name])
 });
 let tree;
-const render=()=> {cursor=0;effects=[];tree=mod.exports.NewShotRow({production:{id:'P',fps_num:24,fps_den:1},shots:[{display_number:'001'}],columns:['duration_frames','name'],customColumnCount:0,onDone:()=>done++});effects.forEach(effect=>effect());};
+const render=()=> {cursor=0;tree=mod.exports.NewShotModal({production:{id:'P',fps_num:24,fps_den:1},sequences:[],nextNumber:'002',existingNumbers:['001']});};
 const find=(predicate,node=tree)=> {if (!node || typeof node !== 'object') return; if(predicate(node))return node;for(const child of node.children||[]){const match=find(predicate,child);if(match)return match;}};
-const input=field=>find(node=>node.type==='Input' && node.props['aria-label'].includes(field));
+const input=field=>find(node=>node.type==='Input' && (node.props['aria-label']||'').includes(field));
 const set=(field,value)=>{input(field).props.onChange({target:{value}});render();};
+const openDialog=()=>{open=true;render();find(node=>node.type==='DialogContent').props.onOpenAutoFocus();render();};
+const escape=()=>find(node=>node.type==='DialogContent').props.onEscapeKeyDown({preventDefault(){}});
+const submit=()=>find(node=>node.type==='form').props.onSubmit({preventDefault(){}});
 (async()=>{
-  render(); assert.equal(input('镜号').props.value,'002'); assert.equal(input('镜号').props.readOnly,true);
+  openDialog(); assert.equal(input('镜号').props.value,'002'); assert.equal(input('镜号').props.readOnly,true);
   assert.equal(input('帧数').props.value,'3s');
-  input('帧数').props.onFocus();set('帧数','2m');
-  const stale=input('帧数'); find(node=>node.type==='tr'&&node.props['aria-label']==='新增镜头输入行').props.onKeyDownCapture({key:'Escape',stopPropagation(){},preventDefault(){}});
-  stale.props.onBlur();assert.equal(calls.length,0);assert.equal(done,1);assert.equal(storage.size,0);
-  slots=[];render();
-  input('帧数').props.onFocus();set('帧数','0');input('帧数').props.onBlur();await Promise.resolve();assert.equal(calls.length,0,'Invalid duration rejected');
-  set('帧数','2m');input('帧数').props.onBlur();await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(calls.length,1);assert.equal(calls[0].display_number,undefined);assert.equal(calls[0].duration_frames,2880);assert.equal(done,2);assert.equal(storage.size,0);
-  console.log('Duration units/rounding, automatic mirror, invalid draft and Escape cancellation passed.');
+  set('帧数','2m');set('分镜图框','16:9');
+  escape(); assert.equal(open,false); assert.equal(calls.length,0,'Escape does not submit');
+  openDialog();assert.equal(input('帧数').props.value,'3s');assert.equal(input('分镜图框').props.value,'','Cancelled inputs do not return');
+  set('帧数','0');await submit(); assert.equal(calls.length,0,'Invalid duration rejected');
+  set('帧数','2m');set('分镜图框','16:9');await submit();
+  assert.equal(calls.length,1);assert.equal(calls[0].display_number,undefined);assert.equal(calls[0].duration_frames,2880);assert.equal(calls[0].panel_frame,'16:9');assert.equal(open,false);
+  assert.equal(mod.exports.nextAvailableShotNumber(['001','010']), '011');
+  console.log('Centered new shot: units, auto number, invalid input, Escape discards draft and explicit creation passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

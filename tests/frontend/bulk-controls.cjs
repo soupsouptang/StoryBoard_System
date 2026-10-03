@@ -20,7 +20,7 @@ const React = {
     return [slots[index], next => { slots[index] = next; }];
   }
 };
-const ui = { Button: 'Button', Select: 'Select' };
+const ui = Object.fromEntries(['Button','Select','Dialog','DialogContent','DialogTitle','DialogDescription','DialogFooter'].map(name=>[name,name]));
 ui.Icons = new Proxy({}, { get: (_, name) => name });
 const dependencies = {
   react: React,
@@ -33,6 +33,7 @@ const dependencies = {
       selectAllShots: ids => { selectedShotIds = [...ids]; }
     })
   },
+  '@/components/shot/ShotFeedbackDialog': {ShotFeedbackDialog: 'ShotFeedbackDialog'},
   '@/lib/hooks/useProduction': {
     useBulkUpdateShots: () => ({
       get isPending() { return updatePending; },
@@ -128,8 +129,9 @@ async function main() {
   await flush();
   render();
   assert.deepEqual(selectedShotIds, ['shot-A', 'shot-C'], 'failed update must preserve shot selection');
-  assert.equal(all(node => node.props.role === 'alert').length, 1);
-  assert.ok(textIncludes('synthetic update failure'));
+  assert.equal(all(node => node.type === 'ShotFeedbackDialog')[0].props.message, 'synthetic update failure');
+  all(node => node.type === 'ShotFeedbackDialog')[0].props.onClose();render();
+  assert.equal(all(node => node.type === 'ShotFeedbackDialog')[0].props.message, null);
   updatePromise = Promise.resolve();
 
   button('取消选择').props.onClick();
@@ -141,10 +143,12 @@ async function main() {
 
   buttons().find(node => node.props['aria-label'] === '删除 2 个镜头').props.onClick();
   render();
-  assert.ok(textIncludes('确认移入废纸篓？'));
-  button('取消').props.onClick();
+  assert.equal(all(node => node.type === 'Dialog')[0].props.open, true);
+  assert.equal(trashCalls.length, 0, 'opening confirmation does not delete');
+  all(node => node.type === 'Dialog')[0].props.onOpenChange(false);
   render();
-  assert.ok(!textIncludes('确认移入废纸篓？'));
+  assert.equal(all(node => node.type === 'Dialog')[0].props.open, false);
+  assert.equal(trashCalls.length, 0, 'Escape dismissal does not delete');
   buttons().find(node => node.props['aria-label'] === '删除 2 个镜头').props.onClick();
   render();
   button('确认').props.onClick();

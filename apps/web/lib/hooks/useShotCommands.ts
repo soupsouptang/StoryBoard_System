@@ -60,5 +60,5 @@ export function useShotCommands(productionId: string, shots: Shot[]) {
     mutation.mutate({action,targetId,ids,clip}, {onError:cause => setError(cause instanceof Error ? cause.message : '镜头操作失败，原数据已保留。')});
   };
   const paste = async (targetId: string) => { const clip = await refreshClipboard(); run('paste', targetId, undefined, clip); };
-  return {paste, canWrite, clipboard, refreshClipboard, copy, run, pending:mutation.isPending, error};
+  return {paste, canWrite, clipboard, refreshClipboard, copy, run, pending:mutation.isPending, error, clearError: () => setError(null)};
 }

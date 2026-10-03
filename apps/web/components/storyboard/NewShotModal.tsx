@@ -51,6 +51,7 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
   const [primaryMethod, setProductionMethod] = useState<ProductionMethod>('live');
   const [durationInput, setDurationInput] = useState('3s');
   const [shotSize, setShotSize] = useState('全景');
+  const [panelFrame, setPanelFrame] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,6 +82,7 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
         department: 'camera',
         duration_frames: durationFrames,
         shot_size: shotSize,
+        panel_frame: panelFrame,
         timing_locked: false,
         status: 'draft'
       });
@@ -101,19 +103,22 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
       <DialogContent
         hideCloseButton={isSubmitting}
         className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg"
+        onEscapeKeyDown={event => { event.preventDefault(); setNewShotModalOpen(false); }}
         onOpenAutoFocus={() => {
           setDisplayNumber(existingNumbers ? nextAvailableShotNumber(existingNumbers) : nextNumber);
           setSequenceId(sequences[0]?.id || '');
+          setName(''); setDescription(''); setVoiceover(''); setPanelFrame('');
+          setProductionMethod('live'); setShotSize('全景'); setDurationInput('3s');
           setError(null);
         }}
       >
         <DialogHeader className="pr-8">
           <DialogTitle className="flex items-center gap-2 text-sm">
             <Icons.Plus className="h-4 w-4" aria-hidden="true" />
-            新建分镜镜头 (New Shot)
+            新增镜头
           </DialogTitle>
           <DialogDescription className="sr-only">
-            新建镜头并设置镜号、篇章、制作方式、景别、时长、画面描述和旁白。
+            镜号自动生成；填写镜头信息后点击创建，Esc取消。
           </DialogDescription>
         </DialogHeader>
 
@@ -123,6 +128,7 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="镜号 (Display Number)">
                 <Input
+                  aria-label="新增镜头镜号（自动）"
                   type="text"
                   readOnly
                   maxLength={64}
@@ -165,6 +171,7 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
                     { value: 'live', label: '实拍 (LIVE)' },
                     { value: 'stock', label: '购买素材 (STOCK)' },
                     { value: 'client', label: '客户素材 (CLIENT)' },
+                    { value: 'archive', label: '历史资料 (ARCHIVE)' },
                     { value: 'ae', label: 'AE合成 (AE)' },
                     { value: 'mg', label: '动效 (MG)' },
                     { value: 'three_d', label: '3D三维 (3D)' },
@@ -194,11 +201,13 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
 
               <Field label="规划时长（f帧 / s秒 / m分 / h时）">
                 <Input
+                  aria-label="新增镜头时长 / 帧数（必填）"
                   type="text"
                   required
+                  placeholder="请输入时长"
                   value={durationInput}
                   onChange={event => setDurationInput(event.target.value)}
-                  className="font-mono"
+                  className="font-mono placeholder:text-[#FF0082]"
                 />
               </Field>
             </div>
@@ -210,6 +219,10 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
                 onChange={event => setDescription(event.target.value)}
                 placeholder="画面主体、运镜方式与光影氛围设计..."
               />
+            </Field>
+
+            <Field label="分镜图框">
+              <Input aria-label="新增镜头分镜图框" value={panelFrame} onChange={event => setPanelFrame(event.target.value)} placeholder="例如：16:9，主体位于画面左侧" />
             </Field>
 
             <Field label="对应解说词旁白">

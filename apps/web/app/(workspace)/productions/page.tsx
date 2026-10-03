@@ -191,7 +191,7 @@ export default function ProductionsPage() {
 
       {/* New Production Dialog — shared shadcn/Radix primitive, functional form preserved. */}
       <Dialog open={showModal} onOpenChange={open => { if (!isCreating) setShowModal(open); }}>
-        <DialogContent hideCloseButton={isCreating} className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-lg">
+        <DialogContent onEscapeKeyDown={event => { event.preventDefault(); setShowModal(false); }} hideCloseButton={isCreating} className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-lg">
           <DialogHeader className="border-b border-border pb-3 pr-8">
             <DialogTitle className="text-sm">{t('newProduction')}</DialogTitle>
             <DialogDescription className="sr-only">

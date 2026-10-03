@@ -383,7 +383,7 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
       </Popover>
 
       <Dialog open={Boolean(pendingDelete)} onOpenChange={open => { if (!open && !setFieldState.isPending) { setPendingDelete(null); setActionError(null); } }}>
-        <DialogContent className="max-w-md" onEscapeKeyDown={event => { if (setFieldState.isPending) event.preventDefault(); }} onInteractOutside={event => { if (setFieldState.isPending) event.preventDefault(); }}>
+        <DialogContent className="max-w-md" onEscapeKeyDown={event => { event.preventDefault(); setPendingDelete(null); setActionError(null); }} onInteractOutside={event => { if (setFieldState.isPending) event.preventDefault(); }}>
           <DialogTitle>删除此列</DialogTitle>
           <DialogDescription>确认删除“{pendingDelete?.label}”整列？列数据保留，可以恢复。</DialogDescription>
           {actionError && <p role="alert" className="text-sm text-destructive">{actionError}</p>}
@@ -400,7 +400,7 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
           }
         }}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" onEscapeKeyDown={event => { event.preventDefault(); setCreateOpen(false); resetCreateForm(); }}>
           <DialogTitle>新建自定义列</DialogTitle>
           <DialogDescription>
             创建后列键由服务器固定；列名可以后续调整。删除不会删除已有镜头值。
@@ -489,7 +489,7 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
           if (!open && !updateField.isPending) resetEditForm();
         }}
       >
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg" onEscapeKeyDown={event => { event.preventDefault(); resetEditForm(); }}>
           <DialogTitle>编辑自定义列</DialogTitle>
           <DialogDescription>
             {editingField
@@ -620,7 +620,7 @@ export function ShotCustomFieldManager({ productionId }: ShotCustomFieldManagerP
           }
         }}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" onEscapeKeyDown={event => { event.preventDefault(); setPendingPurge(null); setActionError(null); }}>
           <DialogTitle>永久删除自定义列</DialogTitle>
           <DialogDescription>
             {pendingPurge

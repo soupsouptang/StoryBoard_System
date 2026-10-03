@@ -119,7 +119,7 @@ export function ShotColumnManager({
         </div>
       </PopoverContent>
     </Popover>
-    <Dialog open={Boolean(pendingDelete)} onOpenChange={open => { if (!open && !pending) setPendingDelete(null); }}><DialogContent className="max-w-md"><DialogTitle>删除此列</DialogTitle><DialogDescription>确认将“{pendingDelete?.label}”移入回收站？数据保留，恢复后重新显示。{pendingDelete?.column_class === 'builtin' && '内置列不允许永久删除。'}</DialogDescription>{error && <p role="alert">{error}</p>}<DialogFooter><Button variant="outline" disabled={pending} onClick={() => setPendingDelete(null)}>取消</Button><Button variant="destructive" disabled={pending} onClick={() => pendingDelete && void changeState(pendingDelete, 'removed')}>{pending ? '删除中…' : '确认删除'}</Button></DialogFooter></DialogContent></Dialog>
+    <Dialog open={Boolean(pendingDelete)} onOpenChange={open => { if (!open && !pending) setPendingDelete(null); }}><DialogContent className="max-w-md" onEscapeKeyDown={event => { event.preventDefault(); setPendingDelete(null); }}><DialogTitle>删除此列</DialogTitle><DialogDescription>确认将“{pendingDelete?.label}”移入回收站？数据保留，恢复后重新显示。{pendingDelete?.column_class === 'builtin' && '内置列不允许永久删除。'}</DialogDescription>{error && <p role="alert">{error}</p>}<DialogFooter><Button variant="outline" disabled={pending} onClick={() => setPendingDelete(null)}>取消</Button><Button variant="destructive" disabled={pending} onClick={() => pendingDelete && void changeState(pendingDelete, 'removed')}>{pending ? '删除中…' : '确认删除'}</Button></DialogFooter></DialogContent></Dialog>
     </>
   );
 }

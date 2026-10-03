@@ -835,7 +835,7 @@ export default function ReviewPage() {
           if (!open && !deleteComment.isPending) setDeleteCommentId(null);
         }}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" onEscapeKeyDown={event => { event.preventDefault(); setDeleteCommentId(null); }}>
           <DialogTitle>删除批注</DialogTitle>
           <DialogDescription>
             删除后该批注会从当前审片线程移除；删除动作仍会由后端审计记录。
@@ -868,7 +868,7 @@ export default function ReviewPage() {
           }
         }}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" onEscapeKeyDown={event => { event.preventDefault(); setBranchParentVersionId(null); setBranchName(''); }}>
           <DialogTitle>创建版本分支</DialogTitle>
           <DialogDescription>
             新分支会从所选不可变版本快照开始，不会修改当前镜头。之后可显式将该分支版本合并回当前镜头。
@@ -912,7 +912,7 @@ export default function ReviewPage() {
           if (!open && !mergeVersion.isPending) setMergeVersionId(null);
         }}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" onEscapeKeyDown={event => { event.preventDefault(); setMergeVersionId(null); }}>
           <DialogTitle>合并版本到当前镜头</DialogTitle>
           <DialogDescription>
             先保存“合并前备份”，再把所选版本应用到当前镜头。若镜头已被他人修改，操作会中止并提示冲突。
@@ -941,7 +941,7 @@ export default function ReviewPage() {
           if (!open && !restoreVersion.isPending) setRestoreVersionId(null);
         }}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" onEscapeKeyDown={event => { event.preventDefault(); setRestoreVersionId(null); }}>
           <DialogTitle>恢复镜头版本</DialogTitle>
           <DialogDescription>
             恢复会先保存当前镜头字段作为“回滚前备份”，再将所选版本写回当前镜头。该操作使用当前 revision 做冲突检查。
