@@ -6,9 +6,17 @@
 
 配套[执行标准](EXTENSIBILITY_EXECUTION_STANDARD_2026-10-04.md)、[知识层合同](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)、[29包机器清单](extensibility_execution_plan_2026-10-04.json)、岗位稿及实施计划一并整理。执行清单校验、拒绝环/无证据接受/待确认接受/越界路径检查、六文档本地链接核对通过；这些仅为文档结构验证，不是产品测试、真实PG或视觉验收。
 
-已先后快进合入远端6d8ddfa和9c88410，保留详情卡片/图片预览/五列布局最新UI及其他会话记录；本轮不改运行代码/UI/依赖、不部署、不重启预览。已有未提交imports/exports/engineering PDF、新画板UI及依赖草稿仍保留，未脱敏REMAINING_CAPABILITY审计不上传。只有本轮明确文档与只读清单校验工具进入提交。
+已先后快进合入远端6d8ddfa和9c88410，并合并包含3182aad的03e4313，保留详情卡片/图片预览/五列布局及镜号时码合列的最新UI和其他会话记录；双方新增续作段落均保留。本轮不改运行代码/UI/依赖、不部署、不重启预览。已有未提交imports/exports/engineering PDF、新画板UI及依赖草稿仍保留，未脱敏REMAINING_CAPABILITY审计不上传。只有本轮明确文档与只读清单校验工具进入提交。
 
 续作先fetch核对实际HEAD/dirty，读总纲最新决定和清单；不要把计划目标当已经实现，也不要用旧H-04、约7列或个人布局目标覆盖新规则。后端共享view/资源/继承的前端缺口交给指定UI owner，已有UI不冻结、不用旧草稿替换。
+
+## 2026-10-04 镜号/时码合列、标题单列、制作方式整体（代码3182aad已上传）
+
+最新用户截图要求已处理：镜号和时码在同一网格项保留各自标签及只读IN/OUT；镜头标题只占一列。制作方式三列以上置于首行最右列并跨两行，主方式在上、辅助复选在下；宽列260px以上辅助两列，否则一列，最大96px内部滚动，所有10项与编辑语义保持。窄屏自然排布。卡片圆角0px，只保留本体1px矩形外框，Slot/td/tr不叠加边框。独立项16px间距/内边距，三行352px本体/固定footer/图片中心缩放继续保持。本段覆盖下面历史标题跨两列与圆角Card。
+
+写集仅ShotDetailCard及SHOT_DETAIL记录/ACTIVE/本文；未改API、数据库、shared primitives、请求/保存语义、导航或其他页面。检查现有shot-detail-card.cjs、最终生产Webpack/TypeScript、diff与Regression Guard通过。真实3002合成项目2560/1440/1024/768/375/320宽度均无root/body溢出、352px、圆角0；镜号/时码X一致，1440标题单轨173px、制作方式row 1 / span 2，大屏辅助两列。末尾TYPE滚动选项实际可达（内部scrollTop176），Esc二次丢弃重开未选中、没有写数据。截图outputs/shot-detail-grouped-2026-10-04.png保留本机不入Git；临时viewport恢复、独立QA页保留。
+
+本机3002已更新`.next/detail-grouped-final/standalone/apps/web`，入口http://127.0.0.1:3002/productions；API8002/PG55432及新画板迁移停点不动。旧文件上传/下载浏览器环境门槛维持，未绕过或声称全站cutover。发布前fetch两remote均无待合入UI，未知`:memory:.ses`保留未上传。代码/对应MD已正常快进push到soupsouptang/StoryBoard_System master回执3182aad；本文随后独立提交上传，最终回执以Git为准，不宣称CI通过。当前追加需求实现与页面检查完成，待用户新反馈，不扩展旧产品待办。
 
 ## 2026-10-04 详情五列试用与均等间距（代码47f7576已上传）
 
