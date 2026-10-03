@@ -94,6 +94,12 @@ HistoryService/get_db原事务拥有日志/补偿，现有域service仍拥有正
 
 **额度续作**：本会话已建立“额度恢复后继续分镜修改”heartbeat（id `automation`），每15分钟检查。额度耗尽时参照实际resetsAt，恢复可用再继续未完成的已确认工作，不使用恢复券，不重复执行正在运行工作。本批全部完成后只核实MD上传，不自动扩展旧产品待办。配置在Codex本机，需客户端/主机可运行；GitHub上的MD本身不提供调度。本次查询五小时用量45%，恢复时间2026-10-03 06:54:06香港时间；后续必须重新查询，不把此历史时间当成固定重置时间。
 
+## 2026-10-04 最大化扩展性需求已同步
+
+新增长期需求合同 [VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)。该文档是后续新增 Domain/字段/关系/任务/排期/自动化/AI/Provider 的优先设计依据；状态为 PLANNED / REQUIREMENTS，不代表代码已完成。本次只更新文档，没有修改 UI、API、ORM、Alembic、Redis 或部署配置。
+
+接手新增能力时，先判断它属于 Entity / Field / Relation / Workflow / Presentation / Automation 中哪一层，再定义 canonical owner、Command、Revision、权限、Event 和持久配置版本。禁止通过扩肥 Shot、万能 EAV、万能关系表、任意脚本插件或新增大量 packages 获得伪扩展性。Import 最新明确原则：不保存客户映射模板，每次重新模糊识别、自动合并、冲突预览，并保留 Provenance。
+
 ## 2026-10-03 三个镜头操作按钮统一与计数文案（`e79c357`）
 
 最新要求已实施：新增镜头左侧对齐批量栏删除按钮；新增/删除/取消选择均100×36px、14px字号、相同8px圆角与正常字距。删除单选显示“删除镜头”，2–99显示“删除N镜”，超过99显示“删除···镜”；两位数固定占位、等宽数字且居中，按钮宽度不随数量改变。红色改为`#e11d48`，悬停`#be123c`，深浅主题均用相同鲜亮红色；保留原二次确认、错误处理、禁用与回收站功能。
@@ -153,6 +159,7 @@ Web production build（含TypeScript）、diff与Regression Guard通过；真实
 | --- | --- |
 | [本轮列/菜单执行与续作](SHOT_COLUMNS_MENUS_2026-10-02.md) | 最新确认的表头/行菜单、整列操作、工具条及实际验收；冲突处优先于早稿 |
 | [完整功能/UI/动画计划](FEATURE_UI_PLAN_2026-10-02.md) | 当前产品要求和实施路线，尤其 §1.1 最新决定 |
+| [最大化扩展性需求总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md) | 新 Domain/Relation/Task/权限/自动化/Provider 的长期需求合同；Import 无模板智能识别与 Provenance；不得把 PLANNED 写成完成 |
 | [VNext 数据库计划](UI_DATABASE_PLAN_2026-10-02.md) | 新系统 schema/持久化设计，仍需确认与演练 |
 | [原交接](HANDOFF_2026-10-02.md) | 其他会话交接、历史环境与尚未完成事项；历史 PID/路径不可直接当作当前值 |
 | [需求清单](CONFIRMED_UI_REQUIREMENTS_2026-10-02.md) | 原编号需求及镜号/拖拽追加要求；冲突时依最新方案处理 |
