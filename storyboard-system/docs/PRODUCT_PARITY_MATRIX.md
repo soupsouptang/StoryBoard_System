@@ -1,5 +1,9 @@
 # FRAMEFORGE Product Parity Matrix
 
+## 2026-10-04 新画板后端增量
+
+Lighting/Moodboard 已有原生可持久画板文档、同项目镜头与图片版本引用、对象锁、删除/恢复/确认 purge，唯一项目 HistoryService 覆盖确认后 undo/redo。lighting 进入项目比较；moodboard 不改变内容 hash。跨用户画板关联和历史图片 pin 阻止不安全的父项创建撤销。18 项 API/迁移/历史定向检查通过；前端新页面仍在接入，不标记视觉完成。最新用户允许只补完全缺失页面，现有 UI 以 `montblanc08` 修改为准。
+
 ## 2026-10-03 centered shot creation / feedback (`0e12efa`)
 
 Latest explicit user requirement replaces the table-bottom creation row with a centered floating card. This is a consumer consolidation, not removal of Shot creation: table/card entries share NewShotModal, workspace open state and canonical create hook. Automatic number, f/s/m/h duration, panel-frame and other authoring fields remain; creation now uses explicit confirmation instead of the retired row blur-save/localStorage draft flow. Esc cancels an unsent draft. Existing server requests retain their service/revision ownership after UI dismissal.

@@ -2,6 +2,8 @@
 
 ## 2026-10-04 新模块整合边界
 
+BoardService 拥有画板命令/图片 pin，HistoryService 拥有唯一持久游标/补偿；后端定向 18 项通过，新 UI 消费者尚待接入与桌面验收。新增页面允许写集为 lighting/moodboard 新路由、components/boards、useBoards 与所需依赖；导航仅追加两入口。现有表格/入口/设置和 `montblanc08` 最新修改不替换。
+
 UI 修改以 GitHub 用户 `montblanc08` 的最新提交为准；其他执行者负责后端合同及前端缺口交接，不以旧草稿覆盖 UI。账号归属核对、允许写集及验收责任见衔接账本。
 
 画板服务/模型/迁移为新增后端owner，复用现有HistoryService作为唯一持久命令历史；灯光进入project_snapshot，情绪板不进入内容版本。导入导出继续复用ImportService/document_export，不另建并行owner。本轮仅后端，UI缺口与接手边界记录于 [后端衔接账本](BACKEND_FRONTEND_HANDOFF_2026-10-04.md)；新模块仍在验证，不能依据本段判为cutover。

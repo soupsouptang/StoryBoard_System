@@ -12,6 +12,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy import DateTime, delete, select
 from app.core.exceptions import ConflictError, DomainError, NotFoundError
 from app.models.asset import Asset, AssetVersion, ShotAssetLink, ClientAssetRequest
+from app.models.board import BoardAssetReference, CreativeBoard
 from app.models.collaboration import AuditLog, Comment, ReviewDecision
 from app.models.command import OutboxEvent
 from app.models.export_template import ExportTemplate
@@ -26,7 +27,7 @@ from app.services.project_snapshot import FIELDS
 # Explicit business allowlists. Source files, credentials, audit/read watermarks,
 # event counters, commits and immutable source versions are never rewound.
 SPECS = {name: (model, fields.split()) for name, (model, fields) in FIELDS.items()
-         if name not in {'asset_versions', 'media_presentations'}}
+         if name not in {'asset_versions', 'media_presentations', 'lighting_boards'}}
 SPECS['production'][1].append('deleted_at')
 for name in SPECS:
     model, fields = SPECS[name]
@@ -35,6 +36,7 @@ for name in SPECS:
 SPECS['values'][1].extend(['binding_kind', 'updated_by'])
 SPECS['columns'][1].remove('schema_version')
 SPECS.update({
+    'boards': (CreativeBoard, 'production_id kind name width height objects shot_ids created_by deleted_at'.split()),
     'comments': (Comment, 'production_id shot_id asset_id user_id role body timecode quote_field quote_text parent_id is_resolved deleted_at'.split()),
     'preferences': (ColumnPreference, 'production_id column_key state position width_px wrap_text updated_by'.split()),
     'views': (SavedView, 'production_id name view_type is_shared created_by config row_height_mode manual_row_height_px measurement_context'.split()),
@@ -42,11 +44,11 @@ SPECS.update({
     'templates': (ExportTemplate, 'production_id name field_ids schema_version created_by'.split()),
     'layouts': (WorkspaceLayout, 'production_id user_id config'.split()),
 })
-SOFT = {'production', 'sequences', 'scenes', 'shots', 'panels', 'steps', 'columns', 'assets', 'comments'}
+SOFT = {'production', 'sequences', 'scenes', 'shots', 'panels', 'steps', 'columns', 'assets', 'comments', 'boards'}
 # Parent-before-child restore; reverse order removes dependency rows.
 ORDER = list(SPECS)
 PERMISSIONS = {'production': 'production.write', 'assets': 'asset.write', 'comments': 'review.comment',
-               'templates': 'export.create'}
+               'templates': 'export.create', 'boards': 'board.write'}
 
 
 def allowed(user, permission):
@@ -73,9 +75,14 @@ def dependencies(section, identity, snapshot):
     for name, rows in snapshot.items():
         if name == section: continue
         for key, row in rows.items():
+            if name == 'boards' and section == 'assets' and identity in row.get('asset_ids', []):
+                # Pins also protect trashed boards and earlier undo states.
+                result[name + '/' + key] = row
+                continue
             if row['data'].get('deleted_at') or row['data'].get('state') in {'trashed', 'purged', 'purging'}: continue
             if name == 'layouts': continue
-            if section == 'production' or foreign_key and row['data'].get(foreign_key) == identity:
+            if section == 'production' or foreign_key and row['data'].get(foreign_key) == identity or (
+                    name == 'boards' and section == 'shots' and identity in row['data']['shot_ids']):
                 result[name + '/' + key] = row
     return result
 
@@ -87,6 +94,11 @@ def references(item, snapshot):
         for field, section in [('column_id', 'columns'), ('shot_id', 'shots'), ('asset_id', 'assets')]:
             identity = data.get(field)
             if identity and identity in snapshot[section]: result[section + '/' + identity] = snapshot[section][identity]
+        if item['section'] == 'boards':
+            for identity in data.get('shot_ids', []):
+                if identity in snapshot['shots']: result['shots/' + identity] = snapshot['shots'][identity]
+            for identity in (item[side] or {}).get('asset_ids', []):
+                if identity in snapshot['assets']: result['assets/' + identity] = snapshot['assets'][identity]
     return result
 
 
@@ -110,6 +122,16 @@ class HistoryService:
             if model is WorkspaceLayout: query = query.where(model.user_id == user_id)
             rows = (await db.scalars(query.execution_options(populate_existing=True))).all()
             output[name] = {row.id: record(row, fields) for row in rows}
+        pins = (await db.execute(select(BoardAssetReference.board_id, AssetVersion.asset_id)
+            .join(CreativeBoard, CreativeBoard.id == BoardAssetReference.board_id)
+            .join(AssetVersion, AssetVersion.id == BoardAssetReference.asset_version_id)
+            .where(CreativeBoard.production_id == production_id))).all()
+        board_assets = {}
+        for board_id, asset_id in pins:
+            board_assets.setdefault(board_id, set()).add(asset_id)
+        for identity, row in output['boards'].items():
+            # Dependency evidence, not business fields to restore.
+            row['asset_ids'] = sorted(board_assets.get(identity, set()))
         # Presentations are append-only, keyed by logical owner, not historic row.
         rows = (await db.scalars(select(MediaPresentation).where(MediaPresentation.production_id == production_id)
             .order_by(MediaPresentation.revision))).all()
@@ -198,7 +220,7 @@ class HistoryService:
 
     @staticmethod
     async def summary(db, production_id, user):
-        if not any(allowed(user, p) for p in ('production.read', 'production.write', 'shot.write', 'asset.write', 'review.comment', 'review.approve', 'export.create')):
+        if not any(allowed(user, p) for p in ('production.read', 'production.write', 'shot.write', 'asset.write', 'review.comment', 'review.approve', 'export.create', 'board.write')):
             raise DomainError('当前账号没有查看项目操作历史的权限', code='FORBIDDEN')
         if await db.get(Production, production_id) is None: raise NotFoundError('项目不存在')
         state = await HistoryService.state(db, production_id, user.id)
@@ -242,7 +264,8 @@ class HistoryService:
             await HistoryService.apply(db, production_id, user, item, None)
         for item in sorted(restoring, key=lambda v: ranks[v['section']]):
             await HistoryService.apply(db, production_id, user, item, item[target_key]['data'])
-        if any(item['section'] != 'layouts' for item in changes):
+        if any(item['section'] not in {'layouts', 'boards'} or item['section'] == 'boards' and
+                ((item['after'] or item['before'])['data']['kind'] == 'lighting') for item in changes):
             production.revision += 1
             production.content_revision += 1
         if any(item['section'] == 'columns' for item in changes): production.schema_revision += 1
@@ -305,6 +328,11 @@ class HistoryService:
             await db.flush()
             return
         else:
+            if name == 'boards':
+                from app.services.board_service import BoardService
+                document = await BoardService.validate(db, production_id, data['kind'],
+                    {key: data[key] for key in ('name', 'width', 'height', 'objects', 'shot_ids')})
+                data = {**data, **document}
             if row is None:
                 row = model(id=identity)
                 db.add(row)
@@ -319,6 +347,9 @@ class HistoryService:
             row.schema_version = (row.schema_version or 0) + 1
             row.measurement_generation = (row.measurement_generation or 0) + 1
         row.updated_at = datetime.now(timezone.utc)
+        if name == 'boards':
+            from app.services.board_service import BoardService
+            await BoardService.pin_media(db, row)
         if name == 'comments':
             from app.services.review_service import ReviewService
             shot = await db.get(Shot, row.shot_id)

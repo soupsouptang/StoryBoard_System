@@ -64,8 +64,8 @@ class AssetMutationService:
         if changed:
             if not restore:
                 references = await AssetService.references(db, production_id, asset_id)
-                if references["reference_shot_count"]:
-                    raise DomainError("素材仍被镜头使用，请先移除关联后删除", code="ASSET_IN_USE")
+                if references["reference_shot_count"] or references["reference_board_count"]:
+                    raise DomainError("素材仍被镜头或画板历史使用，请先处理引用后删除", code="ASSET_IN_USE")
             asset.deleted_at = None if restore else datetime.now(timezone.utc)
             asset.revision += 1
             asset.updated_at = datetime.now(timezone.utc)

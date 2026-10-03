@@ -41,7 +41,7 @@ class ProjectVersionService:
         return {"state_hash": content_hash(snapshot), "schema_version": snapshot["schema_version"],
             "sections": {key: len(rows) for key, rows in snapshot["sections"].items()},
             "excluded_components": ["moodboard"],
-            "pending_components": ["lighting_boards"]}
+            "pending_components": []}
 
     @staticmethod
     async def create_commit(db: AsyncSession, production_id, req, user):

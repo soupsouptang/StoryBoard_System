@@ -307,3 +307,53 @@ async def test_media_compensation_appends_and_preserves_original(tmp_path):
         latest = await ImageCropService.current(db,'p','asset',asset.id)
         assert latest.revision==3 and latest.transform['rotation']==90
         assert (tmp_path/version.storage_key).read_bytes()==data.getvalue()
+
+
+@pytest.mark.asyncio
+async def test_foreign_board_link_blocks_undoing_shot_creation():
+    from app.schemas.board import BoardCreate
+    from app.services.board_service import BoardService
+    async with AsyncSessionLocal() as db:
+        await edit(db, 'Linked shot')
+        await BoardService.create(db, 'p', BoardCreate(kind='lighting', name='Foreign board', shot_ids=['s']), await actor(db, 'v'))
+        await H.finish(db)
+        await db.commit()
+        before = await H.summary(db, 'p', await actor(db))
+        with pytest.raises(ConflictError):
+            await H.move(db, 'p', await actor(db), 'undo', before['revision'])
+        await db.rollback()
+        assert (await db.get(Shot, 's')).deleted_at is None
+        assert await H.summary(db, 'p', await actor(db)) == before
+
+
+@pytest.mark.asyncio
+async def test_historic_board_pin_blocks_undoing_asset_creation(tmp_path):
+    from io import BytesIO
+    from PIL import Image
+    from app.models import Asset, AssetVersion
+    from app.schemas.board import BoardCreate, BoardPatch
+    from app.services.asset_mutation_service import AssetMutationService
+    from app.services.board_service import BoardService
+    image = BytesIO()
+    Image.new('RGB', (100, 60), 'blue').save(image, format='PNG')
+    async with AsyncSessionLocal() as db:
+        user = await actor(db)
+        await H.begin(db, 'p', user, 'Upload', 'asset.write')
+        uploaded = await AssetMutationService.upload(db, 'p', image.getvalue(), 'pin.png', user, tmp_path)
+        await H.finish(db)
+        await db.commit()
+        version = await db.scalar(select(AssetVersion).where(AssetVersion.asset_id == uploaded['asset_id']))
+        foreign = await actor(db, 'v')
+        board = await BoardService.create(db, 'p', BoardCreate(kind='moodboard', name='Pinned', objects=[
+            {'id': 'photo', 'type': 'image', 'asset_version_id': version.id}]), foreign)
+        await H.finish(db)
+        await db.commit()
+        await BoardService.patch(db, 'p', board['id'], BoardPatch(revision=1, objects=[]), foreign)
+        await H.finish(db)
+        await db.commit()
+        before = await H.summary(db, 'p', user)
+        with pytest.raises(ConflictError):
+            await H.move(db, 'p', user, 'undo', before['revision'])
+        await db.rollback()
+        assert (await db.get(Asset, uploaded['asset_id'])).deleted_at is None
+        assert await H.summary(db, 'p', await actor(db)) == before

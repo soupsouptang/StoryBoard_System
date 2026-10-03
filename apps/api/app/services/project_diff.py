@@ -20,6 +20,7 @@ SECTION_LABELS = {
     "review_decisions": "审阅决定", "views": "共享视图", "row_layouts": "行高",
     "column_preferences": "列显示设置",
     "media_presentations": "图片构图",
+    "lighting_boards": "灯光场景",
 }
 
 
@@ -88,7 +89,8 @@ def compare_snapshots(before: dict, after: dict, shot_id: str | None = None) -> 
                         or row.get("owner_type") == "asset" and row.get("asset_id") in related_assets for row in rows) or
                     section == "sequences" and identity in related_sequences or
                     section == "scenes" and identity in related_scenes or
-                    section == "views" and identity in related_views)
+                    section == "views" and identity in related_views or
+                    section == "lighting_boards" and any(shot_id in row.get("shot_ids", []) for row in rows))
                 if not scoped:
                     continue
             if old == new:

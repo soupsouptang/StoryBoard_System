@@ -5,7 +5,8 @@ from sqlalchemy import func, or_, select, union
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import DomainError, NotFoundError
-from app.models.asset import Asset, ShotAssetLink
+from app.models.asset import Asset, AssetVersion, ShotAssetLink
+from app.models.board import BoardAssetReference, CreativeBoard
 from app.models.production import Production
 from app.models.shot import Panel, ProductionStep, Shot
 from app.models.project_version import ProjectCommit
@@ -54,7 +55,14 @@ class AssetService:
         commits = (await db.execute(select(ProjectCommit.id, ProjectCommit.snapshot).where(
             ProjectCommit.production_id == production_id))).all()
         retained = [identity for identity, snapshot in commits if asset.id in snapshot.get("sections", {}).get("assets", {})]
+        boards = (await db.execute(select(CreativeBoard.id, CreativeBoard.name, CreativeBoard.kind, CreativeBoard.deleted_at)
+            .join(BoardAssetReference, BoardAssetReference.board_id == CreativeBoard.id)
+            .join(AssetVersion, AssetVersion.id == BoardAssetReference.asset_version_id)
+            .where(CreativeBoard.production_id == production_id, AssetVersion.asset_id == asset_id).distinct())).all()
         return {"asset_id": asset_id, "references": matches,
+            "board_references": [{"board_id": identity, "name": name, "kind": kind, "is_deleted": deleted is not None}
+                for identity, name, kind, deleted in boards],
+            "reference_board_count": len(boards),
             "reference_shot_count": len({row["shot_id"] for row in matches if not row["is_deleted"]}),
             "retained_commit_ids": retained}
 
@@ -102,6 +110,11 @@ class AssetService:
             select(
                 Asset,
                 func.coalesce(reference_counts.c.reference_shot_count, 0).label("reference_shot_count"),
+                select(func.count(func.distinct(CreativeBoard.id))).join(
+                    BoardAssetReference, BoardAssetReference.board_id == CreativeBoard.id).join(
+                    AssetVersion, AssetVersion.id == BoardAssetReference.asset_version_id).where(
+                    CreativeBoard.production_id == production_id, AssetVersion.asset_id == Asset.id)
+                    .correlate(Asset).scalar_subquery().label("reference_board_count"),
             )
             .outerjoin(reference_counts, reference_counts.c.asset_id == Asset.id)
             .where(
@@ -128,11 +141,12 @@ class AssetService:
                 "rights_status": asset.rights_status,
                 "created_at": asset.created_at,
                 "reference_shot_count": reference_count,
+                "reference_board_count": board_count,
                 "revision": asset.revision,
                 "category": asset.category,
                 "has_thumbnail": bool(asset.proxy_storage_key),
                 "updated_at": asset.updated_at,
                 "deleted_at": asset.deleted_at,
             }
-            for asset, reference_count in rows.all()
+            for asset, reference_count, board_count in rows.all()
         ]

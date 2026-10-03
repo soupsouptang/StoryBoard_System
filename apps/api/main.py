@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.v1.auth import router as auth_router
 from app.api.v1.assets import router as assets_router
+from app.api.v1.boards import router as boards_router
 from app.api.v1.custom_fields import router as custom_fields_router
 from app.api.v1.exports import router as exports_router
 from app.api.v1.health import router as health_router
@@ -87,12 +88,15 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         content={
             "error": {
                 "code": "VALIDATION_ERROR",
                 "message": "请求参数校验失败",
-                "details": {"errors": exc.errors()}
+                "details": {"errors": [
+                    {key: error[key] for key in ("loc", "msg", "type")}
+                    for error in exc.errors()
+                ]}
             }
         }
     )
@@ -121,6 +125,7 @@ app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(custom_fields_router, prefix=settings.API_V1_PREFIX)
 app.include_router(productions_router, prefix=settings.API_V1_PREFIX)
 app.include_router(assets_router, prefix=settings.API_V1_PREFIX)
+app.include_router(boards_router, prefix=settings.API_V1_PREFIX)
 app.include_router(shots_router, prefix=settings.API_V1_PREFIX)
 app.include_router(panel_media_router, prefix=settings.API_V1_PREFIX)
 app.include_router(review_router, prefix=settings.API_V1_PREFIX)

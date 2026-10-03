@@ -12,6 +12,7 @@ from sqlalchemy import JSON, String, cast, func, literal, select, union_all
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 from app.models.asset import Asset, AssetVersion, ClientAssetRequest, ShotAssetLink
+from app.models.board import CreativeBoard
 from app.models.field import ProjectColumn, ShotColumnValue
 from app.models.media import MediaPresentation
 from app.models.production import Production, Scene, Sequence
@@ -33,6 +34,7 @@ FIELDS = {
     "asset_links": (ShotAssetLink, "shot_id asset_id role"),
     "asset_requests": (ClientAssetRequest, "shot_id requested_from requested_at received_at status notes"),
     "media_presentations": (MediaPresentation, "asset_id source_version_id owner_type owner_id revision transform"),
+    "lighting_boards": (CreativeBoard, "name width height objects shot_ids deleted_at"),
 }
 
 
@@ -89,6 +91,8 @@ async def capture_project(db: AsyncSession, production_id: str) -> dict:
             statement = statement.where(model.production_id == production_id, model.revision == latest)
         elif model is AssetVersion:
             statement = statement.where(model.asset_id.in_(asset_ids))
+        elif model is CreativeBoard:
+            statement = statement.where(model.production_id == production_id, model.kind == "lighting")
         elif hasattr(model, "production_id"):
             statement = statement.where(model.production_id == production_id)
         else:
