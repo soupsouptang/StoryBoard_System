@@ -1,5 +1,23 @@
 # FRAMEFORGE 续作入口
 
+## 2026-10-03 持久撤销与重做已实施（代码 `74f76a2`，上传待确切目的地授权）
+
+最新用户要求“继续完成并上传同步，遵循GitHub搭建规则”。先读本文/根及适用AGENTS，fetch两个已配置remote后核实：GitHub此前仅有图片构图局部草稿undo/redo，没有贯穿项目的持久历史；远端最新规则与本地相同，未发现需要合并的新增提交。本次遵循apps/web＋apps/api＋PostgreSQL＋Alembic原生owner，不接回Legacy架构、不生产部署。
+
+**已完成**：项目设置左侧撤销/重做按钮；Ctrl/Cmd+Z、Ctrl/Cmd+Shift+Z和Windows Ctrl+Y；用户＋项目最近100步、刷新/重新登录保留。现有镜头编辑/创建/软删除恢复/排序/批量/相对粘贴/导入，列命令、个人列布局、素材关联/图片构图、批注/审片意见、保存视图/交付模板/项目设置纳入服务端确认历史。列新增/复制的整列数据与位置/宽度/格式同事务一条历史。输入/IME/弹窗草稿/列宽拖动保留本地键盘所有权；新增代码不补录接入前的操作。
+
+HistoryService/get_db原事务拥有日志/补偿，现有域service仍拥有正常写命令；PG三表history_states/history_entries/workspace_layouts由Alembic `a83f02c1d765`（前序b03e7a42f185）拥有。旧浏览器布局仅首次初始化后退出双写。全部对象及父/子引用先检查再整步补偿；冲突409不写、不移动游标；revision递增、audit/outbox追加。永久删除清全项目全部用户历史，个人布局已purge列引用清理；媒体展示追加revision，不改源文件。已有记录时迁移降级拒绝删表。
+
+**实际验证**：完整后端137 passed（1项已有框架弃用warning），11项新增history事务/API测试；快捷键/shot-summary/shot-column-sort、生产Webpack构建/TypeScript、diff和Regression Guard（基于3f91fd9）通过。PG55432独立空库完整迁移与既有库副本迁移、真实HTTP undo/redo/CAS409和compound列位置通过。本机预览升级前有效备份 `/private/tmp/frameforge-before-history-20261003-verified.dump` 已验证，合成原项目/镜头/素材/批注/列数量保持；该备份与配置不进入Git。真实Chrome独立项目验证创建/宽度/后插列undo/redo、Ctrl+Y刷新持久、弹窗输入不触发项目历史和Esc，五宽度1440/1024/768/375/320无根溢出；列管理/表头右键菜单、键盘焦点可达。截图工作区outputs/project-undo-redo-2026-10-03.png，仅留本机。
+
+**浏览器预览**：3002和API8002已重启载入最新构建/源码，PG55432保留。独立验收项目 `54374ea3-0b02-46c6-97c4-0fe9bfb3930a`，1镜头及“可撤销列”保留；入口 `http://127.0.0.1:3002/production/54374ea3-0b02-46c6-97c4-0fe9bfb3930a/shots`。独立验收tab关闭、临时视口恢复，用户原页面保留。视频样本97镜头和原106镜头项目未改动。
+
+**上传阻挡**：代码及canonical台账已本地提交 `74f76a27e9d2df46a3140330455cdde87627b2ca`，本文随后本地提交。已按用户最新“上传同步”尝试非强制推送至既有 `soupsouptang/StoryBoard_System master`，自动审批再次拒绝：用户虽授权上传，未明确指定/验证这个确切仓库与默认master分支，写入共享分支可能影响其他协作者。本地配置还存在origin（montblanc08仓库）；不能自行换remote或绕过拒绝。需要用户明确确认允许把本次代码/MD及此前未同步提交推送至 `https://github.com/soupsouptang/StoryBoard_System.git` 的 `master`。在得到该确切授权前不重试、不宣称上传完成。最后fetch的soupsouptang/master为 `9e1f69c8daad9b0aed0297c8c60947cadc71acd7`；没有远端新功能需合入。CI未运行本次提交，不宣称远端CI通过。
+
+**下一次开工**：先读本文/AGENTS、检查Git状态及远端，不重做已完成实现。若用户明确确认上述目的地，先fetch检查新提交，必要时安全整合，再非强制上传代码检查点及续作MD，最后核实远端SHA并更新MD。若没有新产品需求，不扩展下方历史待办。未知`:memory:.ses`原样保留、未入Git。
+
+实施范围与owner/验收详见[项目历史记录](PROJECT_HISTORY_2026-10-03.md)。现有操作已接通，仍为INTEGRATED_NOT_CUT_OVER；原生Moodboard/Lighting、完整项目restore/merge、成员RBAC、outbox发送和媒体GC是旧产品待办，不因此完成，也不在本次自动扩展。
+
 ## 2026-10-03 已选镜头数量垂直对齐（代码 `eeddeb5`）
 
 用户截图指出“已选 N”比前方镜头数量统计偏低；表格页共同外层由 `items-baseline` 改为 `items-center`，两段文字按同一行中心对齐，保留12px字号、灰色、计数、四位数字占位与原有选择功能。不涉及 API、数据库或媒体修改。
