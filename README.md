@@ -57,6 +57,12 @@ apps/worker
     └── Legacy reference + portable-project exporter bridge
 ```
 
+## 最大化扩展性原则
+
+VNext 的长期扩展要求以 [最大化扩展性需求总纲](storyboard-system/docs/VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md) 为准。核心原则是 **Strong Core + Explicit Extension Points**：未来新增演员、场地、设备、任务、排期、知识库、AI、第三方导入导出等能力，应优先新增 Entity / Typed Relation / Command / Event Consumer / Provider，而不是继续扩肥 Shot、堆页面条件分支或新增第二套状态 owner。
+
+该总纲同时明确：Entity-scoped Fields、ProductionStep/Task 分离、Task Dependency DAG、ProductionMember 项目权限、无模板智能 Import + Provenance、Deliverable Profile、Storage/AI/Queue Provider、Capability Registry、UI extension slots，以及所有持久 JSON 的 schema_version + migrator。它是目标需求合同，不代表对应代码已经全部实现。
+
 ## `packages/` 是封闭集合
 
 根目录 `packages/` **不是通用代码收纳区**。当前只允许四个顶层共享包：
