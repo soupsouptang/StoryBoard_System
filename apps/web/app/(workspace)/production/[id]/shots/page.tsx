@@ -1019,7 +1019,7 @@ export default function ShotListPage() {
       <div className="z-10 shrink-0 space-y-3 border-b border-border bg-background px-4 py-3">
         <h1 className="text-lg font-semibold">分镜制作</h1>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-baseline gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <ShotViewNavigation productionId={production.id} active="table" count={shots.length} displayedCount={visibleShots.length} />
             {selectedShotIds.length > 0 && <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">已选 {selectedShotIds.length}</span>}
           </div>
