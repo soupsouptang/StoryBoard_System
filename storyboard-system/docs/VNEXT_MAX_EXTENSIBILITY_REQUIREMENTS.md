@@ -89,7 +89,8 @@ Table / Board / Wall / Timeline / Calendar / Call Sheet
 
 ```text
 ① Core Domain
-Production / Sequence / Scene / Shot / Panel / Asset / Member
+Work / Episode / Production / Sequence / Scene / Shot / Panel / Asset
+User / Person / Character / Member
 
 ② Extension
 Preset Field / Custom Field / Derived Field
@@ -120,9 +121,33 @@ Worker/Queue   long-running jobs
 
 ---
 
-## 3. Production 是工作区作用域，不是万能业务对象
+## 3. Work / Episode / Production：可选上层组织 + 独立项目工作区
 
-`Production` 继续作为项目工作区与聚合范围：
+`Production` 继续作为**单个项目的 canonical 工作区与业务聚合范围**；`Work` / `Episode` 纳入其上层，负责系列、剧集、栏目或多项目的组织与聚合管理，而不是复制项目数据。
+
+目标层级：
+
+```text
+Work (optional top-level container)
+├─ Episode (optional)
+│  ├─ Production
+│  └─ Production
+├─ Production            # 允许不经过 Episode
+└─ Episode
+   └─ Production
+
+Standalone Production    # 允许完全不使用 Work / Episode
+```
+
+建立项目时通过 Project Preset / Project Type 决定是否显示或启用 Work / Episode 能力：
+
+- 广告、单支短片、简单分镜项目：可以直接创建 standalone Production，默认不暴露多集功能；
+- 剧集、栏目、系列内容：可以先建 Work / Episode，再创建或挂接 Production；
+- 已存在的多个 Production 可以后续归组到 Episode / Work，实现“多项目合并为剧集文件夹后统一管理”；
+- 归组是**组织关系与聚合视图**，不得物理复制、合并或改写各 Production 的 canonical 数据、Revision、History 和权限 owner；
+- 上层容器允许提供跨 Production 的聚合查询、人员冲突、场次统计、资产汇总、排期概览和批量管理，但所有写操作仍进入目标 Production 的正常 Command 边界。
+
+`Production` 内部继续拥有：
 
 ```text
 Production
@@ -144,8 +169,9 @@ Production
 1. 新一级业务对象不得默认挂到 `Shot` 下。
 2. 每个 Entity 必须有明确 owner、生命周期、权限、revision/并发策略。
 3. 跨 Entity 的连接应由 typed relation/link table 表达。
-4. Production 负责 scope 和跨对象一致性边界，但不应成为存放任意业务 JSON 的万能表。
-5. 新实体进入系统前必须说明：
+4. Production 负责单项目 scope 和跨对象一致性边界，但不应成为存放任意业务 JSON 的万能表。
+5. Work / Episode 是可选 container/aggregation scope，不成为第二套 Production 数据库。
+6. 新实体进入系统前必须说明：
    - 为什么不能作为现有 Entity 的字段；
    - 是否需要单独查询/权限/生命周期；
    - 是否参与 Import/Export/History/Automation；
@@ -165,7 +191,7 @@ Production
 - 需要被大量查询、排序、过滤；
 - 其值不是仅对某个客户/项目有效的临时业务属性。
 
-例如 `Shot.duration_frames`、`Shot.scene_id`、`Shot.primary_method` 属于核心；“客户 SKU”“无人机许可编号”“服装备注2”默认不属于核心。
+例如 `Shot.duration_frames`、`Shot.primary_method` 属于核心；Shot 与 Scene 的归属由 `SceneShot` typed relation 表达，不再以单一 `Shot.scene_id` 作为长期目标。 “客户 SKU”“无人机许可编号”“服装备注2”默认不属于核心。
 
 ### 4.2 禁止 Shot 无限膨胀
 
@@ -276,11 +302,13 @@ Derived Field 必须：
 示例：
 
 ```text
+SceneShot
 ShotCast
 ShotLocation
 ShotEquipment
 ShotAsset
 SceneLocation
+CastAssignment
 TaskAssignee
 TaskAsset
 TaskShot
@@ -288,13 +316,90 @@ TaskLocation
 ProductionMember
 ```
 
-Relation 可以带自己的业务属性，例如：
+Relation 可以带自己的业务属性。
+
+### 6.1.1 Scene ↔ Shot 已确认采用 0..N 多对多
+
+一个 Shot 可以：
+
+- 暂时不属于任何 Scene；
+- 属于一个 Scene；
+- 同时归属于多个 Scene，例如回忆、交叉叙事、跨场景复用或其他明确叙事关系。
+
+长期目标：
+
+```text
+SceneShot
+├─ scene_id
+├─ shot_id
+├─ relation_type
+├─ is_primary / role semantics
+└─ order_index
+```
+
+要求：
+
+- 不再把单一 nullable `shots.scene_id` 视为最终 cardinality；
+- 同一 Shot 可有 0..N 个 Scene 关系；
+- `order_index` 表示 Shot 在具体 Scene 内的顺序，不等同于 Shot 全局身份；
+- `relation_type` / primary 语义必须使用稳定、版本化合同，不能用自由文本决定业务逻辑；
+- 若一个 Shot 有“主要所属场景”，允许最多一个 primary；回忆/引用/跨场景等作为 additional relation；
+- 删除 Scene 不得误删仍被其他 Scene 引用的 Shot；
+- Import / Export / Saved View / Schedule 必须能够处理多 Scene Shot。
+
+### 6.1.2 User / Person / Character 已确认彻底分离
+
+三个概念不得再混用：
+
+```text
+User
+= 登录账号 / authentication principal
+
+Person
+= 现实世界中的人
+  导演 / 摄影 / 演员 / 客户 / 工作人员等
+
+Character
+= 作品中的叙事角色
+```
+
+演员关系：
+
+```text
+Character
+    ↓ CastAssignment
+Person
+```
+
+项目成员关系：
+
+```text
+Production
+    ↓ ProductionMember
+Person
+    ↕ optional authenticated account link
+User
+```
+
+要求：
+
+- Person 可以存在而没有 User，例如未登录演员、场务、临时联系人；
+- User 不等于演员/工作人员资料本身；
+- 同一 Person 在同一或不同 Production 中可以拥有多个 project role / department；
+- 同一 Person 可以通过 CastAssignment 扮演一个或多个 Character；
+- Character 不承担登录、联系方式、可用时间等现实人员属性；
+- ProductionMember 负责项目成员、角色、部门和权限上下文；
+- 账号与 Person 的连接使用明确 typed identity link/字段，不通过姓名或邮箱字符串猜测；
+- External Reviewer/Guest 仍由受限 authenticated principal + membership/policy 控制，不把 Character 或未登录 Person 冒充 User。
+
+例如 Shot 需要演员时，优先关系应是 Shot ↔ Character / CastAssignment，再解析到具体 Person；工作人员则直接通过 ProductionMember / TaskAssignee / ScheduleItemPerson 等关系参与执行。
+
+其他 Relation 同样可以带业务属性，例如：
 
 ```text
 ShotCast
 ├─ shot_id
-├─ person_id
-├─ character/role
+├─ character_id / cast_assignment_id
 ├─ required
 └─ notes
 ```
@@ -461,26 +566,29 @@ conflicts[]
 
 全局 `User → Role` 不足以表达真实剧组。
 
-必须增加项目作用域：
+必须增加项目作用域，并以 Person 作为现实成员身份、User 作为可选登录身份：
 
 ```text
 ProductionMember
 ├─ production_id
-├─ user_id / external_identity
-├─ project_role
-├─ department
+├─ person_id
+├─ user_id?              # 有登录权限时关联；不是 Person 的替代品
+├─ project_role(s)
+├─ department(s)
 ├─ permission overrides
 ├─ status
 └─ revision
 ```
 
-要求同一用户可以：
+要求同一个 Person / User 可以：
 
 ```text
 项目 A = 摄影指导
 项目 B = 导演
 项目 C = 客户审片
 ```
+
+一个 Person 在同一项目内也可以同时承担多个职务；权限与职责不得被压缩成单个全局 role。
 
 权限计算至少考虑：
 
@@ -1330,14 +1438,24 @@ result/failure
 
 如果回答不清楚，不允许通过“先加字段/先加页面以后再整理”的方式进入 canonical VNext。
 
-### 25.1 当前保留给产品确认的四个高影响决策
+### 25.1 已确认的四个高影响产品决定（2026-10-04）
 
-以下问题会改变核心 cardinality / identity / 项目层级，因此本文不自行拍板，确认前不得据此修改 ORM：
+以下已由产品确认，后续设计不得再按“待确认”处理：
 
-1. **Scene ↔ Shot 是否升级为多对多 typed relation**：当前可保留 nullable `scene_id`，但若产品明确支持“一个 Shot 跨多个 Scene”，则目标应转为 `SceneShot` relation，并定义 primary/continuity/order 等语义。
-2. **User / Person / Character 是否三者彻底分离**：User 是登录身份，Person 是现实世界人员，Character 是叙事角色；演员通过 CastAssignment 连接 Character ↔ Person。若确认，ProductionMember 应引用 Person/User 的明确身份边界，而不是把三者混为一张表。
-3. **是否把 Work / Episode 纳入 Production 之上的一级层级**：如果未来要原生支持系列剧/栏目/多集工程，需要决定 `Work → Episode → Production` 或其他层级；未确认前不增加空壳表。
-4. **Take 是否成为一级拍摄执行实体**：如果系统要管理一次 Shot 的多次实拍、场记、圈选、Take→Media→Version 链，则应建立 Take；仅做前期分镜时不要提前制造无消费者实体。
+1. **Scene ↔ Shot：采用 typed many-to-many。** 一个 Shot 允许归属于多个 Scene，例如回忆、跨场景或其他叙事关系；目标为 `SceneShot` 关系，支持 0..N Scene，并定义 relation_type / primary / order 的稳定语义。
+2. **User / Person / Character：彻底分开。** User=登录身份，Person=现实中的人，Character=叙事角色；`CastAssignment` 连接 Character ↔ Person；`ProductionMember` 负责 Person 在项目中的职责与权限，并可选关联 User。
+3. **Work / Episode：纳入 Production 上层。** 它们是可选组织容器；简单项目可通过创建预设隐藏/跳过，剧集/系列项目可启用。已有多个 Production 可以后续归组到 Episode / Work 后做聚合管理，但不得复制或物理合并其 canonical 数据。
+4. **Take：当前不实现，只保留扩展 seam。** 当前产品聚焦前期制作，以及拍摄中期的分镜查看、人员/场次调度。现在不新建 Take ORM/table/API/UI 空壳；未来进入现场场记、多机位实拍、Take 圈选、Take→Media 链路时，再按独立 Domain 正式引入。
+
+### 25.2 Take 的未来扩展合同
+
+为了避免当前实现阻断未来 Take，现阶段只要求：
+
+- Shot/Asset/Media 的关系不要假定“一个 Shot 只能有一个拍摄实例”；
+- Asset/Media typed reference 应能未来增加 `Take` target，而不需要破坏既有 AssetVersion；
+- ScheduleItem 可关联 Shot，但不得冒充未来 Take；
+- 不为未知需求预建无消费者字段、表或页面；
+- 当现场场记成为真实 consumer 时，再定义 `Take` 的 identity、camera/unit、roll/clip、circled/NG、timecode、media links、revision 和 review 边界。
 
 ---
 
@@ -1428,15 +1546,31 @@ result/failure
 - 客户 Review；
 - 多格式 Deliverable。
 
-### 28.2 剧情短片
+### 28.2 剧情短片 / 拍摄中期现场
 
 - Scene/Location/Cast；
+- 一个 Shot 同时属于多个 Scene（例如回忆）并保持各 Scene 内顺序正确；
 - Shot/Panel；
 - 场地与演员关系；
+- Person / Character / User 身份不串线；
 - Task/Dependency；
 - Shooting day；
+- 人员可用性、人员/场次调度；
+- 手机上/现场端快速查看当前 Scene/Shot 分镜与人员信息；
+- 不依赖 Take 模块也能完成当前前期和拍摄中期工作；
 - Review/version；
 - EDL/OTIO。
+
+### 28.2.1 Work / Episode 聚合管理
+
+验收至少覆盖：
+
+- 创建 standalone Production 时完全不要求填写 Work / Episode；
+- 通过系列/剧集预设创建 Work → Episode → Production；
+- 将多个既有 Production 后续归组到同一个 Episode / Work；
+- 上层聚合查看跨项目人员、场次、资产和进度；
+- 归组/移动容器不修改子 Production 的 Shot ID、Revision、History、媒体引用或内部权限 owner；
+- 从 Episode / Work 发起批量操作时，最终写入仍逐个经过目标 Production 的权限与 Command 边界。
 
 ### 28.3 二次 Import
 
@@ -1500,6 +1634,10 @@ new canonical project
 
 “最大化扩展性基础完成”至少意味着：
 
+- Work / Episode 可以作为可选上层容器组织多个 Production，而 standalone Production 不受影响；
+- 一个 Shot 可以通过 SceneShot 关系稳定归属 0..N 个 Scene；
+- User / Person / Character 身份与职责边界彻底分离；
+- 当前不实现 Take，但未来加入 Take 不需要推翻 Shot / Asset / Media 核心；
 - 新业务实体无需修改 Shot 核心即可加入；
 - Custom Field 可以按 Entity scope 扩展；
 - 核心跨实体关系使用 typed relations；
