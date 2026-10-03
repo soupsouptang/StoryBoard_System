@@ -1,5 +1,13 @@
 # FRAMEFORGE 续作入口
 
+## 2026-10-04 镜号/时码合列、标题单列、制作方式整体（代码3182aad已上传）
+
+最新用户截图要求已处理：镜号和时码在同一网格项保留各自标签及只读IN/OUT；镜头标题只占一列。制作方式三列以上置于首行最右列并跨两行，主方式在上、辅助复选在下；宽列260px以上辅助两列，否则一列，最大96px内部滚动，所有10项与编辑语义保持。窄屏自然排布。卡片圆角0px，只保留本体1px矩形外框，Slot/td/tr不叠加边框。独立项16px间距/内边距，三行352px本体/固定footer/图片中心缩放继续保持。本段覆盖下面历史标题跨两列与圆角Card。
+
+写集仅ShotDetailCard及SHOT_DETAIL记录/ACTIVE/本文；未改API、数据库、shared primitives、请求/保存语义、导航或其他页面。检查现有shot-detail-card.cjs、最终生产Webpack/TypeScript、diff与Regression Guard通过。真实3002合成项目2560/1440/1024/768/375/320宽度均无root/body溢出、352px、圆角0；镜号/时码X一致，1440标题单轨173px、制作方式row 1 / span 2，大屏辅助两列。末尾TYPE滚动选项实际可达（内部scrollTop176），Esc二次丢弃重开未选中、没有写数据。截图outputs/shot-detail-grouped-2026-10-04.png保留本机不入Git；临时viewport恢复、独立QA页保留。
+
+本机3002已更新`.next/detail-grouped-final/standalone/apps/web`，入口http://127.0.0.1:3002/productions；API8002/PG55432及新画板迁移停点不动。旧文件上传/下载浏览器环境门槛维持，未绕过或声称全站cutover。发布前fetch两remote均无待合入UI，未知`:memory:.ses`保留未上传。代码/对应MD已正常快进push到soupsouptang/StoryBoard_System master回执3182aad；本文随后独立提交上传，最终回执以Git为准，不宣称CI通过。当前追加需求实现与页面检查完成，待用户新反馈，不扩展旧产品待办。
+
 ## 2026-10-04 详情五列试用与均等间距（代码47f7576已上传）
 
 用户确认缩略图旁约五列，并补充每个独立项周围均等合理留白。本轮仅改ShotDetailCard及对应记录/ACTIVE；Card render owner和既有草稿、字段、原子保存、图片预览owners保持。header/body/footer内部16px、独立字段横纵gap16px、标签至控件4px；标题跨2列、五列时长文交替跨3/2列，四列时跨2列，三列以下整行。图片约占内容宽20%、至少180px，窄卡片上下排列。命名container queries依据右侧实际宽度，不受侧栏或表格横向滚动误判。覆盖下方历史24px内部留白与三栏要求；本体max(352px, 实测行高×3)、固定按钮、灰色只读隐藏字段继续保留。
