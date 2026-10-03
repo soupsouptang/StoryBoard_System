@@ -50,6 +50,20 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
   const busy = save.isPending || deletion.isPending;
   const file = useRef<HTMLInputElement>(null);
   const card = useRef<HTMLDivElement>(null);
+  const body = useRef<HTMLDivElement>(null);
+  const [pictureHeight, setPictureHeight] = useState(164);
+  const [pictureRatio, setPictureRatio] = useState(() => {
+    const [width, height] = (production.aspect_ratio || '16:9').split(':').map(Number);
+    return width > 0 && height > 0 ? width / height : 16 / 9;
+  });
+  useLayoutEffect(() => {
+    const element = body.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+    const measure = () => setPictureHeight(Math.max(80, element.clientHeight - 32 - 24));
+    measure();
+    const observer = new ResizeObserver(measure); observer.observe(element);
+    return () => observer.disconnect();
+  }, [height]);
   const fps = production.fps_num / (production.fps_den || 1);
   let durationFrames: number | null = null;
   try { durationFrames = parseShotDuration(duration, fps); } catch { /* present invalid draft without writing */ }
@@ -153,10 +167,13 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
         if (next.size > 10 * 1024 * 1024) { setError('图片不得超过 10 MB'); return; }
         setImage(next);
       }} />
-      <button type="button" disabled={disabled} aria-label="上传或替换详情分镜画面" onClick={() => file.current?.click()} className="relative block h-36 w-full overflow-hidden rounded-md border border-border bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default">
+      <button type="button" disabled={disabled} aria-label="上传或替换详情分镜画面" onClick={() => file.current?.click()} onLoadCapture={event => {
+        const loaded = event.target;
+        if (loaded instanceof HTMLImageElement && loaded.naturalWidth && loaded.naturalHeight) setPictureRatio(loaded.naturalWidth / loaded.naturalHeight);
+      }} className="relative block h-20 w-full min-h-0 flex-1 @min-[760px]/shot-detail:h-auto overflow-hidden rounded-md border border-border bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default">
         {imageUrl ? <img src={imageUrl} alt="待保存分镜画面" className="h-full w-full object-contain" /> : <ShotPanelImage shot={shot} className="h-full w-full object-contain"><span className="text-muted-foreground">点击上传分镜画面</span></ShotPanelImage>}
       </button>
-    </> : field.kind === 'timecode' ? <div className="font-mono text-sm"><div>IN {timecode?.in || '—'}</div><div>OUT {timecode?.out || '—'}</div></div>
+    </> : field.kind === 'timecode' ? <div className="overflow-x-auto whitespace-nowrap font-mono text-sm"><div>IN {timecode?.in || '—'}</div><div>OUT {timecode?.out || '—'}</div></div>
       : field.readonly ? <div className="line-clamp-3 whitespace-pre-wrap break-words text-sm" title={valueText(value)}>{valueText(value) || '—'}</div>
       : field.kind === 'duration' ? <><Input aria-label="详情时长" value={duration} disabled={disabled} onChange={event => setDuration(event.target.value)} className="h-9 text-sm" /><label className="mt-1 flex items-center gap-2 text-xs text-muted-foreground"><Checkbox aria-label="锁定时长" checked={locked} disabled={disabled} onCheckedChange={checked => setLocked(checked === true)} />锁定时长 · f帧 / s秒 / m分 / h时</label>{durationFrames == null && <span className="text-xs text-[#FF0082]">请输入有效时长</span>}</>
       : field.kind === 'select' ? <Select label={field.label} value={valueText(value)} disabled={disabled} options={field.key === 'sequence_id' ? [{ value: '', label: '未分篇章' }, ...sequences.map(sequence => ({ value: sequence.id, label: sequence.name }))] : [{ value: '', label: '请选择' }, ...field.options.map(option => ({ value: option, label: optionLabel(field, option) }))]} onChange={next => change(field.key, field.key === 'sequence_id' ? next || null : next)} />
@@ -166,7 +183,7 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
       : field.kind === 'date' ? <Input type="date" aria-label={field.label} disabled={disabled} value={valueText(value)} onChange={event => change(field.key, event.target.value)} className="h-9 text-sm" />
       : field.kind === 'movement' ? <DetailText label={field.label} value={typeof value === 'object' && value ? String((value as Record<string, unknown>).type || '') : ''} multiline={false} disabled={disabled} onChange={next => change(field.key, { ...(typeof value === 'object' && value ? value : {}), type: next })} />
       : <DetailText label={field.label} value={valueText(value)} multiline={field.kind === 'textarea' || field.kind === 'json'} disabled={disabled} onChange={next => change(field.key, next)} />;
-    return <div key={field.key} data-detail-field={field.key} className={`min-w-0 ${span} ${field.hidden ? 'text-muted-foreground opacity-60' : ''}`}>
+    return <div key={field.key} data-detail-field={field.key} className={`min-w-0 ${field.kind === 'image' && !field.hidden ? 'flex h-full min-h-0 flex-col' : ''} ${span} ${field.hidden ? 'text-muted-foreground opacity-60' : ''}`}>
       <div className="mb-1 flex min-h-4 items-center gap-2 text-xs font-medium text-muted-foreground">{field.label}{field.readonly && <span className="text-[11px] font-normal">只读</span>}</div>
       {editor}{empty && <p className="mt-1 text-xs text-[#FF0082]">{field.label}为必填项</p>}
       {field.key === 'primary_method' && !field.readonly && <div className="@container/shot-method mt-4"><div className="mb-1 text-xs text-muted-foreground">辅助制作方式</div><div className="grid max-h-24 grid-cols-1 gap-x-4 gap-y-2 overflow-y-auto @min-[260px]/shot-method:grid-cols-2">{field.options.map(option => <label key={option} className="flex min-w-0 items-center gap-2 text-xs"><Checkbox aria-label={`辅助制作方式：${getMethodLabel(option)}`} disabled={disabled} checked={secondary.includes(option as typeof secondary[number])} onCheckedChange={checked => setSecondary(checked ? [...new Set([...secondary, option as typeof secondary[number]])] : secondary.filter(item => item !== option))} /><span className="min-w-0 break-words">{getMethodLabel(option)}</span></label>)}</div></div>}
@@ -179,23 +196,23 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
   const longFields = visible.filter(field => ['textarea', 'json'].includes(field.kind));
   return <div ref={card} tabIndex={-1} data-local-history role="region" aria-label={`镜头 ${shot.display_number} 详情`} style={{ height }} className="@container/shot-detail flex min-h-0 flex-col overflow-hidden rounded-none border border-border bg-card text-sm outline-none" onClick={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()}>
     <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border p-4"><h2 className="min-w-0 truncate text-base font-semibold">镜头 {shot.display_number} · 详情 <span className="ml-2 text-xs font-normal text-muted-foreground">REV {shot.revision}</span></h2><Button size="sm" variant="destructive" disabled={!canWrite || busy} onClick={() => setTrash(true)} className="h-8 shrink-0 text-sm"><Icons.Trash2 />删除镜头</Button></header>
-    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4" data-detail-body>
-      <div className={`grid min-w-0 gap-4 ${pictures.length ? '@min-[760px]/shot-detail:grid-cols-[minmax(180px,20%)_minmax(0,1fr)]' : ''}`}>
-        {pictures.length > 0 && <aside className="min-w-0 space-y-4 @min-[760px]/shot-detail:sticky @min-[760px]/shot-detail:top-0 @min-[760px]/shot-detail:self-start">{pictures.map(field => fieldView(field))}</aside>}
-        <div className="@container/shot-fields min-w-0">
-          {/* Tracks follow the editable area's width, independent of the navigation and table scroll. */}
-          <div data-detail-fields className="grid min-w-0 grid-cols-1 gap-4 @min-[300px]/shot-fields:grid-cols-2 @min-[460px]/shot-fields:grid-cols-3 @min-[620px]/shot-fields:grid-cols-4 @min-[780px]/shot-fields:grid-cols-5">
+    <div ref={body} className="min-h-0 flex-1 overflow-hidden p-4" data-detail-body style={{ '--detail-image-width': `${pictureHeight * pictureRatio}px` } as React.CSSProperties}>
+      <div className={`grid h-full min-h-0 min-w-0 gap-4 ${pictures.length ? 'grid-rows-[100px_minmax(0,1fr)] @min-[760px]/shot-detail:grid-rows-1 @min-[760px]/shot-detail:grid-cols-[minmax(0,min(var(--detail-image-width),36%))_minmax(0,1fr)]' : 'grid-rows-1'}`}>
+        {pictures.length > 0 && <aside data-detail-picture className="min-h-0 min-w-0 overflow-hidden">{pictures.map(field => fieldView(field))}</aside>}
+        <div data-detail-scroll className="@container/shot-fields min-h-0 min-w-0 overflow-y-auto overscroll-contain pr-1">
+          {/* Keep the identity track readable; only the editable pane scrolls. */}
+          <div data-detail-fields className="grid min-w-0 grid-cols-1 gap-4 @min-[420px]/shot-fields:grid-cols-[minmax(272px,1fr)_minmax(0,1fr)] @min-[580px]/shot-fields:grid-cols-[minmax(272px,1fr)_repeat(2,minmax(0,1fr))] @min-[740px]/shot-fields:grid-cols-[minmax(272px,1fr)_repeat(3,minmax(0,1fr))] @min-[900px]/shot-fields:grid-cols-[minmax(272px,1fr)_repeat(4,minmax(0,1fr))] @min-[1060px]/shot-fields:grid-cols-[minmax(272px,1fr)_repeat(5,minmax(0,1fr))]">
             {shortFields.map(field => {
               if (identityFields.includes(field)) return field === identityFields[0]
-                ? <div key="shot-identity" data-detail-identity className="min-w-0 space-y-1">{identityFields.map(item => fieldView(item))}</div> : null;
+                ? <div key="shot-identity" data-detail-identity className="grid min-w-0 grid-cols-2 items-start gap-4">{identityFields.map(item => fieldView(item))}</div> : null;
               return fieldView(field, field.key === 'primary_method'
-                ? '@min-[460px]/shot-fields:row-start-1 @min-[460px]/shot-fields:col-start-3 @min-[460px]/shot-fields:row-span-2 @min-[620px]/shot-fields:col-start-4 @min-[780px]/shot-fields:col-start-5' : '');
+                ? '@min-[420px]/shot-fields:row-start-1 @min-[420px]/shot-fields:col-start-2 @min-[420px]/shot-fields:row-span-2 @min-[580px]/shot-fields:col-start-3 @min-[740px]/shot-fields:col-start-4 @min-[900px]/shot-fields:col-start-5 @min-[1060px]/shot-fields:col-start-6' : '');
             })}
-            {longFields.map((field, index) => fieldView(field, `col-span-full @min-[620px]/shot-fields:col-span-2 ${index % 2 === 0 ? '@min-[780px]/shot-fields:col-span-3' : '@min-[780px]/shot-fields:col-span-2'}`))}
+            {longFields.map(field => fieldView(field, 'col-span-full @min-[580px]/shot-fields:col-span-2 @min-[1060px]/shot-fields:col-span-3'))}
           </div>
+          {fields.some(field => field.hidden) && <section className="mt-4 border-t border-border pt-4"><h3 className="mb-4 text-xs text-muted-foreground">隐藏列 · 只读</h3><div className="grid min-w-0 grid-cols-1 gap-4 @min-[420px]/shot-fields:grid-cols-2 @min-[580px]/shot-fields:grid-cols-3 @min-[740px]/shot-fields:grid-cols-4 @min-[900px]/shot-fields:grid-cols-5 @min-[1060px]/shot-fields:grid-cols-6">{fields.filter(field => field.hidden).map(field => fieldView(field))}</div></section>}
         </div>
       </div>
-      {fields.some(field => field.hidden) && <section className="@container/shot-hidden mt-4 border-t border-border pt-4"><h3 className="mb-4 text-xs text-muted-foreground">隐藏列 · 只读</h3><div className="grid min-w-0 grid-cols-1 gap-4 @min-[300px]/shot-hidden:grid-cols-2 @min-[460px]/shot-hidden:grid-cols-3 @min-[620px]/shot-hidden:grid-cols-4 @min-[780px]/shot-hidden:grid-cols-5">{fields.filter(field => field.hidden).map(field => fieldView(field))}</div></section>}
     </div>
     <footer className="flex shrink-0 items-center justify-end gap-4 border-t border-border p-4"><span className="mr-auto text-xs text-muted-foreground">{busy ? '保存中…' : dirty ? '有未保存修改' : '已同步'}</span><Button size="sm" disabled={!canWrite || busy} onClick={() => void submit()} className="h-8 text-sm"><Icons.Check />保存</Button><Button size="sm" variant="outline" disabled={busy} onClick={onClose} className="h-8 text-sm">取消</Button></footer>
     <Dialog open={discard} onOpenChange={open => { if (!open && !busy) forceClose(); }}><DialogContent hideCloseButton onEscapeKeyDown={event => { event.preventDefault(); if (!busy) forceClose(); }} onPointerDownOutside={event => event.preventDefault()}><DialogTitle>放弃未保存的修改？</DialogTitle><DialogDescription>取消或按 Esc 将放弃修改并收起详情。</DialogDescription><DialogFooter><Button variant="outline" onClick={() => setDiscard(false)}>返回编辑</Button><Button disabled={busy} onClick={forceClose}>取消并收起</Button></DialogFooter></DialogContent></Dialog>
