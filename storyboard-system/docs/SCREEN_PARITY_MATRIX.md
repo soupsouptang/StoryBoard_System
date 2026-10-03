@@ -1,5 +1,11 @@
 # FRAMEFORGE Screen Parity Matrix
 
+## 2026-10-03 centered cards acceptance (`0e12efa`)
+
+The latest user request moves new-Shot authoring and bottom notifications into centered cards. The actual shots route now mounts the existing NewShotModal; bottom NewShotRow is removed. Feedback and bulk-trash confirmation use root shared Dialog. Card/Wall creation continues consuming the same modal. Existing floating dialogs allow Esc; unsent draft/deletion cancellation causes no request, while already-submitted requests are not falsely rolled back.
+
+Real local3002 acceptance: centered authoring and protected-column feedback, Escape/reopen3s, deletion confirmation cancelled with Shot/selection retained, import/trash/saved-view/custom-field cancellation, focus return to the creation button. 1440/1024/768/375/320 widths have no root/card horizontal overflow;375×667 internal scrolling keeps cancellation keyboard reachable. Screenshot centered-new-shot-2026-10-03.png remains local. Production build and targeted checks pass; no production deployment/data writes or full-app visual acceptance claimed. The broader BLOCKED_VISUAL gates below are unchanged.
+
 ## 2026-10-02 rendered increment (`095fb7a`)
 
 The crop dialog refactor retains the framing destination through the existing Asset Library, replacing version-file creation with source-preserving metadata commands. It is not a removal of crop capability. Synthetic3002/8002 PostgreSQL-backed UI was used; original3001 remains separate.

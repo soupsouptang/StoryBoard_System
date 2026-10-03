@@ -1,5 +1,11 @@
 # FRAMEFORGE Product Parity Matrix
 
+## 2026-10-03 centered shot creation / feedback (`0e12efa`)
+
+Latest explicit user requirement replaces the table-bottom creation row with a centered floating card. This is a consumer consolidation, not removal of Shot creation: table/card entries share NewShotModal, workspace open state and canonical create hook. Automatic number, f/s/m/h duration, panel-frame and other authoring fields remain; creation now uses explicit confirmation instead of the retired row blur-save/localStorage draft flow. Esc cancels an unsent draft. Existing server requests retain their service/revision ownership after UI dismissal.
+
+Bottom clipboard/command/reorder/bulk-error feedback and bulk-delete confirmation consume shared Dialog cards; selection and bulk controls remain. Existing modal consumers allow Esc, including pending UI guards. Synthetic lifecycle/command checks, production build and real Esc tests on creation/feedback/delete/import/trash/saved-view/custom-field passed. No API/DDL/dependencies changed; product-wide incomplete capabilities below remain incomplete. Upload is pending explicit GitHub destination authorization.
+
 ## 2026-10-02 native media / columns / exports checkpoint (`095fb7a`)
 
 This increment replaces crop-to-new-source-file behavior with metadata presentations; it does not remove image framing. `ImageCropDialog` now reuses react-image-crop/native controls for ratios, rotation/flips, straighten/perspective, pan/zoom and local draft Undo/Redo. Complete appends presentation metadata after CAS; cancel leaves the source untouched. Review renders actual Before/After media. Production content schema2 excludes layout/comments/review independent histories. Synthetic UI and real image/API checks passed; full component-specific framing/retention and project-wide undo/restore/merge remain pending.
