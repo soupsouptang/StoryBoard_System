@@ -2,6 +2,8 @@
 
 ## 2026-10-03 新增镜头、表格展示与悬浮卡片 owner
 
+本次统计`cc1a213`：ProductionShotSummary拥有项目栏统计展示，ShotViewNavigation拥有导航数量展示；两者只派生React Query现有活动镜头/项目/custom values与workspace filters。Web shot-display独占表/卡片筛选纯函数及整数帧累计，packages/timecode独占HH:MM:SS:FF/drop-frame格式。旧页面内联筛选退出并改用纯函数，保留各视图已有语义；顶部不再另建筛选/累计状态。API ProductionService聚合与Shot列表原有deleted_at过滤继续权威，ShotService及现有hook失效策略拥有写后更新，无新增API/schema/cache owner。针对合成检查与真实消费者/五宽度已验证，整体迁移状态与GitHub授权阻挡不变。
+
 省略镜号由ShotService现有Production锁分配；单位解析由Web shot-display（最新997c7af：新增输入无单位默认秒，f仍帧，提交保持duration_frames；复用现有NewShotModal，未改API/数据库），IN/OUT由原累计计时及packages/timecode；五列名保护由既有表格改名入口。最新卡片要求：NewShotModal独占新增表单草稿，workspace store独占开关，表/卡片入口共用同一create hook；删除NewShotRow，避免两个草稿owner。ShotFeedbackDialog只展示既有命令/排序/剪贴板/批量错误，明确关闭清除源错误；BulkActionToolbar仍负责选中条目的操作，删除确认通过现有Dialog居中呈现。根UI Dialog/Radix负责层级、焦点与键盘，各consumer的pending guard明确放行Esc关闭；服务器请求并不随关闭作虚假撤销。无新状态库、依赖或schema。代码0e12efa；针对检查/真实消费者、构建和Guard通过；整体迁移状态不变，GitHub上传待具体授权。
 
 ## 2026-10-02 最新数据库 owner 增量

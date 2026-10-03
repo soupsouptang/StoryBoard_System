@@ -2,7 +2,7 @@
 
 ## 2026-10-03 本会话新增镜头与悬浮卡片增量
 
-执行者本会话；V-Web现有NewShotModal/store与create hook独占新增路径，居中卡片、Esc及原自动编号/IN-OUT/列名保护沿用。最新代码`997c7af`覆盖历史时长规则：新增纯数字默认秒，显式f仍帧，提交仍是duration_frames；单位说明16px/20px均匀铺满输入宽度，右边缘对齐，桌面控件齐平。现有new-shot-row针对检查、生产构建/TypeScript、五宽度真实页面与Esc检查通过；3002最新预览运行，无API/DDL改动。代码已本地提交，MD随后提交；GitHub具体目的地/分支仍受自动审批拒绝阻挡，等待用户授权。额度heartbeat已删除，不扩展旧产品待办。证据与续作步骤见CONTINUE_WORK。
+执行者本会话；最新`cc1a213`：项目信息新增总时长/显示有效镜头时长，按项目fps/drop_frame精确到帧，排除废纸篓；视图数量统一“总共N镜头（其中显示N镜头）”，两处4ch等宽占位。ProductionShotSummary只派生现有查询缓存和filters，表/卡片筛选共用shot-display纯函数，未增加数据owner/API/DDL。此前新增卡片/Esc、无单位秒/显式f帧及单位说明16px对齐保持。针对三份前端检查、生产构建/TypeScript、Regression Guard、五宽度真实表格和卡片搜索验证通过；3002最新预览保留，全部106/106，总时长00:05:05:07。代码已先本地提交，MD随后提交；GitHub具体目的地/分支仍受自动审批拒绝阻挡，等待用户授权。额度heartbeat已删除，不扩展旧产品待办。证据与续作步骤见CONTINUE_WORK。
 
 ## 2026-10-02 原生数据库 / 媒体 / 列 / 导出增量
 
