@@ -142,7 +142,7 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
     } catch (cause) { setError(cause instanceof Error ? cause.message : '保存失败，草稿已保留'); }
   };
   const change = (key: string, value: unknown) => setDraft(current => ({ ...current, [key]: value }));
-  const fieldView = (field: DetailField) => {
+  const fieldView = (field: DetailField, span = '') => {
     const value = draft[field.key];
     const disabled = field.readonly || !canWrite || busy;
     const empty = field.required && (value == null || value === '' || (Array.isArray(value) && !value.length));
@@ -166,8 +166,8 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
       : field.kind === 'date' ? <Input type="date" aria-label={field.label} disabled={disabled} value={valueText(value)} onChange={event => change(field.key, event.target.value)} className="h-9 text-sm" />
       : field.kind === 'movement' ? <DetailText label={field.label} value={typeof value === 'object' && value ? String((value as Record<string, unknown>).type || '') : ''} multiline={false} disabled={disabled} onChange={next => change(field.key, { ...(typeof value === 'object' && value ? value : {}), type: next })} />
       : <DetailText label={field.label} value={valueText(value)} multiline={field.kind === 'textarea' || field.kind === 'json'} disabled={disabled} onChange={next => change(field.key, next)} />;
-    return <div key={field.key} className={`min-w-0 ${field.key === 'name' ? 'sm:col-span-2' : ''} ${field.hidden ? 'text-muted-foreground opacity-60' : ''}`}>
-      <div className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">{field.label}{field.readonly && <span className="text-[11px] font-normal">只读</span>}</div>
+    return <div key={field.key} data-detail-field={field.key} className={`min-w-0 ${span} ${field.hidden ? 'text-muted-foreground opacity-60' : ''}`}>
+      <div className="mb-1 flex min-h-4 items-center gap-2 text-xs font-medium text-muted-foreground">{field.label}{field.readonly && <span className="text-[11px] font-normal">只读</span>}</div>
       {editor}{empty && <p className="mt-1 text-xs text-[#FF0082]">{field.label}为必填项</p>}
       {field.key === 'primary_method' && !field.readonly && <div className="mt-2"><span className="text-xs text-muted-foreground">辅助制作方式</span><div className="flex max-h-20 flex-wrap gap-x-3 gap-y-1 overflow-auto">{field.options.map(option => <label key={option} className="flex items-center gap-1 text-xs"><Checkbox aria-label={`辅助制作方式：${getMethodLabel(option)}`} disabled={disabled} checked={secondary.includes(option as typeof secondary[number])} onCheckedChange={checked => setSecondary(checked ? [...new Set([...secondary, option as typeof secondary[number]])] : secondary.filter(item => item !== option))} />{getMethodLabel(option)}</label>)}</div></div>}
     </div>;
@@ -176,19 +176,22 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
   const pictures = visible.filter(field => field.kind === 'image');
   const shortFields = visible.filter(field => !['image', 'textarea', 'json'].includes(field.kind));
   const longFields = visible.filter(field => ['textarea', 'json'].includes(field.kind));
-  return <div ref={card} tabIndex={-1} data-local-history role="region" aria-label={`镜头 ${shot.display_number} 详情`} style={{ height }} className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card text-sm outline-none" onClick={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()}>
-    <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-6 py-4"><h2 className="min-w-0 truncate text-base font-semibold">镜头 {shot.display_number} · 详情 <span className="ml-2 text-xs font-normal text-muted-foreground">REV {shot.revision}</span></h2><Button size="sm" variant="destructive" disabled={!canWrite || busy} onClick={() => setTrash(true)} className="h-8 shrink-0 text-sm"><Icons.Trash2 />删除镜头</Button></header>
-    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6" data-detail-body>
-      <div className={`grid min-w-0 gap-5 ${pictures.length ? 'lg:grid-cols-[minmax(180px,240px)_minmax(0,1fr)]' : ''}`}>
-        {pictures.length > 0 && <aside className="min-w-0 space-y-4 lg:sticky lg:top-0 lg:self-start">{pictures.map(fieldView)}</aside>}
-        <div className="min-w-0 space-y-5">
-          <div className="grid min-w-0 grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">{shortFields.map(fieldView)}</div>
-          {longFields.length > 0 && <div className="grid min-w-0 grid-cols-1 gap-4 border-t border-border pt-4 xl:grid-cols-2">{longFields.map(fieldView)}</div>}
+  return <div ref={card} tabIndex={-1} data-local-history role="region" aria-label={`镜头 ${shot.display_number} 详情`} style={{ height }} className="@container/shot-detail flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card text-sm outline-none" onClick={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()}>
+    <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border p-4"><h2 className="min-w-0 truncate text-base font-semibold">镜头 {shot.display_number} · 详情 <span className="ml-2 text-xs font-normal text-muted-foreground">REV {shot.revision}</span></h2><Button size="sm" variant="destructive" disabled={!canWrite || busy} onClick={() => setTrash(true)} className="h-8 shrink-0 text-sm"><Icons.Trash2 />删除镜头</Button></header>
+    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4" data-detail-body>
+      <div className={`grid min-w-0 gap-4 ${pictures.length ? '@min-[760px]/shot-detail:grid-cols-[minmax(180px,20%)_minmax(0,1fr)]' : ''}`}>
+        {pictures.length > 0 && <aside className="min-w-0 space-y-4 @min-[760px]/shot-detail:sticky @min-[760px]/shot-detail:top-0 @min-[760px]/shot-detail:self-start">{pictures.map(field => fieldView(field))}</aside>}
+        <div className="@container/shot-fields min-w-0">
+          {/* Tracks follow the editable area's width, independent of the navigation and table scroll. */}
+          <div data-detail-fields className="grid min-w-0 grid-cols-1 gap-4 @min-[300px]/shot-fields:grid-cols-2 @min-[460px]/shot-fields:grid-cols-3 @min-[620px]/shot-fields:grid-cols-4 @min-[780px]/shot-fields:grid-cols-5">
+            {shortFields.map(field => fieldView(field, field.key === 'name' ? '@min-[300px]/shot-fields:col-span-2' : ''))}
+            {longFields.map((field, index) => fieldView(field, `col-span-full @min-[620px]/shot-fields:col-span-2 ${index % 2 === 0 ? '@min-[780px]/shot-fields:col-span-3' : '@min-[780px]/shot-fields:col-span-2'}`))}
+          </div>
         </div>
       </div>
-      {fields.some(field => field.hidden) && <section className="mt-5 border-t border-border pt-4"><h3 className="mb-4 text-xs text-muted-foreground">隐藏列 · 只读</h3><div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">{fields.filter(field => field.hidden).map(fieldView)}</div></section>}
+      {fields.some(field => field.hidden) && <section className="@container/shot-hidden mt-4 border-t border-border pt-4"><h3 className="mb-4 text-xs text-muted-foreground">隐藏列 · 只读</h3><div className="grid min-w-0 grid-cols-1 gap-4 @min-[300px]/shot-hidden:grid-cols-2 @min-[460px]/shot-hidden:grid-cols-3 @min-[620px]/shot-hidden:grid-cols-4 @min-[780px]/shot-hidden:grid-cols-5">{fields.filter(field => field.hidden).map(field => fieldView(field))}</div></section>}
     </div>
-    <footer className="flex shrink-0 items-center justify-end gap-2 border-t border-border px-6 py-4"><span className="mr-auto text-xs text-muted-foreground">{busy ? '保存中…' : dirty ? '有未保存修改' : '已同步'}</span><Button size="sm" disabled={!canWrite || busy} onClick={() => void submit()} className="h-8 text-sm"><Icons.Check />保存</Button><Button size="sm" variant="outline" disabled={busy} onClick={onClose} className="h-8 text-sm">取消</Button></footer>
+    <footer className="flex shrink-0 items-center justify-end gap-4 border-t border-border p-4"><span className="mr-auto text-xs text-muted-foreground">{busy ? '保存中…' : dirty ? '有未保存修改' : '已同步'}</span><Button size="sm" disabled={!canWrite || busy} onClick={() => void submit()} className="h-8 text-sm"><Icons.Check />保存</Button><Button size="sm" variant="outline" disabled={busy} onClick={onClose} className="h-8 text-sm">取消</Button></footer>
     <Dialog open={discard} onOpenChange={open => { if (!open && !busy) forceClose(); }}><DialogContent hideCloseButton onEscapeKeyDown={event => { event.preventDefault(); if (!busy) forceClose(); }} onPointerDownOutside={event => event.preventDefault()}><DialogTitle>放弃未保存的修改？</DialogTitle><DialogDescription>取消或按 Esc 将放弃修改并收起详情。</DialogDescription><DialogFooter><Button variant="outline" onClick={() => setDiscard(false)}>返回编辑</Button><Button disabled={busy} onClick={forceClose}>取消并收起</Button></DialogFooter></DialogContent></Dialog>
     <Dialog open={trash} onOpenChange={setTrash}><DialogContent><DialogTitle>删除镜头 {shot.display_number}？</DialogTitle><DialogDescription>镜头会移入废纸篓；未保存的修改将放弃。</DialogDescription><DialogFooter><Button variant="outline" disabled={busy} onClick={() => setTrash(false)}>取消</Button><Button variant="destructive" disabled={busy} onClick={async () => { try { await deletion.mutateAsync(shot.id); forceClose(); } catch (cause) { setError(cause instanceof Error ? cause.message : '删除失败'); } }}>确认删除</Button></DialogFooter></DialogContent></Dialog>
     <ShotFeedbackDialog message={message || error} onClose={() => { setMessage(null); setError(null); }} />

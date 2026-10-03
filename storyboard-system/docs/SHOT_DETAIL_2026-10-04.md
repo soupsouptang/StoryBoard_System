@@ -1,5 +1,15 @@
 # 2026-10-04 分镜详情卡片与图片预览实施记录
 
+## 最新追加：五列布局与均等间距
+
+用户确认先试用缩略图旁约五列，并要求每个独立项周围留有均等合理空间。本轮只修改 `apps/web/components/shot/ShotDetailCard.tsx` 和本文/ACTIVE/续作MD；render owner仍为该Card，字段/草稿/保存/权限等owner不变，未修改API、数据库、共享primitive或其他页面。
+
+Card内部header/body/footer统一16px留白，字段网格横纵gap均16px，字段标签至控件4px。按可编辑区域实际宽度采用命名container queries（300/460/620/780px→2/3/4/5列），避免侧栏占宽仍强制五列；镜头标题跨两列，长文本五列时交替占3/2列，四列时占两列，三列以下整行。左图约占内部宽度20%、至少180px，窄卡片上下排列；隐藏字段仍集中灰色只读并沿用同一间距。卡片本体三行高、固定footer、内部滚动及图片中心缩放保持。本节覆盖下面早期24px/三栏描述。
+
+验证：现有shot-detail-card.cjs草稿/原子payload/取消/冲突等检查、Webpack生产构建与TypeScript通过，未为纯排版重复增加测试。实际3002合成项目1440px右侧5列，每列约173px；1200px4列，1024/768px3列，375px2列，320px1列。各宽度Card352px、body16px、网格gap16px、root/body无横向溢出、footer完整可见；桌面图236×144px。实测长文本551px跨三列、文字208字符完整保留，聚焦后内部滚动且footer仍可见。临时改标题后Esc提示/第二次Esc丢弃、重开原值，未产生数据保存。截图 `outputs/shot-detail-five-columns-2026-10-04.png` 只保留工作区。3002更新为`.next/detail-five-columns`，8002/PG与原项目保持本会话已有状态。既有真实文件上传/下载验收门槛未因此解除，不将本次布局检查描述为全站cutover。
+
+代码先提交并同步指定soupsouptang master，随后独立更新续作MD；具体回执以续作入口为准。
+
 ## 范围与协作边界
 
 本会话用户授权：详情改为镜头行下方展开、图片放大预览/缩放/下载/替换、保存/放弃规则，完成后同步soupsouptang/StoryBoard_System master并更新续作MD；本轮先启动3002本地页面再继续。最新追加要求覆盖早期平均分栏：卡片本体占三条完整镜头行，内容与卡片边缘留白、缩略图更大、内容有主次。
