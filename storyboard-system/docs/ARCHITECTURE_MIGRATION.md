@@ -4,7 +4,7 @@
 > 文档类型：执行级重构契约  
 > 当前状态：VNext 原生重构；生产环境保持现状；用户已暂停部署  
 > 当前已配置的 Legacy 服务基线：Python 标准库 HTTP + SQLite + 静态前端/过渡 React；该运行时不再是 VNext 的兼容目标，仅保留为功能参考和临时工程导出桥接
-> 关联文档：`ARCHITECTURE.md`、`LIFECYCLE_ARCHITECTURE_PLAN.md`  
+> 关联文档：`ARCHITECTURE.md`、`LIFECYCLE_ARCHITECTURE_PLAN.md`、`VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md`  
 > 文档职责：本文件只负责**从当前事实重构到 VNext 目标边界的方法、不可变规则、Legacy 工程文件桥接、验证与退役条件**。当前仓库事实以 `ARCHITECTURE.md` 为准；产品/实体生命周期阶段编号以 `LIFECYCLE_ARCHITECTURE_PLAN.md` 为准。
 > 统一 owner、并行实现和切换门槛见 [CANONICAL_OWNER_MATRIX.md](CANONICAL_OWNER_MATRIX.md)。下文 2026-09-27 的“当前/尚未开始/占位”审计表述，以该矩阵和本轮状态补核为准，不可读作 2026-09-29 的最新事实。
 
@@ -20,6 +20,12 @@
 - 唯一保留的跨版本兼容面是**文件级工程桥接**：Legacy 导出便携工程文件，VNext 按明确 schema/mapping 导入。
 - 为实现该文件桥接，可以窄范围修改 Legacy exporter 源码、导出 schema 与对应测试；不得因此恢复双写、旧 API 兼容层或数据库 backfill。
 - 本文后续凡涉及 SQLite→PostgreSQL 数据回填、旧 API 路由对等、双 owner cutover、旧项目原地升级的旧设计，均标记为 **RETIRED / DO NOT EXECUTE**；保留文字仅供历史审计。
+
+## 0.1 最大化扩展性覆盖规则
+
+后续 VNext 原生重构不仅要求替换 Legacy owner，还必须为长期扩展保留稳定边界。详见 [最大化扩展性需求总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)。新增演员、场地、设备、任务、排期、自动化、AI、导入导出等能力时，优先增加 Entity / Typed Relation / Command / Event Consumer / Provider，而不是给 Shot 或现有 Service 增加无边界特殊分支。
+
+其中以下约束视为本迁移契约的一部分：Entity-scoped Fields 但禁止万能 EAV；ProductionStep 与 Task 分离；Task Dependency 为独立 DAG；项目成员权限由 ProductionMember 作用域表达；Import 不保存长期映射模板，采用每次模糊识别/自动合并/冲突预览/Provenance；所有长期 JSON 配置均需 schema_version + migrator；Import/Export/Storage/AI/Queue 以 Provider/Adapter 作为扩展边界；Capability Registry 仅做编译期模块化，不引入任意第三方运行时代码插件。
 
 # 1. 为什么需要这份重构契约
 
