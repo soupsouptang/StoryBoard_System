@@ -2,7 +2,9 @@
 
 日期：2026-10-04。状态：**PLANNED / COMPLEMENTARY EXECUTION PLAN**。
 
-本文件承接 [最大化扩展性需求总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md) 与本地需求输入 `ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md`，给出可拆分的执行方案；不替代、不重写已确认需求。岗位稿检查时尚未跟踪，不由本轮另行上传。表名、接口名、迁移批次及待选产品细项均为实施提案，除明确引用的已确认决定外，不冒称产品已批准。
+主执行者后续补充：本轮人类决定已登记于§13–14，产品总合同已按用户要求重写为[总纲v2](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)。本文配套 [逐批执行标准](EXTENSIBILITY_EXECUTION_STANDARD_2026-10-04.md)、[机器执行清单](extensibility_execution_plan_2026-10-04.json) 与 [Knowledge Layer需求](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)。原代理检查/待选记录保留为历史输入；冲突以最新确认及总纲为准，不能继续将已解除问题当阻塞。
+
+本文件承接 [最大化扩展性需求总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md) 与[岗位需求](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md)，给出可拆分执行方案。岗位稿在代理初次检查时尚未跟踪，现由主执行者一并整理上传。表名、接口名和迁移批次为实施细化，除明确引用的已确认决定外，不冒称用户亲自指定。
 
 补充输入：用户指定的 `PRODUCTION_LIFECYCLE_REQUIREMENTS_2026-10-03.md`（需求稿1.0，547行）已完整读取。该文件来自用户提供的另一工作区，检查时不在当前仓库中；本文只引用文件名、章节与R-/AC-编号，不复制私人路径或创建失效的仓库内链接。**用户随后明确排除经营领域，以现有GitHub需求为准、补充细节**：不加入预算、报价、商务合同/采购、费用、真实收付款、利润、财务/收益结算领域，也不把它们列为等待确认的工作。生命周期稿只补充制作、排期、工种、交接、素材、交付及协作验收；不整体升级该稿所有细项为已批准。
 
@@ -167,7 +169,7 @@ Derived evaluator 在 API owner 内解析受控 AST，同实体字段、项目 f
 
 ### 5.6 Schedule / Scenario / projections
 
-建议 SchedulePlan 为独立 scenario owner，DRAFT/CURRENT/ARCHIVED 是方案生命周期，不恢复已移除的产品归档功能。同一项目/明确 scope 最多一个 CURRENT（partial unique index），切换 CurrentPlan 是原子 CAS 命令。ShootDay、ScheduleItem 使用 UTC start/end、显式 IANA 时区及 duration CHECK，保存拍摄日当地日期；时区与多 Unit/current scope 等见 H-06。
+SchedulePlan为独立scenario owner，DRAFT/CURRENT/SUPERSEDED表示草案/当前/被后续修订替代，不提供“归档”操作。同一项目/明确Unit scope最多一个CURRENT（partial unique index），切换CurrentPlan为原子CAS。ShootDay/ScheduleItem用UTC区间、项目IANA时区及duration CHECK，保存拍摄日当地日期；默认Asia/Shanghai，不推定未知工作窗口或容量。
 
 ScheduleItemScene/Shot/Person/Location/Equipment 是 typed links；同一 Shot 可跨日、多次引用。AvailabilityWindow AVAILABLE/UNAVAILABLE/TENTATIVE/UNKNOWN 共用区间来源，无数据不是“肯定可用”。Company Move 由 ScheduleItem 拥有区间、路线/耗时组件；需要负责人/确认时连 Task，不把时间再复制给 Task 或 Shot。Shot.duration_frames 是镜头内容时长，永不作为日程 start/end 的存储 owner。
 
@@ -322,8 +324,11 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 | FX-13 排期 | 两plans、同一Shot跨日/多Unit；UTC跨当地午夜/夏令时；UNAVAILABLE/TENTATIVE/UNKNOWN；转场不足；CURRENT竞态 | 正确时间语义与明确冲突；Shot内容时长不改；只有一个CURRENT；CallSheet draft更新、published旧revision不随正常编辑变。 |
 | FX-14 新域插入 | Equipment实体＋设备许可custom字段＋Shot/Task/Schedule链接＋授权query＋import/export＋audit/event | 不新增Shot核心字段，不改巨大UI shell/万能graph；使用既定seams。迁移后历史/字段/Purge覆盖；有真实贯穿consumer，不只registry描述。 |
 | FX-15 二次导入/交付 | 120镜头合成XLSX多行表头、嵌图、同字段多列、enum冲突、同名人；改文件重导；不同非空值；预览后并发改；PDF/ZIP排除人联系和图片 | CREATE/MERGE/UNCHANGED/CONFLICT/AMBIGUOUS明确；仅安全空值填充；plan commit不重猜；unchanged无假变更；成品/预览/附件/QR/JSON都符合allowlist；工程文件回读保持typed多Scene关系与namespace。 |
-| FX-16 前端（deferred） | 对被接受slice真浏览器读写、403/409、保存失败/重试、dirty draft与refetch、keyboard/IME/localundo、明暗/相关桌面与窄屏 | 只server ack为saved；query/server/draft/derived分层；失效不覆盖草稿；稳定slot权限；表格菜单/选中/列控件及整行照片封面不退化；focus/关闭/ reduced-motion系统偏好通过。不用build代替视觉PASS。 |
+| FX-16 前端（deferred） | 对被接受slice真浏览器读写、403/409、保存失败/重试、dirty draft与refetch、keyboard/IME/localundo、明暗、1440×900和1920×1080桌面横屏/正常缩放 | 只server ack为saved；query/server/draft/derived分层；失效不覆盖草稿；稳定slot权限；表格菜单/选中/列控件及整行照片封面不退化；focus/关闭/动画可打断。按最新用户范围不新增窄屏/缩放验收或产品Reduced Motion开关，不用build代替视觉PASS。 |
 | FX-17 制作联动闭环 | 两Scene/六Shot/两Person、摄影/灯光/制片/剪辑、两拍摄日、一共享设备、一外协Task、一交付变体。将周三计划移至周五：一人不可用、设备时间锁定、交付目标固定；正常链中途故障、重复event与undo | 未来人员/资源准备/通告当前修订/素材交接/后期/交付预测自动更新，可成立项不等确认；三个例外各有原因/负责人，原基准与已完成事实不改。旧通告/确认保留、新重要变化需重确认；失败目标显示并重试，不重复任务/通知。仅制作闭环，不包含费用、付款、合同经营或Take。 |
+| FX-18 同一共享视图 | A/B同view，C另一view；并发改宽/高/筛选/排序/分组；断线重连、列删除、自动尺寸、undo与第三方后来写 | 配置同revision同步，选择/光标/草稿独立；冲突保留草稿；个人布局不双写共享配置；自动尺寸同结果，no-op不增版本，内容hash不变；已接受表格UI接入另由指定owner验收 |
+| FX-19 跨项目资源身份 | 两项目同名Person、同型号两unit、显式共同物理身份、重叠预约、解绑、无权项目、并发预约 | 未关联不猜合并；授权后按共享身份发现冲突；摘要不透出无权项目正文/计数，UNKNOWN不假可用；链接不移动已有预约，锁序/容量真实PG验证 |
+| FX-20 动态继承/环境 | S1/S2共同Shot；增补/排除/替换一个来源项，修改Scene、清override、删除/恢复来源；主Scene外日、另一Scene内夜；显式地点与无主场景 | 未覆盖要求动态更新，来源/override可解释；恢复取当前来源，来源新ID不套旧override；实际出演/Actual不被推定；环境显式值优先、主值附差异、无主待确认；资源计量按总纲确认规则测试 |
 
 ## 11. 精确的人类待选项与实施阻塞
 
@@ -364,3 +369,23 @@ H-05中“默认岗位/模板”只在准备发布默认配置时需要选择；
 本轮完成的是新执行计划及源码证据盘点。实现、Alembic演练、fixture运行、前端接入与浏览器验收均未在本轮执行。下一安全实施起点为 B0证据复核与E0合同/codec等价切片；每次开工重新检查实际Git状态及父会话增量，拿到独立写集后才改代码。
 
 总纲基础完成仍需真实新域贯穿、权限/并发/Purge/恢复与前端consumer证据；本文件不把任何PLANNED能力提升为CUT_OVER。用户已授权本新文档提交/推送，该授权不扩大为后端代码、既有UI或生产变更。
+
+## 13. 主执行者审查后的已确认决定与执行补充
+
+2026-10-04 用户要求继续补到可执行落地标准，随后逐项确认：H-01项目独立授权/拒绝优先/已有项目管理员明确授予；H-02可选主场景且镜头篇章独立/跨篇章提示；H-03项目内Person身份与显式账号关联；H-05单主责多协作/固定产物交接/独立审片不得自确认/跳过须权限与理由；H-06默认Asia/Shanghai、可更改偏好或新项目默认；H-08正式来源/产物保留至删除、预览24小时/可重建工件7天、项目可缩短临时留存/Purge仅留无正文内部标记。上述抽象选择已解除，不再询问。
+
+H-07沿用户已授权的“有必要的管理”分类具体化：Character/Casting/出演关系属于创作内容；Person资料/账号关联、成员授权、任务执行/交接、排期发布、Review归独立历史；共享视图与Moodboard不进入内容版本，Moodboard支持undo。类型/格式版本与业务revision分开，具体codec/Purge闭包门槛见执行标准。
+
+知识层新增明确决定：团队内经验默认贡献，原始数据项目权限隔离、不跨团队；集中提示，每账号跨项目每天最多3个主题、可跳过/稍后、不抢编辑；AI候选隔离，独立资料或实际证据＋人工核验后才入正式知识。知识/设备参考/实际库存/项目事实由不同owner负责，不直接修改项目。Knowledge任务K0–K5已接入机器执行清单，复用E0/E1/E4/E5，不另起身份/权限/journal/Job架构。
+
+配套执行标准已明确工作包的写集/依赖/验证类型、命令回执、数据约束、迁移/恢复边界、导入冲突和实际工程码测试、隐写验收目标；§14补充后共29包。清单校验只验证结构，不表示这些工作包已接受。当前已发布Board后端仍有PG/真实consumer门槛，import/export和新UI未提交草稿继续独立保护。前端修改仅限用户最新授权的真正缺失页，保留montblanc08既有UI及整行照片封面；不生产部署。
+
+## 14. 总纲重写后的执行差异（2026-10-04）
+
+用户点名重写总纲并重新确认含糊处；[总纲v2](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)取代原总纲，不以本文历史待选表推翻最新决定。内置列只删除/恢复，预设与自定义可确认Purge；新项目全部9内置列可见。共享view配置实时同步，个人选择/光标/草稿独立。Person仍项目本地，显式团队共享人员/设备/场地身份用于跨项目受权冲突。
+
+场景演员/场地/设备要求动态继承，镜头按项增补、排除、替换、恢复；有效要求是来源＋override投影，实际出演/已预约/已完成事实不能从继承推定。环境预设镜头显式值优先，否则显示主Scene值及其他Scene差异，无主场景/信息缺失不猜值。原H-04“暂不继承”及默认约7列建议不再是目标。
+
+一级Entity可以拥有真正从属的子Entity，父子必须明确所有权、生命周期、scope和授权/CAS；跨独立Entity使用typed link。总纲§3.1给出Production/Shot/Panel、Asset/Version/component、Work/Episode及Task绑定的具体行为，不使用泛化禁止层级的表述。
+
+机器清单现为29包，新增E2-SHARED-RESOURCE和E3-SHARED-VIEW，FX-18/19/20覆盖共享配置、跨项目资源和继承/环境规则。清单字段及门槛均是计划；没有把未运行结果登记为pass。多Scene同一资源的数量合并若仍待答复，以总纲待确认表及机器清单为准，只暂停该合并行为。

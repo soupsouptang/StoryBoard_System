@@ -1,5 +1,15 @@
 # FRAMEFORGE 续作入口
 
+## 2026-10-04 扩展性总纲v2与执行合同（文档检查点）
+
+用户要求重写[扩展性总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)，重新询问不清晰处，并明确父子所有权：一级Entity可以拥有真正从属子Entity，父子须明确所有权/生命周期/scope；独立实体业务连接使用typed link。已确认全部9内置列初始可见、内置禁止Purge、同共享view配置同步、团队共享资源身份显式关联、Scene要求动态继承/逐项覆盖、环境主值与差异提示。多Scene同一资源的数量合并仍等待Q-05回答，只暂停该规则。
+
+配套[执行标准](EXTENSIBILITY_EXECUTION_STANDARD_2026-10-04.md)、[知识层合同](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)、[29包机器清单](extensibility_execution_plan_2026-10-04.json)、岗位稿及实施计划一并整理。执行清单校验、拒绝环/无证据接受/待确认接受/越界路径检查、六文档本地链接核对通过；这些仅为文档结构验证，不是产品测试、真实PG或视觉验收。
+
+已先后快进合入远端6d8ddfa和9c88410，保留详情卡片/图片预览/五列布局最新UI及其他会话记录；本轮不改运行代码/UI/依赖、不部署、不重启预览。已有未提交imports/exports/engineering PDF、新画板UI及依赖草稿仍保留，未脱敏REMAINING_CAPABILITY审计不上传。只有本轮明确文档与只读清单校验工具进入提交。
+
+续作先fetch核对实际HEAD/dirty，读总纲最新决定和清单；不要把计划目标当已经实现，也不要用旧H-04、约7列或个人布局目标覆盖新规则。后端共享view/资源/继承的前端缺口交给指定UI owner，已有UI不冻结、不用旧草稿替换。
+
 ## 2026-10-04 详情五列试用与均等间距（代码47f7576已上传）
 
 用户确认缩略图旁约五列，并补充每个独立项周围均等合理留白。本轮仅改ShotDetailCard及对应记录/ACTIVE；Card render owner和既有草稿、字段、原子保存、图片预览owners保持。header/body/footer内部16px、独立字段横纵gap16px、标签至控件4px；标题跨2列、五列时长文交替跨3/2列，四列时跨2列，三列以下整行。图片约占内容宽20%、至少180px，窄卡片上下排列。命名container queries依据右侧实际宽度，不受侧栏或表格横向滚动误判。覆盖下方历史24px内部留白与三栏要求；本体max(352px, 实测行高×3)、固定按钮、灰色只读隐藏字段继续保留。

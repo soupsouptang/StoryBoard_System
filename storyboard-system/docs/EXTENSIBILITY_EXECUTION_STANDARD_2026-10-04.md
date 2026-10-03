@@ -1,0 +1,201 @@
+# 扩展性执行标准与逐批验收合同
+
+日期：2026-10-04（Asia/Shanghai）。状态：**执行合同已成文；实现按每个工作包的证据独立验收**。本文承接 [实施计划](EXTENSIBILITY_IMPLEMENTATION_PLAN_2026-10-04.md) 和 [岗位需求](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md)，补足实际执行所需的决定、写集、协议、迁移、失败条件和验收入口。不能凭本文或状态校验脚本宣称功能已经完成。
+
+## 1. 最新决定：已确认，不再重复询问
+
+| 决定 | 执行规则 | 来源 / 性质 |
+| --- | --- | --- |
+| H-01 项目权限 | Work/Episode 只组织项目，不向 Production 继承权限。项目显式 grant，显式 deny 优先，岗位不赋权。新项目创建者登记项目管理权；已有项目由管理员明确授予成员，不从全局 Role 批量推定 | 用户本轮明确选择 |
+| H-02 多 Scene | 0..N 多对多；可没有主场景，最多一个主场景。主场景只供默认展示。镜头篇章独立，跨篇章关联只提示差异，不自动改归属 | 用户本轮明确选择 |
+| H-03 Person | 项目内独立身份；同名不合并。账号关联显式，跨项目复制或授权关联需确认。不因改名、解绑或停用账号改变 Person 稳定 ID | 用户本轮明确选择 |
+| H-05 任务协议 | 一名主责、多名协作；交接固定产物版本。需要独立审片的任务禁止自确认。跳过须有理由、管理权限且仍满足下游输入；项目可配置更严格规则 | 用户本轮明确选择 |
+| H-06 时区 | 默认北京时间，持久标识 `Asia/Shanghai`；可更改偏好或新项目默认。既有项目时区显式保存，不随查看者偏好隐式改变；工作窗口、拍摄日分界和资源容量可配置，缺值不推定可用 | 用户明确默认北京时间及可更改；其余为可解释的技术细化 |
+| H-08 留存 | 正式来源追踪与产物版本保留到明确删除；临时预览24小时，可重新生成的下载工件7天；项目可缩短临时留存。永久删除清关联内容，只留无正文的内部删除标记 | 用户本轮明确选择 |
+| 内容历史 | Character 定义、Casting 选择、Scene/Shot 出演关系、镜头和 Lighting 等创作内容进入内容版本。Person 身份/联系方式、成员授权、任务执行/交接、排期发布和 Review 是各自历史域；共享视图与 Moodboard 不进入创作提交，Moodboard 支持撤销 | 已有用户决定及“有必要的管理”授权下的实施分类，详见§5 |
+| UI 写入 | 现有界面以 `montblanc08` 最新修改为准。仅补真正缺失界面；镜头表/菜单/布局、首页整行照片封面和已有设置不覆盖。导航接入只追加获授权入口 | 既有明确要求 |
+| 重新确认的产品合同 | 全部9内置列首次可见，内置Purge禁止；同共享view配置同步；显式团队资源身份支持跨项目冲突；Scene要求动态继承并逐项增补/排除/替换；环境镜头显式值优先、主Scene值附差异 | 2026-10-04用户回答，完整登记于[总纲v2](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md#2-产品决定登记) |
+
+原计划 H-01/02/03/05/06/08 已解除抽象决策阻塞。实际项目成员名单、人员账号关联、工作窗口、器材容量和外发渠道属于**具体数据**，通过配置或授权操作提供，不能填猜测值；没有配置不阻塞结构实现，但不得宣称对应业务已就绪。
+
+时区优先级：已有项目 `timezone` → 创建项目时明确选择 → 创建者“新项目默认时区” → `Asia/Shanghai`。个人显示偏好只改变显示标签，不改变存储 UTC、拍摄日所属时区或既有预约。改变项目时区先预览当地日期/通告影响，保留 UTC 时刻；移动时间是另一显式命令。当地时区有夏令时的重复/不存在时刻必须由用户选择 UTC offset，不能猜。
+
+## 2. 一次执行的最小工作包
+
+每包必须包含：稳定任务 ID、职责、依赖、允许写集、排除写集、实际基础 SHA、协议/迁移变更、验证门槛、回退界限和真实证据。机器清单见 [执行清单 JSON](extensibility_execution_plan_2026-10-04.json)，校验器见 [校验工具](../../tools/validate_extensibility_plan.py)。清单描述计划，不是测试结果。
+
+执行顺序：重新 fetch / 核对 dirty → 领取单包写集 → 查看真实 consumer → 小步实现 → 定向测试 → 真实 PG / consumer / 必要桌面浏览器 → 台账与合同 → 显式暂存 → diff / guard → commit / push → 下一包。
+
+集成者独占 `main.py`、`models/__init__.py`、Alembic revision 链、共享 History/snapshot 注册及 canonical 台账。域包先提交域实现和具体接入说明，不能在多个 agent 内各自更改这些文件。新依赖先核对已有库；Python 的 `uv.lock` 与实际 CI/镜像消费的哈希锁同时同步。根包边界不增加新 `common/core/domain` 包。
+
+文档修订只改变新的明确决定及执行合同；用户点名重写的总纲按最新确认重写，历史实施证据保留在各自记录中。每次提交只包含本包文件，不混入未验收的 imports/exports、新画板 UI 或未脱敏审计草稿。
+
+## 3. E0 命令、回执、历史与配置合同
+
+### 3.1 新命令封套（现有接口逐个适配，不一次改掉）
+
+新增受控命令可在域 HTTP 入口接收以下形状；不是建立绕过现有 router/service 的万能 `/execute` 写口：
+
+```json
+{
+  "command_id": "opaque-client-request-id",
+  "schema_version": 1,
+  "expected": {
+    "project": {"revision": 7, "schema_revision": 2, "order_revision": 3, "content_revision": 6, "purge_epoch": 0},
+    "objects": {"stable-object-id": 4},
+    "policy_epoch": 2
+  },
+  "payload": {"name": "Synthetic value"}
+}
+```
+
+项目 ID 来自已鉴权路由；actor/principal、权限、inverse、revision advance 和审计由服务器产生。ID 复用当前 opaque ID 规范，不强迫已有合成记录变为 UUID；ID 不能作为磁盘路径。revision 严格整数、拒绝 bool/负值；集合按稳定 ID 去重，批量请求必须有明确上限。每条命令 schema 独立限制字段，未知字段不能偷偷写进 ORM。
+
+`expected` 由命令声明精确依赖：同事务修改多对象必须检查每个对象 token；结构/排序命令检查相应向量；所有授权敏感发布检查 policy epoch，所有恢复/导入/补偿检查 purge epoch。不能把用户提供的某个对象 revision 当作项目五向量。现有 API 的弱兼容期有具体 consumer 和退出条件，不能让新命令复用弱写路径。
+
+### 3.2 回执持久化与并发
+
+`command_receipts` 只保存 production/actor/command_id、规范化 request digest、结果 IDs、返回 revisions、结果类别和时间；唯一 `(production_id, actor_id, command_id)`，有项目与账号 FK。只写最小结果，不复制原正文、联系人、图片或客户端 token。独立组织命令使用自己的受控 scope receipt，不能伪造 Production ID。
+
+锁序为项目根 → 按稳定 ID 排序的受影响对象。拿锁后首先检查当前身份/权限/Purge，再查询相同 command_id：同 digest 返回原受权回执；不同 digest 返回409 `COMMAND_ID_REUSED`。重放成功命令不要求旧 expected 仍等于当前值，否则网络重试会误报冲突；但原结果已被 Purge 或权限撤销时不得返回旧内容。
+
+新请求检查 expected 后进入现有域 service。业务行、receipt、Audit、History、Outbox 同 unit of work 提交，失败全回滚。重复并发同 ID 只发生一次业务变更。no-op 可以保存技术回执，但 production/object revision、updated_at、Audit、History、Outbox 都不变化。失败请求不存成功回执；数据库故障可用原 command_id 重试。可重试与不可重试错误分别声明，不能无限重试409或权限失败。
+
+成功回执至少包含 `command_id/result_kind/object_ids/revisions/history_revision`；`result_kind` 为 `APPLIED` 或 `UNCHANGED`。返回值只在 commit 成功后成为 ACK；router 响应前 flush 不是已保存证明。客户端保留 dirty/saving/acknowledged/failed/conflict 五态，409 保留本地草稿，重新预览后新命令 ID 再提交。
+
+### 3.3 错误和 Query
+
+沿用当前 `detail.code/message/details` 形状并由 API client 适配，不在本包重做提示 UI。401 未登录；403 已知作用域无权限；404 不存在或应隐藏的资源；409 CAS/旧 Plan；422 输入格式不合法；503 暂时 provider/storage 不可用。冲突 `details` 返回可读 token/错误字段，不返回无权对象正文、私密联系资料、SQL、堆栈或真实配置。
+
+Query 在 SQL/权限投影阶段过滤对象、字段和计数，cursor 用稳定排序 tuple，不能用 offset 猜并发边界；响应携带 source vectors、policy epoch、as_of 和口径版本。过滤 digest/权限范围作为 cache key 的一部分。新域无完整权限 query 时不得接新页面或导出。
+
+### 3.4 History codec 与配置迁移
+
+先为现有 `HistoryService` 提取显式 codec seam，每个 codec 声明 type/format_version、capture/validate/restore、permissions、references、dependencies、compensation order、revision category、Purge policy。不从 ORM 自动反射；不增加第二 journal/cursor。新后台入口显式 begin；get_db 同事务 finish 一次。以现有 Shot/列/布局等价 fixture 验证后才接新域。
+
+旧 entry 视为已知 v1，由只读 decoder 转当前 DTO；未知 version 明确拒绝 replay，保留原记录，不清空历史。配置 migrator 是纯转换链；读不能隐式写业务历史。写回须 expected config revision；SavedView、WorkspaceLayout、Profile、ImportPlan 各有格式版本，与业务 CAS 分开。新配置未被旧 consumer 接受前保持入口未接入。
+
+## 4. 按域的数据库约束与命令合同
+
+以下是**待实现合同**，路径是新文件 seam 或现有 owner；不得在 JSON 清单中把拟议接口写成已注册。每包都要 schema、service、router、migration、history/snapshot（适用）、API fixture 一起交付。
+
+| 包 | 持久事实与约束 | 必需命令 / Query；写集核心 |
+| --- | --- | --- |
+| E1-ID | `people` 项目本地，`characters` 项目本地；每个活跃 Person 最多一个当前 User link，每个 User 在同项目最多一个当前 Person link。姓名无唯一约束；账号解绑/停用不删 Person。联系人不默认采集 | Create/Update/Trash/Restore Person、Link/UnlinkAccount；`services/person_service.py` / `models/person.py` / `schemas/person.py` / `api/v1/people.py` |
+| E1-POLICY | ProductionMember 链接明确 Person/User；项目 grant/deny、组策略、policy epoch 为权限 owner。全局管理员只管理授予；任何跨项目汇总逐项目判定。拒绝优先，不用岗位名授权 | Grant/RevokeMember、SetMemberCapabilities、权限上下文 query；`services/project_permission_service.py` / `models/membership.py` / 域 schemas/router |
+| E2-ORG | Episode 必须属于 Work；Production 最多一个 Episode link；standalone 为无 link。删 Work/Episode 不 cascade 子项目，先影响预览及显式解绑。组织变化不推进子项目内容向量 | Create/Move/Detach/Trash/Restore，聚合查询逐项目授权；`services/organization_service.py` / `models/organization.py` |
+| E2-SCENE | Scene 和 Shot 各有 `(production_id,id)` 唯一键；link 两端同项目复合 FK。活跃 `(scene_id,shot_id)` 唯一、最多一个 primary；初版关系为 `related`，不预造闪回/交叉叙事 enum。Scene 内顺序与全局 Shot 顺序分离 | SetShotScenes/ReorderSceneShots、关系差异 query；`services/scene_relation_service.py` / `models/scene_relation.py`；现有 Scene/Shot codec 由集成者适配 |
+| E2-CAST | Character 与 Person 通过 Casting 稳定关系；SceneRequirement 与 ShotAppearance/override 分开，同项目 FK。Shot 的 on_screen/voice/background/stunt 为明确类型。镜头动态继承所有关联场景要求，手动逐项增补/排除/替换，未覆盖项继续随场景更新；保存来源事实与override，不复制有效投影当第二owner | SetCasting/SetSceneRequirements/SetShotOverrides/RestoreInheritance、有效出演/未映射对白来源 query；`services/casting_service.py` / `models/casting.py` |
+| E2-RESOURCE | Location/Equipment 只在真实查询/许可/生命周期接入时建；资源与 Shot/Task/Schedule 用 typed links，同项目校验。容量/档期未配置为 UNKNOWN | 资源 CRUD/绑定及 availability query；`services/resource_service.py` / `models/resource.py` |
+| E2-SHARED-RESOURCE | 项目内Person/EquipmentUnit/Location保留独立ID；显式关联同一物理人员/资源的团队身份。身份管理、预约、忙闲读取权限独立；不按姓名/型号猜合并 | Link/Unlink/PreviewSharedIdentity、受权冲突query；`models/shared_resource_identity.py` / 对应service/schema/router |
+| E3-FIELD | 扩展现有 ProjectColumn 的 entity_scope，唯一 `(production_id,scope,key)`；不同实体 typed value 表、复合 FK、唯一 `(entity_id,definition_id)`。binding 非 custom 不进 custom value owner | SetValue/类型转换Preview/Commit、Trash/Restore/Purge；复用 `custom_field_service.py`，按真实实体增值表，不另造万能 EAV |
+| E3-SHARED-VIEW | SavedView.config是共享列显示/顺序/宽度、行高、筛选/排序/分组的唯一持久owner；WorkspaceLayout保留个人呈现，不双写共享配置；config revision/CAS与ACK后广播 | UpdateSharedConfig/ResetAutoSize、config/events query；复用现有view/history模型及SavedViewService，前端改动交指定UI owner |
+| E4-TASK | 单任务最多一名主责、多协作，显式目标 links；状态事实与 ready/blocked/stale 投影分开。产物固定 AssetVersion，template version 不可变。dependency 同项目/非自身，活跃边去重 | Assign/Start/Submit/Handoff/Reopen/Skip、DAG query；`services/task_service.py`、`workflow_service.py`、`models/task.py`；不复制 ProductionStep/Review 的权威状态 |
+| E5-OUTBOX | 原事务事件+发布 lease；receipt 唯一 `(consumer_id,event_id)`；重复、乱序、崩溃可恢复。队列 ACK 不等于 consumer 成功 | claim/publish/consume/replay adapters；扩展现有 OutboxEvent，worker 无特权直写域表 |
+| E5-JOB | 持久 Job、source vector/digest、provider version、policy/purge epochs、幂等 key、lease、stage 输出。租约用 fencing generation 阻止旧 worker 发布 | Request/Cancel/Retry/PublishJobResult、authorized status；`services/job_service.py` / `models/job.py` / worker handler |
+| E6-SCHEDULE | UTC 区间＋项目 IANA tz；同 project/明确 Unit scope 最多一个 CURRENT Plan；同 Shot 可跨日多引用。未知档期不视为可用，实体容量明确，半开区间 `[start,end)` 相邻不冲突 | CreatePlan/SetCurrent/MoveItems/PublishCallSheet、冲突/DOOD query；`services/schedule_service.py` / `models/schedule.py` |
+| E7-IMPORT | 单来源 session/Plan，不保存客户模板。冻结 source/catalog/parser digest、target IDs/tokens、每字段 decision、媒体 manifest。preview 只读，commit 不重跑模糊匹配 | Parse/Preview/Resolve/Freeze/Commit，复用 ImportService；typed lineage 分域，记录原 row/col/page/sheet |
+| E7-EXPORT | ExportTemplate 演进 Profile，稳定字段/关系 IDs；正文/预览/附件/QR/ZIP 都同投影。下载重新鉴权；工程文件 verify/stage 后导入不重放内部权限 | Plan/Render/Preview/Download/Withdraw，复用 document_export；provider 不拥有写权 |
+| E8-IMPACT | 白名单 rule DSL、因果链、命令回执、ImpactRun 逐目标结果；来源变更提交不因后台失败回滚。实际/发布事实不随预测重算改写 | 自动重算可推导未来项，异常原因/负责人、retry；正常联动默认生效，AI proposal 另受控 |
+
+Entity可以有真正从属的子Entity，但必须先定义所有权、生命周期、作用域和授权/CAS。业务关联不足以构成父子；跨独立Entity使用typed link，删除一端不cascade销毁另一端。从属记录只有在明确的Purge闭包和授权命令下清理，FK cascade不能替代业务影响预览。所有关系scope/FK/CAS在service及适合的PG约束保护；数据库不运行跨域工作流trigger。具体父子合同见总纲§3.1。
+
+任务：未派主责可保存草稿，Start 前必须有主责且所有必需输入就绪；Submit 固定产物与 sender；Handoff 验证接收人权限/任职和指定版本，独立审阅不能自确认。项目更严格配置不得允许跳过必须授权的输入或审片。取消、跳过与完成分开；无变化不造进度事件。
+
+## 5. 内容版本、独立活动和撤销矩阵
+
+| 对象 | 项目内容 snapshot / compare / restore | 独立历史与 undo | 边界 |
+| --- | --- | --- | --- |
+| Shot、Scene/Sequence 创作事实、SceneShot、字段定义/业务值、Panel/图片构图、Lighting | 是；稳定 ID、固定引用、显式 codec | 普通内容命令可 undo/redo | 镜头比较入口过滤整个项目 diff；零 Scene 合法 |
+| Character、Casting 选择、SceneRequirement/ShotAppearance | 是；保存角色及选择/出演关系 | 普通命令可 undo/redo | 只用明确公开的创作字段；不把整个 Person 档案复制进内容版本 |
+| Person 身份/公开协作资料、联系方式/账号关联 | 不自动进入创作提交 | 独立受权 audit；资料普通编辑可 undo，账号/权限撤销不可通过 undo 恢复授权 | 历史 Character/Casting 引用保存稳定 Person ID；显示标记关系当时的选择。姓名修正不改旧创作内容。人物删除清理内容引用，版本显示已移除，不恢复私密资料 |
+| Membership、grant/deny | 否 | 权限审计，显式重新授予；不纳普通内容 undo | 所有版本/媒体/下载都即时重验权限 |
+| Task/分派/提交/交接、排期方案/发布 | 否；各自活动/方案修订 | 可补偿未执行的计划操作；已发生的交接/执行/发布保留并显式撤回/更正 | undo 不能伪装事情从未发生；修改未来计划与撤回发布分开 |
+| Review/批注/审片决定 | 否，独立 revision/event owner | 按独立审阅命令合同 | 创作提交引用受审对象 revision，不整包复制审片活动 |
+| 共享视图、个人布局 | 否 | 现有布局/视图命令历史，不创作版本 | 显示修改不改内容 hash；同步作用域明确 |
+| Moodboard | 否 | canonical HistoryService 支持 undo/redo | 不另造独立持久游标；本地草稿撤销不抢全项目快捷键 |
+| Job/proxy/thumbnail/cache/Presence | 否 | Job 状态与受控活动；派生物可重建；Presence TTL | 原图不可变，缩略图不产生虚假作品版本 |
+
+项目 restore 是“根据允许内容生成新命令”，不是覆写所有表。Preview 显示受影响实体、当前/目标 tokens、Purge 缺项、资源依赖；Commit 重验并原子应用，生成新内容提交和一条可补偿命令。三方 merge 用共同祖先与当前/来源稳定 ID 对比；不同非空冲突不得选最后写赢。Review/授权/执行事实保持其独立 owner。
+
+## 6. 导入、工程交付、图片与隐写的接受边界
+
+导入每个字段只有 `FILL_EMPTY/KEEP_EQUAL/USE_INCOMING/KEEP_CURRENT/UNRESOLVED`；0 和 false 是非空有效值，空字符串/null 的归一规则按类型。不同非空值默认 UNRESOLVED，用户明确选择覆盖才 USE_INCOMING。CREATE/MERGE/UNCHANGED/CONFLICT/AMBIGUOUS 按整行决策计算；未知关系不猜同名 Person/Scene。目标显示镜号不是 ID。
+
+Commit 绑定 source_hash、parse/catalog versions、frozen plan digest、对象 token 和 epochs。附件/图片也有字段 decision；不能以“有图”静默替换旧图。replace 明确软删除范围和二次确认，仍可恢复；失败在最后一行/最后一张图时 DB/History/新文件全回滚。源文件或目标变化后409，必须新预览而不是旧 Plan 重猜。
+
+工程 PDF/ZIP/码仅传同一允许投影：选字段、镜头范围、固定图片版本和构图，metadata 只保留协议必需且受权项。实际从渲染 PDF 像素扫出完整所有码、乱序去重重组、校验分片及整包；附件 ZIP/原图 hash 回读。少码、冲突码、混包、未知 schema、超容量都明确失败。QR-only 无原图 bytes 时返回缺失媒体清单，不冒称图片已恢复；ZIP/附件恢复经过同一 staging。
+
+普通 PDF 六版式、可编辑 Word、好莱坞剧本与分镜表、工程码恢复分别接受；仅生成出文件不算通过。PDF 中文可提取/逐页渲染，长文不丢；竖图/横图/21:9/16:9 不拉伸，按构图适配后黑填充，原图不改写。图片构图由现有 ImageCrop/MediaPresentation owner 生成，资产库与镜头入口引用同一版本。
+
+**隐写追溯单独验收**：二维码/DM、普通hash、文件metadata均不能替代。选成熟库后先测固定种子合成图：原图、四边各裁10%、保留中心70%、1440桌面截图、截图后 JPEG quality80、缩放0.75。每类30个不同 payload＋30个无水印控制；记录成功恢复率/误识别率及不可恢复类型。初始接受目标各类至少27/30正确恢复、控制0/30误识别；这是工程验收目标，不提前声称已达到。达不到时保留 BLOCKED，不写免责标注掩盖失败。PDF/Word 中嵌入图与 raster页、工程纯文本 metadata 的可追溯方式分别标明；不能用图片算法承诺纯文本抗截图能力。
+
+## 7. 迁移与恢复操作门槛
+
+所有批次先核验唯一实际 Alembic head，新增 parent 接受后再登记；不预造 SHA、不并发改旧 revision。Expand → 合成/隔离 VNext 数据转换 → 约束/codec核对 → 单 owner切换 → 真实消费者退出 → Contract。
+
+SceneShot 转换保留已有 Shot IDs；旧 scene_id 只派生 primary，兼容写保留 additional links；有第二关系后拒绝单 FK downgrade。字段类型迁移先 Preview/显式转换，失败值留报告不截断；旧 format_version可读，当前 schema_version不能充业务revision。
+
+每批必须真实 PG：空库升级、上个接受 head 的合成副本升级、重复执行无额外变更、FK/唯一/CHECK、两事务CAS与死锁/锁序、失败回滚、backup/restore＋删除账补放。当前 tests/conftest.py 强制 SQLite，运行 pytest 不等于 PG 演练；PG 门槛用隔离 runner。
+
+普通删除保留快照；Purge 明确 confirm/expected/impact digest。同事务清正文、快照引用、全员 History barrier、plan/job/artifact/config 引用并升 epoch。下载撤销、缓存失效和 GC 是后续可重试工作，回执区分 `logical_complete/storage_pending/storage_complete`，不能返回伪物理擦除成功。
+
+无正文删除标记不留姓名、电话、原字段值或原图，只保留内部对象类型/ID、scope、epoch/清理状态。恢复备份先补放删除账，再允许访问；旧备份可读的恢复环境不是上线条件。对包含新确认写入的迁移，只允许 forward-fix 或停新入口，不用降级删表抹数据。
+
+留存计算用服务器 UTC `expires_at`，分页查询授权不受临时 TTL 避让。24小时/7天清理只针对临时预览/可重建下载工件，不删被 Panel/Board/Task/内容版本固定引用的正式资产。项目缩短临时留存只影响新生成项，批量清旧项须影响预览；用户明确 Purge 优先于留存期限。
+
+## 8. 可复用运行入口与证据格式
+
+在仓库根执行，Python3.12/Node24，依赖按锁安装；禁止读取真实 `.env` 当验收配置。文档校验只检查合同和清单结构，不声称应用通过：
+
+```powershell
+& apps/api/.venv/Scripts/python.exe tools/validate_extensibility_plan.py
+& apps/api/.venv/Scripts/python.exe -m pytest tests/backend/test_command_history.py tests/backend/test_production_revisions.py tests/backend/test_boards_api.py tests/backend/test_board_migration.py -q
+```
+
+导入/导出包接受时执行该包新 tests，后续才纳完整 `-m pytest tests/backend -q`。运行前确认对应文件已提交/接入；未提交测试也可开发运行，但结果绑定实际 working diff，不宣称远端该 SHA 已通过。
+
+PG 前置：配置 `ENVIRONMENT=test`、仅验收用 synthetic SECRET_KEY、loopback PostgreSQL `*_rehearsal` 数据库及 async/sync URL；必须是新建空库或验收合成副本，不是用户已有预览数据库。现有 runner 会拒绝生产/非loopback/其他命名数据库。预检环境只输出布尔和数据库验收类型，不输出 URL/凭据。
+
+```powershell
+& apps/api/.venv/Scripts/python.exe -m alembic -c apps/api/alembic.ini heads
+& apps/api/.venv/Scripts/python.exe -m alembic -c apps/api/alembic.ini upgrade head
+& apps/api/.venv/Scripts/python.exe tools/postgres_rehearsal.py --disposable
+```
+
+新增域锁/FK/恢复 fixture 加入 PG runner 或独立同安全边界脚本；现有 PG runner 通过不自动覆盖新增域。CI复用 `.github/workflows/postgres-migration.yml` 的真实PG服务/backup步骤。不能把 pytest 配置改成连用户库来“补PG测试”。
+
+前端只对获授权的新 consumer 检查。`npm.cmd exec --workspace=apps/web -- tsc --noEmit`，生产 build 使用独立 `FRAMEFORGE_BUILD_DIR` 避免覆盖正在运行的预览目录；不要重启用户已有3002/3100页面。桌面横屏1440×900与1920×1080、正常缩放、明暗主题，实际读/写/刷新/403/409/失败重试/键盘/右键/图片/2D3D；本轮不加窄屏或缩放产品验收要求。动画验证入场/切换/退场可打断、保存失败不消失草稿，无虚假业务状态；不增加产品 Reduced Motion 开关。
+
+截图固定到 `storyboard-system/docs/visual-evidence/2026-10-04/<package-id>/`，只使用合成内容；浏览器地址/书签、用户真实媒体、私有IP、账号和凭据先脱敏再提交。原始截图另保留固定本地目录，不删除。截图必须记录 viewport/主题/状态/基础SHA；backend PASS 不能升级为 UI PASS。
+
+每次验证保存最小记录：
+
+```json
+{
+  "package_id": "E0-RECEIPT",
+  "commit": "actual-full-commit-sha",
+  "working_diff_digest": "sha256-if-dirty",
+  "executed_at": "UTC timestamp",
+  "gate_id": "FX-02",
+  "kind": "api",
+  "command": "actual command without credentials",
+  "result": "pass|fail|blocked",
+  "exit_code": 0,
+  "assertions": ["same request returns one receipt", "nonempty conflict preserves draft"],
+  "evidence": ["repository-relative sanitized report or screenshot"],
+  "remaining": []
+}
+```
+
+不是写满这个 JSON 就通过：必须有真实执行输出、断言和可核对 artifact。失败有具体命令/错误分类/未通过门槛；既有 unrelated failure 记录实际差异，不伪称全绿。最终 commit 在证据基础 SHA 后产生时记录“源码相同，仅文档状态变化”；代码变化须重跑受影响门槛。
+
+## 9. 可执行完成条件
+
+`not_started`→`in_progress`→`accepted` 是工作包执行状态，不替代 canonical 能力迁移状态。accepted 必须依赖包已接受、所有 required gates 有实际证据、router/consumer/迁移/权限/历史/Purge覆盖（适用）；UI 包含截图与动作回读。blocked 只阻塞该包，不把全文冻结。
+
+每次包接受：合同能由另一执行者按指定文件和命令复现；没有未定的业务必填值被写成猜测；导入/历史/worker没有旁路写权；代码真实注册/使用；必要PG和视觉结果齐；旧owner退出或明确非权威；文档写清未验收范围；独立 commit推送，检查远端回执。缺任一项不能以“基本完成”放行。
+
+下一顺序：B0核对已推送Board后端剩余PG/消费者门槛和未提交import/export → E0 receipt/codec/config各小包 → E1身份/权限 → 各实体关系与字段 → Task/DAG、基础设施 → Schedule、Import/Export、自动联动 → 按已接受 API补缺UI。E0可与B0无冲突证据整理并行；长计划不是一次巨大提交。
+
+本文新增的定义、文件seam和验收目标是执行合同；本轮没有据此伪造迁移SHA、测试PASS或全站cutover。已确认人类决定同步到原计划；执行清单保留真实未开始/进行中状态。
