@@ -59,6 +59,28 @@ Versioned Contracts
 - 允许未来替换存储、AI、队列、导入导出实现，而不影响 Domain；
 - 保持 monorepo 边界有限，不通过无限增加 package 追求形式上的“模块化”。
 
+### 1.2 Canonical Facts → Projections
+
+数据库保存可复用的业务事实，页面、时间轴、Stripboard、DOOD、Calendar、Call Sheet、统计页等应尽量是同一组 canonical domain data 的不同 Projection / Read Model，而不是各自复制一套 Scene/Shot/Person/Location 数据。
+
+长期规则：
+
+```text
+Canonical Facts
+↓
+Domain Queries / Read Models
+↓
+Table / Board / Wall / Timeline / Calendar / Call Sheet
+```
+
+因此：
+
+- Schedule 不复制 Scene/Shot 内容；它表达“何时执行哪些内容”；
+- Draft Call Sheet 不成为第二套 Cast/Crew/Location 真相；
+- People/Equipment/Location 页面不得各自维护 Shot 的镜像字段；
+- Projection 可以缓存，但必须能够从 canonical data 重建；
+- 需要历史冻结的已发布文档使用显式 revision/snapshot，而不是把所有 Projection 都持久化成第二事实源。
+
 ---
 
 ## 2. VNext 长期分层
@@ -374,6 +396,65 @@ finish_to_start
 
 Task Dependency 将作为未来排期、知识库经验反馈、补拍/返工、自动推进的基础。
 
+### 7.4 Schedule 是独立执行域，不写回 Shot 时间字段
+
+拍摄排期、演职人员排期、转场、化妆、排练、旅行、准备、用餐、收工等统一建模为“时间区间 + 业务对象 + 资源约束”，不在 Shot 上直接增加 `shoot_date/start_time` 之类字段。
+
+建议目标模型：
+
+```text
+SchedulePlan
+├─ DRAFT
+├─ CURRENT   # 同一作用域最多一个当前正式方案
+└─ ARCHIVED
+
+ShootDay
+└─ ScheduleItem
+   ├─ SHOOT
+   ├─ REHEARSAL
+   ├─ MAKEUP
+   ├─ FITTING
+   ├─ TRAVEL
+   ├─ COMPANY_MOVE
+   ├─ PREP
+   ├─ MEAL
+   └─ WRAP
+```
+
+`ScheduleItem` 通过 typed relations 关联 Scene / Shot / Person / Location / Resource，而不是复制名称文本。一个 Shot 可以被多个 ScheduleItem 引用，以支持补拍、跨日、多 Unit 和多次调整。
+
+人员可用性统一使用 `AvailabilityWindow`（AVAILABLE / UNAVAILABLE / TENTATIVE / UNKNOWN），演员、工作人员、化妆、排练、旅行不分别建立互不兼容的日历真相。
+
+**Company Move 主要属于 ScheduleItem，而不是普通 Task。** 如果转场本身需要责任人、确认、完成状态，可再关联一个 Task；时间轴上的转场时长仍由 Schedule owner 管理。可进一步拆分 strike/load/travel/unload/setup 等时长，但不得只存成备注文本。
+
+### 7.5 Schedule Scenario 与 Constraint Scheduling
+
+排期阶段允许多个方案共存，不使用项目内容版本或 Git 式版本替代 Schedule Scenario：
+
+```text
+Plan A (CURRENT)
+Plan B (DRAFT)
+Plan C (ARCHIVED)
+```
+
+排期引擎按独立实体局部计算，而不是维护一个“大排期 JSON”。基础输入至少包括：
+
+```text
+ScheduleItem.duration
+Requires: People / Location / Resource
+Constraints: Availability / Dependency / TimeWindow / LockedTime / DayNight / MoveTime
+```
+
+输出包括：
+
+```text
+start_at
+end_at
+conflicts[]
+```
+
+`conflicts`、`ready`、`blocked` 等应优先作为 Derived State；只有需要审计/确认/冻结的结果才进入持久业务记录。
+
 ---
 
 ## 8. Project Membership 与权限扩展
@@ -561,6 +642,43 @@ MarkDependentTaskReadyCommand
 - 默认不支持 arbitrary Python/JavaScript；
 - 第一阶段规则配置使用受控 DSL/结构化条件；
 - AI 只能提出 Rule/Command proposal，不能直接写 DB。
+
+### 11.1 禁止用数据库 Trigger 承担业务自动化
+
+PostgreSQL Trigger 仅用于数据库级 integrity / constraint / 必要审计辅助等窄职责。禁止 Trigger 因 Scene/Shot/Task 变化直接修改 Schedule、Person、Call Sheet 或其他 Domain。
+
+跨域业务联动必须保持可解释链路：
+
+```text
+Domain Event
+→ Automation Rule
+→ Command
+→ Audit / History / Outbox
+```
+
+### 11.2 Change / Impact 是自动化的解释层
+
+对会产生连锁影响的高价值操作，允许建立独立 Change/Impact read model 或持久影响记录，用于回答“这次修改影响了什么”。例如 Scene 日期变化可能产生：
+
+```text
+CAST_SCHEDULE
+CREW_SCHEDULE
+RESOURCE
+COMPANY_MOVE
+CALL_SHEET
+POST_TASK
+```
+
+影响状态至少预留：
+
+```text
+AUTO_APPLIED
+CONFLICT
+LOCKED
+REQUIRES_USER
+```
+
+Change/Impact 不取代 Audit 或 Domain Event；它是面向用户的影响解释和冲突处理层。能够从 Event/Command 推导的普通影响不必永久复制全部 old/new payload，只有需要审计、确认、冻结或异步处理的影响才持久化。
 
 ---
 
@@ -817,6 +935,10 @@ immutable original
 → typed references
 ```
 
+同一 `AssetVersion` 允许拥有多个物理 rendition/component，例如 master、preview/proxy、thumbnail；这些文件不是新的业务作品版本。Storage owner 负责 physical file/component，AssetVersion owner 负责业务版本身份。
+
+Review comment/decision 若针对具体媒体修改，必须绑定明确的 AssetVersion / ShotVersion / presentation revision（按实际 Review owner 选择稳定对象），不能只挂到“当前 Shot”后随版本漂移。
+
 物理 GC 只能在引用图、版本保留、retention 全部满足后执行。
 
 ---
@@ -1004,6 +1126,25 @@ DeliverableContribution
 
 ---
 
+### 19.1 前端状态必须分层
+
+新增功能必须明确区分三类状态：
+
+```text
+Server Canonical State
+= FastAPI/PostgreSQL 的业务事实
+
+Draft UI State
+= 拖拽中、选中项、未提交输入、临时面板状态等
+
+Derived State
+= Shot Ready? / Person Conflict? / Schedule Conflict? / Task Blocked? 等规则推导结果
+```
+
+Draft UI State 默认不进入业务数据库；Derived State 默认不让用户手动保存成另一套布尔真相。只有跨设备需要持久的用户布局/偏好，才进入已有 WorkspaceLayout/SavedView 等明确 presentation owner。
+
+---
+
 ## 20. 持久配置统一 schema_version + Migrator
 
 任何长期保存的 JSON 配置必须带 schema_version，并且集中迁移。
@@ -1096,6 +1237,34 @@ apps/web/features/*
 
 Read model 可以派生/缓存，但 canonical business truth 仍属于 Domain tables。
 
+### 22.1 Call Sheet：Draft Projection + Published Revision
+
+Call Sheet 不作为独立事实孤岛。
+
+Draft 状态实时投影：
+
+```text
+ShootDay
++ Schedule
++ Cast/Crew
++ Location
++ Call Time
+→ CallSheetView
+```
+
+发布后必须冻结为显式 revision/snapshot，以保证历史通告不随当前项目事实变化：
+
+```text
+CallSheetRevision
+├─ revision
+├─ published_at
+├─ published_by
+├─ source revisions
+└─ immutable snapshot / resolved references
+```
+
+修订后生成新 revision，旧发布版继续可追溯。Snapshot 只用于“发布历史不可变”这一需求，不能反过来成为 Scene/Person/Location 的新 canonical owner。
+
 ---
 
 ## 23. 搜索与索引扩展
@@ -1160,6 +1329,15 @@ result/failure
 15. 失败时是否会留下半写状态？
 
 如果回答不清楚，不允许通过“先加字段/先加页面以后再整理”的方式进入 canonical VNext。
+
+### 25.1 当前保留给产品确认的四个高影响决策
+
+以下问题会改变核心 cardinality / identity / 项目层级，因此本文不自行拍板，确认前不得据此修改 ORM：
+
+1. **Scene ↔ Shot 是否升级为多对多 typed relation**：当前可保留 nullable `scene_id`，但若产品明确支持“一个 Shot 跨多个 Scene”，则目标应转为 `SceneShot` relation，并定义 primary/continuity/order 等语义。
+2. **User / Person / Character 是否三者彻底分离**：User 是登录身份，Person 是现实世界人员，Character 是叙事角色；演员通过 CastAssignment 连接 Character ↔ Person。若确认，ProductionMember 应引用 Person/User 的明确身份边界，而不是把三者混为一张表。
+3. **是否把 Work / Episode 纳入 Production 之上的一级层级**：如果未来要原生支持系列剧/栏目/多集工程，需要决定 `Work → Episode → Production` 或其他层级；未确认前不增加空壳表。
+4. **Take 是否成为一级拍摄执行实体**：如果系统要管理一次 Shot 的多次实拍、场记、圈选、Take→Media→Version 链，则应建立 Take；仅做前期分镜时不要提前制造无消费者实体。
 
 ---
 
