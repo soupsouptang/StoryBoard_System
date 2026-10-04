@@ -136,7 +136,7 @@ E1-POLICY负责后台用户组及团队归类，K1-EXPERIENCE只保存贡献引�
 
 设备型号保存厂商、型号、变体、分类、官方规格 revision、单位和官方来源。官方规格参与筛选、查询和兼容判断；人工备注使用独立 EquipmentNote，不覆盖官方 SpecificationValue，也不作为兼容自动判断依据。新型号通过 EquipmentCategory + SpecificationDefinition 录入，不能要求为每个新品修改主业务表。
 
-兼容关系使用 typed CompatibilityRelation，至少区分 DIRECT_COMPATIBLE、REQUIRES_ADAPTER、INCOMPATIBLE、CONDITIONAL_COMPATIBLE。用户给出的“例如 Forza 200B 不能直接使用保荣卡口、需要转接环”只用于说明 REQUIRES_ADAPTER 的业务表达；正式知识必须核对厂商官方资料后录入，不从示例直接生成官方事实。
+兼容关系使用 typed CompatibilityRelation，至少区分 DIRECT_COMPATIBLE、REQUIRES_ADAPTER、INCOMPATIBLE、CONDITIONAL_COMPATIBLE。兼容示例必须来自已核实的真实接口：例如 FC-120B 原生 FM Mount，官方 Bowens Mount Adapter 是明确 intermediate component；不能把 Bowens 误写成机身原生 mount。正式兼容仍以厂商官方资料为准。
 
 软件只保存 SoftwareProduct / version scope 到 Capability Domain 的适配关系，例如某三维软件对 THREE_D_MODELING 为 PRIMARY，而对 EDITING 为 NOT_SUPPORTED 或受限。软件知识不保存按钮路径、快捷键、插件教程或逐版本新功能文章。
 
