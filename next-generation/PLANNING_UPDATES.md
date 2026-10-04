@@ -2,6 +2,16 @@
 
 本记录只跟踪 `next-generation/` 的文档储备，不是当前版本工作包或应用实施进度。设计参数未定稿，重构未启动。
 
+## 2026-10-05：填充首批官方Reference Seed数据
+
+用户要求在知识架构闭合后直接“填”首批数据。本轮新增 [首批 Reference Seed Data](requirements/REFERENCE_SEED_DATA_2026-10-05.md)，不再只列Seed范围，而是按字段写入官方已确认值，并统一区分 OFFICIAL_VERIFIED / OFFICIAL_PARTIAL / OFFICIAL_CONFLICT / UNKNOWN / DERIVED / FRAMEFORGE_CLASSIFICATION。没有厂商官方证据的值保持UNKNOWN，不用第三方规格、0/false或相邻新型号字段填空。
+
+首批实际填入RED KOMODO 6K原版的Sensor/RF Mount/REDCODE及6K/5K/4K/2K有效成像区和最大帧率；ZEISS CP.3完整10焦段的T-stop、近摄、长度、前径、重量和六种画幅官方水平AoV；DJI RS5、Focus Pro四模块、Transmission TX/RX/High-Bright Monitor、SDR TX/RX；Nanlite Forza 200、旧Forza 300B的已知历史事实、FC-120B、FC-300B、PavoTube II 15C；Aputure STORM 1200x；Tiffen 4×5.65 diffusion当前已核SKU；以及Blender/UE5/AE Capability和首批Format identity。
+
+官方核对过程中修正旧规划：DJI当前官方Pocket系列资料显示Osmo Pocket 4包含20mm等效f/2.0广角与60mm等效f/1.8中长焦两个可切换内置模组，因此改为一个ImagingDevice + 两个EmbeddedImagingModule，均不可进入独立Lens Picker。Mavic 4 Pro仍为一个机型三个内置模组。该修正同步Seed Catalog和知识基础合同，体现“官方事实优先于先前规划假设”。
+
+旧Forza 300B完整CCT/功率/mount/control等、Tiffen全部当前SKU、Focus Pro部分组件详细参数、DJI完整兼容矩阵、Pocket/Mavic完整录制矩阵等仍明确标OFFICIAL_PARTIAL/UNKNOWN，列入completeness backlog。知识需求升到2.8、基础合同升到1.4、Seed Catalog升到1.2，验收扩到KL-38。本轮仍为规划/结构化种子文档，不代表运行数据库已导入。
+
 ## 2026-10-05：锁定知识分类最大四级
 
 在243个共享Topic、13个Formula、135个A–H Component和83/83专业Domain已经实际展开后，分类深度不再保持未决。当前规则锁定为 `KnowledgeLibrary → KnowledgeDomain → KnowledgeComponent → 可选 KnowledgeSubcomponent`，含Library最多四级、不含Library最多三级。
