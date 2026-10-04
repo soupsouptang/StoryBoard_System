@@ -2,7 +2,7 @@
 
 # FrameForge 制作常识库、基础大类知识与首批 Seed Catalog
 
-版本：1.1，2026-10-05。状态：已确认规划合同，尚未实施。首批常识正文见 [制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)，A–H组件与跨组件关系见 [A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)。
+版本：1.2，2026-10-05。状态：已确认规划合同，尚未实施。首批常识正文见 [制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)，A–H组件与跨组件关系见 [A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)，已填官方结构化数据见 [首批 Reference Seed Data](REFERENCE_SEED_DATA_2026-10-05.md)。
 
 配套：[知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)、[知识体系](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)、[岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)。
 
@@ -301,7 +301,7 @@ LensVariant
 
 Mavic 4 Pro 仍是一个 ImagingDevice；三个内置摄像模组作为三个可选择 EmbeddedImagingModule，各自拥有 sensor / focal / aperture / recording capability。
 
-Osmo Pocket 4 是一个 ImagingDevice + 一个锁定 EmbeddedImagingModule；选择机身后镜头不可替换。
+Osmo Pocket 4 是一个 ImagingDevice + 两个可切换但不可拆换的 EmbeddedImagingModule；当前官方资料确认广角20mm等效f/2.0与中长焦60mm等效f/1.8。选择机身后只能在内置模组间切换，独立 Lens Picker 不可替换镜头。
 
 ### 5.4 规格
 
@@ -658,23 +658,17 @@ Seed 至少包括：
 
 ### 15.3 DJI Osmo Pocket 4
 
-一个 ImagingDevice + 一个锁定 EmbeddedImagingModule。首批至少保存：
+一个 ImagingDevice + 两个可切换 EmbeddedImagingModule，镜头均固定在设备内部：
 
-- 1-inch CMOS；
-- 20mm format equivalent；
-- f/2.0；
-- focus range；
-- ISO / shutter official ranges；
-- recording modes / frame rates；
-- digital zoom capability；
-- supported photo/video format；
-- storage / connection；
-- accessory relations。
-
-独立 Lens Picker 不出现该镜头。
+- Wide Module：1-inch CMOS、20mm format equivalent、f/2.0、focus 0.09m–∞；
+- Medium-Tele Module：1/1.28-inch CMOS、60mm format equivalent、f/1.8、focus 0.20m–∞；
+- 两个内置镜头都不出现在独立 Lens Picker；
+- 切换内置模组时 Sensor、Focal、Aperture、FOV/recording capability 与相关附件能力同步变化；
+- 完整 ISO / shutter / codec / recording-mode matrix 只从 DJI 官方详细规格继续补，不根据旧 Pocket 型号推断。
 
 官方 seed source：
-- https://www.dji.com/osmo-pocket-4/specs
+- https://store.dji.com/ca/product/osmo-pocket-4
+- https://store.dji.com/ca/event/dji-osmo-pocket-series
 
 ### 15.4 DJI Mavic 4 Pro
 
