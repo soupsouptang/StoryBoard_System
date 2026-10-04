@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { useAuthStore } from '@/stores/authStore';
 import type { Production } from '@frameforge/types';
-import { timecodeToFrames } from '@frameforge/timecode';
+import { framesToTimecode, timecodeToFrames } from '@frameforge/timecode';
 import {
   Badge, Button, Card, Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle, Field, Icons, Input, Select
@@ -29,9 +29,8 @@ export default function ProductionsPage() {
   );
   const productionTypes: Record<string, string> = { corporate: '宣传片', documentary: '纪录片', tvc: 'TVC 广告', film: '电影', short: '短片' };
   const durationLabel = (prod: Production) => {
-    if (prod.total_duration_frames == null || prod.fps_num <= 0 || prod.fps_den <= 0) return '时长待定';
-    const seconds = Math.round(prod.total_duration_frames * prod.fps_den / prod.fps_num);
-    return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+    if (prod.total_duration_frames == null || prod.fps_num <= 0 || prod.fps_den <= 0) return '待定';
+    return framesToTimecode(prod.total_duration_frames, prod.fps_num / prod.fps_den, prod.drop_frame);
   };
   const updatedLabel = (value: string) => {
     const date = new Date(value);
@@ -168,10 +167,10 @@ export default function ProductionsPage() {
                   </div>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/75">
                     <span>{productionTypes[prod.template_type] || prod.template_type}</span>
-                    <span>{prod.shot_count ?? 0} 镜头</span>
-                    <span className="tabular-nums">{durationLabel(prod)}</span>
-                    <span>{prod.fps_den > 0 ? Number((prod.fps_num / prod.fps_den).toFixed(3)) : prod.fps_num} fps</span>
                     <span>{prod.aspect_ratio}</span>
+                    <span>{prod.fps_den > 0 ? Number((prod.fps_num / prod.fps_den).toFixed(3)) : prod.fps_num} fps</span>
+                    <span>{prod.shot_count ?? 0} 镜头</span>
+                    <span className="tabular-nums">总时长 {durationLabel(prod)}</span>
                   </div>
                 </div>
                 <div className="relative z-20 flex shrink-0 items-center gap-3">
