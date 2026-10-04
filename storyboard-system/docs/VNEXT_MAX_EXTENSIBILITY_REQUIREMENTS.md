@@ -640,3 +640,542 @@ MediaHandoff 只有在“一份素材存在多消费者、独立确认、更正/
 | 全流程产品闭环 | Z0-PRODUCTION-CLOSED-LOOP | FX-17、FX-26、FX-27、FX-28、FX-29、FX-30、FX-31、FX-32、KL-05、KL-06、KL-07 | 使用 §19.4 的完整合成项目，从创作到经验校准并受控影响后续计划真实跑通；required Checklist与hard授权资料也必须贯穿；API/PG/真实消费者证据齐全后才能称“闭环” |
 
 FX-26 至 FX-32 的具体 fixture 写在实施计划/执行标准并列入机器清单。任何上游工作包即使单独 accepted，只表示该环节能力通过，不代表 Z0 或整个 Production workflow 已闭环。
+
+## 20. Canonical Production Data Dictionary（制作数据标准口径）
+
+新增：2026-10-05。状态：VNext 数据语义与跨部门流转的强制合同。本节是在现有 §1–§19 基础上补充，不替代、删除或弱化前述任何规则；发生冲突时仍按 §1 的冲突优先级处理。
+
+本节解决“同一业务概念被不同部门用不同文字、单位或状态重复表达”的问题。所有页面、导入、导出、统计、自动化、知识层和后续 AI 都必须优先消费这里定义的 canonical semantic，而不是重新发明一套同义字段。标准化的目标是统一含义、单位、身份和状态，不是限制影视创作。能用连续数值表达的物理量不得为了方便 UI 被数据库硬编码成少数枚举；UI 可以提供高频 preset，但底层保存规范值并允许受控 Custom。
+
+### 20.1 字段类型、Null / Unknown 与通用保存规则
+
+每个进入正式实现的标准字段至少登记以下元数据：`canonical_key`、中文名、英文名、domain、适用 entity、data_type、unit、preset/allowed values、custom_allowed、null semantics、unknown semantics、source of truth、planned/actual 属性、继承与 override 规则、import aliases、export representation、knowledge dimension、deprecated aliases。新增字段不得仅有显示名称而没有稳定 key。
+
+正式字段统一归入四类：
+
+| 类型 | 用途 | 规则 |
+| --- | --- | --- |
+| ENUM | 语义必须一致且集合稳定，例如 INT / EXT、AVAILABLE / UNAVAILABLE | 保存稳定 code；UI 文案可本地化；未知值不得静默塞入自由文本 |
+| DICTIONARY_REF | 需要可扩展字典且有稳定身份，例如 Camera Model、Lens Model、VFX Task Type | 保存稳定 dictionary item id + 当时显示快照；同名不等于同一身份 |
+| MEASURED_VALUE | 连续物理量或数量，例如焦段、色温、距离、功率、时长 | 保存规范数值 + 规范单位；UI 可提供 preset；不得把“35mm”作为不可计算字符串 |
+| FREE_TEXT | 只有确实不适合结构化的说明、备注、创作意图 | 不参与需要严格口径的自动计算；若后续形成稳定业务含义，应升级为结构字段 |
+
+通用空值语义必须分开：
+
+- `NULL / NOT_RECORDED`：没有填写或没有采集；
+- `UNKNOWN`：明确知道当前无法确定；
+- `NOT_APPLICABLE`：该字段对当前对象不适用；
+- 数值 `0`：真实零值，不得当空；
+- 布尔 `false`：真实否定，不得当空；
+- 空字符串不得作为 UNKNOWN 或 N/A 的替代；
+- 删除字典项不得改写历史记录；历史通过稳定 identity + snapshot 继续解释。
+
+所有时间事实至少区分 `occurred_at`（实际发生时间）与 `recorded_at`（录入系统时间）；需要修正时使用显式 correction，不用覆盖原 Actual。所有物理量统一存 SI 或本节指定影视行业规范单位，展示层可以换算。导入可以识别常见别名，但提交前必须归一化并保留 source text。
+
+### 20.2 计划、预测、实际与修正的统一口径
+
+全系统不得用一个 `time`、`duration` 或 `status` 同时表达计划与实际。以下语义为强制定义：
+
+| 口径 | 含义 | 是否可被未来自动化改写 |
+| --- | --- | --- |
+| Estimate | 对工作本身需要多久/多少资源的估计，可来自模板、EstimateProfile 或人工覆盖 | 可以产生新估计版本，不覆盖历史 |
+| Planned | 当前 SchedulePlan 或 Task 当前安排 | 未来未锁定部分可以改 |
+| Baseline | 用户明确冻结的某一计划快照，用于偏差比较 | 不得被重排覆盖 |
+| Forecast | 根据最新 Actual、约束和剩余工作推导的未来预计 | 可以持续变化 |
+| Actual | 实际发生的执行事实 | 不得被排期、模板或预测覆盖 |
+| Corrected Actual | 对错误 Actual 的显式修正结果 | 新建 correction；保留原值和原因 |
+
+知识层和看板做 `Planned vs Actual`、`Baseline vs Actual`、`Estimate vs Actual` 时必须明确使用哪一对口径，不能混用。
+
+### 20.3 通用制作实体与创作字段
+
+| canonical_key | 中文 / English | Entity | 类型 / 规范值 | 口径说明 |
+| --- | --- | --- | --- | --- |
+| production.title | 项目名 / Production Title | Production | text | 项目身份展示值，不作为稳定 ID |
+| production.timezone | 项目时区 / Project Timezone | Production | IANA timezone | 时间存 UTC，按该时区显示；默认 Asia/Shanghai |
+| production.frame_rate | 帧率 / Frame Rate | Production | rational fps | 常用 23.976/24/25/29.97/30/48/50/59.94/60/100/120；Custom 允许 |
+| production.aspect_ratio | 项目画幅 / Aspect Ratio | Production | rational/decimal | 常用 1.33/1.37/1.66/1.78/1.85/2.00/2.39/2.40；Custom |
+| scene.number | 场号 / Scene Number | Scene | structured text | 展示编号，不作为稳定身份 |
+| scene.int_ext | 内外景 / INT-EXT | Scene | INT / EXT / INT_EXT / UNKNOWN | 允许镜头明确覆盖显示值 |
+| scene.time_of_day | 场景时段 / Time of Day | Scene | DAWN / DAY / DUSK / NIGHT / CONTINUOUS / CUSTOM | Custom 保留规范 code + label |
+| scene.location_ref | 场地 / Location | Scene | relation | 指向稳定 Location，不保存第二份权威地点文本 |
+| scene.story_day | 剧情日 / Story Day | Scene | integer/text | 创作连续性字段，不等于拍摄日 |
+| shot.number | 镜号 / Shot Number | Shot | structured text | 可重排；稳定身份另存 |
+| shot.title | 镜头标题 / Shot Title | Shot | text | 描述性 |
+| shot.description | 画面描述 / Visual Description | Shot | text | 创作正文 |
+| shot.production_method | 制作方式 / Production Method | Shot | controlled multi-ref | 如 LIVE_ACTION / AE / VFX / UE_3D / ANIMATION / ARCHIVE / MIXED；用于 Task applicability，不直接代表已执行 |
+| shot.size | 景别 / Shot Size | Shot | ECU / CU / MCU / MS / MLS / FS / LS / VLS / ELS / CUSTOM | 允许项目字典扩展；统计用 canonical code |
+| shot.angle | 机位角度 / Camera Angle | Shot | EYE / LOW / HIGH / DUTCH / OVERHEAD / GROUND / POV / OTS / CUSTOM | 与 camera height 分开 |
+| shot.camera_movement | 镜头运动 / Camera Movement | Shot | STATIC / PAN / TILT / DOLLY_IN / DOLLY_OUT / TRUCK / PEDESTAL / ARC / CRANE / HANDHELD / STEADICAM / GIMBAL / DRONE / VEHICLE / CUSTOM | 多运动组合用 ordered list，不拼自由字符串 |
+| shot.duration_frames | 成片时长帧数 / Editorial Duration | Shot | integer frames | 项目帧率下权威成片时长；不作为拍摄耗时 |
+| shot.dialogue_text | 对白 / Dialogue | Shot | text + Character ref | 没有多说话人真实入口前不预建空段落 |
+| shot.notes | 备注 / Notes | Shot | text | 不参与严格计算 |
+| shot.fulfillment | 拍摄满足状态 / Shot Fulfillment | Shot execution fact | SATISFIED / PARTIAL / UNSATISFIED / RESHOOT_REQUIRED | 不能由 ScheduleItem 完成自动推定；必须记录来源、操作者、时间、原因 |
+
+### 20.4 摄影 Camera / Lens / Exposure 数据口径
+
+摄影字段的设备身份、计划值和现场实际值必须分开。Camera/Lens 字典说明“是什么型号”，Shot/ScheduleItem Actual 说明“这次怎么使用”。不得从镜头型号名称自动推断实际焦段、光圈或滤镜。
+
+| canonical_key | 中文 / English | 类型 | 推荐 preset / allowed values | 规则 |
+| --- | --- | --- | --- | --- |
+| camera.body_ref | 摄影机机身 / Camera Body | DICTIONARY_REF | ARRI / Sony / RED / Canon / Blackmagic 等具体型号字典 | 项目配置或实际记录引用；知识层可保存基础规格 |
+| camera.unit_label | 机位组 / Camera Unit | enum/project dictionary | A_CAM / B_CAM / C_CAM / CUSTOM | 不等同 Person 或摄制组 Unit |
+| camera.sensor_mode | 传感器模式 / Sensor Mode | dictionary/text | Open Gate、S35、FF、Crop 等 | 型号相关字典值；允许 Custom |
+| camera.recording_resolution | 记录分辨率 / Capture Resolution | structured integer | width × height | 不用“4K”替代精确值；可额外保存 display label |
+| camera.recording_codec | 记录编码 / Capture Codec | DICTIONARY_REF | ARRIRAW / ProRes / X-OCN / R3D / BRAW / H.264 / H.265 / CUSTOM | 与交付 codec 分开 |
+| camera.frame_rate_capture | 拍摄帧率 / Capture FPS | rational fps | 23.976/24/25/29.97/30/48/50/59.94/60/100/120/240 + Custom | 与项目时间线 fps 分开；高帧率可与 playback fps 构成变速 |
+| camera.playback_frame_rate | 回放帧率 / Playback FPS | rational fps | 项目帧率为常见默认 | 明确变速关系 |
+| lens.model_ref | 镜头型号 / Lens Model | DICTIONARY_REF | Prime/Zoom/Anamorphic/Macro/Probe 等型号 | 型号不等于实际焦段 |
+| lens.type | 镜头类型 / Lens Type | enum | PRIME / ZOOM / ANAMORPHIC / MACRO / PROBE / TILT_SHIFT / SPECIALTY / CUSTOM | 可从字典型号带默认值，但历史固定 |
+| cinematography.focal_length_mm | 焦段 / Focal Length | decimal mm | 8/10/12/14/16/18/21/24/25/27/28/32/35/40/50/55/65/75/85/100/135/180/200 + Custom | **底层必须保存数值 mm，不做硬枚举**；例如 37.5 合法 |
+| cinematography.anamorphic_squeeze | 变形宽银幕倍率 / Anamorphic Squeeze | decimal ratio | 1.33/1.5/1.6/1.8/2.0 + Custom | 非变形镜头为 N/A，不填 1 伪装 |
+| cinematography.t_stop | T 光圈 / T-Stop | decimal | T1.0/1.3/1.4/1.5/2/2.8/4/5.6/8/11/16/22 + Custom | 保存数值；显示 T 前缀 |
+| cinematography.f_stop | F 光圈 / F-Stop | decimal | f/1.4/2/2.8/4/5.6/8/11/16/22 + Custom | 只有实际使用 F 值时记录，不与 T-stop 自动互换 |
+| cinematography.iso_ei | ISO / EI | integer | 50/100/200/250/320/400/500/640/800/1000/1250/1600/2000/2500/3200/5000/6400 + Custom | ISO 与 EI 如需区分可加 exposure_index_mode |
+| cinematography.white_balance_k | 白平衡 / White Balance | integer Kelvin | 2000/2500/2800/3000/3200/4000/4300/4500/5000/5600/6000/6500/7500 + Custom | 保存 Kelvin；“日光”只能作为 label |
+| cinematography.tint | Tint | decimal | Camera-native numeric + Custom | 保留设备定义和单位/方向元数据 |
+| cinematography.shutter_angle_deg | 快门角度 / Shutter Angle | decimal degree | 11.25/22.5/45/72/90/144/172.8/180/216/270/360 + Custom | 若源为快门速度，保留 source representation 并统一换算条件 |
+| cinematography.shutter_speed_s | 快门速度 / Shutter Speed | rational seconds | 1/24、1/48、1/50、1/100 等 | 与 angle 不同时双写；转换必须带 fps 来源 |
+| cinematography.nd_stops | ND / Neutral Density | decimal stops | 0/0.3/0.6/0.9/1.2/1.5/1.8/2.1/2.4/2.7/3.0 + Custom | 保存 stop/密度规范，不只写“ND8” |
+| cinematography.filter_refs | 滤镜 / Filters | controlled multi-ref | ND / CPL / Black Pro-Mist / Glimmerglass / Streak / Diopter / Custom | 实际型号可 dictionary ref；效果描述不替代型号 |
+| cinematography.focus_distance_m | 对焦距离 / Focus Distance | decimal meter | Custom | UNKNOWN 与无限远分开；无限远使用明确 infinity 标记 |
+| cinematography.camera_height_m | 机位高度 / Camera Height | decimal meter | Ground/Low/Eye/High/Overhead 可作 UI preset | preset 只是快速输入，不作为底层枚举 |
+| cinematography.camera_distance_m | 机距 / Camera Distance | decimal meter | Custom | 相对主体参考需明确 target ref/说明 |
+| cinematography.support | 支撑方式 / Camera Support | enum/multi | TRIPOD / HI_HAT / SHOULDER / HANDHELD / STEADICAM / GIMBAL / DOLLY / SLIDER / JIB / CRANE / VEHICLE / DRONE / SPECIALTY | 与 movement 分开 |
+| cinematography.stabilization | 稳定方式 / Stabilization | enum | NONE / OPTICAL / IBIS / ELECTRONIC / EXTERNAL / MIXED / UNKNOWN | 可用于经验维度 |
+| cinematography.focus_mode | 对焦方式 / Focus Mode | enum | MANUAL / AF / REMOTE_FIZ / FIXED / UNKNOWN | 不保存设备教学内容 |
+| cinematography.exposure_note | 曝光备注 / Exposure Note | FREE_TEXT | — | 只补充结构字段，不能替代 T/ISO/shutter/ND |
+| cinematography.actual_source | 参数来源 / Parameter Source | enum | PLANNED / CAMERA_REPORT / MANUAL_ACTUAL / IMPORTED / CORRECTED | 用于区分计划与实测 |
+
+### 20.5 灯光 Lighting / Grip 数据口径
+
+灯具型号知识只保存型号和基础知识，不加入使用方法；项目数据可以保存“此次需要什么、怎么设置、实际如何”，但知识库不能据此自动声称器材已具备。
+
+| canonical_key | 中文 / English | 类型 | 推荐值 | 规则 |
+| --- | --- | --- | --- | --- |
+| lighting.fixture_ref | 灯具型号 / Fixture Model | DICTIONARY_REF | 具体型号 | 与需求 quantity、实际使用分开 |
+| lighting.fixture_type | 灯具类型 / Fixture Type | enum | COB / FRESNEL / OPEN_FACE / PANEL / TUBE / MAT / HMI / TUNGSTEN / PRACTICAL / SPECIALTY / CUSTOM | 型号可带默认基础分类 |
+| lighting.source_technology | 光源技术 / Source Technology | enum | LED_DAYLIGHT / LED_BICOLOR / RGBWW / HMI / TUNGSTEN / FLUORESCENT / DISCHARGE / PRACTICAL / OTHER | 基础知识维度 |
+| lighting.power_w | 额定/设置功率 / Power | decimal W | Custom | 型号额定功率与现场实际功率/调光分开 |
+| lighting.cct_k | 色温 / CCT | integer Kelvin | 2000/2500/2700/2800/3000/3200/4000/4300/4500/5000/5600/6000/6500/10000 + Custom | RGB 模式可同时 N/A |
+| lighting.intensity_pct | 输出强度 / Intensity | decimal % | 0–100 | 实际设置；0 是真实关闭 |
+| lighting.color_mode | 色彩模式 / Color Mode | enum | CCT / HSI / RGB / XY / GEL / EFFECT / SOURCE_MATCH / CUSTOM | 不把具体颜色塞入 mode |
+| lighting.hue_deg | Hue | decimal degree | 0–360 | HSI 时适用 |
+| lighting.saturation_pct | Saturation | decimal % | 0–100 | HSI 时适用 |
+| lighting.xy_x / lighting.xy_y | CIE xy | decimal | 0–1 | xy 模式使用 |
+| lighting.gel_ref | 色纸 / Gel | DICTIONARY_REF | CTO / CTB / PlusGreen / MinusGreen / Rosco/LEE 型号 / Custom | 保留 manufacturer/code |
+| lighting.role | 灯光作用 / Lighting Role | enum | KEY / FILL / BACK / RIM / TOP / BACKGROUND / PRACTICAL / AMBIENT / EYE_LIGHT / SPECIAL / CUSTOM | 允许同一灯多 role，但必须显式 |
+| lighting.direction | 灯光方向 / Direction | enum | FRONT / FRONT_3Q / SIDE / BACK_3Q / BACK / TOP / BOTTOM / CUSTOM | 可另加角度数值 |
+| lighting.height_m | 灯位高度 / Height | decimal m | Custom | UNKNOWN 分开 |
+| lighting.distance_m | 灯距 / Distance | decimal m | Custom | 相对目标需明确 target |
+| lighting.modifier_refs | 控光附件 / Modifiers | multi-ref | SOFTBOX / LANTERN / FRESNEL / REFLECTOR / GRID / BARN_DOOR / SNOOT / PROJECTION / EGGCRATE / FLAG / SCRIM / CUSTOM | 配件型号可 dictionary |
+| lighting.diffusion_ref | 柔光材料 / Diffusion | DICTIONARY_REF | Silk / Grid Cloth / Frost / Magic Cloth / Custom | 保存标准名称/型号，不写教程 |
+| lighting.grip_support | 支撑 / Grip Support | enum/multi | C_STAND / COMBO / BABY_STAND / BOOM / MENACE_ARM / OVERHEAD / TRUSS / CUSTOM | 只表达项目要求/实际 |
+| lighting.power_source | 供电来源 / Power Source | enum | MAINS / BATTERY / GENERATOR / VEHICLE / UNKNOWN / CUSTOM | 不扩展为电力工程系统 |
+| lighting.dmx_mode | DMX / Control Mode | dictionary/text | DMX / CRMX / Art-Net / sACN / Local / Custom | 地址等可作为项目实际字段 |
+| lighting.requirement_quantity | 需求数量 / Required Quantity | nonnegative number + unit | — | 属 Requirement；同一时段按 §8/D-28 汇总 |
+| lighting.readiness | 灯光准备状态 / Lighting Readiness | derived/confirmation | UNKNOWN / PREPARED / PARTIAL / UNAVAILABLE | **不是库存事实**；针对 ShootDay/ScheduleItem 的准备确认 |
+| lighting.actual_used_quantity | 实际使用数量 / Actual Used | nonnegative number + unit | — | Actual；不得从需求数量直接推断 |
+
+### 20.6 美术、场景、道具、服装、化妆与连续性
+
+| canonical_key | 中文 / English | 类型 / 规范值 | 规则 |
+| --- | --- | --- | --- |
+| art.set_type | 场景实现类型 / Set Type | PRACTICAL_LOCATION / STUDIO / SET_BUILD / BACKLOT / VIRTUAL / MIXED / CUSTOM | 与 Location identity 分开 |
+| art.dressing_level | 布景程度 / Dressing Level | EXISTING / LIGHT_DRESS / PARTIAL_BUILD / FULL_BUILD / STRIKE / CUSTOM | 不等于任务完成状态 |
+| art.palette | 主色板 / Palette | structured colors + notes | 允许多色；色值与文字说明分开 |
+| art.hero_prop_ref | 英雄道具 / Hero Prop | relation/dictionary | Project-scoped identity |
+| prop.category | 道具类型 / Prop Category | HERO / ACTION / BACKGROUND / SET_DRESSING / CONSUMABLE / BREAKAWAY / GRAPHIC / CUSTOM | “Consumable”仅创作连续性含义，不进入采购/财务 |
+| prop.required_quantity | 道具需求数量 / Required Quantity | nonnegative number + unit | 需求口径 |
+| prop.continuity_state | 道具连续性 / Continuity State | CLEAN / USED / DAMAGED / BLOODIED / BROKEN / EMPTY / FULL / CUSTOM | 允许 project dictionary 扩展 |
+| prop.readiness | 道具准备状态 / Prop Readiness | UNKNOWN / PREPARED / PARTIAL / UNAVAILABLE | 制片/美术准备事实，不是库存 |
+| costume.look_ref | 服装造型 / Costume Look | project dictionary/ref | 同一角色可多个 look，稳定 identity |
+| costume.continuity_state | 服装连续性 / Costume Continuity | CLEAN / USED / WET / DIRTY / DAMAGED / BLOODIED / CUSTOM | 具体状态可扩展 |
+| makeup.look_ref | 妆发造型 / HMU Look | project dictionary/ref | 与 Character/Person/Scene/StoryDay 关系明确 |
+| makeup.special_requirement | 特殊妆效需求 / Special Makeup | enum + notes | NONE / BEAUTY / AGE / WOUND / CREATURE / PROSTHETIC / CUSTOM |
+| continuity.story_day | 连续性剧情日 / Story Day | structured | 与拍摄 ShootDay 分开 |
+| continuity.reference_asset | 连戏参考 / Continuity Reference | AssetVersion ref | 固定版本，不能引用会漂移的 latest |
+| continuity.status | 连戏核对 / Continuity Check | UNKNOWN / MATCHED / MISMATCH / WAIVED | 由明确核对事实产生 |
+
+### 20.7 人员、演员、角色、岗位与部门
+
+Department 是项目范围的稳定业务归类，不是权限角色。岗位名称决定职责/视图，仍不得自动授予项目权限。
+
+| canonical_key | 中文 / English | 类型 / 规范值 | 规则 |
+| --- | --- | --- | --- |
+| person.id | 现实人员 / Person | stable id | 项目内独立；同名不合并 |
+| person.account_link | 账号关联 / Account Link | explicit relation | 不按邮箱/姓名自动绑定 |
+| character.id | 剧情角色 / Character | stable id | 与 Person/User 分开 |
+| casting.status | 选角状态 / Casting Status | CANDIDATE / HOLD / CONFIRMED / RELEASED / REPLACED | 候选不算确定出演 |
+| cast.assignment_type | 出演类型 / Performance Type | PRINCIPAL / SUPPORTING / FEATURED / BACKGROUND / STAND_IN / DOUBLE / VOICE / CUSTOM | 可按项目扩展 |
+| cast.appearance_type | 镜头出演 / Shot Appearance | ON_CAMERA / VOICE_ONLY / BACKGROUND / DOUBLE / STAND_IN / OFFSCREEN / CUSTOM | 需求与 Actual 分开 |
+| department.id | 部门 / Department | project-scoped stable ref | 建议首版：DIRECTING / PRODUCTION / CAMERA / LIGHTING_GRIP / ART / COSTUME / HMU / SOUND / DIT_DATA / EDITORIAL / VFX / COLOR / REVIEW_QC / DELIVERY + Custom |
+| role.id | 岗位 / Role | project-scoped stable ref | 一人可多 Role；Role 不授予权限 |
+| assignment.scope | 任职范围 / Assignment Scope | PRODUCTION / SCENE / SHOT / TASK / SHOOT_DAY | 具体对象 typed relation |
+| availability.state | 可用性 / Availability | UNKNOWN / TENTATIVE / AVAILABLE / UNAVAILABLE | 缺资料必须 UNKNOWN，不当可用 |
+| availability.interval | 可用区间 / Availability Interval | UTC half-open interval | 项目时区展示 |
+| call.call_time | 集合时间 / Call Time | datetime | 每 Person 独立；不默认全员同一时间 |
+| call.ack_state | 通告确认 / Call Sheet Ack | NOT_SENT / SENT / DELIVERED / OPENED / ACKNOWLEDGED | 绑定明确 CallSheetRevision |
+| attendance.state | 到场 / Attendance | UNKNOWN / ARRIVED / LATE / ABSENT / RELEASED | Actual，不从 ack 推断 |
+| work.actual_interval | 实际工作区间 / Work Actual | interval | 与 Availability、Call、Task Planned 分开 |
+
+### 20.8 制片、排期、现场执行与 Company Move
+
+| canonical_key | 中文 / English | 类型 / 规范值 | 规则 |
+| --- | --- | --- | --- |
+| schedule.plan_state | 排期方案状态 / Plan State | DRAFT / CURRENT / SUPERSEDED | 同 Production/Unit scope 最多一个 CURRENT |
+| schedule.item_type | 排期条目类型 / Schedule Item Type | PREP / FITTING / HMU / WARDROBE / REHEARSAL / SETUP / SHOOT / BREAK / MOVE / STRIKE / WRAP / RECORDING / CUSTOM | Company Move 使用 MOVE |
+| schedule.planned_interval | 计划区间 / Planned Interval | UTC half-open interval | 与 Actual 分开 |
+| schedule.baseline_interval | 基线区间 / Baseline Interval | immutable snapshot | 只有明确 freeze 才存在 |
+| schedule.forecast_interval | 预测区间 / Forecast Interval | derived interval | 根据最新事实持续重算 |
+| schedule.actual_interval | 实际区间 / Actual Interval | actual interval | 显式更正，不覆盖原始记录 |
+| schedule.lock_state | 锁定 / Lock State | UNLOCKED / TIME_LOCKED / FULLY_LOCKED | 自动重排不得偷偷破锁 |
+| schedule.result | 执行结果 / Execution Result | NOT_STARTED / IN_PROGRESS / COMPLETED / PARTIAL / NOT_COMPLETED / CANCELLED / CORRECTED | ScheduleItem 完成不等于 Shot SATISFIED |
+| move.from_location | 转场起点 / From Location | Location ref | MOVE 专用 |
+| move.to_location | 转场终点 / To Location | Location ref | MOVE 专用 |
+| move.strike_min | 撤收 / Strike Duration | minutes | estimate/planned/actual 要区分 |
+| move.load_min | 装载 / Load Duration | minutes | 同上 |
+| move.travel_min | 行驶 / Travel Duration | minutes | 不只依赖地图值 |
+| move.unload_min | 卸载 / Unload Duration | minutes | 同上 |
+| move.setup_min | 到场 Setup / Setup Duration | minutes | 影响下一条 earliest start |
+| shoot_day.wrap_forecast | 预计收工 / Forecast Wrap | datetime derived | Actual 变化后重算 |
+| shoot_day.wrap_actual | 实际收工 / Actual Wrap | datetime actual | 不被 forecast 覆盖 |
+| on_set.delay_reason | 延误原因 / Delay Reason | controlled dictionary + note | WEATHER / TALENT / CAMERA / LIGHTING / ART / LOCATION / SOUND / TECHNICAL / CREATIVE / MOVE / OTHER |
+| on_set.issue_severity | 现场问题严重度 / Issue Severity | INFO / MINOR / MAJOR / BLOCKING | 不直接替代 ReworkRequest |
+| checklist.result | Checklist 结果 | PASS / FAIL / UNKNOWN / NOT_APPLICABLE / WAIVED | 来源/规则/版本固定，遵循 D-35 与 §19.5 |
+| readiness.state | 可开始状态 / Readiness | READY / BLOCKED / UNKNOWN / OVERRIDDEN | **派生状态**；必须返回 reason codes 和 source revisions |
+
+### 20.9 Location 与环境条件
+
+| canonical_key | 中文 / English | 类型 / 推荐值 | 规则 |
+| --- | --- | --- | --- |
+| location.ref | 场地 / Location | stable relation | 名称不是稳定身份 |
+| location.type | 场地类型 / Location Type | PRACTICAL / STUDIO / BACKLOT / VIRTUAL_STAGE / PUBLIC / PRIVATE / CUSTOM | 不代表是否已获得许可 |
+| location.availability | 场地可用窗口 / Availability | interval + state | UNKNOWN / TENTATIVE / AVAILABLE / UNAVAILABLE |
+| location.access_state | 进场准备 / Access State | UNKNOWN / PENDING / CONFIRMED / RESTRICTED / UNAVAILABLE | 与 availability 分开 |
+| location.power_note | 场地供电备注 / Power Note | text/structured known values | 不扩展为工程计算系统 |
+| location.noise_condition | 环境噪声 / Noise Condition | QUIET / MODERATE / LOUD / VARIABLE / UNKNOWN + note | 可作为声音/经验维度 |
+| environment.weather | 天气 / Weather | dictionary + source | 计划/实际分开；不自动承诺准确性 |
+| environment.temperature_c | 温度 / Temperature | decimal °C | Actual/forecast source 必须标识 |
+| environment.wind_mps | 风速 / Wind | decimal m/s | 同上 |
+| environment.precipitation | 降水 / Precipitation | NONE / LIGHT / MODERATE / HEAVY / UNKNOWN | 来源固定 |
+| environment.light_condition | 自然光条件 / Natural Light | DARK / LOW / OVERCAST / DIFFUSE / DIRECT_SUN / MIXED / UNKNOWN | 创作/现场辅助维度 |
+| authorization.requirement_state | 授权资料要求 | REQUIRED_HARD / REQUIRED_SOFT / NOT_APPLICABLE | hard 缺失/过期/UNKNOWN 阻断通过；遵循 §19.5 |
+| authorization.record_state | 授权资料状态 | UNKNOWN / MISSING / VALID / EXPIRED / OUT_OF_SCOPE / WAIVED_WHEN_ALLOWED | 只记录制作所需证明，不作法律结论 |
+
+### 20.10 录音与声音现场数据
+
+| canonical_key | 中文 / English | 类型 / 推荐值 | 规则 |
+| --- | --- | --- | --- |
+| sound.capture_type | 收音类型 / Capture Type | DIALOGUE / BOOM / LAV / PLANT / ROOM_TONE / WILD_TRACK / ATMOS / SFX / PLAYBACK / MUSIC / VOICE / CUSTOM | 可多值但每条记录有明确类型 |
+| sound.mic_ref | 麦克风型号 / Microphone | DICTIONARY_REF | 具体型号 | 型号知识与项目实际设置分开 |
+| sound.mic_role | 麦克风角色 / Mic Role | BOOM / LAVALIER / PLANT / CAMERA / AMBIENCE / OTHER | 与型号分开 |
+| sound.recorder_ref | 录音机 / Recorder | DICTIONARY_REF | 具体型号 | — |
+| sound.sample_rate_hz | 采样率 / Sample Rate | integer Hz | 48000 / 96000 / 192000 + Custom |
+| sound.bit_depth | 位深 / Bit Depth | enum | 16 / 24 / 32_FLOAT | 保存 canonical code |
+| sound.channel_layout | 声道布局 / Channel Layout | MONO / STEREO / LCR / 5_1 / 7_1 / ATMOS_BED / CUSTOM | 项目/交付时可分别存在 |
+| sound.timecode_sync | 同步方式 / Sync Method | TIMECODE / JAM_SYNC / SLATE / WAVEFORM / MANUAL / NONE / UNKNOWN | 记录实际 |
+| sound.timecode_rate | 音频时码率 / TC Rate | rational fps | 与项目/摄影 fps 的不一致必须提示 |
+| sound.reference_level | 参考电平 / Reference Level | decimal dBFS | Custom |
+| sound.noise_issue | 噪声问题 / Noise Issue | NONE / INTERMITTENT / CONTINUOUS / CLIPPED / RF / WIND / HUM / OTHER | Actual issue，不代表素材不可用 |
+| sound.usability | 声音可用性 / Audio Usability | UNKNOWN / USABLE / LIMITED / UNUSABLE / REQUIRES_FIX | 后期可以进一步 Review，不自动批准 |
+
+### 20.11 现场素材、DIT、完整性、备份与正式交接
+
+“上传成功”“完整性检查”“备份验证”“代理生成”“正式交接”必须继续是不同事实。
+
+| canonical_key | 中文 / English | 类型 / 规范值 | 规则 |
+| --- | --- | --- | --- |
+| media.asset_role | 素材角色 / Asset Role | ORIGINAL / AUDIO_ORIGINAL / PROXY / PREVIEW / RENDER / PLATE / REFERENCE / MASTER / DELIVERABLE / OTHER | 同一 AssetVersion 组件不重复造作品版本 |
+| media.capture_source | 拍摄来源 / Capture Source | relation | Production/ShootDay/ScheduleItem/Scene/Shot/Task；Take 未上线前不得虚构 Take |
+| media.ingest_state | 入库 / Ingest | NOT_STARTED / IN_PROGRESS / INGESTED / FAILED | 上传成功只到该层 |
+| media.integrity_state | 完整性 / Integrity | PENDING / PASSED / FAILED | checksum/校验方式另存 |
+| media.checksum_algorithm | 校验算法 / Checksum | enum | XXH64 / MD5 / SHA256 / CUSTOM | 值与算法分开 |
+| media.backup_state | 备份验证 / Backup Verification | PENDING / PARTIAL / VERIFIED / FAILED | 项目可配置要求；不能用“有第二份文件”直接推 VERIFIED |
+| media.proxy_state | 代理 / Proxy | NOT_REQUIRED / PENDING / READY / FAILED | 与 Formal Handoff 分开 |
+| media.usability_state | 可使用 / Usability | UNKNOWN / CHECK_PENDING / USABLE / LIMITED / UNUSABLE | 不等于 Review Approved |
+| media.handoff_state | 正式交接 / Formal Handoff | NOT_SUBMITTED / SUBMITTED / ACCEPTED / REJECTED / CORRECTED / SUPERSEDED | 固定 AssetVersion 与接收者 |
+| media.handoff_consumer | 接收 Task / Consumer | Task/Department relation | 多消费者时按 §12.1 升级 MediaHandoff Entity |
+| media.handoff_checklist_revision | 交接核对版本 | Checklist revision ref | 接受基于固定规则 |
+| media.handoff_reason | 拒收/更正原因 | controlled reason + text | 不删原提交 |
+| media.recorded_at | 素材登记时间 | datetime | 与拍摄 occurred time 分开 |
+
+### 20.12 剪辑 Editorial 数据口径
+
+| canonical_key | 中文 / English | 类型 / 推荐值 | 规则 |
+| --- | --- | --- | --- |
+| editorial.task_type | 剪辑任务 / Editorial Task | SYNC / SELECTS / ASSEMBLY / ROUGH_CUT / FINE_CUT / PICTURE_LOCK / CONFORM / ONLINE / VERSIONING / CUSTOM | Task type，不做第二份 workflow status |
+| editorial.sequence_ref | 序列 / Sequence | stable project ref | 版本另建 AssetVersion/版本对象 |
+| editorial.input_version | 输入版本 / Input Version | AssetVersion ref | 必须固定，不引用 latest |
+| editorial.output_version | 输出版本 / Output Version | AssetVersion ref | Task 提交产物 |
+| editorial.picture_state | 画面阶段 / Picture State | OFFLINE / ONLINE / CONFORMED / LOCK_CANDIDATE / LOCKED | LOCKED 必须是明确业务事实 |
+| editorial.sync_state | 音画同步 / Sync State | PENDING / SYNCED / FAILED / MANUAL_OVERRIDE | 可追溯输入 |
+| editorial.handle_frames | Handle | integer frames | 与 fps 绑定 |
+| editorial.source_timecode | 源时码 / Source TC | structured timecode | 固定 source fps |
+| editorial.timeline_timecode | 时间线时码 / Timeline TC | structured timecode | 固定 sequence fps |
+| editorial.change_reason | 改版原因 / Change Reason | REVIEW / CREATIVE / TECHNICAL / RESHOOT / CLIENT / DELIVERY / OTHER | 不替代 ReworkRequest |
+| editorial.version_label | 版本显示名 / Version Label | text | 仅 display；稳定版本 identity 另存 |
+
+### 20.13 VFX / AE / UE-3D / CG 数据口径
+
+| canonical_key | 中文 / English | 类型 / 推荐值 | 规则 |
+| --- | --- | --- | --- |
+| vfx.task_type | VFX 类型 / VFX Task Type | CLEANUP / ROTO / KEY / TRACK_2D / TRACK_3D / MATCHMOVE / COMPOSITING / SCREEN / BEAUTY / MATTE_PAINT / CG_ASSET / CG_SHOT / SIMULATION / PARTICLES / SET_EXTENSION / REMOVE / ADD / CUSTOM | 受控字典，可扩展 |
+| vfx.complexity | 复杂度 / Complexity | SIMPLE / STANDARD / COMPLEX / RND / UNKNOWN | **不能直接当工时**；仅估时维度之一 |
+| vfx.input_plate | 输入 Plate | AssetVersion ref | 固定版本 |
+| vfx.reference_assets | 参考素材 | AssetVersion refs | 固定版本 |
+| vfx.output_version | 输出 / Output | AssetVersion ref | 不以文件名当版本 identity |
+| vfx.frame_range | 帧范围 / Frame Range | start/end frames + fps | source/sequence context 明确 |
+| vfx.resolution | 工作分辨率 / Working Resolution | width×height | 与 Delivery 分辨率分开 |
+| vfx.color_space | 工作色彩空间 / Working Color Space | DICTIONARY_REF | 必须引用版本化色彩配置 |
+| vfx.alpha_mode | Alpha | STRAIGHT / PREMULTIPLIED / NONE / UNKNOWN | 交接必要时使用 |
+| vfx.review_target | 审片目标 / Review Target | AssetVersion ref | Review 不挂 latest |
+| vfx.engine | 引擎/软件类别 / Engine | AE / NUKE / FUSION / UE / BLENDER / MAYA / HOUDINI / OTHER | 仅用于项目/经验维度；不等于流程 |
+| vfx.render_state | 渲染结果 / Render State | PENDING / RUNNING / SUCCEEDED / FAILED / CANCELLED | 异步技术状态，不等于 Task 完成 |
+| vfx.rework_link | 返工来源 | ReworkRequest relation | Task 完成不自动关闭 ReworkRequest |
+
+### 20.14 后期声音 Post Sound 数据口径
+
+| canonical_key | 中文 / English | 类型 / 推荐值 | 规则 |
+| --- | --- | --- | --- |
+| post_sound.task_type | 后期声音类型 | DIALOGUE_EDIT / ADR / FOLEY / SFX / AMBIENCE / SOUND_DESIGN / MUSIC_EDIT / MIX / MASTER / QC / CUSTOM | 受控字典 |
+| post_sound.input_version | 输入 / Input | AssetVersion ref | 固定 picture/audio inputs |
+| post_sound.output_version | 输出 / Output | AssetVersion ref | 固定 |
+| post_sound.sample_rate_hz | 采样率 | integer Hz | 48000/96000/192000 + Custom |
+| post_sound.bit_depth | 位深 | 16 / 24 / 32_FLOAT | — |
+| post_sound.channel_layout | 声道布局 | MONO / STEREO / 5_1 / 7_1 / ATMOS / CUSTOM | — |
+| post_sound.loudness_lufs | 响度 / Loudness | decimal LUFS | 只有测量后记录 Actual |
+| post_sound.true_peak_dbtp | 真峰值 / True Peak | decimal dBTP | 测量值 |
+| post_sound.sync_state | 同步检查 | UNKNOWN / PASS / FAIL / WAIVED | QC fact |
+| post_sound.mix_state | 混音阶段 | PREMIX / FINAL_MIX / MASTER / REVISION | workflow stage label，不替代 Task 状态 |
+
+### 20.15 调色 Color / Online 数据口径
+
+| canonical_key | 中文 / English | 类型 / 推荐值 | 规则 |
+| --- | --- | --- | --- |
+| color.input_version | 调色输入 | AssetVersion ref | 固定 conform input |
+| color.output_version | 调色输出 | AssetVersion ref | 固定 |
+| color.working_space | 工作色彩空间 | DICTIONARY_REF | ACEScct / DaVinci Wide Gamut / LogC / S-Gamut3.Cine / Custom |
+| color.input_transform | 输入变换 | DICTIONARY_REF/versioned config | 不只写 LUT 文件名 |
+| color.output_transform | 输出变换 | DICTIONARY_REF/versioned config | 与 deliverable target 对应 |
+| color.display_target | 显示目标 | REC709_G24 / P3_D65 / HDR_PQ / HLG / CUSTOM | 可扩展 |
+| color.lut_ref | LUT / Look | AssetVersion/ref | 固定版本；不得引用会漂移的同名文件 |
+| color.hdr_peak_nits | HDR 峰值 | decimal nit | 非 HDR 为 N/A |
+| color.conform_state | Conform | PENDING / PASS / FAIL / CORRECTED | 与 grade 状态分开 |
+| color.grade_stage | 调色阶段 | PREP / PRIMARY / SECONDARY / REVIEW / FINAL / MASTERED | 不替代 ReviewDecision |
+| color.qc_state | 调色 QC | PENDING / PASSED / FAILED / PASSED_WITH_EXCEPTION | 独立事实 |
+
+### 20.16 Review、修改、补拍与问题闭环
+
+| canonical_key | 中文 / English | 类型 / 规范值 | 规则 |
+| --- | --- | --- | --- |
+| review.target_version | 审片目标 | immutable content/AssetVersion ref | 永远固定版本 |
+| review.decision | 审片决定 | PENDING / APPROVED / CHANGES_REQUESTED / REJECTED / SUPERSEDED | 不由 Comment resolve 推定 |
+| review.comment_state | 评论状态 | OPEN / RESOLVED / REOPENED / SUPERSEDED | 解决评论不等于修改已完成 |
+| rework.type | 修改类型 | POST_REWORK / RESHOOT / DATA_FIX / DELIVERY_FIX / OTHER | 决定回 Task 还是 Schedule |
+| rework.state | Rework 状态 | OPEN / IN_PROGRESS / WAITING_REVIEW / RESOLVED / WAIVED / CANCELLED / SUPERSEDED | Task complete 不能直接设 RESOLVED |
+| rework.source_key | 去重键 / Dedupe Key | stable derived identity | 同来源、同目标、同未解决需求不得重复建单 |
+| rework.owner | 主责 | Person + Department | 未解决必须有 owner 或明确 UNASSIGNED |
+| rework.target_task | 返工任务 | Task relation | 可一对多但须明确 |
+| rework.replacement_version | 替代版本 | AssetVersion ref | 有新版本后仍需目标 Review/QC 接受 |
+| rework.resolution_reason | 关闭原因 | ACCEPTED / WAIVED / CANCELLED / DUPLICATE / SUPERSEDED | 保留历史 |
+| reshoot.schedule_demand | 补拍待排需求 | typed relation | 回到 Schedule，不直接把 Shot 改已完成 |
+
+### 20.17 交付、QC 与验收数据口径
+
+| canonical_key | 中文 / English | 类型 / 推荐值 | 规则 |
+| --- | --- | --- | --- |
+| delivery.item_ref | 交付对象 / Deliverable Item | stable entity/ref | 只有具有独立生命周期时作为独立 Entity |
+| delivery.variant | 交付变体 / Variant | structured | LANGUAGE / DURATION / ASPECT / PLATFORM / CLIENT / CUSTOM dimensions |
+| delivery.resolution | 分辨率 | width×height integer | 常用 1920×1080 / 3840×2160 / 4096×2160 + Custom |
+| delivery.aspect_ratio | 画幅 | rational/decimal | 1.33/1.78/1.85/2.00/2.39/2.40 + Custom |
+| delivery.frame_rate | 交付帧率 | rational fps | 明确 drop/non-drop 相关时码规则 |
+| delivery.codec | 视频编码 | DICTIONARY_REF | ProRes / DNxHR / H.264 / H.265 / EXR / DPX / IMF essence / Custom |
+| delivery.container | 容器 | MOV / MP4 / MXF / IMF / IMAGE_SEQUENCE / CUSTOM | 与 codec 分开 |
+| delivery.color_target | 色彩目标 | DICTIONARY_REF | Rec.709 / P3 / PQ / HLG / Custom |
+| delivery.audio_codec | 音频编码 | PCM / AAC / CUSTOM | 与采样率/位深/声道分开 |
+| delivery.audio_sample_rate_hz | 音频采样率 | integer Hz | 48000/96000 + Custom |
+| delivery.audio_bit_depth | 音频位深 | 16 / 24 / 32_FLOAT | — |
+| delivery.audio_layout | 声道布局 | MONO / STEREO / 5_1 / 7_1 / ATMOS / CUSTOM | — |
+| delivery.subtitle_type | 字幕类型 | NONE / BURN_IN / SRT / VTT / TTML / IMSC / CUSTOM | 具体语言与版本另存 |
+| delivery.qc_state | QC | PENDING / PASSED / FAILED / PASSED_WITH_EXCEPTION | 与提交/验收分开 |
+| delivery.submit_state | 提交 | NOT_SUBMITTED / SUBMITTED | 独立事实 |
+| delivery.delivery_state | 送达 | NOT_SENT / SENT / DELIVERED / FAILED | 技术送达事实 |
+| delivery.ack_state | 接收确认 | UNACKNOWLEDGED / ACKNOWLEDGED | 接收方确认收到 |
+| delivery.acceptance | 验收 | PENDING / ACCEPTED / REJECTED / SUPERSEDED | Reject 必须回 ReworkRequest/Task |
+| delivery.accepted_version | 验收版本 | AssetVersion ref | 固定当时版本，后续新变体不改写旧验收 |
+| delivery.authorization_check | 授权资料检查 | PASS / FAIL / UNKNOWN / NOT_APPLICABLE | 不作法律结论 |
+
+### 20.18 Task、Department、Handoff 的统一跨部门合同
+
+不同部门看到的任务卡、看板、统计必须查询同一 Task 和同一固定输入输出，不得复制部门专属正文。Department 只负责归类、默认视图和交接责任，不取代 Task owner 或项目权限。
+
+Task 的核心 canonical 字段：
+
+| canonical_key | 含义 | 规则 |
+| --- | --- | --- |
+| task.primary_department | 主部门 | 一个 Task 一个 primary Department；协作部门另存关系 |
+| task.owner_person | 主责 | 一名主责，多名协作；未分派显式 UNASSIGNED |
+| task.workflow_stage | 执行阶段 | UNSCHEDULED / READY / IN_PROGRESS / PENDING_HANDOFF / COMPLETED；CANCELLED / SKIPPED / CORRECTED 为独立动作/结果 |
+| task.estimate_duration | 预计工时 | Estimate，不等于 Planned |
+| task.planned_interval | 计划 | Planned |
+| task.actual_interval | 实际 | Actual |
+| task.input_bindings | 固定输入 | AssetVersion / Scene / Shot / Requirement 等明确 revision |
+| task.output_bindings | 固定产物 | AssetVersion 或明确业务输出 |
+| task.readiness | 可开始 | derived：READY/BLOCKED/UNKNOWN/OVERRIDDEN + reason codes |
+| task.input_stale | 输入过期 | derived boolean + source revisions；不得把 Task 历史抹成“从未完成” |
+| task.rework_source | 返工来源 | ReworkRequest relation，可空 |
+
+跨部门交接必须遵循统一 Handoff Contract。简单的一对一交接可以由 Task output binding + receipt fact 表达；满足 §12.1/§19.3 的多消费者、独立确认、更正/撤回或单独权限条件后升级为 MediaHandoff/独立 Handoff Entity。无论采用哪种物理模型，都必须拥有以下语义：
+
+```text
+source_task
+sender_department
+sender_person
+submitted_output_version[]
+input_revision_vector
+receiver_task
+receiver_department
+receiver_person_or_group
+acceptance_checklist_revision
+submitted_at
+received_at
+decision = PENDING | ACCEPTED | REJECTED | ACCEPTED_WITH_EXCEPTION | CORRECTED | SUPERSEDED
+decision_reason
+decision_actor
+decision_at
+```
+
+上游 Task = COMPLETED 不得自动伪造下游已经 ACCEPTED；下游 readiness 只有在其要求的固定输入、交接和其他 hard 条件满足后才能 READY。Reject 保留原提交并回到源 Task/ReworkRequest，不覆盖历史。
+
+### 20.19 Requirement → Preparation → Actual 三层口径
+
+所有跨部门“需要什么”必须与“已经准备好什么”“实际发生什么”分开。取消库房不等于取消准备确认。
+
+Canonical 模式：
+
+```text
+Requirement
+→ Time/Scope Demand
+→ Preparation / Readiness Confirmation
+→ Schedule / Task readiness
+→ Actual
+→ QA / ExperienceObservation
+```
+
+适用示例：
+
+- 灯光：`需要 Aputure 600D × 2` → 某 ShootDay `PREPARED 2` → 现场 `actual_used = 2`；
+- 道具：`需要 hero phone × 1` → `PREPARED` → 实际连续性状态；
+- 演员：角色需求 → CastAssignment → Availability/Call → Attendance/Actual performance；
+- 场地：Location requirement → Availability → AccessReady → ScheduleItem Actual；
+- 素材：需要 plate/input → Preview 可看 → Formal Handoff → 下游实际使用。
+
+Preparation 不得产生库存、采购、租赁到货、领用审批或成本结论。它只回答“针对这个明确任务/时段，负责部门确认准备到什么程度”。
+
+### 20.20 指标、统计与知识层可学习字段合同
+
+任何新 KPI、Dashboard、知识聚合或 AI 特征必须登记：
+
+```text
+metric_key
+grain
+numerator
+denominator
+exclusions
+dedupe_key
+time_scope
+timezone
+source_entities
+source_revisions
+planned/forecast/actual semantics
+permission_scope
+calculation_version
+unknown_handling
+drilldown_identity
+```
+
+没有这些定义的“完成率”“效率”“平均时长”“准备度”“交付率”不得成为正式指标。
+
+以下字段默认允许作为知识/估时校准维度，但必须满足去标识、样本门槛和 §16 的权限：
+
+- Scene：INT/EXT、Time of Day、场地类型、演员数量、主要需求类别；
+- Shot：Shot Size、Camera Movement、Production Method、焦段区间、镜头类型、是否变形宽银幕、支撑方式；
+- Lighting：fixture class、数量区间、Lighting Role、准备/Setup Actual；
+- Schedule：Prep/Setup/Rehearsal/Shoot/Reset/Move/Strike/Wrap Actual；
+- Personnel：人数和岗位组合的去标识统计，不把个人表现用于排名；
+- Media：ingest/integrity/backup/handoff 实际耗时；
+- Post：Task type、VFX task type、complexity、固定输入数量、rework count；
+- Review：修改类别、轮次、Rework/Reshoot 路径；
+- Delivery：variant 数量、QC/reject 类型、从 submit 到 accept 的实际时间；
+- QA：原因和人工解释，只补充 Actual，不替代 Actual。
+
+不应直接进入通用知识统计或 AI 特征的内容：私人联系方式、账号身份、未脱敏人员评价、合同/薪酬/费用、未经授权的项目正文、客户机密、以及任何通过自由文本推断出的敏感个人属性。
+
+### 20.21 导入别名、显示值与 canonical value
+
+导入层允许识别行业常见别名，但预览确认后必须映射到 canonical value，并保留原文。例如：
+
+| 输入原文 | canonical |
+| --- | --- |
+| 35mm / 35 MM / 35毫米 / 35 定 | `cinematography.focal_length_mm = 35`；“定焦”若可确认则另写 `lens.type=PRIME` |
+| 日光 / daylight / 5600K | `cinematography.white_balance_k = 5600`；如原文仅“日光”但无法确认精确值，则保留候选，不静默造 5600 |
+| 内 / INT / Interior | `scene.int_ext = INT` |
+| 夜 / N / NIGHT | `scene.time_of_day = NIGHT` |
+| 手持 / HH / handheld | `shot.camera_movement/support` 按可确认语义映射，不把运动与支撑错误合成 |
+| 24P / 24fps | rational 24/1 |
+| 23.98 / 23.976 | 24000/1001；若源只写 23.98，预览说明归一化 |
+| T2.8 / 2.8T | `cinematography.t_stop=2.8` |
+| ND 0.6 / ND4 | 只有映射规则和语境明确时归一到统一 ND 表示；否则保留候选 |
+
+别名表必须版本化。自动识别置信度不能替代人工确认；不同非空意义冲突继续按 §11 进入预览冲突。
+
+### 20.22 字典扩展、Custom 与兼容规则
+
+1. **Preset 不是数据库 enum 的同义词。** 焦段、色温、距离、功率、时间等连续量保存数值，Preset 只帮助快速输入。
+2. **Custom 允许但必须规范。** 对可扩展分类，Custom 建立项目范围 dictionary item，获得稳定 ID；不能每次保存一个任意字符串再靠文本去重。
+3. **全局字典与项目字典分层。** 通用行业语义可由系统字典提供；项目新增项只在项目内生效，除非经知识/管理员流程提升为受控全局字典版本。
+4. **历史不追随重命名漂移。** 引用保存稳定 ID，并可保存当时 label snapshot；重命名只改变当前显示。
+5. **删除不复活旧含义。** 删除字典项后历史仍可解释；重新创建同名项获得新 identity。
+6. **禁止万能 tags 代替正式字段。** Tag 可以辅助检索，但凡进入计算、排期、权限、交接、知识校准的语义必须有正式 canonical key。
+7. **禁止部门私有同义字段。** 例如剪辑页不能再建 `lens_mm`，摄影页不能另建 `focal`，两者必须引用 `cinematography.focal_length_mm`。
+8. **显示语言与存储 code 分离。** 中英文 UI、导出模板可自由本地化，数据库 code 不因界面语言改变。
+9. **未知新 code 拒绝静默写入。** 新客户端遇到旧服务不认识的 code 必须明确冲突/升级，不降级成字符串。
+10. **知识层不反向篡改项目事实。** EstimateProfile 可以建议焦段/工时/流程模式，但接受后仍由原业务命令写未来计划；Actual 和具体摄影/灯光参数不会被知识库自动改写。
+
+### 20.23 首批强制实现与验收
+
+Canonical Dictionary 的实现不要求一次建立 200 个数据库列。允许按实际 Entity 使用结构字段、typed relation、项目字段定义和字典服务组合实现，但不得牺牲上述语义。首批至少强制接通以下高价值字段：
+
+1. Scene：INT/EXT、Time of Day、Location、Story Day；
+2. Shot：Shot Size、Movement、Production Method、Fulfillment；
+3. Camera：Body、Lens、Focal Length、T-stop、ISO/EI、White Balance、Shutter、ND、Capture FPS；
+4. Lighting：Fixture Model/Type、CCT、Intensity、Role、Modifier、Required Quantity、Readiness、Actual Used；
+5. Person/Cast：Person、Character、Casting、Role、Department、Availability；
+6. Schedule：Plan/Item type、Planned/Baseline/Forecast/Actual、Lock、Result、Move breakdown；
+7. Sound：Capture Type、Mic、Sample Rate、Bit Depth、Sync、Usability；
+8. Media：Ingest、Integrity、Backup、Proxy、Usability、Formal Handoff；
+9. Post：Task type、fixed input/output AssetVersion、Editorial/VFX/Sound/Color 关键技术口径；
+10. Review/Rework：固定 target、Decision、Rework type/state/owner/replacement version；
+11. Delivery：resolution、aspect、fps、codec/container、color/audio target、QC、submit/deliver/ack/accept；
+12. Knowledge：Actual 来源、Observation、EstimateProfile applicability、calculation version。
+
+新增验收应覆盖：
+
+- 同一焦段用 `35`、`35mm`、`35毫米` 导入后归一到同一数值，原文仍可追溯；
+- 37.5mm 等非 preset 焦段可保存、筛选、导出、统计，不因 preset 被拒绝；
+- Lens Model=24–70 Zoom 不会自动把 Shot Focal Length 写成 24、70 或任意值；
+- Planned/Forecast/Actual 同时存在时看板和知识统计不会混用；
+- UNKNOWN、NOT_RECORDED、NOT_APPLICABLE、0、false 在查询和导出中保持不同；
+- Department/Role/Permission 三者不互相推导；
+- Task Completed 不会自动变成 Handoff Accepted、Review Approved、Shot Satisfied 或 Delivery Accepted；
+- Requirement 已确认但 Preparation=UNKNOWN 时 Schedule readiness 不能伪 READY；
+- Formal Handoff REJECTED 后原提交、固定版本、拒收原因仍可追溯；
+- Rework Task 完成但新版本未 Review Accepted 时 ReworkRequest 仍未 RESOLVED；
+- 新增 Custom dictionary item 有稳定 identity，同名删除重建不会继承旧关系；
+- KPI 下钻对象与 numerator/denominator 完全一致；
+- ExperienceProfile 使用的是明确 Actual，而不是最新 Planned/Forecast；
+- 导入、表格、详情、看板、导出和知识查询使用同一 canonical key，不存在第二套同义 owner。
+
+只有字段语义、单位、来源、版本、跨部门交接、计划/实际和统计口径同时通过，才能把某一业务域登记为“数据口径已闭环”。仅 UI 下拉框出现标准选项或数据库存在列，不构成完成。
+
