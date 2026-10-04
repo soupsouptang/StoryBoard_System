@@ -1,5 +1,13 @@
 # FRAMEFORGE 续作入口
 
+## 2026-10-04 辅助制作方式全选（本地代码4902e02）
+
+用户要求辅助制作方式标题后加入全选，勾选全选/取消全不选、与下方选项对齐。仅ShotDetailCard组内标题行使用下方同样两/三列网格与8px列gap，标题第一列/全选第二列，框16px/icon12px/文字14px行高20px保持；全部选中checked、无项unchecked、部分项indeterminate。操作调用现有setSecondary草稿，disabled复用权限/pending，仍需明确Save，原CAS/dirty/Esc/单一owner不变；没有API/DB或shared primitive改动。
+
+消费者检查接入实际表格选项合同，新增十项全选/半选/再全选/清空与不请求断言，原草稿/原子Save/冲突/no-op/取消通过；生产Webpack/TypeScript、diff及Regression Guard以43ce6a5为base通过。真实合成012点击0→10→9→10→0及半选同步，恢复基线显示已同步；Space全选、Esc询问/二次Esc丢弃收起、重开0项与REV6保持，没有业务写入。实际008十项已有选中只读查看，全选自动checked。2560/1440/1024/768/375/320全选框/文字与下方第二列X差0、与标题中心Y差0，卡片470px、组/根无横向溢出、辅助组无折行或独立滚动。临时viewport恢复、QA页关闭、用户页保留，截图outputs/shot-detail-method-select-all-2026-10-04.png仅本机。
+
+3002已更新.next/detail-method-select-all/standalone/apps/web，API8002/PG55432/媒体保持。代码/详细MD/ACTIVE本地提交4902e02，本文随后独立本地提交。GitHub具体仓库/分支授权仍未回复，未重试被拒上传；未知`:memory:.ses`保留不上传。不扩展旧待办或历史文件上传/下载实机门槛。
+
 ## 2026-10-04 顶部删除按钮微缩（本地代码bd40348）
 
 用户要求宽高各缩小约2–3px，icon不变。仅ShotDetailCard顶部删除按钮size-[29px]覆盖原32px，仍圆角8px正方形，Trash2 16×16px、原红色/aria-label/title/权限/disabled及确认/Esc保持。真实1440/1024/768/375/320按钮均29×29、icon16×16且中心偏差0，卡片470px/根无横向溢出；合成012点击开启删除确认，Esc取消，没有业务写入。生产Webpack/TypeScript、diff与Regression Guard以b88efd4为base通过；纯尺寸改动未新增镜像测试。临时viewport恢复、QA页关闭、原用户页面保留，截图outputs/shot-detail-delete-compact-2026-10-04.png仅本机。
