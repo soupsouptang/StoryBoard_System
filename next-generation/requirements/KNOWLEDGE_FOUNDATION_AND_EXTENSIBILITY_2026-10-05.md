@@ -2,7 +2,7 @@
 
 # FrameForge 知识库基础内容、类型与扩展合同
 
-版本：1.2，2026-10-05。状态：需求合同，尚未创建运行数据库、知识条目、索引、维护页面或权限规则。本版已形成制作常识、243 Topic/13公式和135个A–H组件基线；详见 [制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)、[制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md) 与 [A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)。
+版本：1.3，2026-10-05。状态：需求合同，尚未创建运行数据库、知识条目、索引、维护页面或权限规则。本版已形成制作常识、243 Topic/13公式和135个A–H组件基线，并据真实规模锁定分类最大深度为 Library→Domain→Component→可选Subcomponent；Topic/器材/软件/格式不作为继续嵌套的树层。
 
 ## 1. 总原则
 
@@ -50,6 +50,21 @@
 | H | 剪辑、声音、成片与交付 | 剪辑、素材、调色、声音、配音、音乐、混音、字幕、本地化、在线、QC、交付 |
 
 A–H 是**知识空间**，不等同项目实际 Department。同一 KnowledgeTopic、EquipmentModel、SoftwareProduct 或 FormatDefinition 可以被多个知识小库/Domain 引用，但 canonical 内容只有一个 owner，避免复制正文和规格。
+
+## 2.3 分类深度与知识实体分离
+
+分类树最大为：
+
+```text
+KnowledgeLibrary
+→ KnowledgeDomain
+→ KnowledgeComponent
+→ KnowledgeSubcomponent (optional)
+```
+
+含 Library 最多四级。KnowledgeTopic、EquipmentModel、SoftwareProduct、FormatDefinition、FormulaDefinition 都是独立实体，通过 relation / facet 连接分类节点，不能继续扩成第五层以上目录。
+
+这条规则同时解决“镜头→焦段→光圈”等错误：焦段、F-number、T-stop、FOV、Focus、Coverage 是并列知识维度，通过 relation/公式互联，不存在父子数据关系。品牌、型号、卡口Variant也通过结构化字段检索，不进入知识分类层。
 
 ## 3. 基础知识类型
 
