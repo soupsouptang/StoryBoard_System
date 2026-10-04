@@ -312,11 +312,11 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 | E1 身份/项目授权（A/B） | Identity/Permission：Person/Character/Member/identity、policy epoch；M1 表/FK/权限切换 | E0；H-01/03；FX-04/05/12。先列现有授权，再统一切换所有 read/write/media/history/export | 回退保留已建立成员事实，不放宽到全局 Role；未准备好时保持新功能关闭 |
 | E2 组织/基础关系（B） | Organization/Relations：Work/Episode links、SceneShot、Appearance、Location/Equipment；M2组织、M3场景关系、M4演员/资源链接 | E1，H-02/04；FX-03/04/06；同项目约束/历史 codec/旧 DTO 受控投影 | 多 Scene 已写入后拒绝单 FK downgrade；挂接事实保留，不改子项目 revision/history |
 | E3 实体字段（B） | Fields：扩展 project_columns scope/type、typed values/bindings/derived；M5 定义、M6 每个实际实体值转换 | E0/E1；对应实体依 E2；H-11；FX-02/07/14 | 非 Shot 值或新类型已写入后不能回旧模型；保留 IDs/source 与迁移 codec |
-| E4 任务/DAG（B） | Workflow：Task、模板固定版本、依赖、交接；M7 | E2，任务 custom 字段依 E3；H-05/07；FX-08/09 | 暂停自动推进，保留 task/edge/产物，不把它们塞回 ProductionStep |
+| E4 任务/DAG（B） | Workflow：Task、模板固定版本、依赖、交接；M7 | E2，任务 custom 字段依 E3；H-05/07；FX-08/09/26 | 暂停自动推进，保留 task/edge/产物；来源失效只按D-35停用未执行自动任务，不把它们塞回 ProductionStep |
 | E5 基础设施闭环（D） | Infrastructure：Outbox publisher/receipts、RQ Job、Storage adapter、provider包装；M8/M9 | E0/E1，包装 B0 被接受实现；FX-10/11/12。权限/Purge publication fence 必需 | 暂停调度与发布，已提交事件/job 保留可重放；不丢确认内容 |
-| E6 排期/发布投影（B 扩展） | Schedule：scenario/items/availability/资源、CallSheetRevision；M10 | E2/E4，耗时 job 依 E5；H-06/07/08；FX-06/09/13 | 保留 scenarios/current 唯一事实；已发布 revision 显式撤回，不能静默改旧文件 |
+| E6 排期/发布投影（B 扩展） | Schedule：scenario/items/availability/资源、CallSheetRevision；M10 | E2/E4，耗时 job 依 E5；H-06/07/08；FX-06/09/13/27 | 保留 scenarios/current 唯一事实；计划变化只自动更新通告Draft/重确认范围，发布与发送必须显式，旧revision不能静默改写 |
 | E7 数据入口/出口（C） | Import/Deliverable：Provider、冻结 Plan、typed lineage、Profile、artifacts；M11/M12 | B0/E2/E3/E5；H-08/09；FX-07/11/12/14/15 | 保留来源/receipt，旧端只能用兼容 profile；新多实体工程文件不能降成丢数据旧文件 |
-| E8 自动联动/索引（E） | Infrastructure：Rule DSL/causation、ImpactRun、正常制作联动/例外通知、search consumers；M13（随真实consumer建模） | E4/E5/E6；H-10具体执行权限；FX-10/11/14/17；正常联动自动更新、AI proposal受控 | 故障暂缓consumer并显式显示未完成/例外，保留可重放事件和事实；恢复后补算，不把人工逐项批准改成产品默认 |
+| E8 自动联动/索引（E） | Infrastructure：Rule DSL/causation、ImpactRun、正常制作联动/例外通知、search consumers；M13（随真实consumer建模） | E4/E5/E6，并等待E6-MEDIA-HANDOFF/E7-DELIVERY-LOOP可消费；H-10具体执行权限；FX-10/11/14/17；正常联动自动更新、AI proposal受控 | 故障暂缓consumer并显式显示未完成/例外，保留可重放事件和事实；恢复后补算；不自动发布通告、外发或取消已执行Task |
 | E9 前端补缺/集成（已授权，主执行者后续审查） | 只创建真正缺失页并接真实 API；现有 UI 以 montblanc08 最新提交为准，无本轮 UI 写入 | 按已接受 E1–E8 各 slice 接入，遵循§3.1交接与写集；FX-16；保留 explicit frontend gap | 停用新 contribution，保留 montblanc08 最新表/封面与服务端事实；不能退到弱权限/假保存 |
 
 早期不需等待所有长期域才能验证基础 seam：以一个 Equipment 实体从 E2/E3 到 query/permission/import/export/job/event 做贯穿 fixture，FX-14 失败即修该 seam，不能靠“目录建齐”通过。Presence Redis 与真实 AI/TTS 的接入可以后续独立排期，不是本轮文档完成条件，也不能因此声称总纲基础全部完成。
@@ -343,7 +343,7 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 | FX-14 新域插入 | Equipment实体＋设备许可custom字段＋Shot/Task/Schedule链接＋授权query＋import/export＋audit/event | 不新增Shot核心字段，不改巨大UI shell/万能graph；使用既定seams。迁移后历史/字段/Purge覆盖；有真实贯穿consumer，不只registry描述。 |
 | FX-15 二次导入/交付 | 120镜头合成XLSX多行表头、嵌图、同字段多列、enum冲突、同名人；改文件重导；不同非空值；预览后并发改；PDF/ZIP排除人联系和图片 | CREATE/MERGE/UNCHANGED/CONFLICT/AMBIGUOUS明确；仅安全空值填充；plan commit不重猜；unchanged无假变更；成品/预览/附件/QR/JSON都符合allowlist；工程文件回读保持typed多Scene关系与namespace。 |
 | FX-16 前端（deferred） | 对被接受slice真浏览器读写、403/409、保存失败/重试、dirty draft与refetch、keyboard/IME/localundo、明暗、1440×900和1920×1080桌面横屏/正常缩放 | 只server ack为saved；query/server/draft/derived分层；失效不覆盖草稿；稳定slot权限；表格菜单/选中/列控件及整行照片封面不退化；focus/关闭/动画可打断。按最新用户范围不新增窄屏/缩放验收或产品Reduced Motion开关，不用build代替视觉PASS。 |
-| FX-17 制作联动闭环 | 两Scene/六Shot/两Person、摄影/灯光/制片/剪辑、两拍摄日、一共享设备、一外协Task、一交付变体。将周三计划移至周五：一人不可用、设备时间锁定、交付目标固定；正常链中途故障、重复event与undo | 未来人员/资源准备/通告当前修订/素材交接/后期/交付预测自动更新，可成立项不等确认；三个例外各有原因/负责人，原基准与已完成事实不改。旧通告/确认保留、新重要变化需重确认；失败目标显示并重试，不重复任务/通知。仅制作闭环，不包含费用、付款、合同经营或Take。 |
+| FX-17 制作联动闭环 | 两Scene/六Shot/两Person、摄影/灯光/制片/剪辑、两拍摄日、一共享设备、一外协Task、一交付变体。将周三计划移至周五：一人不可用、设备时间锁定、交付目标固定；正常链中途故障、重复event与undo | 未来人员/资源准备、CallSheet Draft/需重确认范围、素材预计交接、后期/交付预测自动更新；系统不自动Publish/Send。任务失效按D-35分流，Formal MediaHandoff按D-37门槛。三个例外各有原因/负责人，原基准与已完成/已发布事实不改；失败目标显示并重试，不重复任务/通知。仅制作闭环，不包含费用、付款、合同经营或Take。 |
 | FX-18 同一共享视图 | A/B同view，C另一view；并发改宽/高/筛选/排序/分组；断线重连、列删除、自动尺寸、undo与第三方后来写 | 配置同revision同步，选择/光标/草稿独立；冲突保留草稿；个人布局不双写共享配置；自动尺寸同结果，no-op不增版本，内容hash不变；已接受表格UI接入另由指定owner验收 |
 | FX-19 跨项目身份 | 两项目同名Person、独立场地、显式共享身份、时间冲突、解绑、无权项目及并发排期 | 未关联不猜合并；授权后按共享人员/场地身份发现冲突；摘要不透出无权项目正文/计数，未知不假可用；器材不建立库存身份或预留 |
 | FX-20 动态继承/环境 | S1/S2共同Shot；增补/排除/替换一个来源项，修改Scene、清override、删除/恢复来源；主Scene外日、另一Scene内夜；显式地点与无主场景 | 未覆盖要求动态更新，来源/override可解释；恢复取当前来源，来源新ID不套旧override；实际出演/Actual不被推定；环境显式值优先、主值附差异、无主待确认；资源计量按总纲确认规则测试 |
@@ -357,6 +357,9 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 | 项目独立授权、人员项目内身份 | 组织仅分类；无账号人员可登记，同名不合并，账号明确关联 |
 | 多场景、动态要求和逐项覆盖 | 主场景可无，镜头篇章独立；实际出演不从要求推定；环境明确值优先，主值显示差异 |
 | 单主责与固定产物交接 | 独立审片不自确认，跳过须管理权限与理由且检查下游输入 |
+| 自动任务失效 | 只有系统自动生成、未开始、无Actual/产物/交接的Task可自动停用；已开始、已交接、有产物或人工创建的Task保留并提示负责人 |
+| 通告发布边界 | 自动联动只更新Draft和需重确认范围；Publish与Send均须有权限的人显式执行，旧revision不随排期漂移 |
+| 素材正式交接 | Formal Handoff必须完整性通过并满足项目配置的BackupVerification；Preview可做草稿预处理但不满足正式input readiness |
 | 九个初始列及共享配置 | 预设按需添加；内置不永久删除；SavedView 是共享配置唯一负责人 |
 | 器材知识与需求 | 取消库房；知识仅型号与基础知识，不写使用方法；来源识别生成需求候选，时段清单不承诺实际可用 |
 | 时间与数量 | 独立需求相加，明确共用一次；按已有排期关联，未排期另列，来源、型号、单位和时间可追溯 |
