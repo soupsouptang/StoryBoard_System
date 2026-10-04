@@ -1,5 +1,13 @@
 # FRAMEFORGE 续作入口
 
+## 2026-10-04 详情操作全部置顶（本地代码d32a7a2）
+
+最新用户截图要求已实施：移除底部同步/保存/取消footer，顶部按镜头/REV/同步状态/删除icon排列、gap8px；删除仅Trash2 icon，32×32px圆角正方形，aria-label/title及原二次确认保留。右上保存取消各64×32px、同字号、均无icon。卡片470px本体、body16px内部留白和字段16px间距、既有草稿/权限/pending/原子Save/dirty/Esc处理函数不变；没有API/DB或其他页面改动。
+
+实机桌面body338→403px增加65px，footer不存在；2560及五种1440/1024/768/375/320宽度均470px、按钮64×32/32×32和padding16、无根横向溢出；窄屏顶部组自然换行保持操作可达。真实合成项目no-op Save提示保存成功且REV6保持、不收起；删除icon开启确认，Esc退出；临时标题变化后顶部未保存提示，顶部Cancel询问、再次Esc丢弃收起，重开原值。现有shot-detail-card检查、最终Webpack生产构建/TypeScript、diff及Regression Guard以fb6e02f为base通过。截图outputs/shot-detail-header-actions-2026-10-04.png仅本机；临时viewport与QA页已清理，原页面保留。
+
+3002后台Web已更新`.next/detail-header-actions/standalone/apps/web`，API8002/PG55432及媒体不变。代码与详细MD/ACTIVE本地提交d32a7a2，续作MD随后本地提交；GitHub具体仓库授权仍未获得，未重试/绕过自动审批拒绝，不声称上传。未知`:memory:.ses`保留未上传，不扩展其他旧待办。此段覆盖历史底部固定footer规则，布局owner及前述文件实机门槛不变。
+
 ## 2026-10-04 详情高度标准基准bug修复（本地代码f11427d）
 
 用户截图指出内容撑高镜头行会导致详情按倍数增高。真实样本006标准行84.594px、008行313px，旧详情008达到1252px；ShotDetailSlot现固定为原标准布局470px，只观察内容区宽度，取消相邻TR测量/订阅。其他表格行高/布局、末行借空间、固定左图、内部滚动和保存语义保持，此段覆盖此前实测行高×4计算。未修改项目数据、API、DB或shared primitives。
