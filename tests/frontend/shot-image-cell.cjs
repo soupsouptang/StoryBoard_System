@@ -50,6 +50,8 @@ assert.equal(requests[0].file, file);
   view.props.children[0].props.onChange({target:{files:[file],value:''}});view=render();
   assert.equal(requests.length,1,'Replacing in an open preview must not upload before Lock');
   assert.equal(view.props.children[2].props.file,file);
+  view.props.children[2].props.onHistoryRestored();view=render();assert.equal(view.props.children[2].props.file,null,'Acknowledged Undo discards an unlocked replacement');
+  view.props.children[0].props.onChange({target:{files:[file],value:''}});view=render();
   view.props.children[2].props.onClose();view=render();
   assert.equal(view.props.children[2].props.file,null,'Closing discards the staged replacement');
   assert.equal(saves.length,0);

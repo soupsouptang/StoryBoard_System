@@ -1,5 +1,9 @@
 # FRAMEFORGE canonical owner matrix
 
+## 2026-10-04 图片浮窗历史接入
+
+ShotImagePreview独占两入口的浮窗DOM/按钮/快捷键及未锁定调整；详情frameUndo/frameRedo仍由ShotDetailCard拥有，表格已确认历史仍由原HistoryService拥有。useProjectCommandHistory只是从ProjectHistoryControls提取的共享CAS/query/Command客户端，项目菜单和窗口都消费该适配，不新增历史数据库或独立持久owner。[记录](SHOT_FRAMING_2026-10-04.md)。
+
 ## 2026-10-04 载入原图
 
 载入原图沿用ShotImagePreview/useShotFraming及既有detail Command；frame_fit=cover|contain仍由MediaPresentation持久化，image_framing权威成品、Canvas草稿/下载，无新owner/DDL。HistoryService记录同次业务命令的Shot token效果以支持连续构图撤销，外部修改精确冲突保护保持。 [实施与证据](SHOT_ORIGINAL_FIT_2026-10-04.md)。

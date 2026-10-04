@@ -1,5 +1,17 @@
 # 分镜画面构图、锁定与双击复位 · 2026-10-04
 
+## 最新追加：两个入口共用撤销/重做控件
+
+用户要求表格分镜小图与详情大图打开同一版本，并明确不能复制两套近似控件。两个入口继续只调用ShotImagePreview；标题行中的Undo2/Redo2、32px按钮/16px图标及快捷键仅在该组件定义一份，始终显示、按历史/权限/pending置灰。详情传入原本地frameUndo/frameRedo，不提前提交；表格入口接入原项目HistoryService，恢复项目最新可撤销/重做步骤，title包含该步骤标签。小图仍只有Lock提交，详情Lock仍进草稿后Save。
+
+将原ProjectHistoryControls的query/Command/CAS/pending/重复请求保护及反馈提取为useProjectCommandHistory，项目菜单和图片窗口共用同一客户端适配；原项目＋用户query key、revision及后端权限/审计/HistoryService保持，不另建持久历史。表格窗口仅在open时启用该query。成功等待ACK及cache失效后刷新画面并清除未锁定替换/调整；失败保留画面，窗口内显示错误。统一⌘Z/Ctrl+Z、⌘⇧Z/Ctrl+Shift+Z/Ctrl+Y处理，不抢输入框/中文输入法/重复按键；Dialog外的原全局快捷键规则保持。没有API/DB/依赖/共享primitive变化。
+
+五份针对检查通过：project-command-history验证真实hook的CAS/ACK/重复/pending/disabled/失败恢复；shot-framing-preview验证同一消费者两种历史派发、失败保留与ACK刷新，原坐标/取消/双击/冲突保持；shot-image-cell验证撤销成功清除未锁定替换；shot-detail-card与history-shortcuts保持。正式Webpack/TypeScript、diff通过。
+
+真实3002合成012：小图125%Lock→窗口Undo100%→Redo125%，Ctrl+Z/Ctrl+Y恢复，最后Undo回原100%基线；详情草稿125%Lock→Undo100%→Redo125%，Meta+Z/Meta+Shift+Z同结果，再Undo并Esc退出，详情版本29保持且已保存，无详情业务提交。实际97镜头008两个入口只读验收，各显示同样32px/16px按钮。1440/1024/768/375/320共用窗口宽608/400/288/288/288px，根/Dialog无横向溢出，两个按钮均可见；标准1280两入口宽528px一致。viewport恢复、QA页关闭，证据outputs/shot-preview-history-table-2026-10-04.jpg及shot-preview-history-detail-2026-10-04.jpg仅留本机。
+
+本机3002更新.next/preview-history standalone（部署时PID68349），API8002/PG55432与媒体保持，无DDL。未知:memory:.ses原样保留未stage。按用户已授权soupsouptang/StoryBoard_System master正常快进同步，代码先上传、续作MD随后独立更新上传；不扩展其他旧待办。
+
 最新追加「载入原图」完整居中contain、默认上传cover及连续构图撤销修复，现有Lock/Esc/双下载保持。见[后续记录](SHOT_ORIGINAL_FIT_2026-10-04.md)；以下为此前阶段证据。
 
 ## 最新确认规则

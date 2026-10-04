@@ -3,15 +3,19 @@ import { useEffect, useRef, useState } from 'react';
 import type { Shot } from '@frameforge/types';
 import { Button, Dialog, DialogContent, DialogDescription, DialogTitle, Icons } from '@frameforge/ui';
 import { useShotFraming } from '@/lib/hooks/useShotFraming';
+import { useProjectCommandHistory } from '@/lib/hooks/useProjectCommandHistory';
 import { drawShotFraming, framingBlob, fullFrame, originalFrame, panFraming, projectFrameRatio, zoomFraming, type ShotFraming } from '@/lib/shot-framing';
 
 export function ShotImagePreview({ shot, aspectRatio, open, onClose, onReplace, onLock, disabled, file, framing,
-  onUndo, onRedo, canUndo, canRedo }: {
+  onUndo, onRedo, canUndo, canRedo, onHistoryRestored }: {
   shot: Shot; aspectRatio: string; open: boolean; onClose: () => void; onReplace: () => void;
   onLock: (framing: ShotFraming) => Promise<unknown> | void; disabled: boolean;
   file?: File | null; framing?: ShotFraming | null;
   onUndo?: () => void; onRedo?: () => void; canUndo?: boolean; canRedo?: boolean;
+  onHistoryRestored?: () => void;
 }) {
+  const localHistory = Boolean(onUndo);
+  const history = useProjectCommandHistory(shot.production_id, open && !localHistory);
   const source = useShotFraming(shot, open && !file);
   const [snapshot, setSnapshot] = useState<typeof source.data>();
   const [acknowledgement, setAcknowledgement] = useState(0);
@@ -22,6 +26,7 @@ export function ShotImagePreview({ shot, aspectRatio, open, onClose, onReplace, 
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
   const [locked, setLocked] = useState(false);
+  const [historyPending, setHistoryPending] = useState(false);
   const [bounds, setBounds] = useState({ center: 0, width: 0, maxHeight: 0 });
   const stage = useRef<HTMLDivElement>(null), canvas = useRef<HTMLCanvasElement>(null);
   const drag = useRef<{ id: number; x: number; y: number } | null>(null);
@@ -67,17 +72,17 @@ export function ShotImagePreview({ shot, aspectRatio, open, onClose, onReplace, 
     const element = stage.current;
     if (!element || !open) return;
     const wheel = (event: WheelEvent) => {
-      if (disabled || pending || !image) return;
+      if (disabled || pending || historyPending || !image) return;
       event.preventDefault(); adjusted.current=true; setLocked(false);
       setTransform(current => current ? zoomFraming(current,current.scale * Math.exp(-event.deltaY * .002)) : current);
     };
     element.addEventListener('wheel', wheel, { passive: false });
     return () => element.removeEventListener('wheel', wheel);
-  }, [open, disabled, pending, image]);
+  }, [open, disabled, pending, historyPending, image]);
   const zoom = transform ? Math.round(transform.scale * 100) : 100;
   const setScale = (value: number) => { adjusted.current=true; setLocked(false); setTransform(current => current ? zoomFraming(current,value / 100) : current); };
-  const reset = () => { if (!image || pending || disabled) return; adjusted.current=true; setTransform(fullFrame(aspectRatio, image.naturalWidth, image.naturalHeight)); setLocked(false); drag.current = null; };
-  const loadOriginal = () => { if (!image || pending || disabled) return; adjusted.current=true; setTransform(originalFrame(aspectRatio, image.naturalWidth, image.naturalHeight)); setLocked(false); drag.current=null; };
+  const reset = () => { if (!image || pending || historyPending || disabled) return; adjusted.current=true; setTransform(fullFrame(aspectRatio, image.naturalWidth, image.naturalHeight)); setLocked(false); drag.current = null; };
+  const loadOriginal = () => { if (!image || pending || historyPending || disabled) return; adjusted.current=true; setTransform(originalFrame(aspectRatio, image.naturalWidth, image.naturalHeight)); setLocked(false); drag.current=null; };
   const frameHeight = Math.max(80, Math.min((bounds.width - 34) / frameRatio, bounds.maxHeight - 180));
   const finishDrag = () => { drag.current = null; };
   const download = async (original: boolean) => {
@@ -96,7 +101,7 @@ export function ShotImagePreview({ shot, aspectRatio, open, onClose, onReplace, 
     } catch (cause) { setError(cause instanceof Error ? cause.message : '下载失败'); }
   };
   const lock = async () => {
-    if (!transform || !image || disabled || pending) return;
+    if (!transform || !image || disabled || pending || historyPending) return;
     setPending(true); setError('');
     try {
       const before=framing?.transform || (!file ? snapshot?.presentation.transform : null);
@@ -108,20 +113,41 @@ export function ShotImagePreview({ shot, aspectRatio, open, onClose, onReplace, 
     catch (cause) { setError(cause instanceof Error ? cause.message : '锁定失败，调整已保留'); }
     finally { setPending(false); }
   };
-  const editDisabled = disabled || pending || !image || !transform;
+  const restoreHistory = async (direction: 'undo' | 'redo') => {
+    if (disabled || pending || historyPending) return;
+    if (localHistory) {
+      (direction === 'undo' ? onUndo : onRedo)?.();
+      setLocked(false);
+      return;
+    }
+    setHistoryPending(true);
+    try {
+      if (await history.run(direction)) {
+        onHistoryRestored?.();
+        adjusted.current = false;
+        setAcknowledgement(current => current + 1);
+        setLocked(false);
+        drag.current = null;
+      }
+    } finally { setHistoryPending(false); }
+  };
+  const undoAvailable = localHistory ? canUndo : history.data?.can_undo;
+  const redoAvailable = localHistory ? canRedo : history.data?.can_redo;
+  const historyDisabled = disabled || pending || historyPending || (!localHistory && history.pending);
+  const editDisabled = disabled || pending || historyPending || !image || !transform;
   return <Dialog open={open} onOpenChange={next => { if (!next) onClose(); }}>
     <DialogContent aria-describedby={undefined} style={{ left: bounds.center || '50%', width: bounds.width || '50%', maxWidth: 'none', maxHeight: bounds.maxHeight || '85vh' }}
       className="gap-3 overflow-y-auto p-4" closeLabel="关闭画面预览" onKeyDown={event => {
         const target = event.target as HTMLElement;
-        if (target.closest('input,textarea') || !(event.metaKey || event.ctrlKey) || event.altKey || pending) return;
+        if (target.closest('input,textarea') || !(event.metaKey || event.ctrlKey) || event.altKey || event.repeat || event.nativeEvent.isComposing || historyDisabled) return;
         const key = event.key.toLowerCase();
-        if (key === 'z' && onUndo) { event.preventDefault(); event.stopPropagation(); (event.shiftKey ? onRedo : onUndo)?.(); }
-        else if (key === 'y' && event.ctrlKey && onRedo) { event.preventDefault(); event.stopPropagation(); onRedo(); }
+        if (key === 'z') { event.preventDefault(); event.stopPropagation(); void restoreHistory(event.shiftKey ? 'redo' : 'undo'); }
+        else if (key === 'y' && event.ctrlKey && !event.metaKey && !event.shiftKey) { event.preventDefault(); event.stopPropagation(); void restoreHistory('redo'); }
       }}>
       <div className="flex items-center gap-2 pr-6">
         <DialogTitle className="text-sm">镜头 {shot.display_number} · 分镜画面</DialogTitle>
-        {onUndo && <Button variant="ghost" size="icon-sm" aria-label="撤销锁定构图" title="撤销锁定构图" disabled={!canUndo || pending} onClick={onUndo}><Icons.Undo2 /></Button>}
-        {onRedo && <Button variant="ghost" size="icon-sm" aria-label="重做锁定构图" title="重做锁定构图" disabled={!canRedo || pending} onClick={onRedo}><Icons.Redo2 /></Button>}
+        <Button variant="ghost" size="icon-sm" aria-label="撤销锁定构图" title={localHistory ? '撤销锁定构图（⌘Z / Ctrl+Z）' : `撤销${history.data?.undo_label ? '：' + history.data.undo_label : ''}（⌘Z / Ctrl+Z）`} aria-keyshortcuts="Meta+Z Control+Z" disabled={!undoAvailable || historyDisabled} onClick={() => void restoreHistory('undo')}><Icons.Undo2 /></Button>
+        <Button variant="ghost" size="icon-sm" aria-label="重做锁定构图" title={localHistory ? '重做锁定构图（⌘⇧Z / Ctrl+Shift+Z / Ctrl+Y）' : `重做${history.data?.redo_label ? '：' + history.data.redo_label : ''}（⌘⇧Z / Ctrl+Shift+Z / Ctrl+Y）`} aria-keyshortcuts="Meta+Shift+Z Control+Shift+Z Control+Y" disabled={!redoAvailable || historyDisabled} onClick={() => void restoreHistory('redo')}><Icons.Redo2 /></Button>
       </div>
       <DialogDescription className="sr-only">固定项目画幅 {aspectRatio}。按住鼠标左键移动画面，滚轮缩放，双击百分比恢复居中满框。只有锁定画面才确认，Esc 或点击窗外取消未锁定调整。</DialogDescription>
       <div ref={stage} data-preview-stage data-frame-ratio={aspectRatio} className="flex touch-none select-none items-center justify-center overflow-hidden rounded-md bg-black"
@@ -150,12 +176,13 @@ export function ShotImagePreview({ shot, aspectRatio, open, onClose, onReplace, 
             <Button variant="outline" size="sm" aria-label="下载构图后的画面" disabled={!image || !transform} onClick={() => void download(false)} className="h-8 text-sm"><Icons.Download />构图下载</Button>
             <Button variant="outline" size="sm" aria-label="下载原图" disabled={!blob} onClick={() => void download(true)} className="h-8 text-sm"><Icons.Download />原图下载</Button>
             </div>
-            <Button variant="outline" size="sm" aria-label="替换分镜画面" disabled={disabled || pending} onClick={onReplace} className="col-start-3 row-start-1 h-8 text-sm"><Icons.RefreshCw />替换</Button>
+            <Button variant="outline" size="sm" aria-label="替换分镜画面" disabled={disabled || pending || historyPending} onClick={onReplace} className="col-start-3 row-start-1 h-8 text-sm"><Icons.RefreshCw />替换</Button>
           </div>
         </div>
       </div>
       {locked && <p role="status" className="text-xs text-muted-foreground">{onUndo ? '构图已锁定至草稿，点击详情卡片保存后提交。' : '画面已锁定。'}</p>}
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {!localHistory && history.message && <p role="alert" className="text-sm text-destructive">{history.message}</p>}
     </DialogContent>
   </Dialog>;
 }

@@ -1,5 +1,9 @@
 # FrameForge VNext 原生重构工作簿
 
+## 2026-10-04 图片浮窗统一历史控件
+
+表格与详情仍共用ShotImagePreview，Undo/Redo按钮/快捷键只保留一份；表格接原项目历史，详情接原构图草稿。项目菜单与浮窗共用useProjectCommandHistory客户端，未复制持久owner。两入口真实撤销/重做、取消/基线恢复、五宽度及五份针对检查/生产构建通过；3002为preview-history，API/DB保持。[记录](SHOT_FRAMING_2026-10-04.md)。
+
 ## 2026-10-04 详情版本与保存状态
 
 用户追加的详情header已实现：第N版修改（三位占位）、#50FF00加粗绿灯/已保存、灰色未保存、亮红删除icon及16px间距；成功/no-op不弹窗，失败/冲突保留。真实合成保存ACK/项目撤销恢复、删除Esc与五宽度无溢出通过；实际008只读验收。3002为detail-save-status-final，API/PG/业务owner保持，不扩展其他待办。[实施与证据](SHOT_DETAIL_2026-10-04.md)。

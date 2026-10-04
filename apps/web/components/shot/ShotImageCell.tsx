@@ -61,6 +61,7 @@ export function ShotImageCell({ shot, disabled = false, preview = true }: { shot
       </Button>
       {preview && <ShotImagePreview shot={shot} aspectRatio={aspectRatio} open={previewOpen} file={replacement}
         onClose={() => {setPreviewOpen(false); setReplacement(null);}} onReplace={() => inputRef.current?.click()}
+        onHistoryRestored={() => setReplacement(null)}
         onLock={async framing => {const saved=await save.mutateAsync({id:shot.id,revision:shot.revision,changes:{},custom_values:[],image:replacement,framing}); setReplacement(null); return saved;}} disabled={disabled || upload.isPending || save.isPending} />}
       {error && <span role="alert" className="block text-[10px] text-destructive">{error}</span>}
     </div>

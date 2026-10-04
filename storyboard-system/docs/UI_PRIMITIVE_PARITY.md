@@ -1,5 +1,9 @@
 # UI primitive parity ledger
 
+## 2026-10-04 图片历史按钮共用
+
+沿用现有Button/icon-sm与Icons.Undo2/Redo2，两个入口只调用ShotImagePreview中的同一组业务控件；没有新增primitive/图标库。Dialog继续负责Esc/外部点击/焦点，历史按钮和快捷键由该业务组件统一分派，五宽度真实可见。[记录](SHOT_FRAMING_2026-10-04.md)。
+
 ## 2026-10-04 详情保存状态组合
 
 ShotDetailCard局部状态组合新增aria-hidden绿灯并沿用role=status，颜色/字重按明确用户要求覆盖；删除按钮复用Button/Icons.Trash2，显式普通及dark颜色确保主题一致，几何尺寸不变。未改共享primitive/主题token/依赖；错误Dialog继续拥有关闭/Esc。五宽度真实渲染及保存反馈验证通过。[记录](SHOT_DETAIL_2026-10-04.md)。
