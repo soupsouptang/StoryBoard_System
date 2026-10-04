@@ -308,6 +308,147 @@ A01/A02/A03
 → A09 Time Calibration
 ```
 
+
+
+## 10.9 专业知识域 → Component 映射
+
+该映射是实现期稳定桥，不按名称猜归属。一个专业知识域可以映射多个 Component，但不得跨库改写岗位定义。
+
+### A
+
+| Domain | Component |
+| --- | --- |
+| KA-01 | KLC-A01 |
+| KA-02 | KLC-A02、KLC-A03、KLC-A04、KLC-A05 |
+| KA-03 | KLC-A07 |
+| KA-04 | KLC-A06、KLC-A07、KLC-A08 |
+| KA-05 | KLC-A06 |
+
+### B
+
+| Domain | Component |
+| --- | --- |
+| KB-01 | KLC-B01 |
+| KB-02 | KLC-B02 |
+| KB-03 | KLC-B03 |
+| KB-04 | KLC-B04 |
+| KB-05 | KLC-B05、KLC-B06 |
+| KB-06 | KLC-B07 |
+| KB-07 | KLC-B08 |
+| KB-08 | KLC-B09 |
+| KB-09 | KLC-B10、KLC-B11 |
+| KB-10 | KLC-B12 |
+
+### C
+
+| Domain | Component |
+| --- | --- |
+| KC-01 | KLC-C01 |
+| KC-02 | KLC-C02、KLC-C03、KLC-C04 |
+| KC-03 | KLC-C05、KLC-C07 |
+| KC-04 | KLC-C06、KLC-C07 |
+| KC-05 | KLC-C06 |
+| KC-06 | KLC-C08、KLC-C09 |
+| KC-07 | KLC-C03、KLC-C07 |
+| KC-08 | KLC-C10 |
+| KC-09 | KLC-C11 |
+| KC-10 | KLC-C12、KLC-C13 |
+
+### D
+
+| Domain | Component |
+| --- | --- |
+| KD-01 | KLC-D01 |
+| KD-02 | KLC-D02、KLC-D06 |
+| KD-03 | KLC-D04 |
+| KD-04 | KLC-D07 |
+| KD-05 | KLC-D05、KLC-D06 |
+| KD-06 | KLC-D08 |
+| KD-07 | KLC-D09、KLC-D10、KLC-D11、KLC-D12 |
+| KD-08 | KLC-D13 |
+| KD-09 | KLC-D14、KLC-D15、KLC-D16 |
+| KD-10 | KLC-D17、KLC-D18 |
+| KD-11 | KLC-D17、KLC-D18 |
+| KD-12 | KLC-D19 |
+| KD-13 | KLC-D20、KLC-D21、KLC-D22 |
+
+### E
+
+| Domain | Component |
+| --- | --- |
+| KE-01 | KLC-E01 |
+| KE-02 | KLC-E02、KLC-E03、KLC-E04 |
+| KE-03 | KLC-E05、KLC-E06 |
+| KE-04 | KLC-E07 |
+| KE-05 | KLC-E08 |
+| KE-06 | KLC-E09、KLC-E10 |
+| KE-07 | KLC-E11、KLC-E12、KLC-E13、KLC-E14 |
+
+### F
+
+| Domain | Component |
+| --- | --- |
+| KF-01 | KLC-F01 |
+| KF-02 | KLC-F02、KLC-F03 |
+| KF-03 | KLC-F04 |
+| KF-04 | KLC-F05、KLC-F06、KLC-F07 |
+| KF-05 | KLC-F08、KLC-F09 |
+| KF-06 | KLC-F10、KLC-F11 |
+| KF-07 | KLC-F12、KLC-F18 |
+| KF-08 | KLC-F13 |
+| KF-09 | KLC-F14 |
+| KF-10 | KLC-F15 |
+| KF-11 | KLC-F16、KLC-F17 |
+
+### G
+
+| Domain | Component |
+| --- | --- |
+| KG-01 | KLC-G01、KLC-G02 |
+| KG-02 | KLC-G03、KLC-G04 |
+| KG-03 | KLC-G05 |
+| KG-04 | KLC-G06、KLC-G07 |
+| KG-05 | KLC-G08 |
+| KG-06 | KLC-G09、KLC-G10 |
+| KG-07 | KLC-G11 |
+| KG-08 | KLC-G12 |
+| KG-09 | KLC-G13 |
+| KG-10 | KLC-G14、KLC-G15、KLC-G16 |
+| KG-11 | KLC-G17、KLC-G18 |
+| KG-12 | KLC-G19、KLC-G20 |
+| KG-13 | KLC-G21、KLC-G22 |
+| KG-14 | KLC-G23、KLC-G24 |
+| KG-15 | KLC-G25 |
+
+### H
+
+| Domain | Component |
+| --- | --- |
+| KH-01 | KLC-H01、KLC-H02 |
+| KH-02 | KLC-H03 |
+| KH-03 | KLC-H04 |
+| KH-04 | KLC-H05、KLC-H06 |
+| KH-05 | KLC-H07、KLC-H08、KLC-H09、KLC-H10 |
+| KH-06 | KLC-H11 |
+| KH-07 | KLC-H12、KLC-H13 |
+| KH-08 | KLC-H14 |
+| KH-09 | KLC-H15、KLC-H16 |
+| KH-10 | KLC-H17 |
+| KH-11 | KLC-H18 |
+| KH-12 | KLC-H19、KLC-H20、KLC-H21 |
+
+岗位最终路径是：
+
+```text
+JOB_CATALOG role
+→ RoleKnowledgeBinding
+→ KA–KH ProfessionalKnowledgeDomain
+→ KLC Component
+→ PC-* shared Topic / 专业增量 Topic
+```
+
+这条链只用于知识检索/组织，不授予权限、不创建 Task、不决定项目 Department。
+
 ## 11. 跨组件 Relation 类型
 
 组件之间首批固定：
