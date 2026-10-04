@@ -16,12 +16,12 @@
 → 基础大类知识
 → Equipment / Software / Format 对常识能力的实现与约束
 → A–H 专业知识小库
-→ 小库内部组件
+→ 小库内部 Component
 → 跨组件 relation
-→ 根据真实数据决定 Domain 最大层级
+→ KnowledgeLibrary → Domain → Component → 可选Subcomponent（最大分类深度）
 ```
 
-本阶段只完成前四步和首批 seed。暂不继续细分 A–H 内部最终树深。
+共享常识、A–H组件和最大分类深度均已形成规划基线。后续只在满足独立维护/查询/岗位部分需求时增加 Subcomponent；Topic、器材、软件、格式继续通过 relation/facet 组织，不再向下增加第五级目录。
 
 ## 2. 基础知识内容模板
 
