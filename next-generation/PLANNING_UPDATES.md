@@ -2,6 +2,14 @@
 
 本记录只跟踪 `next-generation/` 的文档储备，不是当前版本工作包或应用实施进度。设计参数未定稿，重构未启动。
 
+## 2026-10-05：锁定知识分类最大四级
+
+在243个共享Topic、13个Formula、135个A–H Component和83/83专业Domain已经实际展开后，分类深度不再保持未决。当前规则锁定为 `KnowledgeLibrary → KnowledgeDomain → KnowledgeComponent → 可选 KnowledgeSubcomponent`，含Library最多四级、不含Library最多三级。
+
+KnowledgeTopic、EquipmentModel、SoftwareProduct、FormatDefinition、FormulaDefinition全部保持独立实体，不作为第五级目录。Focal Length、F-number、T-stop、FOV、Focus等是并列Topic/Specification，通过typed relation和Formula关联，明确禁止形成“摄影→镜头→焦段→光圈”这类错误树。品牌、型号、Variant使用结构化字段/Facet检索；超过Subcomponent后继续组织内容时使用Topic、Tag、Relation、Facet或SpecificationDefinition，而不是第五/第六层目录。
+
+Subcomponent只在稳定维护边界、独立查询/输入输出、岗位只需部分内容或组件内容量确实过大时建立。同步更新知识基础合同1.3、知识总纲2.7、A–H组件1.2以及KL-35/36验收；Seed/Topic Catalog和README中的旧“层级未锁定”当前口径已清理。历史规划记录保留当时状态，不作为当前规则。
+
 ## 2026-10-05：展开制作常识正文与A–H组件
 
 在已确认的制作常识/Seed合同之上继续推进，不新增产品范围。新增 [制作常识 Topic Catalog](requirements/PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md) 1.1，把原条目清单展开为243个唯一共享Topic与13个FormulaDefinition，覆盖镜头语言、Camera Angle/FOV/Perspective、光学、五类放大/运镜、曝光/帧率、灯光、色彩数据流、声音、媒体/格式、二维合成、三维/实时、制作工作流、接口兼容和时间校准。FOV/透视/摄影角度继续独立；F-number/T-stop和特殊光学公式边界保持。
