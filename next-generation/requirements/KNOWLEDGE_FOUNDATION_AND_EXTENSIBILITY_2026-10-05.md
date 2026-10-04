@@ -2,7 +2,7 @@
 
 # FrameForge 知识库基础内容、类型与扩展合同
 
-版本：1.1，2026-10-05。状态：需求合同，尚未创建运行数据库、知识条目、索引、维护页面或权限规则。本版新增制作常识库、细化基础对象/关系及首批 reference seed；详见 [制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)。
+版本：1.2，2026-10-05。状态：需求合同，尚未创建运行数据库、知识条目、索引、维护页面或权限规则。本版已形成制作常识、243 Topic/13公式和135个A–H组件基线；详见 [制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)、[制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md) 与 [A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)。
 
 ## 1. 总原则
 
