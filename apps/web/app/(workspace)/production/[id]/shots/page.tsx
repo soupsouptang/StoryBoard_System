@@ -1258,7 +1258,7 @@ export default function ShotListPage() {
       )}
 
       <ShotFeedbackDialog message={reorderShots.error ? (reorderShots.error instanceof Error ? reorderShots.error.message : '排序保存失败，请刷新后重试。') : null} onClose={() => reorderShots.reset()} />
-      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden" style={{ minHeight: isInspectorOpen ? 440 : undefined }}>
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden" style={{ minHeight: isInspectorOpen ? 558 : undefined }}>
         <div
           ref={tableViewport}
           data-shots-content

@@ -5,6 +5,8 @@ const React = {
   createElement: (type, props, ...children) => ({type, props: props || {}, children: children.flat(Infinity)}),
   useState(initial) { const index = cursor++; if (!(index in slots)) slots[index] = initial; return [slots[index], value => { slots[index] = typeof value === 'function' ? value(slots[index]) : value; }]; }
 };
+const resolver = { exports: {} };
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('apps/web/lib/media-resolver.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText, { module: resolver, exports: resolver.exports });
 const ui = Object.fromEntries(['Button','Dialog','DialogContent','DialogDescription','DialogFooter','DialogHeader','DialogTitle','Field','Input','Select','TextArea'].map(name=>[name,name]));
 ui.Icons = new Proxy({}, {get: (_,name)=>name});
 const mod = {exports:{}};
@@ -17,7 +19,7 @@ assert.equal(parse('1',30000/1001),30);
 for (const value of ['', '0', '-2s', '2.5f', '1e3', '2x', '25seconds', 'Infinity', '1h30m', '999999999999999999h']) assert.throws(()=>parse(value,25));
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('apps/web/components/storyboard/NewShotModal.tsx','utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.React,esModuleInterop:true}}).outputText, {
   module:mod,exports:mod.exports,Error,BigInt,
-  require:name=>({'react':React,'@frameforge/ui':ui,'@/lib/shot-display':display.exports,'@/stores/useWorkspaceStore':{useWorkspaceStore:()=>({isNewShotModalOpen:open,setNewShotModalOpen:value=>{open=value;}})},'@/lib/hooks/useProduction':{useCreateShot:()=>({isPending:false,mutateAsync:async value=>{calls.push(value);}})}}[name])
+  require:name=>({'@/lib/media-resolver':resolver.exports,'react':React,'@frameforge/ui':ui,'@/lib/shot-display':display.exports,'@/stores/useWorkspaceStore':{useWorkspaceStore:()=>({isNewShotModalOpen:open,setNewShotModalOpen:value=>{open=value;}})},'@/lib/hooks/useProduction':{useCreateShot:()=>({isPending:false,mutateAsync:async value=>{calls.push(value);}})}}[name])
 });
 let tree;
 const render=()=> {cursor=0;tree=mod.exports.NewShotModal({production:{id:'P',fps_num:24,fps_den:1},sequences:[],nextNumber:'002',existingNumbers:['001']});};

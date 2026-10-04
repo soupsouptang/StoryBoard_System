@@ -32,16 +32,16 @@ export function getMethodStyle(method: string) {
 export function getMethodLabel(method: string, locale: 'zh-CN' | 'en-US' = 'zh-CN'): string {
   const m = (method || 'live').toLowerCase();
   const dictZh: Record<string, string> = {
-    live: '实拍 LIVE',
-    stock: '素材 STOCK',
-    client: '客户 CLIENT',
-    archive: '历史资料 ARCHIVE',
-    still: '静帧 STILL',
-    ae: 'AE合成 AE',
-    mg: '动效 MG',
-    three_d: '3D三维 3D',
-    vfx: '视效 VFX',
-    type: '字卡 TYPE'
+    live: '实拍镜头',
+    stock: '商用素材',
+    client: '客户提供',
+    archive: '复用素材',
+    still: '静帧画面',
+    ae: 'AE效果',
+    mg: 'MG动画',
+    three_d: '三维制作',
+    vfx: '视觉特效',
+    type: '文字特效'
   };
 
   const dictEn: Record<string, string> = {

@@ -4,6 +4,8 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
 
+const resolver = { exports: {} };
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('apps/web/lib/media-resolver.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText, { module: resolver, exports: resolver.exports });
 const slots = [];
 let cursor = 0;
 let selectedShotIds = ['shot-A', 'shot-C'];
@@ -23,6 +25,7 @@ const React = {
 const ui = Object.fromEntries(['Button','Select','Dialog','DialogContent','DialogTitle','DialogDescription','DialogFooter'].map(name=>[name,name]));
 ui.Icons = new Proxy({}, { get: (_, name) => name });
 const dependencies = {
+  '@/lib/media-resolver': resolver.exports,
   react: React,
   '@frameforge/ui': ui,
   '@frameforge/types': {},

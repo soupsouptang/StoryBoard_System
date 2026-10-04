@@ -4,15 +4,15 @@ import { useLayoutEffect, useRef, useState, type ReactNode, type RefObject } fro
 /** A table spacer owns vertical flow; a sticky slot owns the visible content width. */
 export function ShotDetailSlot({ viewport, children }: { viewport: RefObject<HTMLDivElement | null>; children: (height: number) => ReactNode }) {
   const slot = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ width: 0, height: 352 });
+  const [size, setSize] = useState({ width: 0, height: 470 });
   useLayoutEffect(() => {
     const region = viewport.current, element = slot.current;
     if (!region || !element) return;
     const preceding = element.closest('tr')?.previousElementSibling;
     const measure = () => {
       const rowHeight = preceding?.getBoundingClientRect().height || 80;
-      // Reserve three complete rows, including comfortable internal spacing.
-      setSize({ width: region.clientWidth, height: Math.max(352, rowHeight * 3) });
+      // Reserve four complete rows, including comfortable internal spacing.
+      setSize({ width: region.clientWidth, height: Math.max(470, rowHeight * 4) });
     };
     measure();
     const observer = new ResizeObserver(measure); observer.observe(region);

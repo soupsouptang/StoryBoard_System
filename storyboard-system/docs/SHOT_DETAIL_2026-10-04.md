@@ -1,5 +1,31 @@
 # 2026-10-04 分镜详情卡片与图片预览实施记录
 
+## 最新本机部署恢复与最终页面验收
+
+用户明确要求重新部署供浏览器访问。本机旧API进程已停止，最新API的HistoryService读取画板表，原PG停在a83f02c1d765，因此先备份到本机`/private/tmp/frameforge-before-preview-20261004.dump`，实际恢复至独立副本，并在副本及独立空库执行既有Alembic迁移至c14f8a63b920；两条链通过。原35张业务表逐行JSON排序SHA256/数量在副本升级后及本机正式升级后均完全一致，只增加现有官方迁移的两张画板表。本次没有修改迁移或API源码，没有读取Legacy数据库，也没有新建持久化owner；此处覆盖下方历史“画板迁移尚未应用”的本机运行状态，不代表画板产品/UI已验收。
+
+Web使用已通过生产Webpack/TypeScript构建的`.next/detail-method-verified/standalone/apps/web`，3002显式同源代理至8002；两服务改为后台独立进程，绑定127.0.0.1。启动使用原本机配置和媒体目录，未输出或上传凭据、备份、图片。API健康及Web同源健康端点均200/healthy，浏览器实际项目大厅显示原有4个项目，分镜合成项目12镜头和图片正常加载。PG55432保留。机器休眠/重启后的进程状态仍需现场核对，本次不是公网部署。
+
+最新构建实机2560/1440/1024/768/375/320均470px卡片、6/3/2/2/1/1等宽列、无根横向溢出；十项辅助复选均11px/16px行高、12px框、两列五行，组高96px=scrollHeight，不折行/无独立滚动。勾选文字特效后Esc询问、再次Esc丢弃并收起，重开unchecked；未提交草稿。四份针对前端检查再次通过。最终截图`outputs/shot-detail-method-names-2026-10-04.png`仅留工作区。此前四行/固定左图/长文本滚轮及光标检查保持有效；真实选文件及下载回执仍沿用下方未通过门槛，不宣称全站cutover。
+
+## 最新追加：制作方式四字名称与完整辅助复选组
+
+用户指定十项中文显示名：live实拍镜头、stock商用素材、client客户提供、archive复用素材、still静帧画面、ae AE效果、mg MG动画、three_d三维制作、vfx视觉特效、type文字特效。只替换中文呈现，原枚举值/数据/命令/选中值保持；英文locale独立译名保留。复用media-resolver.getMethodLabel作为显示owner，表格badge/详情/自定义原格式列/分类页面等既有消费者直接沿用；新增镜头、批量制作方式、旧Inspector和卡片筛选菜单移除各自硬编码备注并使用该函数。责任部门选项不改，避免相同stock/three_d/vfx编码误套制作方式名称。
+
+详情辅助组固定两列五行，字号11px、行高16px、复选框12×12px、勾选图标10px、横gap8px/纵gap4px；移除max-height及独立overflow，不折行。选项span用显式important字号/行高覆盖表格既有14px!important统一样式，只限定这十项。主方式选择与辅助组仍是同列两行的整体，Card四行高/六等宽轨/固定左图/长文本两列两行保持。
+
+允许写集在四行布局基础上加media-resolver及上述四处纯显示选项调用、现有三个前端回归harness依赖接入；不改shared UI primitive、API、DB、导航/导入导出流程或其他业务逻辑，不新增显示标签owner。shot-detail-card、新增镜头单位/Esc、批量更新/删除/错误、旧Inspector草稿/CAS/取消四份定向检查通过，测试读取实际resolver而非复制映射；最终生产构建/TypeScript通过。真实浏览器具体尺寸与截图回执在续作MD最新段落补录。
+
+## 最新追加：四行高度、等宽轨道与长文本两列两行
+
+用户在六列代码451323f正常上传后追加：卡片由三行增为四个单位，右侧所有列等宽，从画面描述开始的长文本输入项统一占两列两行。最新实现覆盖下面352px/三行、身份列最小272px和长文本跨三列的描述。
+
+Slot本体=max(470px,实测镜头行高×4)，分镜表可用区最低558px，末行继续借上层纵向空间显示完整footer。Card右侧全部采用等宽tracks，不为镜号/时码单独扩大一轨；两者仍在同一轨中等分，IN/OUT两行保持，窄轨可横向阅读时码。制作方式两列以上仍是最右列跨两行的整体。长文本/JSON网格项统一col-span-2、row-span-2，单列窄屏自然占一列；TextArea显式field-sizing:fixed、128px固定高度、正常文字换行和overflow-y-auto，未聚焦最多五行省略展示，聚焦去除覆盖层，可滚轮及光标阅读完整值。左图高度随新增空间增大，桌面16:9约501×282px；图片区域不参与右侧滚动。
+
+允许写集扩为ShotDetailCard、ShotDetailSlot、分镜表页唯一minHeight及本文/ACTIVE/CONTINUE_WORK；owner不变，排除导航、其他页面、API、数据库和shared primitive。定向shot-detail-card草稿/原子保存/冲突/no-op/取消检查、最终Webpack生产构建/TypeScript与diff通过。实际3002合成项目2560/1440/1024/768/375/320宽度均470px、root/body无横向溢出、末行footer可见，分别6/3/2/2/1/1等宽列；2560六轨均283.445px。长文本项实际column/row均span 2，输入126px内高、CSS fieldSizing=fixed；208字符原文完整，1440滚轮scrollTop0→30，ArrowDown光标至208，ArrowUp至0且scrollTop回0，未改值/未保存。稳定布局下右侧滚动147px，左图及左栏X/Y/宽高完全不变；首次尺寸变更的异步测量不计作稳定证据。临时viewport恢复。
+
+本机最终Web3002构建.next/detail-four-verified；8002/PG和未应用画板迁移保持。截图outputs/shot-detail-four-rows-six-columns-2026-10-04.png仅工作区，不入Git。此前上传/下载实机环境门槛保持；仅完成本次详情排版追加，不扩展总纲待实施包。代码先上传，再独立更新和上传续作MD。
+
 ## 最新追加：镜号时码并排、固定左图与六列内容
 
 最新用户截图覆盖下面组内纵排/最多五列方案：镜号和时码在同一网格项内并排，各占一半，时码继续保持14px等宽IN/OUT两行。左侧图片独立占列，按图片自然比例与内容区可用高度计算宽度，保留16px内容内边距；16:9合成图桌面约292×164px，不裁切。图片区域不参与右侧滚动，隐藏只读字段也移入右侧滚动区。Card整体三行高、直角单层外框、header/footer固定和上传/保存/取消规则保持。

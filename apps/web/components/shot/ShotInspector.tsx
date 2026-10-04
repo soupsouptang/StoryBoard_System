@@ -1,5 +1,7 @@
 'use client';
 
+import { getMethodLabel } from '@/lib/media-resolver';
+
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Button, Input, TextArea, Icons, Select, Checkbox, Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from '@frameforge/ui';
 import type { Shot, Production, ProductionMethod } from '@frameforge/types';
@@ -10,7 +12,7 @@ import { useWorkspaceStore } from '@/stores/useWorkspaceStore';
 import { useUpdateShot, useDeleteShot } from '@/lib/hooks/useProduction';
 import { ShotImageCell } from './ShotImageCell';
 
-const METHOD_OPTIONS: { value: ProductionMethod; label: string }[] = [ { value: "live", label: "实拍 (LIVE SHOOT)" }, { value: "stock", label: "购买素材 (STOCK FOOTAGE)" }, { value: "client", label: "客户素材 (CLIENT ASSET)" }, { value: "archive", label: "历史资料 (ARCHIVE)" }, { value: "still", label: "静帧 (STILL FRAME)" }, { value: "ae", label: "AE合成包装 (AE COMP)" }, { value: "mg", label: "动效设计 (MOTION GRAPHICS)" }, { value: "three_d", label: "3D三维制作 (3D ANIMATION)" }, { value: "vfx", label: "视效特效 (VFX SHOT)" }, { value: "type", label: "纯文字字卡 (TITLE CARD)" } ];
+const METHOD_OPTIONS: { value: ProductionMethod; label: string }[] = [ { value: "live", label: getMethodLabel('live') }, { value: "stock", label: getMethodLabel('stock') }, { value: "client", label: getMethodLabel('client') }, { value: "archive", label: getMethodLabel('archive') }, { value: "still", label: getMethodLabel('still') }, { value: "ae", label: getMethodLabel('ae') }, { value: "mg", label: getMethodLabel('mg') }, { value: "three_d", label: getMethodLabel('three_d') }, { value: "vfx", label: getMethodLabel('vfx') }, { value: "type", label: getMethodLabel('type') } ];
 
 interface ShotInspectorProps {
   shot: Shot | null;

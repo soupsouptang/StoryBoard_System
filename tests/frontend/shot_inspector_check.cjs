@@ -45,6 +45,7 @@ const ui = Object.fromEntries(['Button', 'Input', 'TextArea', 'Select', 'Checkbo
 ui.Icons = new Proxy({}, { get: (_, key) => key });
 const { ShotInspector } = load('apps/web/components/shot/ShotInspector.tsx', {
   react: React, '@frameforge/ui': ui,
+  '@/lib/media-resolver': load('apps/web/lib/media-resolver.ts', {}),
   './ShotImageCell': { ShotImageCell: 'ShotImageCell' },
   '@frameforge/timecode': { framesToSeconds: () => 1, framesToTimecode: () => '00:00:01:00' },
   '@tanstack/react-query': { useQueryClient: () => ({ invalidateQueries: async () => {} }) },

@@ -1,5 +1,7 @@
 'use client';
 
+import { getMethodLabel } from '@/lib/media-resolver';
+
 import React, { useState } from 'react';
 import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle, Select } from '@frameforge/ui';
 import { ShotFeedbackDialog } from '@/components/shot/ShotFeedbackDialog';
@@ -77,16 +79,16 @@ export function BulkActionToolbar({ production }: BulkActionToolbarProps) {
           }}
           options={[
             { value: '', label: '制作方式…' },
-            { value: 'live', label: '实拍 (LIVE)' },
-            { value: 'stock', label: '购买素材 (STOCK)' },
-            { value: 'client', label: '客户素材 (CLIENT)' },
-            { value: 'archive', label: '历史资料 (ARCHIVE)' },
-            { value: 'still', label: '静帧 (STILL)' },
-            { value: 'ae', label: 'AE 合成' },
-            { value: 'mg', label: '动效 (MG)' },
-            { value: 'three_d', label: '3D 三维' },
-            { value: 'vfx', label: '视效 (VFX)' },
-            { value: 'type', label: '文字字卡' },
+            { value: 'live', label: getMethodLabel('live') },
+            { value: 'stock', label: getMethodLabel('stock') },
+            { value: 'client', label: getMethodLabel('client') },
+            { value: 'archive', label: getMethodLabel('archive') },
+            { value: 'still', label: getMethodLabel('still') },
+            { value: 'ae', label: getMethodLabel('ae') },
+            { value: 'mg', label: getMethodLabel('mg') },
+            { value: 'three_d', label: getMethodLabel('three_d') },
+            { value: 'vfx', label: getMethodLabel('vfx') },
+            { value: 'type', label: getMethodLabel('type') },
           ]}
           className="w-[170px] min-w-0"
         />

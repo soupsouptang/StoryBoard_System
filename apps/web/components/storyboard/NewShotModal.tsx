@@ -1,5 +1,7 @@
 'use client';
 
+import { getMethodLabel } from '@/lib/media-resolver';
+
 import React, { useState } from 'react';
 import {
   Button,
@@ -169,16 +171,16 @@ export function NewShotModal({ production, sequences, nextNumber, existingNumber
                   value={primaryMethod}
                   onChange={value => setProductionMethod(value as ProductionMethod)}
                   options={[
-                    { value: 'live', label: '实拍 (LIVE)' },
-                    { value: 'stock', label: '购买素材 (STOCK)' },
-                    { value: 'client', label: '客户素材 (CLIENT)' },
-                    { value: 'archive', label: '历史资料 (ARCHIVE)' },
-                    { value: 'ae', label: 'AE合成 (AE)' },
-                    { value: 'mg', label: '动效 (MG)' },
-                    { value: 'three_d', label: '3D三维 (3D)' },
-                    { value: 'vfx', label: '视效 (VFX)' },
-                    { value: 'still', label: '静帧 (STILL)' },
-                    { value: 'type', label: '字卡 (TYPE)' }
+                    { value: 'live', label: getMethodLabel('live') },
+                    { value: 'stock', label: getMethodLabel('stock') },
+                    { value: 'client', label: getMethodLabel('client') },
+                    { value: 'archive', label: getMethodLabel('archive') },
+                    { value: 'ae', label: getMethodLabel('ae') },
+                    { value: 'mg', label: getMethodLabel('mg') },
+                    { value: 'three_d', label: getMethodLabel('three_d') },
+                    { value: 'vfx', label: getMethodLabel('vfx') },
+                    { value: 'still', label: getMethodLabel('still') },
+                    { value: 'type', label: getMethodLabel('type') }
                   ]}
                   className="font-mono font-semibold"
                 />

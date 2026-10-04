@@ -24,8 +24,8 @@ function DetailText({ label, value, multiline, disabled, onChange }: { label: st
   const [focused, setFocused] = useState(false);
   const common = { 'aria-label': label, value, disabled, onFocus: () => setFocused(true), onBlur: () => setFocused(false), onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(event.target.value), placeholder: `输入${label}`, className: 'w-full text-sm' };
   return <div className="relative min-w-0">
-    {multiline ? <TextArea {...common} rows={4} className="h-24 w-full resize-none text-sm" /> : <Input {...common} className="h-9 w-full text-sm text-ellipsis" />}
-    {multiline && !focused && value && <div aria-hidden="true" className="pointer-events-none absolute inset-px rounded-md bg-background px-3 py-2"><div className="line-clamp-4 whitespace-pre-wrap break-words text-sm [line-break:strict]">{value}</div></div>}
+    {multiline ? <TextArea {...common} rows={5} style={{ fieldSizing: 'fixed' }} className="h-32 w-full resize-none overflow-y-auto text-sm" /> : <Input {...common} className="h-9 w-full text-sm text-ellipsis" />}
+    {multiline && !focused && value && <div aria-hidden="true" className="pointer-events-none absolute inset-px rounded-md bg-background px-3 py-2"><div className="line-clamp-5 whitespace-pre-wrap break-words text-sm [line-break:strict]">{value}</div></div>}
   </div>;
 }
 
@@ -186,7 +186,7 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
     return <div key={field.key} data-detail-field={field.key} className={`min-w-0 ${field.kind === 'image' && !field.hidden ? 'flex h-full min-h-0 flex-col' : ''} ${span} ${field.hidden ? 'text-muted-foreground opacity-60' : ''}`}>
       <div className="mb-1 flex min-h-4 items-center gap-2 text-xs font-medium text-muted-foreground">{field.label}{field.readonly && <span className="text-[11px] font-normal">只读</span>}</div>
       {editor}{empty && <p className="mt-1 text-xs text-[#FF0082]">{field.label}为必填项</p>}
-      {field.key === 'primary_method' && !field.readonly && <div className="@container/shot-method mt-4"><div className="mb-1 text-xs text-muted-foreground">辅助制作方式</div><div className="grid max-h-24 grid-cols-1 gap-x-4 gap-y-2 overflow-y-auto @min-[260px]/shot-method:grid-cols-2">{field.options.map(option => <label key={option} className="flex min-w-0 items-center gap-2 text-xs"><Checkbox aria-label={`辅助制作方式：${getMethodLabel(option)}`} disabled={disabled} checked={secondary.includes(option as typeof secondary[number])} onCheckedChange={checked => setSecondary(checked ? [...new Set([...secondary, option as typeof secondary[number]])] : secondary.filter(item => item !== option))} /><span className="min-w-0 break-words">{getMethodLabel(option)}</span></label>)}</div></div>}
+      {field.key === 'primary_method' && !field.readonly && <div className="mt-3"><div className="mb-1 text-xs text-muted-foreground">辅助制作方式</div><div className="grid grid-cols-2 gap-x-2 gap-y-1">{field.options.map(option => <label key={option} className="flex min-w-0 items-center gap-1 text-[11px] leading-4"><Checkbox className="size-3 [&_svg]:size-2.5" aria-label={`辅助制作方式：${getMethodLabel(option)}`} disabled={disabled} checked={secondary.includes(option as typeof secondary[number])} onCheckedChange={checked => setSecondary(checked ? [...new Set([...secondary, option as typeof secondary[number]])] : secondary.filter(item => item !== option))} /><span className="whitespace-nowrap text-[11px]! leading-4!">{getMethodLabel(option)}</span></label>)}</div></div>}
     </div>;
   };
   const visible = fields.filter(field => !field.hidden);
@@ -200,15 +200,15 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
       <div className={`grid h-full min-h-0 min-w-0 gap-4 ${pictures.length ? 'grid-rows-[100px_minmax(0,1fr)] @min-[760px]/shot-detail:grid-rows-1 @min-[760px]/shot-detail:grid-cols-[minmax(0,min(var(--detail-image-width),36%))_minmax(0,1fr)]' : 'grid-rows-1'}`}>
         {pictures.length > 0 && <aside data-detail-picture className="min-h-0 min-w-0 overflow-hidden">{pictures.map(field => fieldView(field))}</aside>}
         <div data-detail-scroll className="@container/shot-fields min-h-0 min-w-0 overflow-y-auto overscroll-contain pr-1">
-          {/* Keep the identity track readable; only the editable pane scrolls. */}
-          <div data-detail-fields className="grid min-w-0 grid-cols-1 gap-4 @min-[420px]/shot-fields:grid-cols-[minmax(272px,1fr)_minmax(0,1fr)] @min-[580px]/shot-fields:grid-cols-[minmax(272px,1fr)_repeat(2,minmax(0,1fr))] @min-[740px]/shot-fields:grid-cols-[minmax(272px,1fr)_repeat(3,minmax(0,1fr))] @min-[900px]/shot-fields:grid-cols-[minmax(272px,1fr)_repeat(4,minmax(0,1fr))] @min-[1060px]/shot-fields:grid-cols-[minmax(272px,1fr)_repeat(5,minmax(0,1fr))]">
+          {/* Equal tracks preserve the six-column rhythm; only the editable pane scrolls. */}
+          <div data-detail-fields className="grid min-w-0 grid-cols-1 gap-4 @min-[420px]/shot-fields:grid-cols-2 @min-[580px]/shot-fields:grid-cols-3 @min-[740px]/shot-fields:grid-cols-4 @min-[900px]/shot-fields:grid-cols-5 @min-[1060px]/shot-fields:grid-cols-6">
             {shortFields.map(field => {
               if (identityFields.includes(field)) return field === identityFields[0]
                 ? <div key="shot-identity" data-detail-identity className="grid min-w-0 grid-cols-2 items-start gap-4">{identityFields.map(item => fieldView(item))}</div> : null;
               return fieldView(field, field.key === 'primary_method'
                 ? '@min-[420px]/shot-fields:row-start-1 @min-[420px]/shot-fields:col-start-2 @min-[420px]/shot-fields:row-span-2 @min-[580px]/shot-fields:col-start-3 @min-[740px]/shot-fields:col-start-4 @min-[900px]/shot-fields:col-start-5 @min-[1060px]/shot-fields:col-start-6' : '');
             })}
-            {longFields.map(field => fieldView(field, 'col-span-full @min-[580px]/shot-fields:col-span-2 @min-[1060px]/shot-fields:col-span-3'))}
+            {longFields.map(field => fieldView(field, 'row-span-2 @min-[420px]/shot-fields:col-span-2'))}
           </div>
           {fields.some(field => field.hidden) && <section className="mt-4 border-t border-border pt-4"><h3 className="mb-4 text-xs text-muted-foreground">隐藏列 · 只读</h3><div className="grid min-w-0 grid-cols-1 gap-4 @min-[420px]/shot-fields:grid-cols-2 @min-[580px]/shot-fields:grid-cols-3 @min-[740px]/shot-fields:grid-cols-4 @min-[900px]/shot-fields:grid-cols-5 @min-[1060px]/shot-fields:grid-cols-6">{fields.filter(field => field.hidden).map(field => fieldView(field))}</div></section>}
         </div>
