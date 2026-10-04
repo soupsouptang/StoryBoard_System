@@ -134,7 +134,7 @@ Template/Production Method生成required和optional Checklist；Scene/Shot/Task/
 
 ## 其他模块的验收
 
-岗位场景 RW-01—RW-10 见[岗位需求](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md)；知识场景 KL-01—KL-31 见[知识需求](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)；KL-12—KL-16覆盖岗位驱动知识，KL-17—KL-23覆盖A–H分库/规格/兼容/软件/时间QA/权限边界，KL-24—KL-31覆盖制作常识Topic拆分、运镜/放大、光学与单位转换、固定镜头/多机位、两级兼容路径、格式/色彩数据流、首批官方seed和分层时间校准。语义、单位与统计验收见[总纲第20节](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)。
+岗位场景 RW-01—RW-10 见[岗位需求](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md)；知识场景 KL-01—KL-35 见[知识需求](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)；KL-12—KL-16覆盖岗位驱动知识，KL-17—KL-23覆盖A–H分库/规格/兼容/软件/时间QA/权限边界，KL-24—KL-31覆盖制作常识/光学/固定镜头/格式/seed/时间校准，KL-32—KL-35覆盖243 Topic/13公式、135 A–H组件、83专业域显式映射、跨组件链和暂缓最终层级深度。语义、单位与统计验收见[总纲第20节](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)。
 
 ## 组织与能力验收合同（待实施、未运行）
 
