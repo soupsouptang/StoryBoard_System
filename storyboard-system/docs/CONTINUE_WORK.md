@@ -1,5 +1,21 @@
 # FRAMEFORGE 续作入口
 
+## 2026-10-04 固定画框构图与双击100%复位（本地代码f8875c5）
+
+最新用户确认：项目画框内缩放/位移、允许留空、显式锁定，小图只有Lock保存，详情Lock先记录本地草稿历史后卡片Save提交；原图和构图两个下载。最后追加双击百分比恢复100%居中满框并丢弃尚未锁定操作，已实现。两入口共用ShotImagePreview/原Dialog；项目比例支持小数，50–300%胶囊、±25步进、滚轮/左键pan；原图保留，MediaPresentation/ImageCropService/项目History是原有持久owner，无新路由/DDL。详情不再有图点击直接替换。本段覆盖下方历史slider及详情有图点击上传规则。
+
+代码及对应owner/API/product/screen/UI台账先本地提交f8875c5，本文随后独立提交。后端两份针对检查9 passed，前端4份实际消费者/坐标检查通过，正式UI包及生产Webpack/TypeScript、diff/Regression Guard（base9417a48）通过。两个GitHub remote已fetch，各HEAD之外未合入数量0；未知:memory:.ses原样保留未stage。
+
+真实本地PG/API合成012验证连续125%/150%Lock和项目Undo恢复、详情局部Undo/Redo及卡片Save；绿色合成PNG实际chooser替换Esc恢复原蓝黄图，再次Lock成功后项目Undo恢复。无Lock的Esc/窗外取消重开100%、双击位移归零、50/300按钮禁用通过；项目2.39:1实际画框正确，合成项目设置已恢复16:9。真实97镜头项目只读预览008，不保存/替换。
+
+双下载实际收到Downloads：镜头012_构图画面 (1).png为1920×1080，镜头012_原图.png为800×450，尺寸/像素核验。浏览器download事件timeout但本机文件回执已确认，不能继续沿用旧“真实文件上传/下载未完成”状态。本轮实际选择/替换提交及下载门槛已补。
+
+最终1440/1024/768/375/320无根/弹窗横向溢出，内容区中心差0、胶囊中心齐画框；宽608/400/288/288/288。截图outputs/shot-framing-preview-2026-10-04.jpg仅本机保留；QA页关闭、viewport已恢复。3002最终.next/shot-framing-interaction standalone Web PID53266/API8002 PID52490，现有运行环境/PG55432及原媒体保留，无DDL。入口http://127.0.0.1:3002/productions，用户刷新加载新代码。
+
+**尚待门槛**：当前DOM浏览器API无原生drag/wheel，Codex原生应用控制被工具明确禁止，未绕过。真实组件事件/坐标/松开停留/边界测试已通过，原生鼠标实机仍需用户复核或合法工具补验，整体INTEGRATED_NOT_CUT_OVER。GitHub push此前被自动审批拒绝，要求具体目的地/分支上传授权；soupsouptang/StoryBoard_System master的询问仍未获回复。本轮未push/force，不能声称MD已上传。
+
+续作只补上述实机门槛和GitHub同步，保留本轮代码与部署，不扩展其他旧产品待办；明确授权后正常快进上传本地代码及后续MD。详见[实施记录](SHOT_FRAMING_2026-10-04.md)。
+
 ## 2026-10-04 辅助制作方式全选（本地代码4902e02）
 
 用户要求辅助制作方式标题后加入全选，勾选全选/取消全不选、与下方选项对齐。仅ShotDetailCard组内标题行使用下方同样两/三列网格与8px列gap，标题第一列/全选第二列，框16px/icon12px/文字14px行高20px保持；全部选中checked、无项unchecked、部分项indeterminate。操作调用现有setSecondary草稿，disabled复用权限/pending，仍需明确Save，原CAS/dirty/Esc/单一owner不变；没有API/DB或shared primitive改动。
