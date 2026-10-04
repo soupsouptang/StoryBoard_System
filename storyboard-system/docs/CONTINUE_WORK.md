@@ -1,5 +1,19 @@
 # FRAMEFORGE 续作入口
 
+## 2026-10-04 图片浮窗共用撤销/重做完成、代码已上传
+
+最新用户要求两个图片入口统一版本、共用同一个或同一组控件，已完成。表格小图与详情大图继续调用唯一ShotImagePreview，其中Undo2/Redo2按钮、32px/16px样式及快捷键只定义一份，始终显示、无可用历史时置灰。详情仍消费ShotDetailCard的锁定构图草稿历史；小图接入原项目HistoryService，tooltip标明当前命令标签。原小图Lock立即提交、详情Lock草稿后Save、Esc/窗外取消未锁定操作不变。
+
+原项目菜单的query/Command/CAS/ACK/pending/重复保护提取为useProjectCommandHistory，菜单和图片窗口共用客户端，未复制持久owner。小图历史恢复成功后等待cache刷新，载入确认画面并清除未锁定替换/调整；失败仍保留画面并显示错误。⌘Z/Ctrl+Z、⌘⇧Z/Ctrl+Shift+Z/Ctrl+Y在同一窗口处理，输入框/IME/重复按键排除，原全局Dialog保护保留。无API/DB/依赖/primitive变更。
+
+五份定向前端检查、正式Webpack/TypeScript、diff/Regression Guard（basee5df0c0）通过。真实合成012小图125%Lock、Undo100%/Redo125%、Ctrl+Z/Ctrl+Y，最终Undo回原100%；详情125%草稿Lock、Undo/Redo及Meta快捷键、最终Undo并Esc退出，版本29及已保存状态保持，无详情保存写入。实际97镜头008两入口只读检查，32px按钮/16pxicon同款。1440/1024/768/375/320根/Dialog无横向溢出、按钮完整，窗口608/400/288/288/288px，默认1280两入口528px一致。临时viewport恢复、QA页关闭；证据outputs/shot-preview-history-table-2026-10-04.jpg与shot-preview-history-detail-2026-10-04.jpg仅保留本机。
+
+3002为.next/preview-history standalone（部署时Web PID68349）；API8002 PID61874及PG55432/媒体保持，无DDL。用户刷新 http://127.0.0.1:3002/production/aaab21df-7d26-468f-98f3-37a174d8ae81/shots 可看。生成tsconfig已复原、未知:memory:.ses未stage。
+
+fetch核验授权目标soupsouptang/StoryBoard_System master无新增待合入提交，代码及配套MD 418a9de已正常快进上传（e5df0c0→418a9de）。本文随后独立提交上传并查询远端SHA核验；不覆盖他人历史。当前图片浮窗追加无剩余工作，旧原生drag/wheel工具门槛保持历史记录，不扩展其他任务；额度可用，未使用恢复额度券，也未重启已暂停的续作自动任务。
+
+详见[构图与历史控件记录](SHOT_FRAMING_2026-10-04.md)。以下为历史阶段，最新行为与部署以本段为准。
+
 ## 2026-10-04 详情版本与保存反馈完成、代码已上传
 
 最新用户追加已完成：删除按钮亮红#FF454D（深浅主题明确覆盖，hover #F53540），29px圆角正方形与16px图标保持；版本“第N版修改”数字最小3ch预留三位、不补零；已保存使用8px绿灯及加粗700文字，均#50FF00/RGB(80,255,0)，未保存灰色无灯，pending灰色保存中。标题/版本/状态/删除横向16px间距，窄屏自然换行。成功ACK和no-op不再弹出保存成功提示，保持卡片展开；错误/冲突提示与草稿保留不变。本段覆盖历史REV、已同步及成功弹窗规则。
