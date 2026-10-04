@@ -1,5 +1,13 @@
 # FRAMEFORGE 续作入口
 
+## 2026-10-04 辅助制作方式放大（本地代码b578b38）
+
+最新用户要求“不影响框架、文字放大、可两列五行改三列四行、无需滚动/折行”已完成。仅ShotDetailCard辅助组14px字号/20px行高（原11px/16px）、16px复选框/12pxicon（原12px/10px）；保留8px横gap/4px纵gap，组实际宽度≥260px三列四行，否则两列五行。显式important仅覆盖该组文字，十项nowrap且无独立overflow；470px标准本体、六等宽内容轨、固定左图、16px内留白/字段间距、置顶操作及保存/dirty/Esc owner保持。
+
+真实2560/1440/1024/768/375/320均十项完整14px/16px框，卡片470px、根/组无横向溢出；辅助列数3/2/2/2/3/3，组高92/116/116/116/92/92px且clientHeight=scrollHeight；容器根据字段可用宽度适配，不直接使用屏幕宽度。实际008十项全选完整、不折行，仅只读；合成项目点击文字特效勾选后出现未保存状态、Esc确认/第二次Esc丢弃收起、重开unchecked与REV6保持。没有提交业务写入。临时viewport恢复、QA页关闭、原用户页面保留；截图outputs/shot-detail-method-readable-2026-10-04.png仅本机。
+
+现有shot-detail-card检查、最终生产Webpack/TypeScript、diff及Regression Guard以df23757为base通过。3002 Web已更新`.next/detail-method-readable/standalone/apps/web`，API8002/PG55432及媒体未改。代码和详细MD/ACTIVE本地提交b578b38，本文随后独立本地提交。GitHub具体仓库授权仍未回复，未重试/绕过此前自动审批拒绝，不能声称上传；未知`:memory:.ses`保留未上传。仅完成本次UI追加，不扩展旧待办或历史文件上传/下载实机门槛。此段覆盖历史11px/12px框固定两列描述。
+
 ## 2026-10-04 详情操作全部置顶（本地代码d32a7a2）
 
 最新用户截图要求已实施：移除底部同步/保存/取消footer，顶部按镜头/REV/同步状态/删除icon排列、gap8px；删除仅Trash2 icon，32×32px圆角正方形，aria-label/title及原二次确认保留。右上保存取消各64×32px、同字号、均无icon。卡片470px本体、body16px内部留白和字段16px间距、既有草稿/权限/pending/原子Save/dirty/Esc处理函数不变；没有API/DB或其他页面改动。
