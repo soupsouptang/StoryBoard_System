@@ -36,6 +36,6 @@ useShotFraming读取panel presentation及不可变source，打开时来源revisi
 
 Web3002采用.next/shot-framing-interaction/standalone/apps/web，API8002沿用现有本机运行配置重启，PG55432/原数据和媒体保留，无DDL。入口http://127.0.0.1:3002/productions，刷新加载新版本。本机最终Web PID53266/API PID52490。
 
-两个GitHub remote已fetch，无HEAD之外待合入提交。此前push被自动审批拒绝，要求明确具体目的地/分支上传授权；soupsouptang/StoryBoard_System master的授权询问尚无回复。本轮只提交本地代码及MD，不force/绕过；明确授权后正常快进上传，先代码再续作MD，不把本地commit当上传成功。
+两个GitHub remote已fetch，无HEAD之外待合入提交。此前push的具体目的地授权阻挡已解除：用户在明确列出soupsouptang/StoryBoard_System master后回复“强制上传”。正常快进push回执451323f→f8875c5，代码和对应实施MD已上传，续作及本同步记录随后单独提交上传；无需改写远端历史，未绕过审批。最终MD回执以Git远端查询为准。
 
 截图本机outputs/shot-framing-preview-2026-10-04.jpg，不进入Git。无子agent；未知:memory:.ses保留，不stage。续作入口在CONTINUE_WORK.md。

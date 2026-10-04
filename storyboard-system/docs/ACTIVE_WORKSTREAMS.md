@@ -2,7 +2,7 @@
 
 ## 2026-10-04 分镜固定画框构图
 
-两种缩略图共用ShotImagePreview：项目画幅、pan/wheel、50–300%胶囊、双击100%居中复位；小图仅Lock保存，详情Lock本地草稿历史后原子Save。原图/构图双下载已收到并核验，真实文件替换取消、锁定、项目撤销、详情局部undo/redo及Save通过，五宽度最终无溢出。原生drag/wheel实机受工具能力限制，仅真实组件事件检查通过，仍待复核。3002最终shot-framing-interaction/API8002已重启，PG不做DDL。两个remote无待合入增量；仅本地提交，具体GitHub目的地授权仍待此前回复。[证据与限制](SHOT_FRAMING_2026-10-04.md)。
+两种缩略图共用ShotImagePreview：项目画幅、pan/wheel、50–300%胶囊、双击100%居中复位；小图仅Lock保存，详情Lock本地草稿历史后原子Save。原图/构图双下载已收到并核验，真实文件替换取消、锁定、项目撤销、详情局部undo/redo及Save通过，五宽度最终无溢出。原生drag/wheel实机受工具能力限制，仅真实组件事件检查通过，仍待复核。3002最终shot-framing-interaction/API8002已重启，PG不做DDL。用户已确认具体目标上传，代码f8875c5正常快进同步soupsouptang/StoryBoard_System master，续作及同步MD随后单独上传；没有改写远端历史。[证据与限制](SHOT_FRAMING_2026-10-04.md)。
 
 ## 2026-10-04 扩展性需求重写与已确认产品规则
 
