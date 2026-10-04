@@ -7,7 +7,8 @@
 | [总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md) | 项目到交付与经验的完整闭环、对象关系及字段标准 |
 | [岗位工作流](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md) | 账号、人员、岗位、任务、看板及交接 |
 | [时段需求](RESOURCE_TIME_REQUIREMENTS_2026-10-04.md) | 器材道具的来源、缺值、动态继承和分时汇总 |
-| [知识体系](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md) | 型号基础知识、经验贡献及受控校准 |
+| [知识体系](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md) | A–H专业知识、官方型号/兼容关系、软件能力范围及粗粒度时间校准 |
+| [知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md) | 知识类型、A–H分库、Revision、可扩展设备规格、兼容关系、软件范围与维护边界 |
 | [工种定义](JOB_CATALOG_DEFINITIONS_2026-10-05.md) | 岗位详细表；J-01—J-08仍待用户决定 |
 | [岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md) | 139个岗位所需的跨岗位共同知识、A–H专业知识域及稳定岗位编号映射 |
 | [技术接受要求](TECHNICAL_ACCEPTANCE.md) | 本代命令、权限、历史、导入导出、媒体及空库要求 |
