@@ -28,7 +28,10 @@
     "MODEL-BASIC-KNOWLEDGE-ONLY",
     "ASSET-DEFAULT-PRESENTATION",
     "FPS-KEEP-SECONDS",
-    "KNOWLEDGE-CONTRIBUTION-SNAPSHOT"
+    "KNOWLEDGE-CONTRIBUTION-SNAPSHOT",
+    "TASK-AUTO-INACTIVATE",
+    "CALLSHEET-EXPLICIT-PUBLISH",
+    "MEDIA-FORMAL-HANDOFF"
   ],
   "shared_integration_paths": [
     "apps/api/main.py",
@@ -569,7 +572,8 @@
       "required_gates": [
         "FX-08",
         "FX-09",
-        "FX-12"
+        "FX-12",
+        "FX-26"
       ],
       "verification": [],
       "blockers": [],
@@ -671,7 +675,8 @@
         "FX-12",
         "FX-13",
         "FX-19",
-        "FX-23"
+        "FX-23",
+        "FX-27"
       ],
       "verification": [],
       "blockers": [],
@@ -757,7 +762,9 @@
       "dependencies": [
         "E4-TASK",
         "E6-SCHEDULE",
-        "E5-OUTBOX"
+        "E5-OUTBOX",
+        "E6-MEDIA-HANDOFF",
+        "E7-DELIVERY-LOOP"
       ],
       "state": "not_started",
       "allowed_paths": [
@@ -853,7 +860,8 @@
       "dependencies": [
         "K0-REFERENCE",
         "E4-TASK",
-        "E5-OUTBOX"
+        "E5-OUTBOX",
+        "E6-SCHEDULE"
       ],
       "state": "not_started",
       "allowed_paths": [
@@ -1165,6 +1173,121 @@
       "blockers": [],
       "acceptance": "对应API已接受；仅创建仍缺失需求页，真实桌面读写与失败回读；不建库房或覆盖既有UI。",
       "required_evidence_kinds": [
+        "browser",
+        "contract"
+      ]
+    },
+    {
+      "id": "E6-MEDIA-HANDOFF",
+      "title": "现场素材完整性、备份验证与正式交接",
+      "owner": "E6-MEDIA",
+      "dependencies": [
+        "E4-TASK",
+        "E5-JOB",
+        "E6-SCHEDULE"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/media_handoff.py",
+        "apps/api/app/services/media_handoff_service.py",
+        "apps/api/app/schemas/media_handoff.py",
+        "apps/api/app/api/v1/media_handoffs.py",
+        "tests/backend/test_media_handoff.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-09",
+        "FX-12",
+        "FX-28"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "正式交接固定AssetVersion并通过完整性与项目配置备份门槛；Preview只允许草稿预处理，不冒充正式input readiness。",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E7-DELIVERY-LOOP",
+      "title": "Review返工补拍与交付验收回流",
+      "owner": "E7-DELIVERY",
+      "dependencies": [
+        "E4-TASK",
+        "E6-SCHEDULE",
+        "E6-MEDIA-HANDOFF",
+        "E5-OUTBOX",
+        "E7-EXPORT"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/rework.py",
+        "apps/api/app/models/deliverable.py",
+        "apps/api/app/services/rework_service.py",
+        "apps/api/app/services/deliverable_service.py",
+        "apps/api/app/schemas/rework.py",
+        "apps/api/app/schemas/deliverable.py",
+        "apps/api/app/api/v1/rework.py",
+        "apps/api/app/api/v1/deliverables.py",
+        "tests/backend/test_rework_delivery_loop.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-09",
+        "FX-12",
+        "FX-15",
+        "FX-29"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "Review问题能唯一进入返工Task或补拍排期并回到新Version/Review；QC、提交、送达、确认、验收、退回事实分离。",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "Z0-PRODUCTION-CLOSED-LOOP",
+      "title": "全制作主链端到端闭环接受",
+      "owner": "INTEGRATOR",
+      "dependencies": [
+        "E8-IMPACT",
+        "E7-DELIVERY-LOOP",
+        "K2-CALIBRATION"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "tests/backend/test_production_closed_loop.py",
+        "storyboard-system/docs/visual-evidence/2026-10-04/Z0-PRODUCTION-CLOSED-LOOP/"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-17",
+        "FX-26",
+        "FX-27",
+        "FX-28",
+        "FX-29",
+        "FX-30",
+        "KL-05",
+        "KL-06"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "总纲§19.4合成项目必须从Project/Scene/Shot跑到Experience/Calibration；API、真实PostgreSQL、真实consumer/浏览器及合同证据齐全，任何单包PASS不能冒充整链闭环。",
+      "required_evidence_kinds": [
+        "api",
+        "postgres",
         "browser",
         "contract"
       ]
