@@ -1,6 +1,6 @@
 # FrameForge VNext 最大化扩展性需求总纲
 
-版本：3.1，2026-10-04。状态：需求和执行依据，功能是否完成按实际工作包验收。
+版本：3.2，2026-10-04。状态：需求和执行依据，功能是否完成按实际工作包验收。
 
 本文规定要做什么、数据归谁、怎样协作及如何验收。本轮完成需求审计和改写，不修改界面、运行服务、在线数据库或部署。代码现状见[职责台账](CANONICAL_OWNER_MATRIX.md)、[工作簿](ACTIVE_WORKSTREAMS.md)和实际证据，不能凭文档存在认定功能完成。
 
@@ -63,6 +63,9 @@
 | D-32 取消库房资格 | 随第15问取消库房；此前staff任职资格仅为被替代提案，不实施 |
 | D-33 贡献范围 | 新经验按采集时项目成员所属全部团队贡献，成员换组只影响之后的新经验；旧范围保留 |
 | D-34 器材知识 | 第16问明确仅型号和基础知识，不加入使用方法；独立需求相加，保留第3问已确认的明确共用去重 |
+| D-35 自动任务失效 | Scene、Shot、制作方式或模板来源变化后，系统自动生成且尚未开始、没有实际记录、没有产物、没有交接的任务可自动标记为“不再需要/停用”；人工创建、已开始、已交接或已有产物的任务保留事实并提示负责人处理，系统不自动取消 |
+| D-36 通告发布边界 | 排期变化只自动刷新 Call Sheet 草稿、影响范围和需重新确认的人；已发布 revision 永不随当前排期漂移。发布新版和任何外发/发送必须由有权限的人显式执行，自动联动不得自动发布或对外发送 |
+| D-37 正式素材交接 | 正式 MediaHandoff 必须通过完整性检查以及项目配置要求的备份验证；可在正式交接前提供明确标识的 Preview 用于草稿预处理，但 Preview 不满足正式输入 readiness，也不能冒充已正式交接 |
 
 旧 Q-05 已由 D-28、D-29 解决。最新逐项访谈记录见[全量文档审计](EXTENSIBILITY_GRILL_AUDIT_2026-10-04.md)，已确认规则直接落实到正文，不保留并行待选提案。实际人员名单、需求数量、型号、时间和工作窗口仍须配置，不属于待选产品规则。
 
@@ -172,6 +175,8 @@ Scene、Shot、制作方式和项目模板只是工作需求来源，不能把�
 
 任务默认执行流为“待安排 → 可开始 → 进行中 → 待交接 → 已完成”，取消与跳过是明确动作；blocked、overdue、input stale 是可并存的派生标记，不替代真实阶段。开始条件来自固定输入、前置依赖、人员和必要准备，不以页面是否打开判断。
 
+任务适用性必须随其来源重新计算。Scene、Shot、Production Method、Requirement 或 WorkflowTemplate 的变化使某个自动生成 Task 不再适用时，只有同时满足“系统自动生成、未开始、无 Actual、无输出产物、无交接事实”的 Task 才允许自动进入“不再需要/停用”状态；该状态与人工 Cancel 分开，不计为用户主动取消。已经开始、已经提交/交接、已有输出，或由用户手动创建的 Task 保留其事实、依赖和历史，系统只标记来源已失效/需负责人处理，不自动删除或取消。若同一稳定来源重新变为适用，尚未执行且未产生事实的自动停用 Task 可以在保留历史的前提下恢复适用；已经执行过的旧 Task 不复活为新的执行事实。
+
 Task 的完成不能直接把 Shot、Review 或 Deliverable 写成完成。Task 提交固定输出版本；需要交接时由接收方确认固定 AssetVersion 或明确缺项。输入后来变化，只使相关下游标记过期或返工，不抹去“当时已经完成和交接”的事实。
 
 “我的工作”、部门看板和项目任务视图均查询同一 Task owner。一个 Person 多工种仍是同一现实人员；不同岗位视图不能复制任务正文。未分派、未知工时、缺输入、待交接和冲突必须可单独查询，确保任务可以从 Scene/Shot 真正流向人员执行，而不是停在镜头字段。
@@ -231,6 +236,8 @@ Call Sheet Draft 是 CURRENT SchedulePlan、ShootDay、Scene/Shot、Person、Loc
 生成、发布、通知送达、打开查看、个人确认、现场到场和工作完成是不同事实。重要时间或地点变化发布新 revision 后，旧确认仍绑定旧 revision，需要时明确进入重新确认；普通未来计划联动不等待所有人先确认才继续更新。
 
 不同人员可以有不同 Call Time；演员妆发、工作人员 Setup、摄影开机和车辆集合不能默认使用同一时间。CallSheetRevision 可以被撤回或被新 revision 取代，但旧发布内容和当时确认保留历史，不能随当前排期静默漂移。
+
+排期、人员、地点或集合要求变化后，系统只自动重算当前 Call Sheet Draft、标出与最近已发布 revision 的差异，并精确标记哪些 Recipient 因重要时间/地点/集合要求改变而需要重新确认。系统不得因为草稿已更新就自动生成“已发布”事实，也不得自动把新版外发。只有具有发布权限的人显式 Publish 才创建新的不可变 CallSheetRevision；只有具有发送权限并明确执行 Send/Notify 时才产生外发记录。发布与发送是两个动作，允许先发布后不发送。
 
 ### 8.6 当天执行与动态重排
 
@@ -318,6 +325,8 @@ HistoryService 是唯一项目持久命令历史，用户加项目最近一百�
 
 “文件上传成功”“完整性检查通过”“备份验证完成”“可查看代理生成”“已交接给后期”必须是不同事实。原素材、代理、预览和缩略图仍是同一 AssetVersion 的不同组件；固定交接必须引用明确 AssetVersion，不能引用会随当前版本漂移的“最新文件”。
 
+正式素材交接采用 D-37：AssetVersion 必须先通过完整性检查，并满足该项目当前配置要求的全部 BackupVerification 条件，才可产生 Formal Handoff / 正式接收事实。项目没有配置某类额外备份要求时不凭行业习惯自行增加隐藏门槛，但完整性检查始终是正式交接的基础条件。备份尚未满足时可以生成或开放明确标记为 Preview / PREPROCESS_ONLY 的代理或预览，供剪辑、AE、声音等做草稿预处理；这种访问不能将正式输入标记为 Ready，也不能被最终输出、正式 Review 或 Delivery 当作已交接依据。
+
 首版若一次交接只服务一项 Task，可由 TaskAssetVersion + 接收事实表达；当同一素材需要多消费者、独立确认、撤回/更正或单独权限时，MediaHandoff 才成为独立 Entity。引入 MediaHandoff 前必须按 §3.1 说明其 owner、生命周期、权限、revision、历史、自动化和 typed relations，不建立万能 handoff JSON。
 
 后期接收方看到的状态至少区分：缺输入、待检查、检查失败、待备份验证、可使用、已交接、输入已过期。素材后来被替换或上游 Shot 产生补拍时，只影响引用了相关输入的下游 Task；已经完成的旧版本和旧交接保留，必要时生成返工需求。
@@ -378,12 +387,12 @@ DeliverableItem / Variant 只在存在独立交付对象、查询、权限、生
 
 | 源变化 | 自动重算 / 推进 | 不能自动伪造的事实 |
 | --- | --- | --- |
-| Scene / Shot 内容或要求变化 | Task applicability、Readiness、人员/场地需求、未锁定排期、后期输入与 Checklist | 实际出演、资源已具备、已拍摄、Review 已批准 |
+| Scene / Shot 内容或要求变化 | Task applicability、Readiness、人员/场地需求、未锁定排期、后期输入与 Checklist；仅符合 D-35 的自动生成未执行任务可自动停用 | 已开始/有产物 Task 被自动取消、实际出演、资源已具备、已拍摄、Review 已批准 |
 | Cast / Person 可用性变化 | 人员时间线、相关 ScheduleItem 冲突、Call Sheet 草稿、受影响负责人 | 自动换演员、旧通告已知悉 |
 | Location / 时间窗变化 | 拍摄条目、Company Move、后续地点窗口、通告草稿 | 场地已同意、已到场 |
-| ScheduleItem / ShootDay 改期 | Person、转场、需求时段、Call Sheet 当前 revision 候选、Media ETA、Post earliest start、Delivery forecast | 已执行事实、旧 Call Sheet revision、固定外部目标已改变 |
+| ScheduleItem / ShootDay 改期 | Person、转场、需求时段、Call Sheet Draft、需重新确认 Recipient、Media ETA、Post earliest start、Delivery forecast | 自动发布/外发新版通告、已执行事实、旧 Call Sheet revision、固定外部目标已改变 |
 | 现场 Actual 延误 | 当天剩余计划、Wrap、转场、后续冲突、后期预计输入 | 自动取消镜头 |
-| MediaHandoff / 输入版本变化 | 下游 Task readiness、input stale、Review target | 旧 Task 从未完成过 |
+| MediaHandoff / 输入版本变化 | 下游 Task readiness、input stale、Review target；Formal Handoff 仅在完整性与项目配置备份门槛通过后成立，Preview 只允许草稿预处理 | Preview 被冒充正式输入、旧 Task 从未完成过 |
 | Review 产生修改 | ReworkRequest、返工 Task 或补拍待排需求 | 评论解决、修改已制作 |
 | Delivery 退回 | ReworkRequest、Task、后续 Version / Review | 原验收历史被删除 |
 | 经验校准新版本 | 后续新计划的 estimate baseline / workflow suggestion | 已确认计划、历史 Actual 被重写 |
@@ -528,13 +537,13 @@ Project / Template
 | --- | --- | --- | --- |
 | 项目/模板 | Production + 项目类型 | 实际启用阶段、角色/任务模板、Checklist | 能生成/创建 Scene/Shot 和真实 Task，不只是展示模板 |
 | Scene/Shot | 创作内容、多 Scene relation | Requirement、Production Method、明确 override | 能决定 Task applicability、人员/地点/需求和 Readiness |
-| Task | 模板或人工工作需求 | 主责/协作、输入、计划、产物、依赖、实际状态 | 下游依赖可由固定输入/交接事实解锁 |
+| Task | 模板或人工工作需求 | 主责/协作、输入、计划、产物、依赖、实际状态及适用性来源 | 失效的自动任务按 D-35 停用；已执行事实保留；下游依赖只能由仍适用且满足固定输入/交接的事实解锁 |
 | 人员/选角 | Person、Character、CastAssignment、Membership | 明确出演/任职与 Availability | 排期能使用同一 Person 检冲突并生成个人时间线 |
 | 排期 | Task/Scene/Shot、人员/场地、时间段需求 | SchedulePlan、ShootDay、ScheduleItem、锁定/冲突 | 能生成转场、通告和后期预计输入 |
 | 转场 | 前后 ScheduleItem、Location | 可解释 Move 区间及组成时长 | 下一拍摄条目 earliest start 正确受影响 |
-| 通告 | CURRENT Plan + 当日事实 | immutable CallSheetRevision + Recipient/ack facts | 发布后可确认、改版、保留旧 revision |
+| 通告 | CURRENT Plan + 当日事实 | 自动更新的 Draft、差异/需重确认列表；经授权显式发布后才产生 immutable CallSheetRevision + Recipient/ack facts | 自动化不发布或外发；发布后可确认、显式改版并保留旧 revision |
 | 现场 | ScheduleItem + Readiness | Actual、镜头满足/补拍事实、素材来源 | Media 可以追溯拍摄来源并进入检查/交接 |
-| 素材 | MediaAsset / AssetVersion | integrity、backup、可用与 handoff 事实 | Post Task 只有固定输入满足后 Ready |
+| 素材 | MediaAsset / AssetVersion | integrity、项目配置的 backup verification、Preview 与 Formal Handoff 分离 | 草稿预处理可消费 Preview；正式 Post readiness / Review / Delivery 只有固定版本 Formal Handoff 后成立 |
 | 后期 | Post Task + 固定输入 | 新 AssetVersion / 产物 | Review target 固定版本 |
 | Review | 固定版本 + Comment/Decision | 已解决或 ReworkRequest | 修改进入 Task，补拍进入待排，不停在评论 |
 | 补拍/返工 | ReworkRequest | Task 或 Schedule demand + 新产物 | 回到 Media/Post/Review，源问题不重复建单 |
@@ -574,11 +583,11 @@ MediaHandoff 只有在“一份素材存在多消费者、独立确认、更正/
 
 验收操作至少包含：
 
-1. 将一个 Scene 从周三移到周五；未锁定的人员安排、转场、需求时段、通告草稿、媒体预计交接、后期 earliest start 和交付预测自动刷新。
+1. 将一个 Scene 从周三移到周五；未锁定的人员安排、转场、需求时段、通告草稿、媒体预计交接、后期 earliest start 和交付预测自动刷新；因 Scene / Production Method 变化而失效的自动 Task 按 D-35 分流：未开始无产物的自动停用，已开始/已交接/有产物的保留并提示负责人。
 2. 其中一名演员周五不可用、下一场地点窗口不足、一个后期目标日期固定；三项必须形成可解释例外，而不是静默改数据。
-3. 发布新 CallSheetRevision；旧 revision、旧确认和旧计划基准仍可追溯，重要变化需要重新确认。
+3. 排期变化先自动刷新 Call Sheet Draft 并标出需重新确认的人；系统不得自动发布或外发。由有权限的人显式发布新 CallSheetRevision，旧 revision、旧确认和旧计划基准仍可追溯，重要变化需要重新确认。
 4. 第一场实际超时，系统重算 Company Move 和当天剩余计划；锁定条目不移动，预计 Wrap 和冲突更新。
-5. 拍摄完成后建立素材来源，分别记录完整性/备份/交接；未交接前后期 Task 不得伪 Ready。
+5. 拍摄完成后建立素材来源，分别记录完整性、项目配置的备份验证、Preview 与 Formal Handoff；备份未满足时允许草稿预处理，但正式后期输入不得伪 Ready。
 6. Review 评论生成唯一 ReworkRequest；后期修改产出新 AssetVersion，补拍问题重新进入排期并产生新媒体，再回到 Review。
 7. Delivery 被退回时回到 ReworkRequest / Task；再次提交和最终验收不覆盖第一次退回历史。
 8. 收工/阶段结束生成经验观察；校准候选可以更新之后的预计时长或流程关系，但不能自动改当前项目已确认计划或具体摄影/AE/UE 设置。
@@ -587,3 +596,23 @@ MediaHandoff 只有在“一份素材存在多消费者、独立确认、更正/
 
 通过上述场景才可以宣称“制作功能闭环”。单独通过 Shot 编辑、Task API、Schedule 页面、Review 页面或 Export 构建都不能替代端到端闭环验收。
 
+
+
+### 19.5 闭环环节、工作包与验收门槛映射
+
+总纲中的闭环环节必须有机器工作包 owner 和至少一个可执行 gate；没有对应包的文字要求不能被视为已纳入实施。现有通用基础门槛继续复用，下表增加本轮闭环专属门槛。
+
+| 功能环节 | 主要工作包 | 专属/关键 Gate | 验收重点 |
+| --- | --- | --- | --- |
+| Scene/Shot → Task / DAG / Handoff | E4-TASK | FX-08、FX-09、FX-26 | 模板/制作方式真实生成任务；来源失效按 D-35 自动停用边界；已执行事实不被删除 |
+| Person/Cast/Location → 排期 | E2-CAST、E2-SHARED-RESOURCE、E6-SCHEDULE | FX-13、FX-19、FX-20 | UNKNOWN 不当可用；一人多岗不重复；锁定和冲突可解释 |
+| Schedule → Company Move → Call Sheet | E6-SCHEDULE | FX-13、FX-27 | Move 影响 earliest start；排期变化只改 Draft；发布/发送必须显式 |
+| On-set Actual → Media 正式交接 | E6-MEDIA-HANDOFF | FX-28 | Actual 可追溯；完整性+项目配置备份门槛；Preview 与 Formal Handoff 分离 |
+| Media → Post Task → Version | E4-TASK、E6-MEDIA-HANDOFF | FX-09、FX-28 | 固定 AssetVersion 输入；Preview 不冒充正式 Ready；输入变化只使相关分支过期 |
+| Review → Rework / Reshoot → 再 Review | E7-DELIVERY-LOOP | FX-29 | ReworkRequest 去重；返工回 Task，补拍回 Schedule，产生新版本再审 |
+| Deliverable / QC / Delivery | E7-DELIVERY-LOOP、E7-EXPORT | FX-15、FX-29 | QC、提交、送达、确认、验收、退回分开；退回能回返工 |
+| 全流程 Impact | E8-IMPACT | FX-10、FX-17 | 源事实先提交；未来项自动联动；LOCKED/CONFLICT/REQUIRES_USER 可解释可重试 |
+| Actual → QA → Calibration | K1-EXPERIENCE、K2-CALIBRATION | KL-04、KL-05、KL-06、KL-08 | 实测与解释分开；去重；不可变 profile；只更新未来估时/流程候选 |
+| 全流程产品闭环 | Z0-PRODUCTION-CLOSED-LOOP | FX-17、FX-26、FX-27、FX-28、FX-29、FX-30、KL-05、KL-06 | 使用 §19.4 的完整合成项目，从创作到经验校准真实跑通；API/PG/真实消费者证据齐全后才能称“闭环” |
+
+FX-26 至 FX-30 的具体 fixture 写在实施计划并列入机器清单。任何上游工作包即使单独 accepted，只表示该环节能力通过，不代表 Z0 或整个 Production workflow 已闭环。
