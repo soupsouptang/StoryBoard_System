@@ -1,5 +1,13 @@
 # FRAMEFORGE 续作入口
 
+## 2026-10-04 已保存外发光取消完成、代码已上传
+
+最新用户要求圆点和文字只上色，已移除绿灯shadow；原#50FF00、700字重、8px圆点及间距保持。实际97镜头项目008只读核验圆点/文字boxShadow、textShadow、filter均none，color/background为rgb(80,255,0)，未写业务数据。正式生产Webpack/TypeScript、diff/Regression Guard（baseeb04099）通过；仅样式改变，未加镜像CSS测试或扩大测试。截图outputs/shot-saved-status-no-glow-2026-10-04.jpg及shot-saved-status-no-glow-header-2026-10-04.jpg仅留本机，QA页已关闭。本段覆盖历史光晕规则。
+
+3002已部署.next/saved-status-flat standalone（Web PID73563）；API8002/PG55432与原媒体保持，无DDL。生成tsconfig复原，未知:memory:.ses未stage。用户刷新原分镜页面即可查看。
+
+授权目标soupsouptang/StoryBoard_System master已fetch核验无新增，代码及配套MD b99c671正常快进上传（eb04099→b99c671）；本文随后单独提交上传并核对远端SHA，不force改写。当前微调全部完成，不扩展其他旧任务；普通额度可用、未使用券。详见[详情记录](SHOT_DETAIL_2026-10-04.md)。
+
 ## 2026-10-04 图片浮窗共用撤销/重做完成、代码已上传
 
 最新用户要求两个图片入口统一版本、共用同一个或同一组控件，已完成。表格小图与详情大图继续调用唯一ShotImagePreview，其中Undo2/Redo2按钮、32px/16px样式及快捷键只定义一份，始终显示、无可用历史时置灰。详情仍消费ShotDetailCard的锁定构图草稿历史；小图接入原项目HistoryService，tooltip标明当前命令标签。原小图Lock立即提交、详情Lock草稿后Save、Esc/窗外取消未锁定操作不变。
