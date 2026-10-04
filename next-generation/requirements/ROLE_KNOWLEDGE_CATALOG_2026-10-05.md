@@ -2,7 +2,7 @@
 
 # 岗位驱动知识目录
 
-版本：1.2，2026-10-05。状态：知识范围合同，尚未建立运行知识条目、索引、页面或数据库。基础类型、器材/软件扩展和维护规则统一见 [知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)。
+版本：1.3，2026-10-05。状态：知识范围合同，尚未建立运行知识条目、索引、页面或数据库。基础类型、器材/软件扩展和维护规则统一见 [知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)；跨岗位制作常识、公式及首批器材/软件/格式 seed 见 [制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)。
 
 ## 1. 目的与边界
 
@@ -38,7 +38,7 @@ J系列状态见 JOB_CATALOG 第3.2节；组织与能力已确认部分见[组�
 | KX-04 | 素材、版本、审阅与交付 | 素材组件与作品版本、Integrity/Backup/Formal Handoff、Review target、ReworkRequest、Deliverable/QC。 |
 | KX-05 | 授权资料与Readiness | 制作授权资料、hard/soft requirement、required/optional Checklist 与可解释 Readiness；不做合同/法务。 |
 | KX-06 | 来源、研究与证据 | 来源、版本、核验、不确定性、项目事实与知识事实分离。 |
-| KX-07 | 时间经验与校准 | 计划vs实际、粗粒度实际用时、统计候选和未来估时校准；不记录问题原因或解决方案。 |
+| KX-07 | 时间经验与校准 | 从通告、Schedule、制作表与Actual读取计划/实际时长；Shot/Scene/ShootDay可作aggregate，Setup/Shoot/Move/Task/Post等作component；不按Person统计。 |
 
 ## 4. A–H 专业知识域
 
