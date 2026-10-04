@@ -1,5 +1,13 @@
 # 2026-10-04 分镜详情卡片与图片预览实施记录
 
+## 最新追加：辅助制作方式全选
+
+用户要求标题后增加全选，与下方复选项垂直对齐、标题同行。ShotDetailCard辅助组标题行沿用下方同一两/三列等宽网格与8px列gap，“辅助制作方式”第一列、全选第二列；框16px/icon12px、文字14px/20px行高与下方一致。沿用shared Checkbox：十项全选checked、无项unchecked、部分项indeterminate；勾选设置现有secondary草稿为当前十项，取消设置为空，不发请求。disabled复用现有权限/pending；数据提交仍由现有明确Save及原子CAS路径管理，没有第二个owner/API/DB修改。
+
+现有消费者测试接入真实shot-table-presentation选项合同，增加十项全选/部分取消半选/重新全选/全不选及操作不请求断言，原草稿/原子payload/no-op/冲突/取消检查仍通过。生产Webpack/TypeScript与diff通过。真实合成012点击状态依次0→10→9→10→0，主框unchecked→checked→indeterminate→checked→unchecked，恢复基线后已同步；Space选十项、Esc询问/再次Esc丢弃收起、重开0项/REV6保持，没有业务保存。实际008十项已有选中，仅只读打开，全选自动checked。
+
+2560/1440/1024/768/375/320实机标题与全选文字中心Y差0、全选框/文字与下方第二列X差0，字号14px/框16px、卡片470px、组和根无横向溢出；保留辅助组92/116px高且clientHeight=scrollHeight，不折行/无独立滚动。3002更新.next/detail-method-select-all，API8002/PG55432和媒体保持，临时viewport已恢复、QA页关闭、原用户页面保留。截图outputs/shot-detail-method-select-all-2026-10-04.png仅本机。代码与MD本地提交；GitHub具体仓库/分支授权仍待回复，不重试或绕过被拒上传。
+
 ## 最新追加：详情删除按钮缩小
 
 用户要求宽高各缩小约2–3px且icon不变。仅ShotDetailCard顶部删除按钮增加size-[29px]，覆盖原32px；Trash2保持16×16px，圆角8px与原色、aria-label/title、权限/disabled、确认和Esc行为保持。真实1440/1024/768/375/320均按钮29×29、icon16×16、中心偏差0、卡片470px、根无横向溢出；正常点击打开合成012删除确认，Esc取消，未删除或保存任何数据。生产Webpack/TypeScript与diff通过。本机3002更新.next/detail-delete-compact，API/DB不变，临时viewport恢复/QA页关闭；截图outputs/shot-detail-delete-compact-2026-10-04.png仅本机。本段覆盖历史32px删除按钮描述，GitHub具体仓库授权仍未回复，没有重试被拒上传。

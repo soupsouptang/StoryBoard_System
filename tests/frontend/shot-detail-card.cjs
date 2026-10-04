@@ -19,7 +19,8 @@ function load(file, deps = {}) {
   return module.exports;
 }
 const store = load('apps/web/stores/useWorkspaceStore.ts').useWorkspaceStore;
-const fieldsModule = load('apps/web/lib/shot-detail-fields.ts', {'./shot-table-presentation': {PENDING_SHOT_TABLE_COLUMNS:new Set(),SHOT_TABLE_COLUMN_OPTIONS:{}}});
+const presentation = load('apps/web/lib/shot-table-presentation.ts');
+const fieldsModule = load('apps/web/lib/shot-detail-fields.ts', {'./shot-table-presentation': presentation});
 let calls = [], resolve, reject;
 const mutation = {isPending:false,mutateAsync: request => {calls.push(request); mutation.isPending = true; return new Promise((yes,no) => {resolve = value => {mutation.isPending=false;yes(value);};reject = error => {mutation.isPending=false;no(error);};});}};
 const ui = Object.fromEntries(['Button','Input','TextArea','Select','Checkbox','Dialog','DialogContent','DialogTitle','DialogDescription','DialogFooter'].map(name => [name,name]));
@@ -34,8 +35,8 @@ const {ShotDetailCard} = load('apps/web/components/shot/ShotDetailCard.tsx', {
   '@/lib/shot-display':{parseShotDuration:value => {const match=/^(\d+)(f|s)?$/.exec(value);if(!match) throw Error('invalid');return Number(match[1])*(match[2]==='f'?1:25);}},
   './ShotPanelImage':{ShotPanelImage:'ShotPanelImage'},'./ShotFeedbackDialog':{ShotFeedbackDialog:'ShotFeedbackDialog'}
 });
-let shot = {id:'A',production_id:'P',display_number:'001',revision:1,name:'原标题',duration_frames:75,timing_locked:false};
-const fields = fieldsModule.shotDetailFields(['name','duration_frames','panel_image','custom','hidden'],['name','duration_frames','panel_image','custom'], {name:'镜头标题',custom:'备注',hidden:'隐藏'}, [{id:'F',column_key:'custom',field_type:'textarea',revision:4},{id:'H',column_key:'hidden',field_type:'text',revision:1}]);
+let shot = {id:'A',production_id:'P',display_number:'001',revision:1,name:'原标题',duration_frames:75,timing_locked:false,primary_method:'live',secondary_methods:[]};
+const fields = fieldsModule.shotDetailFields(['name','duration_frames','primary_method','panel_image','custom','hidden'],['name','duration_frames','primary_method','panel_image','custom'], {name:'镜头标题',custom:'备注',hidden:'隐藏'}, [{id:'F',column_key:'custom',field_type:'textarea',revision:4},{id:'H',column_key:'hidden',field_type:'text',revision:1}]);
 const props = () => ({shot,production:{id:'P',fps_num:25,fps_den:1},fields,customValues:{F:'原备注',H:'不可修改'},sequences:[],height:240,canWrite:true,onClose:store.getState().closeInspector});
 function render() {cursor=0;effects=[];tree=ShotDetailCard(props());const pending=effects;pending.forEach(fn => fn());cursor=0;effects=[];tree=ShotDetailCard(props());}
 function find(predicate,node=tree) {if(!node || typeof node!=='object') return; if(predicate(node))return node;for(const child of [node.props?.children].flat(Infinity)){if(!child || typeof child!=='object')continue;const match=find(predicate,child);if(match)return match;}}
@@ -47,6 +48,22 @@ async function flush() {await new Promise(yes => setImmediate(yes));render();}
   store.getState().openInspector('A');render();
   assert.ok(find(node => node.props.hidden && node.props.type==='file'));
   assert.equal(find(node => node.props['aria-label']==='隐藏'),undefined,'Hidden fields are read-only, not disabled editors');
+  const allMethods = () => find(node => node.props['aria-label']==='辅助制作方式全选');
+  const methodOptions = fields.find(field => field.key==='primary_method').options;
+  const method = option => find(node => node.props['aria-label']===`辅助制作方式：${option}`);
+  assert.equal(methodOptions.length,10);
+  assert.equal(allMethods().props.checked,false);
+  allMethods().props.onCheckedChange(true);render();
+  assert.equal(allMethods().props.checked,true);
+  methodOptions.forEach(option => assert.equal(method(option).props.checked,true));
+  method(methodOptions[0]).props.onCheckedChange(false);render();
+  assert.equal(allMethods().props.checked,'indeterminate','Partial selection reflects mixed state');
+  allMethods().props.onCheckedChange(true);render();
+  methodOptions.forEach(option => assert.equal(method(option).props.checked,true));
+  allMethods().props.onCheckedChange(false);render();
+  methodOptions.forEach(option => assert.equal(method(option).props.checked,false));
+  assert.equal(allMethods().props.checked,false);
+  assert.equal(calls.length,0,'Select all remains a local draft until explicit Save');
   edit('镜头标题','临时');edit('镜头标题','原标题');
   button('取消').props.onClick();assert.equal(store.getState().isInspectorOpen,false,'Changing then reverting is clean');
   store.getState().openInspector('A');render();edit('镜头标题','新标题');edit('备注','新备注');

@@ -186,7 +186,18 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
     return <div key={field.key} data-detail-field={field.key} className={`min-w-0 ${field.kind === 'image' && !field.hidden ? 'flex h-full min-h-0 flex-col' : ''} ${span} ${field.hidden ? 'text-muted-foreground opacity-60' : ''}`}>
       <div className="mb-1 flex min-h-4 items-center gap-2 text-xs font-medium text-muted-foreground">{field.label}{field.readonly && <span className="text-[11px] font-normal">只读</span>}</div>
       {editor}{empty && <p className="mt-1 text-xs text-[#FF0082]">{field.label}为必填项</p>}
-      {field.key === 'primary_method' && !field.readonly && <div className="@container/shot-method mt-3"><div className="mb-1 text-xs text-muted-foreground">辅助制作方式</div><div className="grid grid-cols-2 gap-x-2 gap-y-1 @min-[260px]/shot-method:grid-cols-3">{field.options.map(option => <label key={option} className="flex min-w-0 items-center gap-1 text-sm leading-5"><Checkbox className="size-4 shrink-0 [&_svg]:size-3" aria-label={`辅助制作方式：${getMethodLabel(option)}`} disabled={disabled} checked={secondary.includes(option as typeof secondary[number])} onCheckedChange={checked => setSecondary(checked ? [...new Set([...secondary, option as typeof secondary[number]])] : secondary.filter(item => item !== option))} /><span className="whitespace-nowrap text-sm! leading-5!">{getMethodLabel(option)}</span></label>)}</div></div>}
+      {field.key === 'primary_method' && !field.readonly && <div className="@container/shot-method mt-3">
+        <div className="mb-1 grid grid-cols-2 items-center gap-x-2 @min-[260px]/shot-method:grid-cols-3">
+          <div className="whitespace-nowrap text-xs text-muted-foreground">辅助制作方式</div>
+          <label className="flex min-w-0 items-center gap-1 text-sm leading-5">
+            <Checkbox className="size-4 shrink-0 [&_svg]:size-3" aria-label="辅助制作方式全选" disabled={disabled}
+              checked={field.options.every(option => secondary.includes(option as typeof secondary[number])) ? true : field.options.some(option => secondary.includes(option as typeof secondary[number])) ? 'indeterminate' : false}
+              onCheckedChange={checked => setSecondary(checked === true ? [...field.options] as typeof secondary : [])} />
+            <span className="whitespace-nowrap text-sm! leading-5!">全选</span>
+          </label>
+        </div>
+        <div className="grid grid-cols-2 gap-x-2 gap-y-1 @min-[260px]/shot-method:grid-cols-3">{field.options.map(option => <label key={option} className="flex min-w-0 items-center gap-1 text-sm leading-5"><Checkbox className="size-4 shrink-0 [&_svg]:size-3" aria-label={`辅助制作方式：${getMethodLabel(option)}`} disabled={disabled} checked={secondary.includes(option as typeof secondary[number])} onCheckedChange={checked => setSecondary(checked ? [...new Set([...secondary, option as typeof secondary[number]])] : secondary.filter(item => item !== option))} /><span className="whitespace-nowrap text-sm! leading-5!">{getMethodLabel(option)}</span></label>)}</div>
+      </div>}
     </div>;
   };
   const visible = fields.filter(field => !field.hidden);
