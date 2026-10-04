@@ -20,6 +20,9 @@
 | [列模型](COLUMN_MODEL_REQUIREMENTS_2026-10-02.md) | 九个内置列、二十个预设列、自定义列及删除规则 |
 | [后端衔接](BACKEND_FRONTEND_HANDOFF_2026-10-04.md) | 后端变化产生的页面缺口、负责人和保护范围 |
 | [逐项审计](EXTENSIBILITY_GRILL_AUDIT_2026-10-04.md) | 本轮问题、用户回答、整改和检查结果 |
+| [制作闭环复核](PRODUCTION_CLOSURE_AUDIT_2026-10-05.md) | 3.1至3.3闭环复核、规则衔接和后续证据，不宣称已实现 |
+| [界面规划](VNEXT_UI_PLANNING_2026-10-05.md) | 各模块页面、岗位操作、动画和未来多端；不改变现有已明确UI |
+| [通告与导出设计](CALL_SHEET_EXPORT_DESIGN_2026-10-05.md) | 通告发布投影、纸张模板、字段、水印、工程码与验收 |
 
 遇到冲突按最新用户决定、适用 AGENTS、对应最新规则、历史计划处理。已经确认的规则直接写在使用位置；历史证据保留在记录中，不让实施者靠末尾补丁猜规则。技术细化要说明是实现选择，不能冒充用户回答。
 
@@ -362,7 +365,7 @@ HistoryService 是唯一项目持久命令历史，用户加项目最近一百�
 
 Review 永远绑定固定内容或 AssetVersion，不把 Comment 挂在会漂移的“当前 Shot”上。Comment、ReviewDecision 和任务交接各有独立含义；解决一条评论不等于新版本已经制作、QC 或交付。
 
-当 Review 产生可执行修改时，创建或关联唯一 ReworkRequest。ReworkRequest 不能只是 ReviewComment 的字段，因为它需要独立查询、负责人、生命周期、去重、自动化和跨后期/补拍两种去向；它属于 Production scope，通过 typed link 连接源 Review/Comment、受影响 Scene/Shot、输入版本、目标 Task 和后续产物。它不默认成为 Shot 子对象。
+当审阅产生可执行修改时，创建或关联唯一返工要求（ReworkRequest）。返工要求不能只是批注字段，因为它需要独立查询、负责人、生命周期、去重、自动化和后期返工／补拍两种去向。项目管理其作用域和生命周期；它通过有明确类型的连接关联源审阅／批注、受影响场景／镜头、固定输入版本、目标任务和后续产物。这些对象各自保存事实，删除其中一个对象不以父子级联方式删除其他对象；引用断开、正文清理和恢复按第17节及各自权限处理。
 
 后期返工路径为“Review/Comment → ReworkRequest → Task → 固定输入版本 → 新 AssetVersion → Review”。需要补拍时为“Review/现场问题 → ReworkRequest → 拍摄 Task / 待排需求 → SchedulePlan / ShootDay → 现场实际 → Media → 后期 Task → 新 Version → Review”。同一来源、同一目标和同一未解决需求必须幂等，不重复生成任务。
 
@@ -438,7 +441,7 @@ Project Template、Scene/Shot Requirement 或 Deliverable 可以明确声明 Aut
 
 ## 16. 知识库
 
-影视方法、型号参考、时间段需求、项目事实、一次经验、统计和建议分别负责。来源、核验状态和处理方式分开，参数有单位条件和资料版本；人工智能不是独立事实源。
+影视基础知识、型号参考、时间段需求、项目事实、一次经验、统计和建议分别负责。不加入器材使用方法。来源、核验状态和处理方式分开，参数有单位条件和资料版本；人工智能不是独立事实源。
 
 后台用户组保留团队归类，复用已有组成员关系，不建立另一份知识团队成员名单。采集新经验时，贡献范围取当时项目成员所属全部团队的并集并固定；成员之后加入或退出团队，只影响之后的新经验，既有贡献不自动扩散或撤回。没有团队时仅项目内使用。明确撤回、关闭贡献、来源修正或永久删除仍使相关统计失效。
 
@@ -454,17 +457,17 @@ Project Template、Scene/Shot Requirement 或 Deliverable 可以明确声明 Aut
 
 
 
-### 16.1 项目 Actual → QA → 估时与流程校准闭环
+### 16.1 实际执行 → 经验问答 → 估时与流程校准闭环
 
 经验库的主要用途是校准后续项目的预计时长和流程关联，不建设“常用设置、设备使用经验、常见问题百科”。具体摄影机、焦段、曝光、灯位、AE/UE 参数和设备组合始终属于 Project / Scene / Shot / Task 的实际数据。
 
-可进入校准的 Actual 至少来自 Task 实际用时、ScheduleItem 的 Prep/Setup/Shoot/Reset/Move/Wrap 实际区间、MediaHandoff、返工/补拍和阶段完成事实。QA 只补充原因、上下文和人工解释，不替代实测 Actual。
+可进入校准的实际记录至少来自任务实际用时、安排条目的准备／搭建／拍摄／复位／转场／撤收实际区间、素材交接、返工／补拍和阶段完成事实。经验问答只补充原因、上下文和人工解释，不替代实际测量；经验问答与质量核验是不同步骤，不再用同一缩写混称。
 
 经验闭环为：
 
 ```text
 Project Actual
-→ ExperienceObservation / QA
+→ ExperienceObservation / 经验问答
 → 去重与质量核验
 → Aggregate / EstimateProfile
 → Calibration Candidate
@@ -474,9 +477,9 @@ Project Actual
 → 仅影响之后的新计划或明确重新预测
 ```
 
-一次项目偏差不能直接修改全局基线。校准必须记录样本数、独立执行单位、适用项目/Scene/Shot/Production Method 条件、版本和来源；不足时返回 INSufficient data。新 EstimateProfile 不重写已确认计划、Actual、旧通告或旧任务。
+一次项目偏差不能直接修改全局基线。校准必须记录样本数、独立执行单位、适用项目／场景／镜头／制作方式条件、版本和来源；不足时返回“样本不足”。新估时配置不重写已确认计划、实际记录、旧通告或旧任务。
 
-流程关联校准可以提出“某 Shot Pattern 通常还需要 Tracking Task”“某类 Scene 需要额外共享准备”等候选，但正式改变 WorkflowTemplate / Dependency / Checklist 仍走其 own revision 和审核命令，保留旧模板实例所用版本。
+流程关联校准可以提出“某类镜头通常还需要跟踪任务”“某类场景需要额外共享准备”等候选，但正式改变工作流模板、依赖或检查清单仍走各自的修订和审核命令，保留旧模板实例所用版本。
 
 
 ## 17. 删除、迁移和恢复
@@ -568,7 +571,7 @@ Project / Template
 | Review | 固定版本 + Comment/Decision | 已解决或 ReworkRequest | 修改进入 Task，补拍进入待排，不停在评论 |
 | 补拍/返工 | ReworkRequest | Task 或 Schedule demand + 新产物 | 回到 Media/Post/Review，源问题不重复建单 |
 | 交付 | DeliverableItem/Variant + QC + Authorization Requirement/Record | submit/deliver/ack/accept/reject 等独立事实 | Hard授权与required Checklist满足后才可通过Final QC；Reject 回返工；Accept 固定当时版本 |
-| 经验校准 | Planned vs Actual + QA | Aggregate / EstimateProfile / calibration candidate | 只在确认后更新未来 estimate/workflow/checklist 基线 |
+| 经验校准 | 预计与实际记录＋经验问答 | 汇总／估时配置／校准候选 | 只在确认后更新未来估时、工作流和检查清单基线 |
 
 ### 19.3 闭环所需 Entity 准入说明
 
@@ -582,7 +585,7 @@ Project / Template
 | CallSheetRevision | 已发布内容必须固定且可被确认，不能随 CURRENT 排期漂移 | 是；发布/撤回/接收人权限 | 独立发布历史；重要变化触发重确认 | ShootDay、ScheduleItem、Person、Location |
 | ReworkRequest | Review 问题需要跨后期和补拍、去重、负责人和状态 | 是；独立 open/resolved/superseded 语义 | 触发 Task / Schedule；保留源问题 | Review/Comment、Shot、AssetVersion、Task、Deliverable |
 | DeliverableItem / Variant | 一个项目有多个真实交付对象、不同规格和验收事实 | 是；接收范围、QC/提交/验收生命周期 | 退回触发返工；发布事实独立 | AssetVersion、Task、Review、Authorization |
-| ExperienceObservation | 项目事实不能被 QA/解释覆盖，经验需独立质量/撤回 | 是；原始项目权限与团队汇总权限分开 | 不进创作版本；进入校准作业 | Task、ScheduleItem、Scene/Shot、KnowledgeSpace |
+| ExperienceObservation | 项目事实不能被问答／解释覆盖，经验需独立质量核验／撤回 | 是；原始项目权限与团队汇总权限分开 | 不进创作版本；进入校准作业 | 任务、安排条目、场景／镜头、采集时固定的团队贡献范围 |
 | EstimateProfile | 统计版本必须冻结样本/算法/适用范围，不能覆盖模板字段 | 是；不可变计算版本 | 新版本只影响未来建议/预测 | ExperienceObservation、Pattern、WorkflowTemplate |
 | AuthorizationRecord | 同一授权可覆盖多个Person/Location/Scene/Asset/Deliverable，并有独立文件/范围/期限/撤回 | 是；Production scope权限、revision、替代/撤回；不做合同法务 | 影响未来Readiness/QC，不自动改历史执行 | Person、Location、Scene/Shot、AssetVersion、Deliverable |
 | ChecklistDefinition / ChecklistResult | 检查规则要被模板复用且结果属于项目实际执行，不能与SOP或普通字段混为一体 | 是；定义版本与项目结果分离，结果有revision/证据 | 参与Readiness；来源失效按D-39保留已确认事实 | Project、Scene、Shot、Task、ShootDay、Deliverable |
@@ -636,7 +639,7 @@ MediaHandoff 只有在“一份素材存在多消费者、独立确认、更正/
 | Review → Rework / Reshoot → 再 Review | E7-DELIVERY-LOOP | FX-29 | ReworkRequest 去重；返工回 Task，补拍回 Schedule，产生新版本再审 |
 | Deliverable / QC / Delivery | E7-DELIVERY-LOOP、E7-EXPORT | FX-15、FX-29 | QC、提交、送达、确认、验收、退回分开；退回能回返工 |
 | 全流程 Impact | E8-IMPACT | FX-10、FX-17 | 源事实先提交；未来项自动联动；LOCKED/CONFLICT/REQUIRES_USER 可解释可重试 |
-| Actual → QA → Calibration → 未来基线 | K1-EXPERIENCE、K2-CALIBRATION、K3-RECOMMENDATION | KL-04、KL-05、KL-06、KL-07、KL-08 | 实测与解释分开；去重；不可变 profile；必须经受权接受后才更新未来估时/流程候选 |
+| 实际执行 → 经验问答 → 校准 → 未来基线 | K1-EXPERIENCE、K2-CALIBRATION、K3-RECOMMENDATION | KL-04、KL-05、KL-06、KL-07、KL-08 | 实测与解释分开；去重；不可变 profile；必须经受权接受后才更新未来估时/流程候选 |
 | 全流程产品闭环 | Z0-PRODUCTION-CLOSED-LOOP | FX-17、FX-26、FX-27、FX-28、FX-29、FX-30、FX-31、FX-32、KL-05、KL-06、KL-07 | 使用 §19.4 的完整合成项目，从创作到经验校准并受控影响后续计划真实跑通；required Checklist与hard授权资料也必须贯穿；API/PG/真实消费者证据齐全后才能称“闭环” |
 
 FX-26 至 FX-32 的具体 fixture 写在实施计划/执行标准并列入机器清单。任何上游工作包即使单独 accepted，只表示该环节能力通过，不代表 Z0 或整个 Production workflow 已闭环。
@@ -1060,7 +1063,7 @@ Requirement
 → Preparation / Readiness Confirmation
 → Schedule / Task readiness
 → Actual
-→ QA / ExperienceObservation
+→ 经验问答 / ExperienceObservation
 ```
 
 适用示例：
@@ -1108,7 +1111,7 @@ drilldown_identity
 - Post：Task type、VFX task type、complexity、固定输入数量、rework count；
 - Review：修改类别、轮次、Rework/Reshoot 路径；
 - Delivery：variant 数量、QC/reject 类型、从 submit 到 accept 的实际时间；
-- QA：原因和人工解释，只补充 Actual，不替代 Actual。
+- 经验问答：原因和人工解释，只补充实际记录，不替代实际记录。
 
 不应直接进入通用知识统计或 AI 特征的内容：私人联系方式、账号身份、未脱敏人员评价、合同/薪酬/费用、未经授权的项目正文、客户机密、以及任何通过自由文本推断出的敏感个人属性。
 

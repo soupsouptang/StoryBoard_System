@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" role="img" aria-labelledby="title desc">
+ <title id="title">新增排期页面结构规划</title><desc id="desc">合成排期的待安排队列、拍摄日时间线、冲突检查区，以及锁定与超时影响。不是已实现功能。</desc>
+ <rect width="1440" height="900" fill="#0b0b0b"/><g font-family="Microsoft YaHei, sans-serif" fill="#fafafa">
+ <text x="24" y="32" font-size="18">FRAMEFORGE</text><text x="1170" y="32" font-size="14" fill="#aaa">新增页规划 · 未实施</text><path d="M0 50H1440" stroke="#333"/>
+ <rect y="51" width="224" height="849" fill="#141414"/><text x="24" y="105" font-size="15">现有项目导航保持</text><text x="24" y="166" font-size="15">筹备与执行（新增组）</text><text x="42" y="215" font-size="15" fill="#bbb">场景与演职人员</text><text x="42" y="265" font-size="15" fill="#bbb">任务</text><rect x="16" y="286" width="190" height="40" rx="9" fill="#292929"/><text x="42" y="312" font-size="15">拍摄排期</text><text x="42" y="365" font-size="15" fill="#bbb">通告</text><text x="42" y="415" font-size="15" fill="#bbb">现场</text>
+ <text x="248" y="105" font-size="25" font-weight="700">拍摄排期</text><text x="248" y="138" font-size="14" fill="#aaa">合成项目 · 当前方案 A · 摄制组 1 · 项目时区 Asia/Shanghai</text><rect x="1240" y="87" width="160" height="36" rx="9" fill="#fafafa"/><text x="1258" y="111" fill="#171717" font-size="14">生成通告草稿</text>
+ <rect x="248" y="168" width="230" height="655" rx="10" fill="#171717" stroke="#333"/><text x="264" y="204" font-size="17">待安排 · 3</text><text x="264" y="240" font-size="13" fill="#aaa">场景 / 镜头 / 任务</text>
+ <rect x="264" y="267" width="198" height="95" rx="9" fill="#242424"/><text x="280" y="297" font-size="14">场景 B · 室内采访</text><text x="280" y="328" font-size="13" fill="#aaa">2 镜头 · 时长待确认</text>
+ <rect x="264" y="378" width="198" height="95" rx="9" fill="#242424"/><text x="280" y="408" font-size="14">场景 C · 道具准备</text><text x="280" y="439" font-size="13" fill="#aaa">准备任务 · 未分派</text>
+ <rect x="494" y="168" width="536" height="655" rx="10" fill="#141414" stroke="#333"/><text x="510" y="204" font-size="17">拍摄日 1 · 10 月 5 日</text>
+ <g stroke="#303030"><path d="M550 245V778M650 245V778M750 245V778M850 245V778M950 245V778"/></g><g font-size="13" fill="#aaa"><text x="530" y="238">08:00</text><text x="630" y="238">09:00</text><text x="730" y="238">10:00</text><text x="830" y="238">11:00</text><text x="930" y="238">12:00</text></g>
+ <rect x="550" y="269" width="98" height="66" rx="8" fill="#333"/><text x="565" y="296" font-size="14">准备</text><text x="565" y="319" font-size="12" fill="#bbb">共享一次</text>
+ <rect x="652" y="348" width="199" height="72" rx="8" fill="#262f40" stroke="#749ad9"/><text x="668" y="378" font-size="14">场景 A · 拍摄</text><text x="668" y="403" font-size="12" fill="#bbc9df">实际超时 20 分钟</text>
+ <rect x="854" y="435" width="93" height="72" rx="8" fill="#303030"/><text x="867" y="466" font-size="14">转场</text><text x="867" y="489" font-size="12" fill="#bbb">分段时长</text>
+ <rect x="948" y="526" width="66" height="72" rx="8" fill="#343434" stroke="#b5b5b5"/><text x="956" y="555" font-size="12">锁定</text><text x="956" y="580" font-size="12">11:55</text>
+ <text x="514" y="706" font-size="14" fill="#aaa">建议与已保存安排分别标识。</text><text x="514" y="734" font-size="14" fill="#aaa">锁定条目不被自动移动。</text><text x="514" y="762" font-size="14" fill="#aaa">安排结束不等于镜头已满足。</text>
+ <rect x="1046" y="168" width="370" height="655" rx="10" fill="#171717" stroke="#333"/><text x="1064" y="204" font-size="17">影响检查 · 场景 A</text><text x="1064" y="250" font-size="14">预计 / 实际 / 新预测分开</text><text x="1064" y="287" font-size="14" fill="#bbb">人员与场地冲突：1 项</text><text x="1064" y="324" font-size="14" fill="#bbb">时间段需求：查看来源 →</text><path d="M1064 354H1398" stroke="#333"/>
+ <text x="1064" y="398" font-size="15">已保存：实际结束事实</text><text x="1064" y="438" font-size="15">待处理：下一场锁定冲突</text><text x="1064" y="478" font-size="15">未改变：旧通告与旧确认</text><text x="1064" y="543" font-size="14" fill="#aaa">可查看建议 / 处理冲突 / 重试联动</text><text x="1064" y="579" font-size="14" fill="#aaa">此区只用于新增排期页面。</text>
+ <text x="248" y="866" font-size="14" fill="#aaa">结构示意；无真实账号、素材、联系方式或线上数据。不改变分镜制作的现有布局。</text></g>
+</svg>

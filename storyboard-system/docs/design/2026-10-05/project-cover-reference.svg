@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 780" role="img" aria-labelledby="title desc">
+ <title id="title">项目入口整行封面保留示意</title><desc id="desc">合成项目的横向照片位置、渐变遮罩、左侧标题和信息、右侧编辑与打开入口。不是运行界面截图。</desc>
+ <defs><linearGradient id="cover"><stop stop-color="#525252"/><stop offset=".48" stop-color="#333"/><stop offset="1" stop-color="#111"/></linearGradient><linearGradient id="shade"><stop stop-color="#000" stop-opacity=".35"/><stop offset=".45" stop-color="#000" stop-opacity=".65"/><stop offset="1" stop-color="#000" stop-opacity=".9"/></linearGradient></defs>
+ <rect width="1440" height="780" fill="#0b0b0b"/>
+ <g font-family="Microsoft YaHei, sans-serif" fill="#fafafa">
+ <text x="32" y="32" font-size="18">FRAMEFORGE · 项目入口</text><text x="1260" y="32" font-size="13" fill="#aaa">规划参考 · 合成数据</text>
+ <path d="M0 50H1440" stroke="#292929"/><text x="120" y="117" font-size="25" font-weight="700">项目</text><text x="120" y="147" font-size="14" fill="#aaa">保留照片作为整行项目入口；此图只说明结构。</text>
+ <rect x="1080" y="92" width="112" height="36" rx="9" fill="#fafafa"/><text x="1100" y="115" fill="#151515" font-size="14">＋ 新建项目</text>
+ <text x="120" y="192" font-size="14" fill="#aaa">最近打开</text>
+ <rect x="120" y="210" width="1080" height="140" rx="14" fill="url(#cover)"/>
+ <path d="M170 318V253H268V318M293 329V225H402V329M435 325V273H520V325M560 329V243H655V329" fill="#8d8d8d" opacity=".6"/>
+ <rect x="120" y="210" width="1080" height="140" rx="14" fill="url(#shade)" stroke="#444"/>
+ <text x="151" y="267" font-size="22" font-weight="700">城市影像 · 合成项目 A</text><text x="151" y="300" font-size="14" fill="#ddd">宣传片 · 16:9 · 25 fps · 24 镜头 · 00:02:10:00</text>
+ <text x="875" y="265" font-size="14" fill="#bbb">今天 10:30</text><text x="875" y="292" font-size="13" fill="#bbb">项目成员 A</text><text x="1000" y="282" font-size="15">编辑</text><text x="1100" y="282" font-size="15">打开 →</text>
+ <rect x="120" y="368" width="1080" height="140" rx="14" fill="url(#cover)"/>
+ <path d="M135 462L335 399L510 462L790 397L1180 480" stroke="#aaa" stroke-width="20" opacity=".25" fill="none"/>
+ <rect x="120" y="368" width="1080" height="140" rx="14" fill="url(#shade)" stroke="#444"/>
+ <text x="151" y="425" font-size="22" font-weight="700">人物记录 · 合成项目 B</text><text x="151" y="459" font-size="14" fill="#ddd">纪录短片 · 9:16 · 30 fps · 12 镜头 · 00:01:20:00</text>
+ <text x="875" y="425" font-size="14" fill="#bbb">昨天 16:20</text><text x="875" y="452" font-size="13" fill="#bbb">项目成员 B</text><text x="1000" y="440" font-size="15">编辑</text><text x="1100" y="440" font-size="15">打开 →</text>
+ <rect x="120" y="552" width="1080" height="148" rx="10" fill="#171717" stroke="#363636"/>
+ <text x="145" y="585" font-size="17" font-weight="700">保留规则</text><text x="145" y="616" font-size="15">照片铺满整行＋渐变遮罩；标题和信息在左；更新时间与操作在右。</text><text x="145" y="646" font-size="15" fill="#bbb">真实封面由授权素材提供。这里的几何图案只代指照片，不是新封面样式。</text><text x="145" y="676" font-size="15" fill="#bbb">不改变现有项目大厅尺寸、排序、已接受表现或应用代码。</text>
+ </g>
+</svg>
