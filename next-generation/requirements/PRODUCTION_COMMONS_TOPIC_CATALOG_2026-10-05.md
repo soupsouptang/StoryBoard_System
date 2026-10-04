@@ -20,7 +20,7 @@
 - base domains；
 - revision / source policy。
 
-本文件先定义“常识语义”，不为这些 Topic 建最终层级树。Domain 只用于大类归组和检索；Topic 之间依靠 typed relation 连接。
+本文件定义常识语义，不把 Topic 作为分类树层级。当前最大分类深度已固定为 Library→Domain→Component→可选Subcomponent；Topic 通过 typed relation / link 被任意分类节点引用。
 
 ## 2. Relation vocabulary
 
@@ -401,7 +401,7 @@ Compatibility 必须分别保存 mechanical/electronic/AF/aperture/metadata/stab
 2. 只有该专业确实存在新的稳定概念时才新增 Topic；
 3. 不允许把同一概念换名后在不同小库复制正文；
 4. 专业小库可新增 INPUT_OUTPUT、ROLE_BOUNDARY、METHOD_PRINCIPLE，但应链接共享常识；
-5. 最终 Domain 最大层级要根据 A–H 实际组件数量和导航需求决定，本文件暂不先定“最多2/3/4层”。
+5. 分类树不得超过 Library→Domain→Component→可选Subcomponent；超过后使用 Topic、Relation、Facet 或 SpecificationDefinition，不增加第五/第六级目录。
 
 ## 20. 首批内容完成标准
 
