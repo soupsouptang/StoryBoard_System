@@ -1,5 +1,13 @@
 # 2026-10-04 分镜详情卡片与图片预览实施记录
 
+## 最新追加：放大辅助制作方式选项
+
+用户要求不改变卡片框架、不增加滚动或折行的情况下放大选项。ShotDetailCard原组11px字号/16px行高、12px框改为14px字号/20px行高、16px框与12px勾选icon；保留横gap8px/纵gap4px。只在辅助组使用命名容器查询：组可用宽度至少260px时三列四行，否则两列五行；十项名称保持nowrap，移除独立滚动的既有规则保持。显式important仅作用于选项文字，避免表格统一字号覆盖。470px标准卡片本体、最多六等宽内容轨、固定左图、16px内容留白/字段间距与置顶操作保持；没有shared primitive/API/DB/枚举/草稿或保存owner变化。
+
+既有shot-detail-card检查及生产Webpack/TypeScript通过，diff检查通过。实机2560/1440/1024/768/375/320宽度：十项字号均14px、框16px、每项单行20px、卡片470px、根和组均无横向溢出；辅助组列数3/2/2/2/3/3，组高92/116/116/116/92/92px，全部clientHeight=scrollHeight且overflowY=visible。组基于字段实际宽度而非屏幕宽度，窄屏单内容列反而可容纳三列选项。实际样本008十项全选也完整无折行；仅只读查看，未保存任何用户数据。合成项目文字特效点击勾选后显示未保存状态，Esc询问、再次Esc丢弃收起，重开unchecked与REV6保持。临时viewport已恢复，QA页关闭，原用户页面保留。截图outputs/shot-detail-method-readable-2026-10-04.png仅本机。
+
+Web3002已更新`.next/detail-method-readable/standalone/apps/web`，API8002/PG55432及媒体保持。代码/MD本地提交，GitHub仍等待此前具体目的地授权，未重试或绕过被拒上传。本段覆盖历史11px/12px框/固定两列描述，其他功能不扩展。
+
 ## 最新追加：操作全部置顶，取消底部占位
 
 用户要求移除同步/保存/取消底部行，为内容留更多空间，内容布局与卡片边缘留白保持。仅ShotDetailCard呈现修改：header依次为镜头标题、REV、同步状态、删除icon，元数据项间gap8px；右侧保存/取消均64×32px、同字体、无图标。删除为32×32px圆角正方形，保留Trash2 icon、aria-label/title“删除镜头”与原二次确认；保存/取消/权限/pending/dirty/ACK/Esc仍归既有处理函数，无第二个命令或状态owner。footer DOM删除，470px标准本体及body p16/gap16保持；窄屏header自然换行，按钮始终可见，底部仍有16px内容内留白。
