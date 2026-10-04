@@ -1,5 +1,9 @@
 # FrameForge VNext 原生重构工作簿
 
+## 2026-10-04 分镜制作两行工具栏
+
+用户确认布局已接入真实shots页：第一行统计/蓝色已选数/新增；第二行原管理工具、视图、搜索、删除/浅色取消四组，20px居中短竖线，表格旧批量下拉栏移除。原删除确认和store/Command owner保持；正式构建、三项消费者检查及五宽度/窄屏键盘可见通过。3002为shot-toolbar-compact。 [实施与验证](SHOT_TOOLBAR_2026-10-04.md)。
+
 ## 2026-10-04 已保存无发光微调
 
 用户要求圆点/文字仅上色，已移除绿灯shadow；实际008两者boxShadow/textShadow/filter均none，#50FF00与字重/间距保持。生产构建与真实页面验证通过，3002为saved-status-flat，业务owner及API/PG不变。[记录](SHOT_DETAIL_2026-10-04.md)。

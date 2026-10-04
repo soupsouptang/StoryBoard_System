@@ -22,7 +22,7 @@ import { ShotTrashModal } from '@/components/shot/ShotTrashModal';
 import { InlineEditCell } from '@/components/shot/InlineEditCell';
 import { CustomFieldCell } from '@/components/shot/CustomFieldCell';
 import { ShotImageCell } from '@/components/shot/ShotImageCell';
-import { ShotViewNavigation } from '@/components/shot/ShotViewNavigation';
+import { ShotCountSummary, ShotViewNavigation } from '@/components/shot/ShotViewNavigation';
 import { ShotColumnManager } from '@/components/shot/ShotColumnManager';
 import { ShotCustomFieldManager } from '@/components/shot/ShotCustomFieldManager';
 import { ShotSavedViews } from '@/components/shot/ShotSavedViews';
@@ -1065,102 +1065,116 @@ export default function ShotListPage() {
   return (
     <div className={`flex h-full w-full min-w-0 flex-col overflow-hidden ${isInspectorOpen ? 'min-h-min' : 'min-h-0'}`}>
       <div className="z-10 shrink-0 space-y-3 border-b border-border bg-background px-4 py-3">
-        <h1 className="text-lg font-semibold">分镜制作</h1>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <ShotViewNavigation productionId={production.id} active="table" count={shots.length} displayedCount={visibleShots.length} />
-            {selectedShotIds.length > 0 && <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">已选 {selectedShotIds.length}</span>}
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-3" aria-label="分镜制作概况">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-2">
+            <h1 className="text-lg font-semibold">分镜制作</h1>
+            <ShotCountSummary count={shots.length} displayedCount={visibleShots.length} />
+            <span className="flex items-center gap-2 whitespace-nowrap text-xs text-muted-foreground" aria-label={`已选 ${selectedShotIds.length} 个镜头`}>
+              已选
+              <span className="inline-flex h-6 min-w-[4ch] items-center justify-center rounded-md bg-blue-500 px-2 font-mono font-bold tabular-nums text-white">{selectedShotIds.length}</span>
+            </span>
           </div>
-        </div>
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_11rem_max-content] items-center gap-2 overflow-x-auto 2xl:grid-cols-[minmax(max-content,1fr)_minmax(11rem,20rem)_minmax(max-content,1fr)] [&_button]:h-9 [&_button]:text-sm [&_svg]:h-4 [&_svg]:w-4" role="group" aria-label="镜头查询与工具">
-          <div className="relative col-start-2 row-start-1 w-full min-w-0">
-            <Icons.Search aria-hidden="true" className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              value={filters.searchQuery}
-              onChange={event => setFilter('searchQuery', event.target.value)}
-              aria-label="搜索镜头"
-              placeholder="搜索镜号、画面、旁白、负责人..."
-              className="w-full min-w-0 pl-8"
-            />
-          </div>
-          <div className="col-start-1 row-start-1 flex w-max max-w-full flex-nowrap items-center justify-start gap-2 overflow-x-auto">
-            <Button variant="ghost" size="sm" disabled={!commands.canWrite} onClick={() => setImportOpen(true)}><Icons.FileDown className="h-3.5 w-3.5" />导入</Button>
-            <Button
-              variant={showFilters || activeFilterCount > 0 || groupMode !== 'none' ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => setShowFilters(value => !value)}
-              aria-expanded={showFilters}
-              className="shrink-0"
-            >
-              <Icons.Filter className="h-3.5 w-3.5" />
-              筛选/分组{activeFilterCount ? ` · ${activeFilterCount}` : ''}
-            </Button>
-            <ShotSavedViews
-              productionId={production.id}
-              currentConfig={currentSavedViewConfig}
-              onApply={applySavedTableView}
-            />
-
-            <Button variant={freezeEnabled ? 'secondary' : 'ghost'} size="sm" role="switch" aria-checked={freezeEnabled}
-              onClick={() => { setFreezeEnabled(previous => !previous); if (freezeEnabled) setSelectedPins([]); }} className="h-8 shrink-0 text-xs">
-              <Icons.Columns3 className="h-3.5 w-3.5" />冻结列
-            </Button>
-            <ShotCustomFieldManager productionId={production.id} />
-
-            <ShotColumnManager
-              productionId={production.id}
-              columnOrder={tablePresentation.columnOrder.filter(column => DEFAULT_SHOT_TABLE_COLUMN_ORDER.includes(column) && !removedColumns.has(column))}
-              hiddenColumns={tablePresentation.hiddenColumns}
-              rowHeight={tablePresentation.rowHeight}
-              columnLabels={columnLabels}
-              onVisibleChange={handleColumnVisibleChange}
-              onMove={handleColumnMove}
-              onRowHeightChange={handleRowHeightChange}
-              onReset={resetColumnLayout}
-            />
-
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={!isInspectorOpen && selectedShotIds.length !== 1}
-              aria-expanded={isInspectorOpen}
-              onClick={() => isInspectorOpen ? closeInspector() : selectedShotIds[0] && openInspector(selectedShotIds[0])}
-              className="shrink-0"
-            >
-              <Icons.PanelRightOpen className={`h-4 w-4 ${isInspectorOpen ? '-rotate-90' : 'rotate-90'}`} />
-              详情
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsTrashOpen(true)}
-              className="shrink-0"
-            >
-              <Icons.Trash2 className="h-3.5 w-3.5" />
-              废纸篓
-            </Button>
-
-            {!canReorder && shots.length > 1 && (
-              <span
-                className="hidden whitespace-nowrap text-[11px] text-muted-foreground xl:inline"
-                title="清除分组并恢复默认升序后可拖动镜号旁的手柄调整顺序"
-              >
-                顺序已锁定
-              </span>
-            )}
-          </div>
-          <Button size="sm" className="col-start-3 row-start-1 mr-[132px] h-9 w-[100px] justify-self-end text-sm tracking-normal" onClick={() => setNewShotModalOpen(true)}>
+          <Button size="sm" className="h-9 w-[100px] shrink-0 text-sm tracking-normal" disabled={!commands.canWrite} onClick={() => setNewShotModalOpen(true)}>
             <Icons.Plus aria-hidden="true" />新增镜头
           </Button>
         </div>
-      </div>
+        <div
+          className="min-w-0 overflow-x-auto pb-1"
+          role="region"
+          aria-label="镜头工具滚动区"
+          tabIndex={0}
+          onFocusCapture={event => {
+            // Keep the entire keyboard target visible inside the compact tool strip.
+            if (event.target instanceof HTMLElement) event.target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+          }}
+        >
+          <div className="flex w-max min-w-full items-center [&_button]:h-9 [&_button]:text-sm [&_svg]:h-4 [&_svg]:w-4" role="group" aria-label="镜头查询与工具">
+            <div className="flex shrink-0 flex-nowrap items-center gap-2" role="group" aria-label="镜头管理工具">
+              <Button variant="ghost" size="sm" disabled={!commands.canWrite} onClick={() => setImportOpen(true)}><Icons.FileDown className="h-3.5 w-3.5" />导入</Button>
+              <Button
+                variant={showFilters || activeFilterCount > 0 || groupMode !== 'none' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setShowFilters(value => !value)}
+                aria-expanded={showFilters}
+                className="shrink-0"
+              >
+                <Icons.Filter className="h-3.5 w-3.5" />
+                筛选/分组{activeFilterCount ? ` · ${activeFilterCount}` : ''}
+              </Button>
+              <ShotSavedViews
+                productionId={production.id}
+                currentConfig={currentSavedViewConfig}
+                onApply={applySavedTableView}
+              />
 
-      <BulkActionToolbar
-        production={production}
-        allShotIds={visibleShotIds}
-      />
+              <Button variant={freezeEnabled ? 'secondary' : 'ghost'} size="sm" role="switch" aria-checked={freezeEnabled}
+                onClick={() => { setFreezeEnabled(previous => !previous); if (freezeEnabled) setSelectedPins([]); }} className="h-8 shrink-0 text-xs">
+                <Icons.Columns3 className="h-3.5 w-3.5" />冻结列
+              </Button>
+              <ShotCustomFieldManager productionId={production.id} />
+
+              <ShotColumnManager
+                productionId={production.id}
+                columnOrder={tablePresentation.columnOrder.filter(column => DEFAULT_SHOT_TABLE_COLUMN_ORDER.includes(column) && !removedColumns.has(column))}
+                hiddenColumns={tablePresentation.hiddenColumns}
+                rowHeight={tablePresentation.rowHeight}
+                columnLabels={columnLabels}
+                onVisibleChange={handleColumnVisibleChange}
+                onMove={handleColumnMove}
+                onRowHeightChange={handleRowHeightChange}
+                onReset={resetColumnLayout}
+              />
+
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={!isInspectorOpen && selectedShotIds.length !== 1}
+                aria-expanded={isInspectorOpen}
+                onClick={() => isInspectorOpen ? closeInspector() : selectedShotIds[0] && openInspector(selectedShotIds[0])}
+                className="shrink-0"
+              >
+                <Icons.PanelRightOpen className={`h-4 w-4 ${isInspectorOpen ? '-rotate-90' : 'rotate-90'}`} />
+                详情
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsTrashOpen(true)}
+                className="shrink-0"
+              >
+                <Icons.Trash2 className="h-3.5 w-3.5" />
+                废纸篓
+              </Button>
+
+              {!canReorder && shots.length > 1 && (
+                <span
+                  className="hidden whitespace-nowrap text-[11px] text-muted-foreground xl:inline"
+                  title="清除分组并恢复默认升序后可拖动镜号旁的手柄调整顺序"
+                >
+                  顺序已锁定
+                </span>
+              )}
+            </div>
+            <span aria-hidden="true" className="mx-5 h-5 w-px shrink-0 bg-border" />
+            <ShotViewNavigation productionId={production.id} active="table" showCount={false} />
+            <span aria-hidden="true" className="mx-5 h-5 w-px shrink-0 bg-border" />
+            <div className="relative w-[240px] min-w-[240px] flex-1">
+              <Icons.Search aria-hidden="true" className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                value={filters.searchQuery}
+                onChange={event => setFilter('searchQuery', event.target.value)}
+                aria-label="搜索镜头"
+                placeholder="搜索镜号、画面、旁白、负责人..."
+                className="h-9 w-full min-w-0 pl-8"
+              />
+            </div>
+            <span aria-hidden="true" className="mx-5 h-5 w-px shrink-0 bg-border" />
+            <BulkActionToolbar production={production} allShotIds={visibleShotIds} compact />
+          </div>
+        </div>
+      </div>
 
       {showFilters && (
         <div className="z-10 shrink-0 border-b border-border bg-background px-3 py-3 sm:px-6">

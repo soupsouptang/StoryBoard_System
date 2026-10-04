@@ -33,7 +33,7 @@ const {ProductionShotSummary} = load('apps/web/components/shot/ProductionShotSum
   '@/lib/hooks/useCustomFields':{useCustomFieldValues:()=>({data:{values}})},
   '@/lib/shot-display':display,'@/stores/useWorkspaceStore':{useWorkspaceStore:select=>select({filters})}
 });
-const text = node => node == null || node === false ? '' : typeof node === 'object' ? (node.children||[]).map(text).join('') : String(node);
+const text = node => node == null || node === false ? '' : typeof node === 'object' ? typeof node.type === 'function' ? text(node.type(node.props)) : (node.children||[]).map(text).join('') : String(node);
 const production={id:'P',fps_num:25,fps_den:1,drop_frame:false,aspect_ratio:'16:9',shot_count:900,total_duration_frames:900};
 const render=()=>text(ProductionShotSummary({production}));
 assert.match(render(),/2 镜头.*总时长 00:00:04:01.*显示有效镜头时长 00:00:04:01/,'Active cache wins over stale metadata');
@@ -49,8 +49,10 @@ shots=shots.filter(s=>s.id!=='B');
 assert.match(render(),/2 镜头.*总时长 00:00:02:01/,'Removed active shot changes total');
 shots=[];assert.match(render(),/0 镜头.*总时长 00:00:00:00/);
 shots=undefined;assert.match(render(),/900 镜头.*总时长 00:00:36:00.*显示有效镜头时长 —/,'Loading uses authoritative project summary without inventing visible zero');
-const {ShotViewNavigation} = load('apps/web/components/shot/ShotViewNavigation.tsx', {
+const {ShotViewNavigation, ShotCountSummary} = load('apps/web/components/shot/ShotViewNavigation.tsx', {
   'next/link':'Link','@frameforge/ui':{Button:'Button',Icons:{Table2:'Table2',Columns3:'Columns3',LayoutGrid:'LayoutGrid',ListVideo:'ListVideo'}}
 });
 for (const count of [0,106,9999]) assert.ok(text(ShotViewNavigation({productionId:'P',active:'table',count,displayedCount:0})).includes('总共 '+count+' 镜头（其中显示 0 镜头）'));
+assert.ok(!text(ShotViewNavigation({productionId:'P',active:'table',count:97,showCount:false})).includes('总共'), 'Toolbar tabs do not duplicate heading statistics');
+assert.equal(text(ShotCountSummary({count:9999,displayedCount:106})), '总共 9999 镜头（其中显示 106 镜头）');
 console.log('Project and visible frame totals: existing view filters, cache updates, empty and loading passed.');

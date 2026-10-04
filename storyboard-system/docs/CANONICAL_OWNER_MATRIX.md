@@ -1,5 +1,9 @@
 # FRAMEFORGE canonical owner matrix
 
+## 2026-10-04 分镜工具栏排列
+
+shots页面拥有两行排列，ShotCountSummary复用数量显示，ShotViewNavigation保留路由；表格compact消费同一个BulkActionToolbar删除确认及既有useBulkTrashShots。选择/filters仍由useWorkspaceStore拥有，项目信息仍由工作区信息条显示，持久Command/权限/CAS/History owner不变。 [实施与验证](SHOT_TOOLBAR_2026-10-04.md)。
+
 ## 2026-10-04 图片浮窗历史接入
 
 ShotImagePreview独占两入口的浮窗DOM/按钮/快捷键及未锁定调整；详情frameUndo/frameRedo仍由ShotDetailCard拥有，表格已确认历史仍由原HistoryService拥有。useProjectCommandHistory只是从ProjectHistoryControls提取的共享CAS/query/Command客户端，项目菜单和窗口都消费该适配，不新增历史数据库或独立持久owner。[记录](SHOT_FRAMING_2026-10-04.md)。

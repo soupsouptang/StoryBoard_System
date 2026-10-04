@@ -60,7 +60,7 @@ export default function ProductionLayout({
   return (
     <div className="flex h-screen h-[100dvh] w-screen flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)] select-none">
       {/* Top Header */}
-      <TopBar production={production} />
+      <TopBar />
 
       {/* Main Workspace Frame */}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">

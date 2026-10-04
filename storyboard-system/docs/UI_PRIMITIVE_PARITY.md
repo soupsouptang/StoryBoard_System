@@ -1,5 +1,9 @@
 # UI primitive parity ledger
 
+## 2026-10-04 工具栏业务组合
+
+沿用原Button/Input/Icons/Dialog及导航Link，没有增加primitive/依赖。表格compact删除与浅色取消统一100×36px/8px圆角；20px高短竖线两侧各20px。焦点滚入限定当前工具区，确认窗继续由共享Dialog负责Esc/焦点。五宽度真实验收通过。 [实施与验证](SHOT_TOOLBAR_2026-10-04.md)。
+
 ## 2026-10-04 图片历史按钮共用
 
 沿用现有Button/icon-sm与Icons.Undo2/Redo2，两个入口只调用ShotImagePreview中的同一组业务控件；没有新增primitive/图标库。Dialog继续负责Esc/外部点击/焦点，历史按钮和快捷键由该业务组件统一分派，五宽度真实可见。[记录](SHOT_FRAMING_2026-10-04.md)。

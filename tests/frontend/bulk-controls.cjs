@@ -62,9 +62,9 @@ vm.runInNewContext(ts.transpileModule(source, {
 const production = { id: 'production-1' };
 const allShotIds = ['shot-A', 'shot-B', 'shot-C'];
 let tree;
-function render() {
+function render(compact = false) {
   cursor = 0;
-  tree = moduleObject.exports.BulkActionToolbar({ production, allShotIds });
+  tree = moduleObject.exports.BulkActionToolbar({ production, allShotIds, compact });
 }
 function all(predicate, node = tree) {
   if (!node || typeof node !== 'object') return [];
@@ -159,6 +159,22 @@ async function main() {
   render();
   assert.deepEqual(plain(trashCalls), [['shot-A', 'shot-C']]);
   assert.deepEqual(selectedShotIds, [], 'confirmed trash clears selection');
+  render(true);
+  assert.equal(selects().length, 0, 'Compact table actions remove the bulk dropdowns');
+  assert.equal(textIncludes('点击要修改'), false, 'The removed bulk edit hint is not rendered');
+  assert.ok(button('删除镜头').props.disabled && button('取消选择').props.disabled, 'Empty selection keeps actions visible but disabled');
+  selectedShotIds = ['shot-A', 'shot-C'];
+  render(true);
+  assert.equal(selects().length, 0);
+  button('删除镜头').props.onClick(); render(true);
+  assert.equal(all(node => node.type === 'Dialog')[0].props.open, true);
+  assert.equal(trashCalls.length, 1, 'Compact entry still requires confirmation');
+  all(node => node.type === 'Dialog')[0].props.onOpenChange(false); render(true);
+  assert.equal(all(node => node.type === 'Dialog')[0].props.open, false);
+  assert.deepEqual(selectedShotIds, ['shot-A', 'shot-C'], 'Escape preserves the selected shots');
+  button('取消选择').props.onClick(); render(true);
+  assert.deepEqual(selectedShotIds, []);
+  assert.equal(updateCalls.length, 3, 'Compact controls never send a field update');
   console.log('Bulk selects, commands, pending state, errors, selection and two-step trash check passed (synthetic hooks).');
 }
 

@@ -12,9 +12,10 @@ import { useBulkTrashShots, useBulkUpdateShots } from '@/lib/hooks/useProduction
 interface BulkActionToolbarProps {
   production: Production;
   allShotIds: string[];
+  compact?: boolean;
 }
 
-export function BulkActionToolbar({ production }: BulkActionToolbarProps) {
+export function BulkActionToolbar({ production, compact = false }: BulkActionToolbarProps) {
   const { selectedShotIds, clearSelection } = useWorkspaceStore();
   const bulkUpdate = useBulkUpdateShots(production.id);
   const bulkTrash = useBulkTrashShots(production.id);
@@ -25,9 +26,10 @@ export function BulkActionToolbar({ production }: BulkActionToolbarProps) {
   const [confirmingTrash, setConfirmingTrash] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  if (selectedShotIds.length === 0) return null;
+  if (!compact && selectedShotIds.length === 0) return null;
 
   const isBusy = bulkUpdate.isPending || bulkTrash.isPending;
+  const actionsDisabled = isBusy || selectedShotIds.length === 0;
 
 
   const applyBulkUpdate = async (
@@ -59,109 +61,112 @@ export function BulkActionToolbar({ production }: BulkActionToolbarProps) {
     <div
       role="toolbar"
       aria-label="镜头批量操作"
-      className="flex w-full shrink-0 flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-4 py-2.5 text-xs"
+      className={compact ? "flex shrink-0 items-center gap-2" : "flex w-full shrink-0 flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-4 py-2.5 text-xs"}
     >
-      <div className="flex shrink-0 items-center gap-2 pr-3">
-        <span className="flex h-5 w-7 items-center justify-center rounded-md bg-blue-500 px-1 font-mono tabular-nums text-[11px] font-bold text-white">
-          {Math.min(selectedShotIds.length, 99)}
-        </span>
-        <span className="font-medium text-foreground">点击要修改的列标题或单元格</span>
-      </div>
+      {!compact && <>
+        <div className="flex shrink-0 items-center gap-2 pr-3">
+          <span className="flex h-5 w-7 items-center justify-center rounded-md bg-blue-500 px-1 font-mono tabular-nums text-[11px] font-bold text-white">
+            {Math.min(selectedShotIds.length, 99)}
+          </span>
+          <span className="font-medium text-foreground">点击要修改的列标题或单元格</span>
+        </div>
 
-      <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto">
-        <Select
-          label="批量设置制作方式"
-          value={selectedMethod}
-          disabled={isBusy}
-          onChange={value => {
-            setSelectedMethod(value);
-            if (value) void applyBulkUpdate({ primary_method: value }, () => setSelectedMethod(''));
-          }}
-          options={[
-            { value: '', label: '制作方式…' },
-            { value: 'live', label: getMethodLabel('live') },
-            { value: 'stock', label: getMethodLabel('stock') },
-            { value: 'client', label: getMethodLabel('client') },
-            { value: 'archive', label: getMethodLabel('archive') },
-            { value: 'still', label: getMethodLabel('still') },
-            { value: 'ae', label: getMethodLabel('ae') },
-            { value: 'mg', label: getMethodLabel('mg') },
-            { value: 'three_d', label: getMethodLabel('three_d') },
-            { value: 'vfx', label: getMethodLabel('vfx') },
-            { value: 'type', label: getMethodLabel('type') },
-          ]}
-          className="w-[170px] min-w-0"
-        />
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto">
+          <Select
+            label="批量设置制作方式"
+            value={selectedMethod}
+            disabled={isBusy}
+            onChange={value => {
+              setSelectedMethod(value);
+              if (value) void applyBulkUpdate({ primary_method: value }, () => setSelectedMethod(''));
+            }}
+            options={[
+              { value: '', label: '制作方式…' },
+              { value: 'live', label: getMethodLabel('live') },
+              { value: 'stock', label: getMethodLabel('stock') },
+              { value: 'client', label: getMethodLabel('client') },
+              { value: 'archive', label: getMethodLabel('archive') },
+              { value: 'still', label: getMethodLabel('still') },
+              { value: 'ae', label: getMethodLabel('ae') },
+              { value: 'mg', label: getMethodLabel('mg') },
+              { value: 'three_d', label: getMethodLabel('three_d') },
+              { value: 'vfx', label: getMethodLabel('vfx') },
+              { value: 'type', label: getMethodLabel('type') },
+            ]}
+            className="w-[170px] min-w-0"
+          />
 
-        <Select
-          label="批量设置制作状态"
-          value={selectedStatus}
-          disabled={isBusy}
-          onChange={value => {
-            setSelectedStatus(value);
-            if (value) void applyBulkUpdate({ status: value }, () => setSelectedStatus(''));
-          }}
-          options={[
-            { value: '', label: '制作状态…' },
-            { value: 'draft', label: '规划中 (Draft)' },
-            { value: 'in_progress', label: '制作中 (In Progress)' },
-            { value: 'review', label: '待审片 (Review)' },
-            { value: 'changes_requested', label: '需修改' },
-            { value: 'approved', label: '已审批' },
-            { value: 'locked', label: '已锁定' },
-          ]}
-          className="w-[170px] min-w-0"
-        />
+          <Select
+            label="批量设置制作状态"
+            value={selectedStatus}
+            disabled={isBusy}
+            onChange={value => {
+              setSelectedStatus(value);
+              if (value) void applyBulkUpdate({ status: value }, () => setSelectedStatus(''));
+            }}
+            options={[
+              { value: '', label: '制作状态…' },
+              { value: 'draft', label: '规划中 (Draft)' },
+              { value: 'in_progress', label: '制作中 (In Progress)' },
+              { value: 'review', label: '待审片 (Review)' },
+              { value: 'changes_requested', label: '需修改' },
+              { value: 'approved', label: '已审批' },
+              { value: 'locked', label: '已锁定' },
+            ]}
+            className="w-[170px] min-w-0"
+          />
 
-        <Select
-          label="批量设置责任部门"
-          value={selectedDept}
-          disabled={isBusy}
-          onChange={value => {
-            setSelectedDept(value);
-            if (value) void applyBulkUpdate({ department: value }, () => setSelectedDept(''));
-          }}
-          options={[
-            { value: '', label: '责任部门…' },
-            { value: 'camera', label: '摄影组' },
-            { value: 'director', label: '导演组' },
-            { value: 'production', label: '制片组' },
-            { value: 'art', label: '美术组' },
-            { value: 'stock', label: '素材组' },
-            { value: 'editorial', label: '剪辑组' },
-            { value: 'motion', label: '动效组' },
-            { value: 'three_d', label: '三维组' },
-            { value: 'vfx', label: '视效组' },
-            { value: 'sound', label: '声音组' },
-            { value: 'color', label: '调色组' },
-          ]}
-          className="w-[170px] min-w-0"
-        />
-      </div>
+          <Select
+            label="批量设置责任部门"
+            value={selectedDept}
+            disabled={isBusy}
+            onChange={value => {
+              setSelectedDept(value);
+              if (value) void applyBulkUpdate({ department: value }, () => setSelectedDept(''));
+            }}
+            options={[
+              { value: '', label: '责任部门…' },
+              { value: 'camera', label: '摄影组' },
+              { value: 'director', label: '导演组' },
+              { value: 'production', label: '制片组' },
+              { value: 'art', label: '美术组' },
+              { value: 'stock', label: '素材组' },
+              { value: 'editorial', label: '剪辑组' },
+              { value: 'motion', label: '动效组' },
+              { value: 'three_d', label: '三维组' },
+              { value: 'vfx', label: '视效组' },
+              { value: 'sound', label: '声音组' },
+              { value: 'color', label: '调色组' },
+            ]}
+            className="w-[170px] min-w-0"
+          />
+        </div>
 
-      <div className="ml-auto mr-6 flex flex-wrap items-center justify-end gap-2 border-l border-border pl-3">
+      </>}
+
+      <div className={compact ? "flex shrink-0 items-center gap-2" : "ml-auto mr-6 flex flex-wrap items-center justify-end gap-2 border-l border-border pl-3"}>
 
 
           <Button
             variant="destructive"
             size="sm"
-            disabled={isBusy}
+            disabled={actionsDisabled}
             onClick={() => setConfirmingTrash(true)}
             aria-label={`删除 ${selectedShotIds.length} 个镜头`}
             className="flex h-9 w-[100px] shrink-0 items-center justify-center gap-0 bg-[#e11d48] text-sm tracking-normal hover:bg-[#be123c] dark:bg-[#e11d48] dark:hover:bg-[#be123c]"
           >
-            {selectedShotIds.length === 1 ? '删除镜头' : <>删除<span className="inline-block w-[2ch] text-center tabular-nums">{selectedShotIds.length > 99 ? '···' : selectedShotIds.length}</span>镜</>}
+            {compact || selectedShotIds.length === 1 ? '删除镜头' : <>删除<span className="inline-block w-[2ch] text-center tabular-nums">{selectedShotIds.length > 99 ? '···' : selectedShotIds.length}</span>镜</>}
           </Button>
         <Button
-          variant="ghost"
+          variant={compact ? "default" : "ghost"}
           size="sm"
-          disabled={isBusy}
+          disabled={actionsDisabled}
           onClick={() => {
             setConfirmingTrash(false);
             setActionError(null);
             clearSelection();
           }}
-          className="h-9 w-[100px] text-sm tracking-normal text-muted-foreground"
+          className={compact ? "h-9 w-[100px] shrink-0 bg-[#e5e5e5] text-sm tracking-normal text-[#171717] hover:bg-[#d4d4d4] dark:bg-[#e5e5e5] dark:text-[#171717] dark:hover:bg-[#d4d4d4]" : "h-9 w-[100px] text-sm tracking-normal text-muted-foreground"}
         >
           取消选择
         </Button>
