@@ -37,13 +37,14 @@
 | SRC-DJI-SDR | DJI | https://www.dji.com/sdr-transmission/specs |
 | SRC-NANLITE-FC120B | Nanlite | https://nanliteus.com/products/fc-120b-bi-color-led-spotlight-testing-1 |
 | SRC-NANLITE-FC-SERIES | Nanlite | https://nanliteus.com/shop/by-collection/monolight-style/fc-series/ |
+| SRC-NANLITE-FC300B | Nanlite | https://nanliteus.com/products/fc-300b-bi-color-led-spotlight-open-box |
 | SRC-NANLITE-FC-PC | Nanlite | https://nanliteus.com/products/fc-powercontroller-for-fc-300b-fc-500b-and-fc-500c |
 | SRC-NANLITE-PAVO15C | Nanlite | https://nanliteus.com/products/pavotube-ii-15c-2-foot-rgbww-led-tube-light |
-| SRC-NANLITE-FORZA200 | Nanlite | Nanlite official Forza 200 legacy product/article source；实现导入前重新取得可引用归档URL |
+| SRC-NANLITE-FORZA200 | Nanlite | https://www.nanlite.com/product-forza-200 |
 | SRC-NANLITE-FORZA300B-OLD | Nanlite | Nanlite official retrospective/legacy source；实现导入前继续补归档manual |
 | SRC-APUTURE-STORM1200X | Aputure | https://aputure.com/EN-US/products/storm-1200x |
 | SRC-TIFFEN-BPM4565 | Tiffen | https://tiffen.com/products/4-x-5-65-black-pro-mist-filter |
-| SRC-TIFFEN-PM4565 | Tiffen | Tiffen official 4×5.65 Pro-Mist product page/catalog；实现导入前固定当前canonical URL |
+| SRC-TIFFEN-PM4565 | Tiffen | https://tiffen.com/products/4-x-5-65-pro-mist-filter |
 | SRC-BLENDER-FEATURES | Blender Foundation | https://www.blender.org/features/ |
 | SRC-BLENDER-EDIT | Blender Foundation | https://www.blender.org/features/video-editing/ |
 | SRC-UE-FEATURES | Epic Games | https://www.unrealengine.com/features |
@@ -286,7 +287,7 @@ Bowens **不是** FC-120B 原生卡口。
 
 ### 7.4 FC-300B
 
-当前已确认：
+当前已确认（主规格字段以 SRC-NANLITE-FC300B / FC Series 官方页面为来源，FC PowerController关系另用 SRC-NANLITE-FC-PC）：
 
 | Field | Value | Status |
 | --- | --- | --- |
