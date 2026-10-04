@@ -1261,7 +1261,7 @@
       "dependencies": [
         "E8-IMPACT",
         "E7-DELIVERY-LOOP",
-        "K2-CALIBRATION"
+        "K3-RECOMMENDATION"
       ],
       "state": "not_started",
       "allowed_paths": [
@@ -1280,7 +1280,8 @@
         "FX-29",
         "FX-30",
         "KL-05",
-        "KL-06"
+        "KL-06",
+        "KL-07"
       ],
       "verification": [],
       "blockers": [],
