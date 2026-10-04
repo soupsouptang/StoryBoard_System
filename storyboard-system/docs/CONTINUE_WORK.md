@@ -1,5 +1,11 @@
 # FRAMEFORGE 续作入口
 
+## 2026-10-04 顶部删除按钮微缩（本地代码bd40348）
+
+用户要求宽高各缩小约2–3px，icon不变。仅ShotDetailCard顶部删除按钮size-[29px]覆盖原32px，仍圆角8px正方形，Trash2 16×16px、原红色/aria-label/title/权限/disabled及确认/Esc保持。真实1440/1024/768/375/320按钮均29×29、icon16×16且中心偏差0，卡片470px/根无横向溢出；合成012点击开启删除确认，Esc取消，没有业务写入。生产Webpack/TypeScript、diff与Regression Guard以b88efd4为base通过；纯尺寸改动未新增镜像测试。临时viewport恢复、QA页关闭、原用户页面保留，截图outputs/shot-detail-delete-compact-2026-10-04.png仅本机。
+
+3002已部署.next/detail-delete-compact/standalone/apps/web，API8002/PG55432及媒体保持。代码/详细MD/ACTIVE本地提交bd40348，本文随后独立本地提交。GitHub仍等待此前明确仓库/分支授权，未重试被拒上传；未知`:memory:.ses`原样保留未上传。此段覆盖历史32px删除按钮描述，不扩展其他旧待办。
+
 ## 2026-10-04 辅助制作方式放大（本地代码b578b38）
 
 最新用户要求“不影响框架、文字放大、可两列五行改三列四行、无需滚动/折行”已完成。仅ShotDetailCard辅助组14px字号/20px行高（原11px/16px）、16px复选框/12pxicon（原12px/10px）；保留8px横gap/4px纵gap，组实际宽度≥260px三列四行，否则两列五行。显式important仅覆盖该组文字，十项nowrap且无独立overflow；470px标准本体、六等宽内容轨、固定左图、16px内留白/字段间距、置顶操作及保存/dirty/Esc owner保持。
