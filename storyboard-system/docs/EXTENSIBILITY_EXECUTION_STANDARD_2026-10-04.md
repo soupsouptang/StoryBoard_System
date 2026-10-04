@@ -128,6 +128,8 @@ Entity可以有真正从属的子Entity，但必须先定义所有权、生命�
 | FX-28 素材正式交接 | 一个AssetVersion先上传，Integrity通过但项目配置Backup未满足；生成proxy Preview后做草稿预处理，再完成BackupVerification并Formal Handoff；随后源版本变化 | Preview可被明确允许的草稿预处理消费，但正式input仍pending；完整性+配置备份门槛满足后Formal Handoff固定版本并解锁正式Task。源变化只使相关下游stale，旧交接事实保留，不以目录/上传存在判完成 |
 | FX-29 Review返工补拍与交付 | 同一Review问题重复投递；一个走AE返工，一个走补拍；生成新Version再Review；Deliverable经历QC、submit、deliver、ack、reject、rework、重新submit、accept | 同来源只一个活动ReworkRequest；后期返工回Task，补拍回Schedule/Media/Post；每次版本固定。交付各事实分开，reject回返工且不抹旧记录，最终accept固定对应Version/授权检查 |
 | FX-30 全流程产品闭环 | 使用总纲§19.4合成项目，从Project/Scene/Shot、Task、Person、Schedule/Move、CallSheet、Actual、Media、Post、Review、Rework/Reshoot、Delivery到Experience/Calibration/K3受权接受；中途注入权限撤销、409、consumer失败、重复event | 每环上游可驱动下游、失败可解释重试、历史不漂移；D-35/D-36/D-37边界全部成立；经验校准先形成候选，经K3受权接受后才影响未来estimate/workflow，不改当前Actual/已确认计划。必须有API+真实PG+真实consumer/浏览器+合同证据，单包PASS不能冒充整链闭环 |
+| FX-31 授权资料 | Project/Scene/Deliverable各配置一个hard和一个soft授权Requirement；AuthorizationRecord覆盖Person/Location/Asset并固定文件版本；依次测试missing、UNKNOWN、有效、expired、允许N/A、withdrawn、无权限读取、Purge | hard missing/UNKNOWN/expired/withdrawn阻塞对应Readiness/Final QC；soft只提示；允许N/A需显式权限/理由。文件存在不自动判定所有用途合法；不出现合同、金额、付款或法务结论；固定历史引用不随当前记录漂移 |
+| FX-32 Checklist/Readiness | Template/Production Method生成required和optional Checklist；Scene/Shot/Task/Deliverable分别实例化；测试complete、UNKNOWN、N/A、来源失效、已完成带证据后来源移除、重复事件、直接尝试写ready=true | Readiness只能由权威事实派生；required未通过阻塞、optional只提示、N/A按定义/权限保存。未确认自动项来源失效可停用，已确认/有证据结果保留并标来源失效；不出现SOP步骤执行器或用自由布尔绕过条件 |
 
 这些是待运行门槛，不是本轮功能测试结果。FX-21至FX-25覆盖资源/构图/帧率增量；FX-26至FX-30覆盖制作闭环新增边界。各增量分别领取、交付、记录前端缺口，共用已有事务、回执、历史、事件和作业基础。
 
@@ -135,11 +137,13 @@ Entity可以有真正从属的子Entity，但必须先定义所有权、生命�
 
 | 包 | 必须证明的业务闭环 | 不得越界 |
 | --- | --- | --- |
+| E2-AUTHORIZATION | AuthorizationRecord/Requirement、hard/soft、期限/文件/typed links → Readiness/Final QC | 不做合同、费用、法务判断；文件存在不等于全部用途有效 |
+| E4-CHECKLIST | ChecklistDefinition/Result → required/optional/N-A → 派生Readiness | 不保存SOP步骤，不允许ready=true旁路写入 |
 | E6-MEDIA-HANDOFF | Actual/AssetVersion → Integrity → 项目配置Backup → Preview/Formal Handoff → Post readiness | 不另建Asset owner；Preview不能满足正式输入 |
-| E7-DELIVERY-LOOP | Review → ReworkRequest → Task或补拍排期 → 新Version → Review；QC/submit/deliver/ack/accept/reject | 不改Review历史语义，不用单一status吞并交付事实 |
-| Z0-PRODUCTION-CLOSED-LOOP | 组合所有已接受包跑总纲§19.4并通过FX-30，经验候选必须经过K3受权接受再影响后续计划 | 不新增业务写模型，不以mock、文档校验或单包测试替代产品闭环 |
+| E7-DELIVERY-LOOP | Review → ReworkRequest → Task或补拍排期 → 新Version → Review；QC/submit/deliver/ack/accept/reject；Final QC消费required Checklist和hard Authorization | 不改Review历史语义，不用单一status吞并交付事实 |
+| Z0-PRODUCTION-CLOSED-LOOP | 组合所有已接受包跑总纲§19.4并通过FX-30/31/32，required Checklist、hard授权和经验候选K3受权接受都必须贯穿 | 不新增业务写模型，不以mock、文档校验或单包测试替代产品闭环 |
 
-E4-TASK负责FX-26的任务失效边界；E6-SCHEDULE负责FX-27的通告草稿/显式发布边界；E6-MEDIA-HANDOFF负责FX-28；E7-DELIVERY-LOOP负责FX-29；E8-IMPACT继续负责跨域传播与FX-17；Z0只有在上述包和K3受权建议/接受链均接受后才运行FX-30。
+E4-TASK负责FX-26的任务失效边界；E6-SCHEDULE负责FX-27的通告草稿/显式发布边界；E6-MEDIA-HANDOFF负责FX-28；E7-DELIVERY-LOOP负责FX-29；E2-AUTHORIZATION负责FX-31；E4-CHECKLIST负责FX-32；E8-IMPACT继续负责跨域传播与FX-17；Z0只有在上述包、授权/Checklist以及K3受权建议/接受链均接受后才运行FX-30。
 
 ### 4.3 构图和帧率的事务细则
 
