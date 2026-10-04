@@ -1,6 +1,6 @@
 # FrameForge VNext 最大化扩展性需求总纲
 
-版本：3.2，2026-10-04。状态：需求和执行依据，功能是否完成按实际工作包验收。
+版本：3.3，2026-10-04。状态：需求和执行依据，功能是否完成按实际工作包验收。
 
 本文规定要做什么、数据归谁、怎样协作及如何验收。本轮完成需求审计和改写，不修改界面、运行服务、在线数据库或部署。代码现状见[职责台账](CANONICAL_OWNER_MATRIX.md)、[工作簿](ACTIVE_WORKSTREAMS.md)和实际证据，不能凭文档存在认定功能完成。
 
@@ -66,6 +66,8 @@
 | D-35 自动任务失效 | Scene、Shot、制作方式或模板来源变化后，系统自动生成且尚未开始、没有实际记录、没有产物、没有交接的任务可自动标记为“不再需要/停用”；人工创建、已开始、已交接或已有产物的任务保留事实并提示负责人处理，系统不自动取消 |
 | D-36 通告发布边界 | 排期变化只自动刷新 Call Sheet 草稿、影响范围和需重新确认的人；已发布 revision 永不随当前排期漂移。发布新版和任何外发/发送必须由有权限的人显式执行，自动联动不得自动发布或对外发送 |
 | D-37 正式素材交接 | 正式 MediaHandoff 必须通过完整性检查以及项目配置要求的备份验证；可在正式交接前提供明确标识的 Preview 用于草稿预处理，但 Preview 不满足正式输入 readiness，也不能冒充已正式交接 |
+| D-38 授权资料边界 | 保留演员肖像、场地、音乐、素材、字体、Logo/商标、航拍许可等制作授权资料及其适用对象/范围/期限/文件；不做合同、法务判断或费用。只有项目明确配置为必需的授权项才参与 Readiness/QC，缺失、过期、未知与不适用分开 |
+| D-39 Checklist边界 | Checklist 只表达“是否具备/是否遗漏”的检查条件，不保存逐步操作方法，不恢复 SOP。只有模板/项目明确标记 required 的检查项参与 Readiness；完成、待检查、不适用和来源失效分开，不能因页面字段看似存在而自动伪完成 |
 
 旧 Q-05 已由 D-28、D-29 解决。最新逐项访谈记录见[全量文档审计](EXTENSIBILITY_GRILL_AUDIT_2026-10-04.md)，已确认规则直接落实到正文，不保留并行待选提案。实际人员名单、需求数量、型号、时间和工作窗口仍须配置，不属于待选产品规则。
 
@@ -180,6 +182,14 @@ Scene、Shot、制作方式和项目模板只是工作需求来源，不能把�
 Task 的完成不能直接把 Shot、Review 或 Deliverable 写成完成。Task 提交固定输出版本；需要交接时由接收方确认固定 AssetVersion 或明确缺项。输入后来变化，只使相关下游标记过期或返工，不抹去“当时已经完成和交接”的事实。
 
 “我的工作”、部门看板和项目任务视图均查询同一 Task owner。一个 Person 多工种仍是同一现实人员；不同岗位视图不能复制任务正文。未分派、未知工时、缺输入、待交接和冲突必须可单独查询，确保任务可以从 Scene/Shot 真正流向人员执行，而不是停在镜头字段。
+
+### 7.2 Checklist 与 Readiness 闭环
+
+Checklist 不等于 SOP。ChecklistDefinition 保存可复用检查条件、适用目标、required/optional、是否允许 N/A、来源模板/版本；ChecklistInstance / Result 保存项目内某一实际目标的检查事实和 revision。它可以关联 Project、Scene、Shot、Task、ShootDay、Deliverable，但跨独立对象必须用 typed link，不使用万能 entity_type/entity_id JSON。
+
+Readiness 是可重建投影，不由用户直接写一个 ready=true。它至少综合仍适用的 required Task/input、required Checklist、已配置为硬门槛的授权资料、人员/场地等明确条件；UNKNOWN 仍是未知，不当成通过。Optional Checklist 未完成只能提示，不阻塞；required Checklist 必须完成或在定义允许时显式标记 N/A 并记录操作者/理由。
+
+Scene/Shot/Production Method 变化使自动生成 Checklist 不再适用时，未完成且无人工证据的自动项可停用；已经完成、附有证据或被人工确认的结果保留历史并标来源失效，不自动删除。经验校准只能提出新增/调整 ChecklistDefinition 的候选，正式修改仍经 K3 受权接受和 definition revision。
 
 ## 8. 时间段资源需求与排期
 
@@ -362,6 +372,14 @@ DeliverableItem / Variant 只在存在独立交付对象、查询、权限、生
 
 授权资料只管理制作所需的证明及适用范围，不扩展为合同或法务系统。Delivery / Final QC 可以检查相关人物、场地、音乐、素材、字体、Logo/商标、航拍许可等所需文档是否存在、是否在记录范围/期限内；UNKNOWN、缺文件和不适用分开。系统不自动作法律结论。
 
+### 13.2 授权资料的制作闭环
+
+AuthorizationRecord 是 Production scope 的独立制作资料对象，因为同一份授权可能覆盖多个人物、Scene、Location、Asset 或 Deliverable，并有独立文件、适用范围、有效期、权限、revision、撤回/替代和查询需求，不能塞成 Shot 字段。它通过 typed links 连接 Person、Location、Scene/Shot、AssetVersion、Deliverable；授权文件固定引用 AssetVersion。
+
+AuthorizationRecord 只保存团队确认录入的类型、对象、范围、起止时间、文件和备注；系统可以根据明确日期判断“当前记录已过期”，但不能推断法律有效性、地域/媒体许可之外的隐含权利，也不能因为“文件存在”自动判断所有用途已授权。
+
+Project Template、Scene/Shot Requirement 或 Deliverable 可以明确声明 Authorization Requirement，并标 hard/soft。Hard requirement 缺失、过期或 UNKNOWN 时对应 Readiness / Final QC 不通过；soft requirement 只提示。N/A 必须是该 requirement 明确允许并由有权限的人选择。授权变化只重算未来 readiness/QC，不改写已经发生的拍摄、已发布旧通告或历史交付事实。
+
 
 ## 14. 异步任务、事件和自动化
 
@@ -537,7 +555,7 @@ Project / Template
 | 环节 | 入口事实 | 本环必须产出 | 下游闭环条件 |
 | --- | --- | --- | --- |
 | 项目/模板 | Production + 项目类型 | 实际启用阶段、角色/任务模板、Checklist | 能生成/创建 Scene/Shot 和真实 Task，不只是展示模板 |
-| Scene/Shot | 创作内容、多 Scene relation | Requirement、Production Method、明确 override | 能决定 Task applicability、人员/地点/需求和 Readiness |
+| Scene/Shot | 创作内容、多 Scene relation | Requirement、Production Method、明确 override、适用 Checklist/Authorization Requirement | 能决定 Task applicability、人员/地点/需求和可解释 Readiness |
 | Task | 模板或人工工作需求 | 主责/协作、输入、计划、产物、依赖、实际状态及适用性来源 | 失效的自动任务按 D-35 停用；已执行事实保留；下游依赖只能由仍适用且满足固定输入/交接的事实解锁 |
 | 人员/选角 | Person、Character、CastAssignment、Membership | 明确出演/任职与 Availability | 排期能使用同一 Person 检冲突并生成个人时间线 |
 | 排期 | Task/Scene/Shot、人员/场地、时间段需求 | SchedulePlan、ShootDay、ScheduleItem、锁定/冲突 | 能生成转场、通告和后期预计输入 |
@@ -548,7 +566,7 @@ Project / Template
 | 后期 | Post Task + 固定输入 | 新 AssetVersion / 产物 | Review target 固定版本 |
 | Review | 固定版本 + Comment/Decision | 已解决或 ReworkRequest | 修改进入 Task，补拍进入待排，不停在评论 |
 | 补拍/返工 | ReworkRequest | Task 或 Schedule demand + 新产物 | 回到 Media/Post/Review，源问题不重复建单 |
-| 交付 | DeliverableItem/Variant + QC + 授权资料 | submit/deliver/ack/accept/reject 等独立事实 | Reject 回返工；Accept 固定当时版本 |
+| 交付 | DeliverableItem/Variant + QC + Authorization Requirement/Record | submit/deliver/ack/accept/reject 等独立事实 | Hard授权与required Checklist满足后才可通过Final QC；Reject 回返工；Accept 固定当时版本 |
 | 经验校准 | Planned vs Actual + QA | Aggregate / EstimateProfile / calibration candidate | 只在确认后更新未来 estimate/workflow/checklist 基线 |
 
 ### 19.3 闭环所需 Entity 准入说明
@@ -565,6 +583,8 @@ Project / Template
 | DeliverableItem / Variant | 一个项目有多个真实交付对象、不同规格和验收事实 | 是；接收范围、QC/提交/验收生命周期 | 退回触发返工；发布事实独立 | AssetVersion、Task、Review、Authorization |
 | ExperienceObservation | 项目事实不能被 QA/解释覆盖，经验需独立质量/撤回 | 是；原始项目权限与团队汇总权限分开 | 不进创作版本；进入校准作业 | Task、ScheduleItem、Scene/Shot、KnowledgeSpace |
 | EstimateProfile | 统计版本必须冻结样本/算法/适用范围，不能覆盖模板字段 | 是；不可变计算版本 | 新版本只影响未来建议/预测 | ExperienceObservation、Pattern、WorkflowTemplate |
+| AuthorizationRecord | 同一授权可覆盖多个Person/Location/Scene/Asset/Deliverable，并有独立文件/范围/期限/撤回 | 是；Production scope权限、revision、替代/撤回；不做合同法务 | 影响未来Readiness/QC，不自动改历史执行 | Person、Location、Scene/Shot、AssetVersion、Deliverable |
+| ChecklistDefinition / ChecklistResult | 检查规则要被模板复用且结果属于项目实际执行，不能与SOP或普通字段混为一体 | 是；定义版本与项目结果分离，结果有revision/证据 | 参与Readiness；来源失效按D-39保留已确认事实 | Project、Scene、Shot、Task、ShootDay、Deliverable |
 
 MediaHandoff 只有在“一份素材存在多消费者、独立确认、更正/撤回或单独权限”时才升为独立 Entity；否则先以 TaskAssetVersion + 接收/检查事实表达。Company Move 当前是 ScheduleItem 类型，因为它没有脱离排期方案的独立 owner、权限和生命周期，不新增一级对象。Take 继续遵循 D-15，不为了补图预建空 Entity。
 
@@ -578,7 +598,7 @@ MediaHandoff 只有在“一份素材存在多消费者、独立确认、更正/
 - 一项共享 Scene 准备 Task 和多项 Shot 专属 Task；
 - 一组明确时间段器材/道具需求；
 - 一条拍摄后 Edit → AE 或 UE/3D → Review → Delivery 链；
-- 一个固定 Delivery target 和一项授权资料检查；
+- 一个固定 Delivery target、一项 hard 授权资料 requirement 和一项 required Checklist；
 - 一个 Review 修改走后期返工，一个问题走补拍；
 - 项目结束产生 Planned vs Actual 并进入经验校准候选。
 
@@ -590,7 +610,7 @@ MediaHandoff 只有在“一份素材存在多消费者、独立确认、更正/
 4. 第一场实际超时，系统重算 Company Move 和当天剩余计划；锁定条目不移动，预计 Wrap 和冲突更新。
 5. 拍摄完成后建立素材来源，分别记录完整性、项目配置的备份验证、Preview 与 Formal Handoff；备份未满足时允许草稿预处理，但正式后期输入不得伪 Ready。
 6. Review 评论生成唯一 ReworkRequest；后期修改产出新 AssetVersion，补拍问题重新进入排期并产生新媒体，再回到 Review。
-7. Delivery 被退回时回到 ReworkRequest / Task；再次提交和最终验收不覆盖第一次退回历史。
+7. Final QC 同时检查 required Checklist 与 hard Authorization Requirement；缺失/过期/UNKNOWN 必须阻止通过，soft项只提示。Delivery 被退回时回到 ReworkRequest / Task；再次提交和最终验收不覆盖第一次退回历史。
 8. 收工/阶段结束生成经验观察；校准候选可以更新之后的预计时长或流程关系，但不能自动改当前项目已确认计划或具体摄影/AE/UE 设置。
 9. 任一 consumer 中途失败后，源命令仍成立，ImpactRun 显示失败目标并可重试；重复 event 不产生重复 Task、通告或返工需求。
 10. 全流程任何一步的权限撤销、revision 冲突、永久删除或锁定条件都必须返回明确结果，不能通过前端本地状态假装成功。
@@ -606,6 +626,8 @@ MediaHandoff 只有在“一份素材存在多消费者、独立确认、更正/
 | 功能环节 | 主要工作包 | 专属/关键 Gate | 验收重点 |
 | --- | --- | --- | --- |
 | Scene/Shot → Task / DAG / Handoff | E4-TASK | FX-08、FX-09、FX-26 | 模板/制作方式真实生成任务；来源失效按 D-35 自动停用边界；已执行事实不被删除 |
+| Authorization Requirement / Record | E2-AUTHORIZATION | FX-31 | 只管理制作授权资料；hard/soft、缺失/过期/UNKNOWN/N-A明确；不做合同、法务或费用 |
+| Checklist / Readiness | E4-CHECKLIST | FX-32 | required/optional/N-A、来源与结果分开；不变成SOP；Readiness从事实派生 |
 | Person/Cast/Location → 排期 | E2-CAST、E2-SHARED-RESOURCE、E6-SCHEDULE | FX-13、FX-19、FX-20 | UNKNOWN 不当可用；一人多岗不重复；锁定和冲突可解释 |
 | Schedule → Company Move → Call Sheet | E6-SCHEDULE | FX-13、FX-27 | Move 影响 earliest start；排期变化只改 Draft；发布/发送必须显式 |
 | On-set Actual → Media 正式交接 | E6-MEDIA-HANDOFF | FX-28 | Actual 可追溯；完整性+项目配置备份门槛；Preview 与 Formal Handoff 分离 |
@@ -614,6 +636,6 @@ MediaHandoff 只有在“一份素材存在多消费者、独立确认、更正/
 | Deliverable / QC / Delivery | E7-DELIVERY-LOOP、E7-EXPORT | FX-15、FX-29 | QC、提交、送达、确认、验收、退回分开；退回能回返工 |
 | 全流程 Impact | E8-IMPACT | FX-10、FX-17 | 源事实先提交；未来项自动联动；LOCKED/CONFLICT/REQUIRES_USER 可解释可重试 |
 | Actual → QA → Calibration → 未来基线 | K1-EXPERIENCE、K2-CALIBRATION、K3-RECOMMENDATION | KL-04、KL-05、KL-06、KL-07、KL-08 | 实测与解释分开；去重；不可变 profile；必须经受权接受后才更新未来估时/流程候选 |
-| 全流程产品闭环 | Z0-PRODUCTION-CLOSED-LOOP | FX-17、FX-26、FX-27、FX-28、FX-29、FX-30、KL-05、KL-06、KL-07 | 使用 §19.4 的完整合成项目，从创作到经验校准并受控影响后续计划真实跑通；API/PG/真实消费者证据齐全后才能称“闭环” |
+| 全流程产品闭环 | Z0-PRODUCTION-CLOSED-LOOP | FX-17、FX-26、FX-27、FX-28、FX-29、FX-30、FX-31、FX-32、KL-05、KL-06、KL-07 | 使用 §19.4 的完整合成项目，从创作到经验校准并受控影响后续计划真实跑通；required Checklist与hard授权资料也必须贯穿；API/PG/真实消费者证据齐全后才能称“闭环” |
 
 FX-26 至 FX-30 的具体 fixture 写在实施计划并列入机器清单。任何上游工作包即使单独 accepted，只表示该环节能力通过，不代表 Z0 或整个 Production workflow 已闭环。
