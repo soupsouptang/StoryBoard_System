@@ -1,5 +1,11 @@
 # 2026-10-04 分镜详情卡片与图片预览实施记录
 
+## 最新修复：详情高度以标准布局为基准
+
+用户指出：制作方式多项等内容撑高镜头行后，详情也被行高倍数放大。实际样本006标准行84.594px，008十项方式行313px，旧逻辑rowHeight×4使008详情高1252px。仅ShotDetailSlot改为标准布局固定470px，移除前一条TR的测量及ResizeObserver订阅；Observer只随可视内容区宽度更新，末行向上借空间/横向sticky/内部滚动及保存语义保持。此处覆盖历史max(470px,实测行高×4)，不是修改表格自身行高或新增UI owner。
+
+既有详情消费者检查和最终Webpack生产构建/TypeScript、diff通过。真实样本008仍313px而详情470px，006仍84.594px而详情470px；1440/1024/768/375/320宽度全部470px、无根横向溢出，干净Esc关闭正常，无数据写入。已部署本机3002构建`.next/detail-standard-height/standalone/apps/web`，API8002/PG55432和原项目/媒体未改；临时viewport恢复，截图outputs/shot-detail-standard-height-2026-10-04.png仅本机。代码/MD本地保存，GitHub具体目的地授权仍沿用最新续作停点，未重试被拒绝的上传。
+
 ## 最新本机部署恢复与最终页面验收
 
 用户明确要求重新部署供浏览器访问。本机旧API进程已停止，最新API的HistoryService读取画板表，原PG停在a83f02c1d765，因此先备份到本机`/private/tmp/frameforge-before-preview-20261004.dump`，实际恢复至独立副本，并在副本及独立空库执行既有Alembic迁移至c14f8a63b920；两条链通过。原35张业务表逐行JSON排序SHA256/数量在副本升级后及本机正式升级后均完全一致，只增加现有官方迁移的两张画板表。本次没有修改迁移或API源码，没有读取Legacy数据库，也没有新建持久化owner；此处覆盖下方历史“画板迁移尚未应用”的本机运行状态，不代表画板产品/UI已验收。

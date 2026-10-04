@@ -1,22 +1,21 @@
 'use client';
 import { useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 
+// Use the accepted standard-row layout, independent of a shot's expanded content.
+const DETAIL_CARD_HEIGHT = 470;
+
 /** A table spacer owns vertical flow; a sticky slot owns the visible content width. */
 export function ShotDetailSlot({ viewport, children }: { viewport: RefObject<HTMLDivElement | null>; children: (height: number) => ReactNode }) {
   const slot = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ width: 0, height: 470 });
+  const [size, setSize] = useState({ width: 0, height: DETAIL_CARD_HEIGHT });
   useLayoutEffect(() => {
     const region = viewport.current, element = slot.current;
     if (!region || !element) return;
-    const preceding = element.closest('tr')?.previousElementSibling;
     const measure = () => {
-      const rowHeight = preceding?.getBoundingClientRect().height || 80;
-      // Reserve four complete rows, including comfortable internal spacing.
-      setSize({ width: region.clientWidth, height: Math.max(470, rowHeight * 4) });
+      setSize({ width: region.clientWidth, height: DETAIL_CARD_HEIGHT });
     };
     measure();
     const observer = new ResizeObserver(measure); observer.observe(region);
-    if (preceding) observer.observe(preceding);
     return () => observer.disconnect();
   }, [viewport]);
   useLayoutEffect(() => {
