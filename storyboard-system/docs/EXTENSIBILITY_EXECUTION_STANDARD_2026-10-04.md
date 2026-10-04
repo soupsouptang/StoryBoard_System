@@ -123,10 +123,25 @@ Entity可以有真正从属的子Entity，但必须先定义所有权、生命�
 | FX-23 分时汇总 | 同时独立相加、明确共用一次、相邻区间、跨日、未排期及来源覆盖；只统计受权数据，不重复汇总同一使用安排 |
 | FX-24 默认构图 | 未专用当前引用随默认构图更新；专用保持；历史、审片及导出固定有效构图和原图版本；缓存失效后可复现且不拉伸 |
 | FX-25 帧率重算 | 30fps/150帧改60fps为300帧；分数帧率统一舍入、正时长最少一帧、锁秒数保持；累计时码与总量一致，音频与排期不漂移 |
+| FX-26 任务适用性失效 | 自动生成任务A未开始无Actual/产物/交接，任务B已开始，任务C已有产物，任务D人工创建；删除对应Scene requirement或Production Method，再恢复同一稳定来源 | A自动进入NOT_REQUIRED/inactive并保留历史，不记人工Cancel；B/C/D保留事实并提示负责人，不自动取消。下游不能因删边伪Ready；同源恢复时仅A可恢复适用，执行过的旧Task不复活 |
+| FX-27 通告发布边界 | 已有Published rev1及部分ack；排期改时间/地点/个人Call Time，重复事件并触发Impact；再由有权限人与无权限人分别尝试Publish/Send | 自动化只更新Draft和需重确认Recipient，不产生Published/Send事实；rev1/旧ack不漂移。有权限显式Publish产生rev2，Send另需显式权限；无权限、重复事件和失败不伪发布 |
+| FX-28 素材正式交接 | 一个AssetVersion先上传，Integrity通过但项目配置Backup未满足；生成proxy Preview后做草稿预处理，再完成BackupVerification并Formal Handoff；随后源版本变化 | Preview可被明确允许的草稿预处理消费，但正式input仍pending；完整性+配置备份门槛满足后Formal Handoff固定版本并解锁正式Task。源变化只使相关下游stale，旧交接事实保留，不以目录/上传存在判完成 |
+| FX-29 Review返工补拍与交付 | 同一Review问题重复投递；一个走AE返工，一个走补拍；生成新Version再Review；Deliverable经历QC、submit、deliver、ack、reject、rework、重新submit、accept | 同来源只一个活动ReworkRequest；后期返工回Task，补拍回Schedule/Media/Post；每次版本固定。交付各事实分开，reject回返工且不抹旧记录，最终accept固定对应Version/授权检查 |
+| FX-30 全流程产品闭环 | 使用总纲§19.4合成项目，从Project/Scene/Shot、Task、Person、Schedule/Move、CallSheet、Actual、Media、Post、Review、Rework/Reshoot、Delivery到Experience/Calibration；中途注入权限撤销、409、consumer失败、重复event | 每环上游可驱动下游、失败可解释重试、历史不漂移；D-35/D-36/D-37边界全部成立；经验校准只更新未来estimate/workflow候选。必须有API+真实PG+真实consumer/浏览器+合同证据，单包PASS不能冒充整链闭环 |
 
-这些是待运行门槛，不是本轮功能测试结果。三个增量各自领取、交付、记录前端缺口，共用已有事务、回执、历史、事件和作业基础。
+这些是待运行门槛，不是本轮功能测试结果。FX-21至FX-25覆盖资源/构图/帧率增量；FX-26至FX-30覆盖制作闭环新增边界。各增量分别领取、交付、记录前端缺口，共用已有事务、回执、历史、事件和作业基础。
 
-### 4.2 构图和帧率的事务细则
+### 4.2 闭环独立工作包的接受职责
+
+| 包 | 必须证明的业务闭环 | 不得越界 |
+| --- | --- | --- |
+| E6-MEDIA-HANDOFF | Actual/AssetVersion → Integrity → 项目配置Backup → Preview/Formal Handoff → Post readiness | 不另建Asset owner；Preview不能满足正式输入 |
+| E7-DELIVERY-LOOP | Review → ReworkRequest → Task或补拍排期 → 新Version → Review；QC/submit/deliver/ack/accept/reject | 不改Review历史语义，不用单一status吞并交付事实 |
+| Z0-PRODUCTION-CLOSED-LOOP | 组合所有已接受包跑总纲§19.4并通过FX-30 | 不新增业务写模型，不以mock、文档校验或单包测试替代产品闭环 |
+
+E4-TASK负责FX-26的任务失效边界；E6-SCHEDULE负责FX-27的通告草稿/显式发布边界；E6-MEDIA-HANDOFF负责FX-28；E7-DELIVERY-LOOP负责FX-29；E8-IMPACT继续负责跨域传播与FX-17；Z0只有在上述包和K2校准均接受后才运行FX-30。
+
+### 4.3 构图和帧率的事务细则
 
 已核对360d4fb对应代码：ImageCropService.rendered已有panel无专用时回退资产默认的逻辑；presentation读取、production封面、内容快照固定与各消费者一致性仍要逐项核验。MediaPresentation表和不可变AssetVersion已经存在，不重新建表。ProductionService.update_production当前直接改项目字段，没有同步转换镜头帧数；帧率重算仍是待实施增量，不冒称已验收。
 
@@ -236,6 +251,6 @@ PG 前置：配置 `ENVIRONMENT=test`、仅验收用 synthetic SECRET_KEY、loop
 
 每次包接受：合同能由另一执行者按指定文件和命令复现；没有未定的业务必填值被写成猜测；导入/历史/worker没有旁路写权；代码真实注册/使用；必要PG和视觉结果齐；旧owner退出或明确非权威；文档写清未验收范围；独立 commit推送，检查远端回执。缺任一项不能以“基本完成”放行。
 
-下一顺序：B0核对已推送Board后端剩余PG/消费者门槛和未提交import/export → E0 receipt/codec/config各小包 → E1身份/权限 → 各实体关系与字段 → Task/DAG、基础设施 → Schedule、Import/Export、自动联动 → 按已接受 API补缺UI。E0可与B0无冲突证据整理并行；长计划不是一次巨大提交。
+下一顺序：B0核对已推送Board后端剩余PG/消费者门槛和未提交import/export → E0 receipt/codec/config各小包 → E1身份/权限 → 各实体关系与字段 → Task/DAG、基础设施 → Schedule → Media Handoff → Review/Rework/Delivery → Import/Export、自动联动与知识校准 → 按已接受 API补缺UI → Z0整链验收。E0可与B0无冲突证据整理并行；长计划不是一次巨大提交。
 
 本文新增的定义、文件seam和验收目标是执行合同；本轮没有据此伪造迁移SHA、测试PASS或全站cutover。已确认人类决定同步到原计划；执行清单保留真实未开始/进行中状态。
