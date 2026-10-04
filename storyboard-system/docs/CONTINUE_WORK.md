@@ -1,5 +1,19 @@
 # FRAMEFORGE 续作入口
 
+## 2026-10-04 载入原图完成、代码已同步
+
+最新用户追加已完成：图片悬浮窗左侧「载入原图」与右侧「替换」同排、边缘留白一致；新上传默认水平/垂直居中cover铺满项目画框，载入原图恢复完整不可变source、100%contain居中且允许一个方向黑边。仍只有显式Lock保存，小图Lock直接提交、详情Lock进入局部草稿后卡片Save；双击百分比恢复100%cover，Esc/X/窗外丢弃未锁定调整，双下载保留。
+
+frame_fit仅扩展既有MediaTransform/MediaPresentation JSON，无新owner/路由/DDL。Canvas草稿及下载、image_framing权威成品、原Command/CAS/权限/事务不变。实际连续Undo发现Shot仅token变化未入历史的既有问题，HistoryService.finish现在在有真实业务变化时纳入同次Shot token效果，保持精准外部冲突保护。旧已生成测试历史未强行改写；合成基线正常恢复后重新验证新步骤连续撤销成功。
+
+后端四份original_fit/shot_detail/image_assets/command_history 29 passed，前端四份坐标及真实组件检查通过；正式Webpack/TypeScript、diff、Regression Guard（base f712396）通过。真实3002合成900×1600竖图cover/contain、Lock持久化、双击后Esc恢复、详情Undo/Redo与Save提示、修复后两次连续Undo回到原蓝黄图片通过。五宽度1440/1024/768/375/320根及Dialog无溢出、居中与左右按钮同排通过。构图PNG实际下载1920×1080，中心/四色边/黑边像素核验完整原图。实际97镜头项目008只读试用后Esc，未保存/替换。
+
+本机Web3002 PID56372运行 .next/shot-original-fit standalone，API8002 PID61874已更新；现有PG55432与用户数据/媒体保持，无DDL。viewport恢复、QA页关闭。用户可刷新 http://127.0.0.1:3002/production/aaab21df-7d26-468f-98f3-37a174d8ae81/shots 查看。证据outputs/shot-original-fit-2026-10-04.jpg和shot-original-fit-user-2026-10-04.jpg只保留本机；未知 :memory:.ses 原样保留未stage。
+
+用户明确授权的soupsouptang/StoryBoard_System master已fetch核验无新待合入提交，代码及配套MD d623358 正常快进push回执 f712396→d623358。本文随后单独提交和上传；最终远端SHA在上传后查询核验，不使用force改写。当前请求没有剩余实现工作；原生drag/wheel旧实机工具门槛仍待，未宣称整站cutover。额度按用户要求在恢复后一分钟查询，已确认普通额度恢复，未使用额度券；本轮完成后暂停对应续作自动任务，不自行扩展旧任务。
+
+详见[原图显示及验证记录](SHOT_ORIGINAL_FIT_2026-10-04.md)。以下为历史阶段，不用旧授权阻挡或部署路径覆盖本段。
+
 ## 2026-10-04 GitHub同步授权已确认、代码已上传
 
 用户在上一条明确列出soupsouptang/StoryBoard_System master及审批限制后回复“强制上传”，具体上传授权已确认。fetch核验远端无待合入新提交，正常快进push回执451323f→f8875c5，已同步本会话此前累积的详情高度、顶部操作、辅助制作方式字号/全选和固定画框构图等代码及配套MD；没有覆盖他人提交、force改写历史或绕过审批。本文和最新同步记录随后单独提交上传，最终MD回执以Git远端查询为准。本段解除下面历史“具体GitHub授权待回复”的阻挡。
