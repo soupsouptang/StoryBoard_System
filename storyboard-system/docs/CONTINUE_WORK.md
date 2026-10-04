@@ -1,5 +1,15 @@
 # FRAMEFORGE 续作入口
 
+## 2026-10-04 项目大厅信息顺序完成、代码已上传
+
+用户澄清现有总时长按参考格式显示、单纯重排且字号/样式/版式保持。项目卡片现顺序为类型、比例、fps、N镜头、总时长HH:MM:SS:FF；复用原项目列表total_duration_frames与@frameforge/timecode，按项目帧率及drop_frame格式化，没有新增第二项时长/请求/owner。真实97镜头项目为宣传片、16:9、30 fps、97 镜头、总时长00:06:23:01。原class/字体/颜色/横gap/封面/操作保持，无API/DB/DDL/依赖变更。
+
+正式生产Webpack/TypeScript、既有shot-summary检查、diff/Regression Guard（base058771e）通过。真实四卡片帧时码与顺序核验，1440字号12px/行高16px/横gap12px；1440/1024/768完整，五宽度根横向溢出0。375/320旧横向卡片左区被右侧日期/按钮挤压仍在，按明确不改版式要求保留，不宣称整体移动布局验收通过，记录SCREEN台账。真实截图outputs/project-summary-order-2026-10-04.png仅工作区保留，临时QA关闭/viewport恢复，未写用户业务数据。
+
+Web3002为.next/project-summary-order standalone PID77271，原API8002/PG55432及媒体保持。刷新 http://127.0.0.1:3002/productions 可查看。生成tsconfig复原，未知:memory:.ses保留未stage。
+
+代码与配套MD a94e6da已正常快进上传soupsouptang/StoryBoard_System master（058771e→a94e6da）；本文随后独立更新上传并核对远端SHA。当前用户确认的排序工作完成，不扩展窄屏重排或其他旧待办；额度可用，未使用恢复券。详见[记录](PROJECT_LOBBY_METADATA_2026-10-04.md)。
+
 ## 2026-10-04 分镜制作两行工具栏完成、代码已上传
 
 用户确认第二张示意图后授权正式修改，已在真实shots页实施。第一行分镜制作标题＋总共N镜头（其中显示N镜头）＋已选蓝色数量徽标，右侧新增镜头；第二行原管理工具至废纸篓 → 视图 → 搜索 → 删除镜头/浅色取消选择，三处分隔为空档20px＋20px高1px短竖线＋20px。删除与取消均100×36px/8px圆角；没有选中时保留并禁用。旧表格第三行的独立计数/修改提示/三种批量下拉移除，全局顶部重复项目资料取消、原项目信息条保留。本段覆盖历史工具栏呈现规则，不扩展其他视图工具排布。
