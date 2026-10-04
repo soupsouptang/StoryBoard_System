@@ -2,6 +2,16 @@
 
 本记录只跟踪 `next-generation/` 的文档储备，不是当前版本工作包或应用实施进度。设计参数未定稿，重构未启动。
 
+## 2026-10-05：确认知识库基础模型与扩展边界
+
+用户确认知识库直接按 A–H 八大类建立专业知识小库；共用基础知识作为共享基础层，不作为第九个项目部门。新增 `KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md`，定义 KnowledgeLibrary/Domain/Entry/Revision、EquipmentCategory/Model、SpecificationDefinition/Value、EquipmentNote、CompatibilityRelation、SoftwareProduct/Scope、RoleKnowledgeBinding、ExperienceObservation/EstimateProfile 的职责和扩展边界。
+
+器材结构化参数以厂商官方资料为权威来源，人工备注独立保存且不能覆盖官方规格。新上市镜头通过 Category + SpecificationDefinition 录入焦段、光圈等，不为新品修改主表；兼容关系使用 typed relation，支持直接兼容、需转接、明确不兼容和条件兼容。用户给出的 Forza 200B / 保荣卡口 / 转接环仅作为 REQUIRES_ADAPTER 的建模示例，正式知识仍需官方来源核验。
+
+软件知识只记录产品或版本范围适配哪些制作能力，可明确 NOT_SUPPORTED，例如三维软件不作为剪辑系统；不建立功能更新日志、按钮级教程或操作手册。正式知识取消 FAILURE_PATTERN/常见问题库。QA/Experience 只保留 Actual 或必要的粗粒度时间补充，用于 EstimateProfile 校准，不再询问问题原因、设备心得、最佳设置和解决办法。
+
+知识库不建立专用权限角色；Create/Edit/Verify/Publish/Withdraw 等动作统一由系统权限和用户组能力决定。更新知识需求至2.3并把验收扩展到KL-23。本次仍只更新规划合同，没有建立数据库、接口、索引、权限或知识维护页面。
+
 ## 2026-10-05：按岗位目录补齐知识范围
 
 依据用户指定的 [JOB_CATALOG_DEFINITIONS_2026-10-05.md](requirements/JOB_CATALOG_DEFINITIONS_2026-10-05.md) 补齐下一代知识体系，仅修改 `next-generation/` 规划文档，不启动应用、数据库、知识索引或页面实现。
