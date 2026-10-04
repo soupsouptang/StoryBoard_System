@@ -2,7 +2,7 @@
 
 # FrameForge 知识体系需求与实施合同
 
-版本：2.6，2026-10-05。状态：需求已审计；知识模块仍待实施和实际验收。本版进一步建立243个共享制作常识Topic、13个公式、135个A–H专业组件、83/83专业知识域到组件映射及首批跨组件关系；仍不锁定最终Domain深度，不修改界面、运行数据库或部署。
+版本：2.7，2026-10-05。状态：需求已审计；知识模块仍待实施和实际验收。本版在243 Topic、13公式、135组件、83/83专业域映射基础上锁定知识分类最大深度为 Library→Domain→Component→可选Subcomponent；Topic/器材/软件/格式保持独立实体。
 
 配套：[总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)、[岗位方案](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md)、[工种目录](JOB_CATALOG_DEFINITIONS_2026-10-05.md)、[岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)、[知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)、[制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)、[制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)、[A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)、[时间段资源需求](RESOURCE_TIME_REQUIREMENTS_2026-10-04.md)、[执行标准](TECHNICAL_ACCEPTANCE.md)、[实施计划](ACCEPTANCE_SCENARIOS.md)。
 
@@ -207,6 +207,7 @@ E1-POLICY负责后台用户组及团队归类，K1-EXPERIENCE只保存贡献引�
 | KL-32 | 制作常识Topic Catalog中的stable ID唯一；243个首批Topic和13个FormulaDefinition可分别检索，公式有适用/禁止条件；共享Topic只有一个canonical revision |
 | KL-33 | A–H组件ID唯一；83个KA–KH专业知识域全部显式映射到已定义Component，139个JOB_CATALOG岗位可沿Role→Domain→Component→Topic链检索，不靠名称猜归属 |
 | KL-34 | 内容→实拍、分镜/预演→3D/VFX、实拍→后期、CG→合成→后期、现场声音→声音后期、表演/造型→连续性等跨组件链有显式INPUT/OUTPUT/HANDOFF/SUPPORT关系；这些关系不自动创建Task或权限 |
-| KL-35 | 最终Domain层级深度保持未锁定；Focal Length/F-number/T-stop/FOV等独立Topic不得因导航树被误做父子数据；只有内容量、独立查询/生命周期或岗位部分需求证明需要时才拆Subcomponent |
+| KL-35 | 分类层级固定为Library→Domain→Component→可选Subcomponent，含Library最多四级；Focal Length/F-number/T-stop/FOV等独立Topic不得因导航树被误做父子数据 |
+| KL-36 | Topic、EquipmentModel、SoftwareProduct、FormatDefinition、FormulaDefinition不占第五级目录；品牌/型号/Variant通过结构化字段/Facet，跨概念通过typed relation，超过Subcomponent不得继续造第五/第六级知识树 |
 
 真实 PostgreSQL、接口、并发、来源、统计回放、删除恢复和新页证据均需绑定实际提交。文档校验只能证明合同与清单结构一致，本轮没有把新知识模块登记为已接受。
