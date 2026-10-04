@@ -165,7 +165,11 @@ Derived evaluator 在 API owner 内解析受控 AST，同实体字段、项目 f
 
 `task_dependencies(production_id,predecessor_id,successor_id,type,revision)` 首批仅 finish_to_start；同项目两端 FK、禁止 self edge、active pair/type 唯一。加边在同项目锁下检查可达性再写，阻止并发 A→B/B→A 各自通过；不依赖数组顺序或数据库跨域自动化 trigger。删除任务预览入/出边和下游缺输入，不能直接 cascade 边后让下游变 ready。
 
-任务执行状态与 input validity 分开，ready/blocked 由 DAG/input query 派生；“已完成但输入过期”保留完成事实、交接人与旧产物版本。固定输入/output AssetVersion、Review target revision/template version/input digest；无关视图/备注不使全部任务过期。实测耗时不能由估时冒充。建议 `/productions/{p}/tasks`、`/task-dependencies`、`/workflow-instances`、`/queries/my-work`；分派/转派/开始/提交/交接/重开/跳过均标准命令＋幂等回执。
+任务执行状态与 input validity 分开，ready/blocked 由 DAG/input query 派生；“已完成但输入过期”保留完成事实、交接人与旧产物版本。固定输入/output AssetVersion、Review target revision/template version/input digest；无关视图/备注不使全部任务过期。实测耗时不能由估时冒充。
+
+任务来源失效按总纲 D-35 执行：Scene/Shot/Production Method/Requirement/模板版本变化后，只有系统自动生成、尚未 Start、无 Actual、无 output、无 Handoff 的任务可以由 Impact consumer 自动标记为 NOT_REQUIRED / inactive；该状态与人工 Cancel 分开并保留来源和历史。人工创建、已开始、已有输出、已交接或已经参与正式 Review/Delivery 的任务只标“来源不再适用/需负责人处理”，系统不自动取消。下游 readiness 随有效任务和依赖重新计算，但不能通过删边把下游伪装成 Ready。相同稳定来源重新适用时，只允许恢复未执行且未产生事实的自动停用实例；执行过的旧任务不复活。
+
+建议 `/productions/{p}/tasks`、`/task-dependencies`、`/workflow-instances`、`/queries/my-work`；分派/转派/开始/提交/交接/重开/跳过均标准命令＋幂等回执。
 
 ### 5.6 Schedule / Scenario / projections
 
@@ -177,6 +181,8 @@ ScheduleItemScene/Shot/Person/Location及ResourceRequirement 是 typed links；�
 
 `/schedule-plans`、`/shoot-days/{id}/items`、`/queries/shooting-day|availability|resource-conflicts|call-sheet` 是拟议 query seams。Stripboard/Calendar/DOOD/CallSheet draft 从同一事实投影，可缓存重建。CallSheetRevision 固定 source vectors、允许字段与受权 resolved references，发布后改动生成新 revision；发送不在本轮授权范围，任何将来外发须实际授权。旧发布内容的 Purge/撤销例外按 §8 管理，不能宣称既永久不变又可复活已删除隐私。
 
+排期、人员、地点或集合要求变化时只自动重算 CallSheet Draft，并对照最近 Published revision 标出变更和需要重新确认的 Recipient。Automation/Impact consumer 没有发布权，不得自动创建 Published revision，也不得自动发送/外发。Publish 必须由有权限的人显式执行并固定 source vectors；Send/Notify 若后续启用，是发布后的另一个显式受权动作。允许“已发布但尚未发送”，不能用自动通知结果反推已发布。
+
 ### 5.7 制作生命周期细化：计划、实际与交接
 
 这些补充落在现有Task/Schedule/Asset/Review/Deliverable seams，不增经营领域或第二套实体镜像。来源为生命周期R-PRE-03/04、R-PROG-01–10、R-AUTO-01–08、R-WORK-01–09、R-SET-06/09、R-POST-01–08、R-DEL-01–04与R-VIEW/EXP/GOV。
@@ -185,12 +191,24 @@ ScheduleItemScene/Shot/Person/Location及ResourceRequirement 是 typed links；�
 | --- | --- | --- |
 | 场景默认与镜头例外 | typed relation/binding声明继承源ID/revision，override具有INHERIT/SET/CLEAR/ADD/EXCLUDE语义；多Scene歧义保留异常。ChangeSceneDefaults触发影响事件，ResolvedShotRequirements是投影 | 没有默认出演时不凭场景关系制造全部演员；已经显式排除/清空的镜头不被重算覆盖。历史显示当时默认与例外。 |
 | 基准、当前计划、实际、预测 | 在Task/Schedule明确字段与不可变BaselineRevision，Milestone与Task links随真实query建模；future prediction可重建，baseline仅显式命令新建 | 无工期/容量/依赖返回unknown，禁止伪精确日期；故事、视图和拍摄顺序独立。边拍边剪/分集交付允许并行，不固定线性阶段。 |
-| 通告与个人反馈 | CallSheetRevision＋受限Recipient link；发布、通知delivery、view、ack、attendance分别有最小活动记录；ack固定revision。新当前修订使相关重要时间/地点旧确认需重确认 | 正常计划联动不等待ack；历史发布文件和旧确认保留。通知失败可重试，不能标作到场或工作完成。对外发送仍需具体授权。 |
-| 素材交接/备份检查 | AssetVersion/physical component、TaskAssetVersion、Review target复用；真实交接consumer需要时增加MediaHandoff/IntegrityCheck/BackupVerification记录，指向固定版本/opaque storage refs | 上传成功不等于检查/备份通过；原素材与proxy对应；后期缺输入、过期、已交接分开，记录实测与检查事实，不能靠目录存在判完成。 |
+| 通告与个人反馈 | CallSheetRevision＋受限Recipient link；Draft由CURRENT计划投影；发布、通知delivery、view、ack、attendance分别有最小活动记录；ack固定revision。计划变化只更新Draft并计算需重确认范围 | 自动联动不得发布或外发；Publish与Send均须权限和显式命令。历史发布文件和旧确认保留；重要变化只把相关Recipient标记需重确认。通知失败可重试，不能标作到场或工作完成。 |
+| 素材交接/备份检查 | AssetVersion/physical component、TaskAssetVersion、Review target复用；正式交接consumer需要时增加MediaHandoff/IntegrityCheck/BackupVerification，全部指向固定版本/opaque storage refs；Preview访问单独标识 | Formal Handoff 必须完整性通过并满足项目当前配置要求的BackupVerification；项目未配置的额外备份不凭行业习惯暗加。备份未满足可提供PREPROCESS_ONLY预览供草稿预处理，但不能满足正式input readiness、Final Review或Delivery。 |
 | 补拍/返工与交付变体 | ReworkRequest指向源Review/comment/input/output版本和受影响Shot，生成唯一Task需求并发事件；DeliverableItem/Variant与共享Task link随交付query建模，固定规格/语言/比例 | 同来源问题不重复建返工；共享工作算一次，变体差异单列；已完成/已检查/已提交/送达/接收/验收是不同事实，不混成status百分比。Take仍deferred。 |
 | 制作指标/期间趋势 | Query返回单位、授权scope、revision、as_of、分子分母与下钻IDs；趋势只读真实期间事件，已有AE+VFX制作标签统计保留 | 来源稿AC-18细化实际Task有效完成率：5项中1有效完成/1过期完成/1受阻且逾期/1待交接/1取消→1/4，过期另列、重叠阻塞去重。无事件不编造7天趋势。 |
 
 这些新增记录仅在相应真实query/command上线时建表，与Schedule、Job、Export所需迁移一起接受。当前检查未证明存在BaselineRevision、CallSheet活动、MediaHandoff或ReworkRequest，不把表名建议当脚手架完成。
+
+### 5.8 闭环独立工作包与最终接受边界
+
+为避免“总纲有闭环、机器清单没有owner”，本轮把之前隐含在 E4/E6/E7/E8 中的三段拆成明确包，并增加一个只负责端到端接受的集成包：
+
+| 包 | 职责 | 依赖与边界 |
+| --- | --- | --- |
+| E6-MEDIA-HANDOFF | On-set Actual / AssetVersion → IntegrityCheck → BackupVerification → Preview / Formal Handoff → Post input readiness | 依赖 E4-TASK、E5-JOB、E6-SCHEDULE；不重复 AssetVersion owner，不把 Preview 当正式交接 |
+| E7-DELIVERY-LOOP | Review → ReworkRequest → 后期返工或补拍待排 → 新 Version → Review；Deliverable/QC/submit/deliver/ack/accept/reject | 依赖 E4-TASK、E6-SCHEDULE、E6-MEDIA-HANDOFF、E5-OUTBOX、E7-EXPORT；不把 Review/Task/Deliverable 混成一个状态 |
+| Z0-PRODUCTION-CLOSED-LOOP | 使用总纲 §19.4 从项目/镜头一路跑到经验校准，验证所有包的真实组合而不拥有第二套业务写入 | 依赖 E8-IMPACT、E7-DELIVERY-LOOP、K2-CALIBRATION；只做集成验收和真实消费者证据，任何单包通过都不能替代 |
+
+E4-TASK、E6-SCHEDULE、E8-IMPACT 的职责保持不变；新增包只填原清单没有 owner 的闭环段，不复制现有 Task/Schedule/Review/Asset/Export owner。
 
 ## 6. Provider / Event / Job / Config 接入
 
@@ -352,7 +370,7 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 
 ## 12. 资源、图片与帧率增量批次
 
-原29包加需求、构图、帧率三个服务增量，再把需求新页从场景新页拆成独立包，共33包；机器清单保存准确依赖和允许文件。新增包全部未开始，无虚构通过证据。已取消的库房和预留不再作为工作包。
+原29包加需求、构图、帧率三个服务增量，再把需求新页从场景新页拆成独立包形成33包；本轮闭环审计再增加 E6-MEDIA-HANDOFF、E7-DELIVERY-LOOP、Z0-PRODUCTION-CLOSED-LOOP 三包，共36包。机器清单保存准确依赖和允许文件。新增包全部未开始，无虚构通过证据。已取消的库房和预留不再作为工作包。
 
 | 包 | 依赖 | 独立交付 |
 | --- | --- | --- |
@@ -362,6 +380,9 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 | E6-SCHEDULE | 原依赖，加E2-DEMAND | 排期负责时间匹配，人员和场地冲突；器材清单只表达需要什么 |
 | K3-RECOMMENDATION | 原依赖，加E2-DEMAND | 知识只提供型号和基础知识，不生成使用方法、不猜库存或自动改需求 |
 | E9-DEMAND-UI | E2-DEMAND、E6-SCHEDULE | 仅补仍缺失的需求页面、组件和hook；与场景新页分开领取，保留现有UI |
+| E6-MEDIA-HANDOFF | E4-TASK、E5-JOB、E6-SCHEDULE | 正式素材交接的完整性/备份门槛、Preview与Formal分离、后期输入readiness |
+| E7-DELIVERY-LOOP | E4-TASK、E6-SCHEDULE、E6-MEDIA-HANDOFF、E5-OUTBOX、E7-EXPORT | Review返工/补拍回流、Deliverable/QC/提交/送达/验收/退回分离 |
+| Z0-PRODUCTION-CLOSED-LOOP | E8-IMPACT、E7-DELIVERY-LOOP、K2-CALIBRATION | 只做端到端闭环接受；必须真实组合运行，不创建第二套业务owner |
 
 需求由resource_demand_service负责；构图继续由ImageCropService/MediaPresentation负责；帧率由现有项目、镜头服务编排唯一时码算法。三包不写进同一个万能服务，不新造解析器、队列、权限或历史基础。公共模型注册、路由、迁移链及内容快照由集成者独占处理。
 
@@ -369,7 +390,7 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 
 ## 13. 实施和接受顺序
 
-先复核 B0 已有画板、导入和导出实际增量；E0 回执、历史编解码、配置可以独立推进。依赖满足后做身份与项目权限、场景与人员、字段、资源、任务和异步基础，再接时段需求与排期、交付、联动与知识。
+先复核 B0 已有画板、导入和导出实际增量；E0 回执、历史编解码、配置可以独立推进。依赖满足后做身份与项目权限、场景与人员、字段、资源、任务和异步基础，再接时段需求与排期；随后完成正式素材交接、Review/返工/补拍/交付闭环，再接全局联动与知识校准；最后由 Z0 组合验证整条制作主链。
 
 缺失页面按逐域已接受接口接入；已有分镜工作台、详情卡、图片预览、项目封面和设置由 montblanc08 当前界面负责，不因后端缺口重写。任何改变先记录 DTO、版本、错误、缓存、历史、权限、允许文件与真实证据，交接给对应负责人。
 
@@ -377,6 +398,6 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 
 ## 14. 本轮交付与未完成范围
 
-本轮完成需求访谈和文档修订。FX-01至FX-25、KL-01至KL-11是待执行门槛；新增时段需求、默认构图继承、帧率重算、知识及相关接口仍保留未开始状态。既有实施记录只说明各自提交当时的证据，不推广到新增模块。
+本轮完成需求访谈和文档修订。FX-01至FX-30、KL-01至KL-11是待执行门槛；新增任务失效边界、通告发布边界、正式素材交接、Review/返工/补拍/交付闭环、时段需求、默认构图继承、帧率重算、知识及相关接口仍保留未开始状态。既有实施记录只说明各自提交当时的证据，不推广到新增模块。
 
 下一步按清单实施独立工作包。缺真实PostgreSQL、来源解析、构图历史、工程扫码、水印样本或桌面读写证据时，准确记录未验收项，不以“文档可执行”宣称功能已落地。
