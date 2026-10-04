@@ -9,6 +9,7 @@
 .env
 .env.*
 storyboard-system
+deprecated
 tests
 _cut_review
 *.xlsx

@@ -1,8 +1,10 @@
-> 2026-10-04审计更新：本文件保存历史提交的真实数据库和测试证据，不推广为新要求已完成。当前新项目默认全部九内置列，原生项目历史已接通；共享视图、来源关系、默认构图固定和新增域仍以最新执行合同逐项验收。取消库房、预留和器材使用方法；知识贡献范围按采集时固定。不得用历史约七列建议、旧素材源版本方案或未完成项覆盖最新实现。详见[审计](EXTENSIBILITY_GRILL_AUDIT_2026-10-04.md)与[执行标准](EXTENSIBILITY_EXECUTION_STANDARD_2026-10-04.md)。
+> **范围：当前版本记录/合同。** 旧功能基线无效；正文中的来源、实现状态及验收仅对应注明提交。下一代不继承旧实现或 UI；当前任务不得按历史待办自动执行。
+
+> 2026-10-04审计更新：本文件保存历史提交的真实数据库和测试证据，不推广为新要求已完成。当前新项目默认全部九内置列，原生项目历史已接通；共享视图、来源关系、默认构图固定和新增域仍以最新执行合同逐项验收。取消库房、预留和器材使用方法；知识贡献范围按采集时固定。不得用历史约七列建议、旧素材源版本方案或未完成项覆盖最新实现。详见[审计](../../deprecated/storyboard-system/docs/EXTENSIBILITY_GRILL_AUDIT_2026-10-04.md)与[执行标准](../../deprecated/storyboard-system/docs/EXTENSIBILITY_EXECUTION_STANDARD_2026-10-04.md)。
 
 # VNext 数据库实施记录（2026-10-02）
 
-本轮按最新需求完善 `apps/api` 数据库，源提交 `f4ea6f1`。不连接或迁移 Legacy 数据库，不执行生产 DDL，不操作部署。设计合同见 [数据库计划](UI_DATABASE_PLAN_2026-10-02.md)，本文只记录实际实现与证据。
+本轮按最新需求完善 `apps/api` 数据库，源提交 `f4ea6f1`。不连接或迁移 Legacy 数据库，不执行生产 DDL，不操作部署。设计合同见 [数据库计划](../../deprecated/storyboard-system/docs/UI_DATABASE_PLAN_2026-10-02.md)，本文只记录实际实现与证据。
 
 ## 1. 列定义和值：第一段
 
@@ -88,12 +90,12 @@ Alembic `c58f2d01e739` 为 Asset 增加 revision/category，约束同资产 vers
 
 隔离真实图片/ORM/旋转选区/填黑/原图保留/CAS/跨项目/删除恢复/事务失败3项、版本迁移/bootstrap/约束/拒绝丢弃历史1项，以及既有项目版本3项通过。没有部署或访问生产数据库。统一 AssetReference/对象存储、全引用 GC/永久删除闭包和项目 undo journal 仍待后续基础域，不宣称完成。
 
-最新用户决定：共享布局不版本化，批注/审阅独立历史，全面按新系统重构，不保留旧产品提交兼容目标。第6/7节是已执行阶段记录，其范围将由新的内容版本 owner 收口；当前剩余任务和验收状态见 [重构范围](VNEXT_REFACTOR_SCOPE_2026-10-02.md)。
+最新用户决定：共享布局不版本化，批注/审阅独立历史，全面按新系统重构，不保留旧产品提交兼容目标。第6/7节是已执行阶段记录，其范围将由新的内容版本 owner 收口；当前剩余任务和验收状态见 [重构范围](../../deprecated/storyboard-system/docs/VNEXT_REFACTOR_SCOPE_2026-10-02.md)。
 
 
 ## 9. 非破坏图片、三类列与交付字段：第六段
 
-代码 `095fb7a` 已先行上传。最新合同：[图片/版本重构范围](VNEXT_REFACTOR_SCOPE_2026-10-02.md)、[三类列需求](COLUMN_MODEL_REQUIREMENTS_2026-10-02.md)。本节覆盖第7/8节历史方案中的构图生成新AssetVersion/contain填黑及内容快照收录布局、批注、审阅规则。UTC与真实PostgreSQL演练另由已上传 `cf26947` 完成。
+代码 `095fb7a` 已先行上传。最新合同：[图片/版本重构范围](../../deprecated/storyboard-system/docs/VNEXT_REFACTOR_SCOPE_2026-10-02.md)、[三类列需求](COLUMN_MODEL_REQUIREMENTS_2026-10-02.md)。本节覆盖第7/8节历史方案中的构图生成新AssetVersion/contain填黑及内容快照收录布局、批注、审阅规则。UTC与真实PostgreSQL演练另由已上传 `cf26947` 完成。
 
 ### 9.1 实际实现
 

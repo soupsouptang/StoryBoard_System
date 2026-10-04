@@ -13,7 +13,8 @@ on:
       - "apps/api/uv.lock"
       - "apps/api/requirements-*.lock"
       - ".dockerignore"
-      - "docs/**"
+      - "storyboard-system/portable_project_export.py"
+      - "storyboard-system/docs/**"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/ci.yml"
@@ -29,7 +30,8 @@ on:
       - "apps/api/uv.lock"
       - "apps/api/requirements-*.lock"
       - ".dockerignore"
-      - "docs/**"
+      - "storyboard-system/portable_project_export.py"
+      - "storyboard-system/docs/**"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/ci.yml"
@@ -99,6 +101,18 @@ jobs:
       - name: Build Next.js application
         run: npm run build --workspace=@frameforge/web
 
+  portable-project-contract:
+    name: Legacy portable export → VNext import contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Verify the versioned synthetic file bridge
+        run: python -m unittest tests.contracts.test_portable_project_contract -v
+
   container-build:
     name: Build deployable container images
     runs-on: ubuntu-latest
@@ -139,6 +153,7 @@ jobs:
       - architecture-boundaries
       - vnext-backend
       - vnext-web
+      - portable-project-contract
       - container-build
       - nginx-config
     runs-on: ubuntu-latest
@@ -149,13 +164,15 @@ jobs:
           ARCHITECTURE_RESULT: ${{ needs.architecture-boundaries.result }}
           BACKEND_RESULT: ${{ needs.vnext-backend.result }}
           WEB_RESULT: ${{ needs.vnext-web.result }}
+          PORTABLE_CONTRACT_RESULT: ${{ needs.portable-project-contract.result }}
           CONTAINER_BUILD_RESULT: ${{ needs.container-build.result }}
           NGINX_CONFIG_RESULT: ${{ needs.nginx-config.result }}
         run: |
-          printf 'architecture=%s\nbackend=%s\nweb=%s\ncontainer-build=%s\nnginx=%s\n' \
-            "$ARCHITECTURE_RESULT" "$BACKEND_RESULT" "$WEB_RESULT" "$CONTAINER_BUILD_RESULT" "$NGINX_CONFIG_RESULT"
+          printf 'architecture=%s\nbackend=%s\nweb=%s\nportable-contract=%s\ncontainer-build=%s\nnginx=%s\n' \
+            "$ARCHITECTURE_RESULT" "$BACKEND_RESULT" "$WEB_RESULT" "$PORTABLE_CONTRACT_RESULT" "$CONTAINER_BUILD_RESULT" "$NGINX_CONFIG_RESULT"
           test "$ARCHITECTURE_RESULT" = "success"
           test "$BACKEND_RESULT" = "success"
           test "$WEB_RESULT" = "success"
+          test "$PORTABLE_CONTRACT_RESULT" = "success"
           test "$CONTAINER_BUILD_RESULT" = "success"
           test "$NGINX_CONFIG_RESULT" = "success"

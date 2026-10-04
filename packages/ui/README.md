@@ -1,13 +1,13 @@
 # FrameForge shared UI
 
-`@frameforge/ui` is the single target shared UI source for `apps/web`. **shadcn/ui is the visual/component baseline**: Radix `new-york` conventions, Tailwind semantic colors, CVA variants, Lucide icons, shadcn radius and Card proportions. **FRAMEFORGE commit `5e86a0b` is the functional baseline**, not the visual baseline: capabilities and interaction contracts found there must be migrated unless a later explicit product decision removed them. Never copy Legacy CSS merely to reach feature parity, and never delete a baseline capability merely because a simpler shadcn screen looks cleaner.
+`@frameforge/ui` is the current shared UI source for `apps/web`, using shadcn/Radix, Tailwind semantic colors, CVA variants and Lucide icons. The old functional baseline is invalid. Follow current user-approved UI and verified consumers; do not recover features from a retired commit or copy old CSS. This package is part of the current application, not a code asset for the next generation.
 
 - `src/components/`: shared Button, Input, TextArea, Card, Badge, Dialog, Popover and DropdownMenu source. Keep shadcn's standard variants and radius/padding proportions.
 - `src/primitives.tsx`: existing package API; Button/Input/TextArea now re-export the shared components. IconButton adds an accessible tooltip. Field and controlled Select use the same semantic theme while preserving the current caller contract.
 - `src/lib/utils.ts`: shared `cn` helper.
 - `src/index.ts`: public primitive/icon API. Product copy and locale dictionaries live in `apps/web`, not in this primitive package. V-Web imports shared UI from this package, not a parallel `components/ui` directory.
 
-Both `apps/web/components.json` and this workspace's `components.json` are recognized by the official CLI. The package exports point TypeScript and the CLI to `src/components` while runtime imports use the compiled `dist`. Before adding a component, inspect `npx shadcn@latest add <name> -c apps/web --dry-run`, then verify that the target path is this package's source and review the diff. Run the package and V-Web builds after changes. The Legacy `storyboard-system/packages/ui` stays in place until its remaining consumers are migrated and tested.
+Both `apps/web/components.json` and this workspace's `components.json` are recognized by the official CLI. The package exports point TypeScript and the CLI to `src/components` while runtime imports use the compiled `dist`. Before adding a component, inspect `npx shadcn@latest add <name> -c apps/web --dry-run`, then verify that the target path is this package's source and review the diff. Run the package and Web builds after changes. The old parallel UI package is retired under `deprecated/`; it is not a runtime, design requirement, or source for next-generation components.
 
 ## Consumer compatibility checks
 
