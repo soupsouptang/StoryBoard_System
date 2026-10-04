@@ -1253,7 +1253,7 @@
       ],
       "verification": [],
       "blockers": [],
-      "acceptance": "Review问题能唯一进入返工Task或补拍排期并回到新Version/Review；QC、提交、送达、确认、验收、退回事实分离。",
+      "acceptance": "Review问题能唯一进入返工Task或补拍排期并回到新Version/Review；Final QC消费required Checklist和hard授权；QC、提交、送达、确认、验收、退回事实分离。",
       "required_evidence_kinds": [
         "unit",
         "api",
@@ -1295,7 +1295,7 @@
       ],
       "verification": [],
       "blockers": [],
-      "acceptance": "总纲§19.4合成项目必须从Project/Scene/Shot跑到Experience/Calibration；API、真实PostgreSQL、真实consumer/浏览器及合同证据齐全，任何单包PASS不能冒充整链闭环。",
+      "acceptance": "总纲§19.4合成项目必须从Project/Scene/Shot跑到Experience/Calibration，并经K3受权接受影响后续计划；required Checklist、hard授权、API、真实PostgreSQL、真实consumer/浏览器及合同证据齐全，任何单包PASS不能冒充整链闭环。",
       "required_evidence_kinds": [
         "api",
         "postgres",
