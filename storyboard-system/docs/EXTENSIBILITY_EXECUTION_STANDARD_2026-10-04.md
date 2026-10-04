@@ -131,7 +131,7 @@ Entity可以有真正从属的子Entity，但必须先定义所有权、生命�
 | FX-31 授权资料 | Project/Scene/Deliverable各配置一个hard和一个soft授权Requirement；AuthorizationRecord覆盖Person/Location/Asset并固定文件版本；依次测试missing、UNKNOWN、有效、expired、允许N/A、withdrawn、无权限读取、Purge | hard missing/UNKNOWN/expired/withdrawn阻塞对应Readiness/Final QC；soft只提示；允许N/A需显式权限/理由。文件存在不自动判定所有用途合法；不出现合同、金额、付款或法务结论；固定历史引用不随当前记录漂移 |
 | FX-32 Checklist/Readiness | Template/Production Method生成required和optional Checklist；Scene/Shot/Task/Deliverable分别实例化；测试complete、UNKNOWN、N/A、来源失效、已完成带证据后来源移除、重复事件、直接尝试写ready=true | Readiness只能由权威事实派生；required未通过阻塞、optional只提示、N/A按定义/权限保存。未确认自动项来源失效可停用，已确认/有证据结果保留并标来源失效；不出现SOP步骤执行器或用自由布尔绕过条件 |
 
-这些是待运行门槛，不是本轮功能测试结果。FX-21至FX-25覆盖资源/构图/帧率增量；FX-26至FX-30覆盖制作闭环新增边界。各增量分别领取、交付、记录前端缺口，共用已有事务、回执、历史、事件和作业基础。
+这些是待运行门槛，不是本轮功能测试结果。FX-21至FX-25覆盖资源/构图/帧率增量；FX-26至FX-32覆盖制作闭环新增边界，其中FX-31/32分别覆盖制作授权资料与Checklist/Readiness。各增量分别领取、交付、记录前端缺口，共用已有事务、回执、历史、事件和作业基础。
 
 ### 4.2 闭环独立工作包的接受职责
 
