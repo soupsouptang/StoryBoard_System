@@ -99,6 +99,8 @@ Before choosing the next migration slice, read the current dynamic sources inste
 
 ## 4. Documentation Authority
 
+Version boundary: read `storyboard-system/docs/NEXT_GENERATION_BOUNDARY.md` before interpreting future plans. Next-generation plans are stored on the separate `docs/next-generation-plan` branch under `next-generation/`; moved-document pointers are not current implementation instructions. Current application/data/UI remain protected. The next generation starts without existing implementation or user assets, but that does not authorize deletion of the current environment.
+
 Each architecture document has one job:
 
 - `ARCHITECTURE.md` records **current repository/runtime reality**.
