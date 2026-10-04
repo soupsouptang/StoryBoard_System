@@ -2,6 +2,20 @@
 
 本记录只跟踪 `next-generation/` 的文档储备，不是当前版本工作包或应用实施进度。设计参数未定稿，重构未启动。
 
+## 2026-10-05：建立制作常识库与首批官方 Seed
+
+用户完成多轮知识模型确认并授权开始统一写入。本轮新增 [制作常识与 Seed Catalog](requirements/PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)，要求知识建设顺序从“制作常识 Topic → 公式/关系 → 基础大类知识 → 器材/软件/格式能力映射”开始，后续才继续 A–H 小库内部组件和最终层级深度。
+
+常识首批覆盖镜头语言、Camera Angle、FOV、Perspective、焦段、F/T-stop、景深/对焦、Anamorphic、构图、Pan/Tilt/Dolly/Orbit等运镜，以及 Spatial Push、Optical Zoom、Mixed/Dolly Zoom、机内Digital Zoom和Post Reframe的前后期拆分；加入曝光、帧率、灯光、色彩、声音、格式、媒体交接、二维/VFX、三维/实时和结构化 FormulaDefinition。FOV优先厂商官方值；计算值标CALCULATED并读取实际SensorRecordingMode。F-number/T-stop、Shutter Angle/Time、ISO/EI/Gain只在已确认映射下转换。
+
+细化基础对象为 KnowledgeTopic/Revision/Alias/Source、Formula、Equipment ProductFamily/Model/Variant、ImagingDevice/EmbeddedImagingModule、SensorRecordingMode、Interface/Support/CompatibilityPath、SoftwareCapability、FormatRelation和CalibrationTarget。固定镜头机型锁定内置镜头；Mavic 4 Pro作为一个机型选择三个内置模组；多机位逐Body独立计算镜头/转接路径，项目卡口偏好只排序。Compatibility以接口推导为主、厂商型号级断言override；自动路径硬限制两个intermediate components。
+
+首批Reference Seed固定为：RED KOMODO原版、ZEISS CP.3完整10焦段、DJI Osmo Pocket 4/Mavic 4 Pro/RS 5/Focus Pro/Transmission/SDR、Nanlite Forza 200/旧Forza 300B/FC-120B/FC-300B/PavoTube II 15C及官方附件、Aputure STORM 1200x及官方附件、Tiffen 4×5.65 Pro-Mist与Black Pro-Mist全部官方Density；通用灯架/C-Stand/三脚架/快拆先建Category/Interface。软件首批为Blender、UE5、AE；格式加入MOV/MP4/MXF、R3D/BRAW/ARRIRAW/CinemaDNG、ProRes/DNxHR/H.264/H.265、EXR/DPX/TIFF/PNG/JPEG、WAV、SRT、OTIO/EDL/XML。
+
+FC-120B已替代用户先前误写的FC-200B。官方Nanlite资料确认FC-120B原生FM Mount并随附Bowens Mount Adapter，因此知识模型不能把Bowens写成其原生Mount。官方规格只写SpecificationValue，人工Note不限内容但不覆盖官方值；来源不保存网页证据快照。
+
+知识需求更新到2.5、基础合同到1.1、岗位知识目录到1.3，验收扩到KL-31。本轮仍只写下一代规划文档，没有建立实际数据库、API、知识条目索引或维护UI；“首批Seed”表示实现时必须从对应厂商官方规格/手册全量结构化录入，不表示这些参数已经存在运行库。
+
 ## 2026-10-05：确认并发布用户、团队、Agency与权限规则
 
 用户对完整审阅稿1.1作出“没问题了，可以上传”的最终许可。基础提交：`420f6028b42c1fe1fff5cff6d2de8d78232ecea3`；发布分支：`docs/next-generation-plan`。使用干净的独立工作区，未更改master默认分支或原运行工作区的未提交文件。
@@ -20,7 +34,7 @@
 
 用户确认知识库直接按 A–H 八大类建立专业知识小库；共用基础知识作为共享基础层，不作为第九个项目部门。新增 `KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md`，定义 KnowledgeLibrary/Domain/Entry/Revision、EquipmentCategory/Model、SpecificationDefinition/Value、EquipmentNote、CompatibilityRelation、SoftwareProduct/Scope、RoleKnowledgeBinding、ExperienceObservation/EstimateProfile 的职责和扩展边界。
 
-器材结构化参数以厂商官方资料为权威来源，人工备注独立保存且不能覆盖官方规格。新上市镜头通过 Category + SpecificationDefinition 录入焦段、光圈等，不为新品修改主表；兼容关系使用 typed relation，支持直接兼容、需转接、明确不兼容和条件兼容。用户给出的 Forza 200B / 保荣卡口 / 转接环仅作为 REQUIRES_ADAPTER 的建模示例，正式知识仍需官方来源核验。
+器材结构化参数以厂商官方资料为权威来源，人工备注独立保存且不能覆盖官方规格。新上市镜头通过 Category + SpecificationDefinition 录入焦段、光圈等，不为新品修改主表；兼容关系使用 typed relation，支持直接兼容、需转接、明确不兼容和条件兼容。早期 Forza 200B / 保荣卡口示例已被后续确认取代；正式兼容知识一律按具体型号的原生接口、现实 AdapterModel 与厂商来源核验。
 
 软件知识只记录产品或版本范围适配哪些制作能力，可明确 NOT_SUPPORTED，例如三维软件不作为剪辑系统；不建立功能更新日志、按钮级教程或操作手册。正式知识取消 FAILURE_PATTERN/常见问题库。QA/Experience 只保留 Actual 或必要的粗粒度时间补充，用于 EstimateProfile 校准，不再询问问题原因、设备心得、最佳设置和解决办法。
 
