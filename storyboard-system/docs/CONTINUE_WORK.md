@@ -1,5 +1,17 @@
 # FRAMEFORGE 续作入口
 
+## 2026-10-04 分镜制作两行工具栏完成、代码已上传
+
+用户确认第二张示意图后授权正式修改，已在真实shots页实施。第一行分镜制作标题＋总共N镜头（其中显示N镜头）＋已选蓝色数量徽标，右侧新增镜头；第二行原管理工具至废纸篓 → 视图 → 搜索 → 删除镜头/浅色取消选择，三处分隔为空档20px＋20px高1px短竖线＋20px。删除与取消均100×36px/8px圆角；没有选中时保留并禁用。旧表格第三行的独立计数/修改提示/三种批量下拉移除，全局顶部重复项目资料取消、原项目信息条保留。本段覆盖历史工具栏呈现规则，不扩展其他视图工具排布。
+
+ShotCountSummary与原导航共用数量展示，表格showCount=false避免重复；compact仍消费同一个BulkActionToolbar确认/错误/useBulkTrashShots。选择/filters、查询、Command/CAS/权限/History以及Card/Wall默认批量消费者保持，没有API/DB/DDL/依赖/共享primitive变化。
+
+三项针对消费者检查（bulk-controls/shot-summary/storyboard-handoff）、最终正式Webpack/TypeScript、diff和Regression Guard（basebcbf160）通过。真实97镜头项目搜索显示1/97→97、选择0→1→0、删除确认Esc不执行、320宽新增Esc无创建；列管理/表头右键/单元格右键可打开并Esc关闭、表格与卡片路由往返通过。2560宽四组同排及间距/按钮尺寸确认；1440/1024/768/375/320根横向溢出均0，工具区自身滚动。首次375键盘焦点部分裁切已修正为完整滚入，并重建及五宽度复核；320取消选择Tab完整可见，确认窗288px/左右16px。业务镜头/媒体未保存或删除。
+
+Web3002最终.next/shot-toolbar-compact standalone PID76225，原API8002 PID61874、PG55432及媒体保持。用户刷新 http://127.0.0.1:3002/production/aaab21df-7d26-468f-98f3-37a174d8ae81/shots 查看。生成tsconfig复原，未知:memory:.ses原样保留未stage；临时QA页关闭、viewport恢复、测试选择清空。真实截图工作区outputs/shot-toolbar-compact-2026-10-04.png仅本机保留。
+
+代码及配套台账277fbb6已正常快进上传用户授权的soupsouptang/StoryBoard_System master（bcbf160→277fbb6），开始及上传前fetch均无待合入提交。本文在代码上传后独立提交上传，随后核对远端SHA；不force改写他人历史。当前布局工作全部完成，不扩展旧图片原生drag/wheel工具门槛或其他历史待办，不重启已暂停自动任务；普通额度可用、未使用恢复券。详见[实施与真实验证](SHOT_TOOLBAR_2026-10-04.md)。
+
 ## 2026-10-04 已保存外发光取消完成、代码已上传
 
 最新用户要求圆点和文字只上色，已移除绿灯shadow；原#50FF00、700字重、8px圆点及间距保持。实际97镜头项目008只读核验圆点/文字boxShadow、textShadow、filter均none，color/background为rgb(80,255,0)，未写业务数据。正式生产Webpack/TypeScript、diff/Regression Guard（baseeb04099）通过；仅样式改变，未加镜像CSS测试或扩大测试。截图outputs/shot-saved-status-no-glow-2026-10-04.jpg及shot-saved-status-no-glow-header-2026-10-04.jpg仅留本机，QA页已关闭。本段覆盖历史光晕规则。
