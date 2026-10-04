@@ -220,7 +220,7 @@ ScheduleItemScene/Shot/Person/Location及ResourceRequirement 是 typed links；�
 
 ### 5.8 闭环独立工作包与最终接受边界
 
-为避免“总纲有闭环、机器清单没有owner”，本轮把之前隐含在 E4/E6/E7/E8 中的三段拆成明确包，并增加一个只负责端到端接受的集成包：
+为避免“总纲有闭环、机器清单没有owner”，本轮把之前隐含在 E2/E4/E6/E7/E8 中、但缺少独立 owner 的授权资料、Checklist/Readiness、素材正式交接、返工/补拍/交付回流拆成明确包，并增加一个只负责端到端接受的集成包：
 
 | 包 | 职责 | 依赖与边界 |
 | --- | --- | --- |
@@ -228,7 +228,7 @@ ScheduleItemScene/Shot/Person/Location及ResourceRequirement 是 typed links；�
 | E4-CHECKLIST | Checklist Definition/Result与派生Readiness；required/optional/N-A/UNKNOWN分离 | 依赖E2-SCENE、E2-AUTHORIZATION、E4-TASK、E0-CONFIG；只检查是否满足，不做SOP |
 | E6-MEDIA-HANDOFF | On-set Actual / AssetVersion → IntegrityCheck → BackupVerification → Preview / Formal Handoff → Post input readiness | 依赖 E4-TASK、E5-JOB、E6-SCHEDULE；不重复 AssetVersion owner，不把 Preview 当正式交接 |
 | E7-DELIVERY-LOOP | Review → ReworkRequest → 后期返工或补拍待排 → 新 Version → Review；Deliverable/QC/submit/deliver/ack/accept/reject | 依赖 E4-TASK、E6-SCHEDULE、E6-MEDIA-HANDOFF、E5-OUTBOX、E7-EXPORT；不把 Review/Task/Deliverable 混成一个状态 |
-| Z0-PRODUCTION-CLOSED-LOOP | 使用总纲 §19.4 从项目/镜头一路跑到经验校准并受控影响后续计划，验证所有包的真实组合而不拥有第二套业务写入 | 依赖 E8-IMPACT、E7-DELIVERY-LOOP、K3-RECOMMENDATION；只做集成验收和真实消费者证据，任何单包通过都不能替代 |
+| Z0-PRODUCTION-CLOSED-LOOP | 使用总纲 §19.4 从项目/镜头一路跑到经验校准并受控影响后续计划，验证所有包的真实组合而不拥有第二套业务写入 | 依赖 E8-IMPACT、E7-DELIVERY-LOOP、E2-AUTHORIZATION、E4-CHECKLIST、K3-RECOMMENDATION；只做集成验收和真实消费者证据，任何单包通过都不能替代 |
 
 E2-AUTHORIZATION 和 E4-CHECKLIST 填补原总纲中“授权资料/Readiness已有引用但无独立owner”的缺口；E4-TASK、E6-SCHEDULE、E8-IMPACT 的职责保持不变。新增包只填原清单没有 owner 的闭环段，不复制现有 Task/Schedule/Review/Asset/Export owner。
 
