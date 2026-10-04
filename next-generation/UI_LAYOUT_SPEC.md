@@ -4,7 +4,7 @@
 
 顺序要求：先完成相关新架构、数据、命令和权限基础的重构与验收，再实施对应UI页面。本次继续写规格，重构和UI开发均未启动。
 
-上位合同：[需求基线](REQUIREMENT_BASELINE.md)、[全模块 UI 规划](UI_PLAN.md)、[导出设计](EXPORT_DESIGN.md)。截图依据及取舍见[参考分析](REFERENCE_LAYOUT_STUDY.md)。下述尺寸、默认排列和交互为设计提案，后续按真实内容验证；不继承旧实现、数据、素材、封面要求或旧功能黄金基线。
+上位合同：[已确认需求](CONFIRMED_REQUIREMENTS.md)、[全模块 UI 规划](UI_PLAN.md)、[导出设计](EXPORT_DESIGN.md)。截图依据及取舍见[参考分析](REFERENCE_LAYOUT_STUDY.md)。下述尺寸、默认排列和交互为设计提案，后续按真实内容验证；不继承旧实现、数据、素材、封面要求或旧功能黄金基线。
 
 ## 1. 把参考中的密度转成可操作规则
 

@@ -1,48 +1,13 @@
-# Python & environment
+# Planning branch: local tools and outputs do not belong in the design tree.
+outputs/
+.venv/
+node_modules/
+.next/
 __pycache__/
 *.py[cod]
-*$py.class
-.video_tools/
-.venv/
-env/
-venv/
-
-# Temporary data & caches
-work/
-storyboard-system/data/
-storyboard-system/.qa-data/
-storyboard-system/qa-artifacts/
-storyboard-system/__pycache__/
-*.tar.gz
-*.zip
-*.db
-apps/api/media/
-.pytest_cache/
-
-# Node
-node_modules/
-dist/
-.next/
-apps/web/next-env.d.ts
-*.tsbuildinfo
-
-# OS
+.env
+.env.*
+!.env.example
+*.log
 .DS_Store
 Thumbs.db
-
-# QA 临时产物（测试运行时生成，含临时数据库）
-storyboard-system/scratch/*/
-storyboard-system/scratch/**/*.db
-**/qa-artifacts/
-storyboard-system/dist/
-
-# Asset packs — large binary files, not for VCS
-film_equipment_25d_pack/
-film_studio_equipment_ingest_kit_v2/
-film_studio_equipment_library_standard_v1/
-merge-backups/
-
-# Credentials — never commit
-storyboard-system/askpass.bat
-storyboard-system/askpass_test.bat
-storyboard-system/test_askpass.py

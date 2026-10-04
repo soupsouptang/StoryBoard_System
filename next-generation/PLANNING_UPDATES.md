@@ -6,7 +6,7 @@
 
 基础提交：`e8e4330c2a9cf1c50bd3c9561d39fd1a3b265c5c`。执行者：本次UI文档会话。复用已存在、检查时干净的 `docs/next-generation-plan` 工作区；参考聊天在当前版本另做仓库整理，本次只写本目录。
 
-允许写集：`AGENTS.md`、`README.md`、`REQUIREMENT_BASELINE.md`、`UI_PLAN.md`、新增 `UI_LAYOUT_SPEC.md`、`REFERENCE_LAYOUT_STUDY.md`、`EXPORT_DESIGN.md`、`sources/SOURCE_INDEX.md` 和本记录。历史 `requirements/source-plans/`、原参考图、已有合成SVG、当前应用、根规则和本版本执行文档均不在本包写集。
+允许写集：`AGENTS.md`、`README.md`、`CONFIRMED_REQUIREMENTS.md`、`UI_PLAN.md`、新增 `UI_LAYOUT_SPEC.md`、`REFERENCE_LAYOUT_STUDY.md`、`EXPORT_DESIGN.md`、`sources/SOURCE_INDEX.md` 和本记录。历史 `requirements/`、原参考图、已有合成SVG、当前应用、根规则和本版本执行文档均不在本包写集。
 
 完成的文档内容：
 
@@ -21,3 +21,7 @@
 实际检查：本目录23份Markdown中的74处本地文件/图片链接均可解析到存在的文件；文档差异空白检查通过。人工核对场景宽度合计756px、正文最低1036px，以及A4正文/列宽合计186mm；这些只是规格计算，不是渲染测量。本包仅9份Markdown，目录外、历史源稿和已有SVG没有差异。没有创建下一代应用，也未运行应用、数据库、浏览器或文件渲染测试。
 
 版本顺序已写入UI规划、布局细则、README与AGENTS：先完成对应新架构、数据、命令和权限基础的重构与验收，再开始该页面UI实施。当前仅文档储备。
+
+## 2026-10-05：精简为独立规划分支
+
+按用户新指令删除本分支继承的旧实现副本及重复方案，保留cfb7f2b中的布局深化和合成参考图。业务定义迁到requirements，修正旧界面/服务复用约束；REQUIREMENT_BASELINE改名CONFIRMED_REQUIREMENTS，避免继续沿用无效功能基线。旧文档需要时从master或来源提交回查，不把本代合回当前执行入口。详细处置和实际检查见[整理记录](BRANCH_CLEANUP_2026-10-05.md)。未启动重构，未改变默认分支。
