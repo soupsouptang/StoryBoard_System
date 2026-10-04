@@ -206,7 +206,7 @@ ScheduleItemScene/Shot/Person/Location及ResourceRequirement 是 typed links；�
 | --- | --- | --- |
 | E6-MEDIA-HANDOFF | On-set Actual / AssetVersion → IntegrityCheck → BackupVerification → Preview / Formal Handoff → Post input readiness | 依赖 E4-TASK、E5-JOB、E6-SCHEDULE；不重复 AssetVersion owner，不把 Preview 当正式交接 |
 | E7-DELIVERY-LOOP | Review → ReworkRequest → 后期返工或补拍待排 → 新 Version → Review；Deliverable/QC/submit/deliver/ack/accept/reject | 依赖 E4-TASK、E6-SCHEDULE、E6-MEDIA-HANDOFF、E5-OUTBOX、E7-EXPORT；不把 Review/Task/Deliverable 混成一个状态 |
-| Z0-PRODUCTION-CLOSED-LOOP | 使用总纲 §19.4 从项目/镜头一路跑到经验校准，验证所有包的真实组合而不拥有第二套业务写入 | 依赖 E8-IMPACT、E7-DELIVERY-LOOP、K2-CALIBRATION；只做集成验收和真实消费者证据，任何单包通过都不能替代 |
+| Z0-PRODUCTION-CLOSED-LOOP | 使用总纲 §19.4 从项目/镜头一路跑到经验校准并受控影响后续计划，验证所有包的真实组合而不拥有第二套业务写入 | 依赖 E8-IMPACT、E7-DELIVERY-LOOP、K3-RECOMMENDATION；只做集成验收和真实消费者证据，任何单包通过都不能替代 |
 
 E4-TASK、E6-SCHEDULE、E8-IMPACT 的职责保持不变；新增包只填原清单没有 owner 的闭环段，不复制现有 Task/Schedule/Review/Asset/Export owner。
 
@@ -334,12 +334,12 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 | FX-05 权限变更 | A普通成员、B只读、C另一项目；列表/计数/详情/历史/媒体/导出/WS；授权后撤销，运行中job与旧下载 | 所有入口同 scope；统计不暴露无权总数；失去权限后 undo、job publish和download受控，私密字段不入正文/日志/附件。 |
 | FX-06 多 Scene | S1/S2共同引用Shot1，Shot2零Scene；各自重排；primary竞态；跨项目link；删除S1；旧DTO写primary | 各Scene顺序正确，最多一个primary，Shot1保留且全局总时长不重复；旧接口保留additional links；单FK回退被拒绝。Schedule/导出保留多关系。 |
 | FX-07 字段/来源 | 同 key 在 shot/scene，numeric 0/false/null，日期/非法选项，required/default，text→number失败；pending对白/地点 | FK/type拒绝跨scope；不吞非法值；转换预览精确失败行；default不回写历史；关系候选不静默绑定；列IDs/旧view/profile/历史可读。 |
-| FX-08 DAG并发 | A→B→D、A→C→D，共享Scene任务被三Shot引用；并发B→A/ A→B；模板v2发布 | 不形成环；共享任务计一次；汇合依赖全齐才ready；v1实例不改；故障不留半套任务；完成不改Review批准事实。 |
+| FX-08 DAG并发 | Project/WorkflowTemplate首次实例化A→B→D、A→C→D，共享Scene任务被三Shot引用；重复实例化；并发B→A/ A→B；模板v2发布 | 首次实例化完整且重复应用不重复建任务；不形成环；共享任务计一次；汇合依赖全齐才ready；v1实例不改；故障不留半套任务；完成不改Review批准事实。 |
 | FX-09 过期/指标 | 固定输入图v1/对白/灯光；完成后只改相关图v2；无关视图变化；AE+VFX双方式、取消任务、0分母 | 只相关分支失效，原交接保留；old result不覆盖；既有AE+VFX口径不改；新指标分子/分母/下钻IDs一致，0分母不显示100%。 |
 | FX-10 Outbox/规则 | commit前失败；commit后队列失败；enqueue后标published前崩溃；重复/乱序event；consumer失败；规则自激 | 回滚无事件；已提交事件不丢；可重投且命令只一次；消费者状态独立；不回滚原业务；因果链可解释，循环受限。 |
 | FX-11 Job/Storage | 导出/OCR大输入、staged文件后失败、lease接管、取消、权限/源revision/purge epoch变化 | 可查询真实progress/失败；取消阻断发布；迟到输出不入当前事实；重复worker不造重复asset；只清自建无引用staged文件，存储失败可重试。 |
 | FX-12 Purge闭包 | A/B各有history、版本、视图、profile、来源、缓存；board pin与job输出；Purge自定义列/Scene/Person/Asset；旧artifact/restore/import/redo | 内置拒绝；普通删除可恢复；Purge清/撤销闭包并防复活，全用户cursor失效；其他Scene/Shot与共享原图不误删；GC竞态不能删除新pin。旧已下载副本不被称为撤回成功。 |
-| FX-13 排期 | 两plans、同一Shot跨日/多Unit；UTC跨当地午夜/夏令时；UNAVAILABLE/TENTATIVE/UNKNOWN；转场不足；CURRENT竞态 | 正确时间语义与明确冲突；Shot内容时长不改；只有一个CURRENT；CallSheet draft更新、published旧revision不随正常编辑变。 |
+| FX-13 排期 | 两plans、同一Shot跨日/多Unit；UTC跨当地午夜/夏令时；UNAVAILABLE/TENTATIVE/UNKNOWN；转场不足；CURRENT竞态；当天首个拍摄条目Actual超时后重算Company Move与剩余计划 | 正确时间语义与明确冲突；Shot内容时长不改；只有一个CURRENT；Actual不覆盖Baseline/Plan，未锁定后续和预计Wrap重算，锁定项不移动；CallSheet draft更新、published旧revision不随正常编辑变。 |
 | FX-14 新域插入 | Equipment实体＋设备许可custom字段＋Shot/Task/Schedule链接＋授权query＋import/export＋audit/event | 不新增Shot核心字段，不改巨大UI shell/万能graph；使用既定seams。迁移后历史/字段/Purge覆盖；有真实贯穿consumer，不只registry描述。 |
 | FX-15 二次导入/交付 | 120镜头合成XLSX多行表头、嵌图、同字段多列、enum冲突、同名人；改文件重导；不同非空值；预览后并发改；PDF/ZIP排除人联系和图片 | CREATE/MERGE/UNCHANGED/CONFLICT/AMBIGUOUS明确；仅安全空值填充；plan commit不重猜；unchanged无假变更；成品/预览/附件/QR/JSON都符合allowlist；工程文件回读保持typed多Scene关系与namespace。 |
 | FX-16 前端（deferred） | 对被接受slice真浏览器读写、403/409、保存失败/重试、dirty draft与refetch、keyboard/IME/localundo、明暗、1440×900和1920×1080桌面横屏/正常缩放 | 只server ack为saved；query/server/draft/derived分层；失效不覆盖草稿；稳定slot权限；表格菜单/选中/列控件及整行照片封面不退化；focus/关闭/动画可打断。按最新用户范围不新增窄屏/缩放验收或产品Reduced Motion开关，不用build代替视觉PASS。 |
@@ -385,7 +385,7 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 | E9-DEMAND-UI | E2-DEMAND、E6-SCHEDULE | 仅补仍缺失的需求页面、组件和hook；与场景新页分开领取，保留现有UI |
 | E6-MEDIA-HANDOFF | E4-TASK、E5-JOB、E6-SCHEDULE | 正式素材交接的完整性/备份门槛、Preview与Formal分离、后期输入readiness |
 | E7-DELIVERY-LOOP | E4-TASK、E6-SCHEDULE、E6-MEDIA-HANDOFF、E5-OUTBOX、E7-EXPORT | Review返工/补拍回流、Deliverable/QC/提交/送达/验收/退回分离 |
-| Z0-PRODUCTION-CLOSED-LOOP | E8-IMPACT、E7-DELIVERY-LOOP、K2-CALIBRATION | 只做端到端闭环接受；必须真实组合运行，不创建第二套业务owner |
+| Z0-PRODUCTION-CLOSED-LOOP | E8-IMPACT、E7-DELIVERY-LOOP、K3-RECOMMENDATION | 只做端到端闭环接受；经验候选必须经受权接受再影响未来计划，必须真实组合运行，不创建第二套业务owner |
 
 需求由resource_demand_service负责；构图继续由ImageCropService/MediaPresentation负责；帧率由现有项目、镜头服务编排唯一时码算法。三包不写进同一个万能服务，不新造解析器、队列、权限或历史基础。公共模型注册、路由、迁移链及内容快照由集成者独占处理。
 
