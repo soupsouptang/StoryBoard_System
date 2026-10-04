@@ -49,7 +49,7 @@
 | G | 三维制作与三维视效 | 建模、材质、绑定、布局、动画、模拟、灯光、渲染、实时引擎、动捕、扫描、视效现场 |
 | H | 剪辑、声音、成片与交付 | 剪辑、素材、调色、声音、配音、音乐、混音、字幕、本地化、在线、QC、交付 |
 
-A–H 是**知识空间**，不等同项目实际 Department。一个 KnowledgeEntry 可以被多个知识小库引用，但正文只有一个 canonical owner，避免复制。
+A–H 是**知识空间**，不等同项目实际 Department。同一 KnowledgeTopic、EquipmentModel、SoftwareProduct 或 FormatDefinition 可以被多个知识小库/Domain 引用，但 canonical 内容只有一个 owner，避免复制正文和规格。
 
 ## 3. 基础知识类型
 
@@ -183,7 +183,7 @@ RoleKnowledgeBinding 不是权限、任职或 TaskAssignment。ExperienceObserva
 
 ### 5.1 稳定身份
 
-KnowledgeEntry、EquipmentModel、SpecificationDefinition、SoftwareProduct、KnowledgeDomain 都有稳定 ID。显示名称、中文名、英文名、别名改变不改变身份。
+KnowledgeTopic、EquipmentModel、SpecificationDefinition、SoftwareProduct、FormatDefinition、KnowledgeDomain 都有稳定 ID。显示名称、中文名、英文名、别名改变不改变身份。
 
 ### 5.2 修订而不是覆盖历史
 
@@ -315,16 +315,7 @@ status
 
 关系应尽量指向 EquipmentModel / EquipmentCategory / InterfaceDefinition，而不是写成一句自然语言。
 
-例如用户确认的业务表达：
-
-```text
-Forza 200B
-  -- REQUIRES_ADAPTER -->
-Bowens Mount accessory
-  via: Bowens adapter ring
-```
-
-这里只用于说明“需要转接”的关系建模方式；正式器材事实录入仍必须引用对应厂商官方资料，不把示例文字直接当官方规格。
+兼容示例必须使用已核实的真实型号和官方接口。例如 FC-120B 的原生 modifier interface 是 FM Mount，官方随附 Bowens Mount Adapter；因此知识关系应表达“FC-120B → FM Mount”以及“FC-120B + 官方 Bowens Adapter → Bowens modifier ecosystem”，不能把 Bowens 直接写成 FC-120B 原生 mount。具体参数和附件仍以对应厂商官方资料为准。
 
 兼容关系的 revision 独立于设备名称修改。项目选择设备时可查询兼容条件，但知识库不能据此声称项目当前实际拥有转接环或设备可用。
 
@@ -423,7 +414,7 @@ J-04 未确认前，JOB_CATALOG 新版本只生成“绑定待复核”；不按
 
 新增知识类型、规格字段或关系类型前必须回答：
 
-1. 为什么现有 KnowledgeEntry 类型/SpecificationDefinition/Relation 不能表达；
+1. 为什么现有 KnowledgeTopic/知识类型、SpecificationDefinition 或明确 Relation 不能表达；
 2. 是否需要独立查询、筛选、兼容计算或版本生命周期；
 3. 是否需要稳定 key 和 typed value；
 4. 是否来自官方权威来源，或只是人工备注；
