@@ -22,11 +22,18 @@ export function fullFrame(aspectRatio: string, width: number, height: number): M
   const cropWidth = Math.min(1, frame.ratio / (width / height));
   const cropHeight = Math.min(1, (width / height) / frame.ratio);
   return { crop: { x: (1 - cropWidth) / 2, y: (1 - cropHeight) / 2, width: cropWidth, height: cropHeight },
-    rotation: 0, aspect_ratio: frame.value, output_width: Math.max(64, Math.min(1920, Math.floor(3840 * frame.ratio))),
+    frame_fit: 'cover', rotation: 0, aspect_ratio: frame.value, output_width: Math.max(64, Math.min(1920, Math.floor(3840 * frame.ratio))),
     scale: 1, translation_x: 0, translation_y: 0, straighten_degrees: 0, perspective_horizontal: 0,
     perspective_vertical: 0, flip_horizontal: false, flip_vertical: false };
 }
-export function panFraming(transform: MediaPresentation['transform'], dx: number, dy: number, width: number, height: number) {
+export function originalFrame(aspectRatio: string, width: number, height: number): MediaPresentation['transform'] {
+  return { ...fullFrame(aspectRatio, width, height), crop: { x:0, y:0, width:1, height:1 }, frame_fit:'contain' };
+}
+export function panFraming(transform: MediaPresentation['transform'], dx: number, dy: number, width: number, height: number, sourceWidth?: number, sourceHeight?: number) {
+  if (transform.frame_fit === 'contain' && sourceWidth && sourceHeight) {
+    const fit = Math.min(width / sourceWidth, height / sourceHeight);
+    width = sourceWidth * fit; height = sourceHeight * fit;
+  }
   return { ...transform,
     translation_x: clampFraming(transform.translation_x + dx / width * transform.crop.width / transform.scale, -1, 1),
     translation_y: clampFraming(transform.translation_y + dy / height * transform.crop.height / transform.scale, -1, 1) };
@@ -40,7 +47,8 @@ export function zoomFraming(transform: MediaPresentation['transform'], scale: nu
 /** Uses the existing source-space renderer; only the API owns saved derivatives. */
 export function drawShotFraming(canvas: HTMLCanvasElement, image: HTMLImageElement, transform: MediaPresentation['transform'], exportResolution = false) {
   const source = document.createElement('canvas');
-  drawMediaPreview(source, image, transform, exportResolution ? 3840 : 960);
+  const contained = transform.frame_fit === 'contain';
+  drawMediaPreview(source, image, contained ? { ...transform, scale:1, translation_x:0, translation_y:0 } : transform, exportResolution ? 3840 : 960);
   const crop = transform.crop;
   const sx = Math.round(crop.x * source.width), sy = Math.round(crop.y * source.height);
   const sw = Math.min(source.width, Math.round((crop.x + crop.width) * source.width)) - sx;
@@ -51,10 +59,11 @@ export function drawShotFraming(canvas: HTMLCanvasElement, image: HTMLImageEleme
   const context = canvas.getContext('2d');
   if (!context || sw < 1 || sh < 1) throw new Error('无法生成构图预览');
   context.fillStyle = '#000'; context.fillRect(0, 0, canvas.width, canvas.height);
-  // ImageOps.fit parity: centered cover, without stretching the image.
-  const fit = Math.max(canvas.width / sw, canvas.height / sh);
+  // Match the canonical server renderer without stretching the image.
+  const fit = (contained ? Math.min : Math.max)(canvas.width / sw, canvas.height / sh) * (contained ? transform.scale : 1);
   const dw = sw * fit, dh = sh * fit;
-  context.drawImage(source, sx, sy, sw, sh, (canvas.width - dw) / 2, (canvas.height - dh) / 2, dw, dh);
+  const tx = contained ? transform.translation_x * dw : 0, ty = contained ? transform.translation_y * dh : 0;
+  context.drawImage(source, sx, sy, sw, sh, (canvas.width - dw) / 2 + tx, (canvas.height - dh) / 2 + ty, dw, dh);
 }
 export function framingBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('无法生成图片')), 'image/png'));

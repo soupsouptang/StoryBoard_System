@@ -91,7 +91,8 @@ async def test_detail_noop_cas_validation_and_late_image_failure_rollback(tmp_pa
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('ratio,canonical,size', [('16:9','16:9',(160,90)), ('2.35:1','47:20',(235,100))])
-async def test_panel_framing_fixed_project_ratio_original_history_and_conflicts(ratio, canonical, size):
+@pytest.mark.parametrize("fit", ["cover", "contain"])
+async def test_panel_framing_fixed_project_ratio_original_history_and_conflicts(ratio, canonical, size, fit):
     async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
         headers, _, _, _ = await setup(client)
         project = (await client.post('/api/v1/productions', headers=headers, json={'name':'Framing synthetic','aspect_ratio':ratio})).json()
@@ -107,7 +108,7 @@ async def test_panel_framing_fixed_project_ratio_original_history_and_conflicts(
         source_path=path+'/image-versions/'+source['source_version_id']+'/content'
         original=(await client.get(source_path,headers=headers)).content
         frame_ratio=size[0]/size[1];cw=min(1,frame_ratio/2);ch=min(1,2/frame_ratio)
-        transform={'crop':{'x':(1-cw)/2,'y':(1-ch)/2,'width':cw,'height':ch},'aspect_ratio':canonical,'output_width':size[0], 'scale':.5,'translation_x':.1,'translation_y':0}
+        transform={'frame_fit':fit,'crop':{'x':(1-cw)/2,'y':(1-ch)/2,'width':cw,'height':ch},'aspect_ratio':canonical,'output_width':size[0], 'scale':.5,'translation_x':.1,'translation_y':0}
         request={'revision':shot['revision'],'framing':{'source':source,'transform':transform}}
         before=(await client.get(root+'/history',headers=headers)).json()
         response=await client.post(endpoint,headers=headers,data={'payload':json.dumps(request)})
@@ -160,3 +161,26 @@ async def test_uploaded_framing_and_fields_rollback_together():
         good=await client.post(endpoint,headers=headers,data={'payload':json.dumps(req)},files={'image':('source.png',picture(),'image/png')})
         assert good.status_code==200,good.text
         assert (await client.get(root+'/history',headers=headers)).json()['undo_count']==before['undo_count']+1
+
+@pytest.mark.asyncio
+async def test_replacement_original_fit_then_detail_edit_support_consecutive_undo():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
+        headers, root, shot, _ = await setup(client)
+        endpoint=f"/api/v1/shots/{shot['id']}/detail"
+        first=await client.post(endpoint,headers=headers,data={'payload':json.dumps({'revision':shot['revision']})},files={'image':('first.png',picture(),'image/png')})
+        assert first.status_code==200,first.text
+        shot=first.json()
+        transform={'crop':{'x':0,'y':0,'width':1,'height':1},'frame_fit':'contain','aspect_ratio':'16:9','output_width':320}
+        second=await client.post(endpoint,headers=headers,data={'payload':json.dumps({'revision':shot['revision'],'framing':{'source':None,'transform':transform}})},files={'image':('replacement.png',picture(),'image/png')})
+        assert second.status_code==200,second.text
+        shot=second.json();panel=shot['panels'][0];path=root+'/assets/'+panel['asset_id']
+        owner={'owner_type':'panel','owner_id':panel['id']}
+        pres=(await client.get(path+'/presentation',headers=headers,params=owner)).json()
+        source={'asset_id':panel['asset_id'],'panel_id':panel['id'],'presentation_revision':pres['revision'],'source_version_id':pres['source_version_id']}
+        third=await client.post(endpoint,headers=headers,data={'payload':json.dumps({'revision':shot['revision'],'framing':{'source':source,'transform':{**transform,'frame_fit':'cover'}}})})
+        assert third.status_code==200,third.text
+        history=(await client.get(root+'/history',headers=headers)).json()
+        for _ in range(2):
+            undo=await client.post(root+'/history/undo',headers=headers,json={'revision':history['revision']})
+            assert undo.status_code==200,undo.text
+            history=undo.json()

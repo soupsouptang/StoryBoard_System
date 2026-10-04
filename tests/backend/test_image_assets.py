@@ -76,6 +76,14 @@ async def test_upload_crop_original_retention_revisions_and_scope(tmp_path):
         assert snapshot["sections"]["assets"][asset.id]["current_version_id"] == result["version_id"]
         assert framing["crop"] == {"x": 0, "y": 0, "width": 1, "height": 1}
         assert framing["aspect_ratio"] == "21:9" and presentation["source_version_id"] == version.id
+        # Existing VNext presentation metadata may omit the newly defaulted fit mode.
+        # A semantically identical save must not create another presentation/audit.
+        current = await Crop.current(db, "p", "asset", asset.id)
+        current.transform = {key:value for key,value in current.transform.items() if key != "frame_fit"}
+        await db.flush()
+        same = await Crop.crop(db, "p", asset.id, request(1, version.id, presentation_revision=1, frame_fit="cover"), user, tmp_path)
+        assert not same["changed"] and same["presentation_revision"] == 1
+        assert len((await db.execute(select(MediaPresentation))).scalars().all()) == 1
         before_files = set(tmp_path.iterdir())
         with pytest.raises(ConflictError):
             await Crop.crop(db, "p", asset.id, request(1, version.id), user, tmp_path)

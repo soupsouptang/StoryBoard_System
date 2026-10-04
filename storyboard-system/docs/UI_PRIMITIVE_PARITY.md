@@ -1,5 +1,9 @@
 # UI primitive parity ledger
 
+## 2026-10-04 载入原图
+
+载入原图复用已导出的Icons.Image及现有Button；Dialog仍独占Esc/窗外/层级，不新增primitive或依赖。业务组合保持居中胶囊及左右同排按钮，五宽度渲染验证通过。 [实施与证据](SHOT_ORIGINAL_FIT_2026-10-04.md)。
+
 ## 2026-10-04 构图预览基础组件
 
 packages/ui显式Icons加入Minus/Redo2，复用Plus/Lock/Download/RefreshCw/Undo2。Dialog/Radix继续独占层级、Esc、窗外关闭及焦点返回；Button沿用既有尺寸/variant，胶囊为业务组合，不造第二套primitive。截图及五宽度检查通过；原生drag/wheel实机门槛仍待。[记录](SHOT_FRAMING_2026-10-04.md)。

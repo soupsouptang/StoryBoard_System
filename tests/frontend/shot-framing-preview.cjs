@@ -13,7 +13,7 @@ function render(){for(let pass=0;pass<5;pass++){cursor=0;effects=[];tree=ShotIma
 const button=name=>find(n=>n.props['aria-label']===name);
 const transform=()=>find(n=>n.type==='canvas').props;
 (async()=>{
- render();button('放大图片').props.onClick();render();assert.equal(transform()['data-framing-scale'],1.25);
+ render();button('载入原图').props.onClick();render();assert.equal(transform()['data-frame-fit'],'contain');assert.equal(transform()['data-framing-scale'],1);assert.equal(calls.length,0,'Load original changes only the preview draft');button('图片缩放比例，双击恢复100%').props.onDoubleClick();render();assert.equal(transform()['data-frame-fit'],'cover');button('放大图片').props.onClick();render();assert.equal(transform()['data-framing-scale'],1.25);
  const s=find(n=>n.props['data-preview-stage']);s.props.onPointerDown({button:0,pointerId:1,clientX:100,clientY:100,preventDefault(){},currentTarget:stage});s.props.onPointerMove({pointerId:1,clientX:150,clientY:125});render();assert.ok(transform()['data-framing-x']>0);assert.ok(transform()['data-framing-y']>0);
  find(n=>n.props['data-preview-stage']).props.onPointerUp();const x=transform()['data-framing-x'];find(n=>n.props['data-preview-stage']).props.onPointerMove({pointerId:1,clientX:200,clientY:150});render();assert.equal(transform()['data-framing-x'],x,'Release stops movement');
  handlers.get('wheel')({deltaY:10000,preventDefault(){}});render();assert.equal(transform()['data-framing-scale'],.5);

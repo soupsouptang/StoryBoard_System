@@ -1,5 +1,9 @@
 # FRAMEFORGE canonical owner matrix
 
+## 2026-10-04 载入原图
+
+载入原图沿用ShotImagePreview/useShotFraming及既有detail Command；frame_fit=cover|contain仍由MediaPresentation持久化，image_framing权威成品、Canvas草稿/下载，无新owner/DDL。HistoryService记录同次业务命令的Shot token效果以支持连续构图撤销，外部修改精确冲突保护保持。 [实施与证据](SHOT_ORIGINAL_FIT_2026-10-04.md)。
+
 ## 2026-10-04 分镜画面构图owner
 
 ShotImagePreview统一小图/详情图预览事件及未锁定构图，useShotFraming读取原panel presentation和immutable source，refetch不覆盖脏预览。小图Lock经useSaveShotDetail提交暂存File及构图；详情由ShotDetailCard拥有锁定草稿/局部undo-redo，原Save一并提交。ShotDetailService编排PanelMediaService→ImageCropService，继续使用项目锁、Shot/presentation CAS、AssetVersion/MediaPresentation、Audit/History/get_db事务；image_framing仍独占权威成品。Web shot-framing复用media-preview，只生成草稿及下载PNG，不另存权威媒体。无DDL/Legacy owner；原生drag/wheel实机仍待，INTEGRATED_NOT_CUT_OVER。[记录](SHOT_FRAMING_2026-10-04.md)。

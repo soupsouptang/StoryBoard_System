@@ -207,6 +207,17 @@ class HistoryService:
                 if item['created'] and name in SOFT: item['dependencies'] = dependencies(name, identity, after)
                 changes.append(item)
         if not changes: return
+        # A framing command changes media data and advances the owning Shot's
+        # CAS token even when every Shot business field stays identical. Track
+        # that acknowledged token effect in the same history step, so undo can
+        # advance/rebase its references without weakening foreign-write guards.
+        for identity in set(before['shots']) & set(after['shots']):
+            old, new = before['shots'][identity], after['shots'][identity]
+            if old['data'] == new['data'] and old['token'] != new['token']:
+                item = {'section': 'shots', 'id': identity, 'before': old, 'after': new,
+                        'expected': new, 'created': False}
+                item['references'] = references(item, after)
+                changes.append(item)
         state = await HistoryService.state(db, production_id, user_id, create=True)
         await db.execute(delete(HistoryEntry).where(HistoryEntry.state_id == state.id, HistoryEntry.applied.is_(False)))
         db.add(HistoryEntry(state_id=state.id, sequence=state.next_sequence, label=context['label'],

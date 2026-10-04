@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Shot } from '@frameforge/types';
 import { Button, Dialog, DialogContent, DialogDescription, DialogTitle, Icons } from '@frameforge/ui';
 import { useShotFraming } from '@/lib/hooks/useShotFraming';
-import { drawShotFraming, framingBlob, fullFrame, panFraming, projectFrameRatio, zoomFraming, type ShotFraming } from '@/lib/shot-framing';
+import { drawShotFraming, framingBlob, fullFrame, originalFrame, panFraming, projectFrameRatio, zoomFraming, type ShotFraming } from '@/lib/shot-framing';
 
 export function ShotImagePreview({ shot, aspectRatio, open, onClose, onReplace, onLock, disabled, file, framing,
   onUndo, onRedo, canUndo, canRedo }: {
@@ -77,6 +77,7 @@ export function ShotImagePreview({ shot, aspectRatio, open, onClose, onReplace, 
   const zoom = transform ? Math.round(transform.scale * 100) : 100;
   const setScale = (value: number) => { adjusted.current=true; setLocked(false); setTransform(current => current ? zoomFraming(current,value / 100) : current); };
   const reset = () => { if (!image || pending || disabled) return; adjusted.current=true; setTransform(fullFrame(aspectRatio, image.naturalWidth, image.naturalHeight)); setLocked(false); drag.current = null; };
+  const loadOriginal = () => { if (!image || pending || disabled) return; adjusted.current=true; setTransform(originalFrame(aspectRatio, image.naturalWidth, image.naturalHeight)); setLocked(false); drag.current=null; };
   const frameHeight = Math.max(80, Math.min((bounds.width - 34) / frameRatio, bounds.maxHeight - 180));
   const finishDrag = () => { drag.current = null; };
   const download = async (original: boolean) => {
@@ -129,24 +130,27 @@ export function ShotImagePreview({ shot, aspectRatio, open, onClose, onReplace, 
         onPointerMove={event => { const last = drag.current; if (!last || last.id !== event.pointerId || editDisabled) return;
           const rect = canvas.current?.getBoundingClientRect(); if (!rect) return;
           const dx = event.clientX - last.x, dy = event.clientY - last.y; drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
-          adjusted.current=true; setLocked(false); setTransform(current => current ? panFraming(current, dx, dy, rect.width, rect.height) : current); }}
+          adjusted.current=true; setLocked(false); setTransform(current => current ? panFraming(current, dx, dy, rect.width, rect.height, image?.naturalWidth, image?.naturalHeight) : current); }}
         onPointerUp={finishDrag} onPointerCancel={finishDrag} onLostPointerCapture={finishDrag}>
-        {image && transform ? <canvas ref={canvas} data-framing-scale={transform.scale} data-framing-x={transform.translation_x} data-framing-y={transform.translation_y}
+        {image && transform ? <canvas ref={canvas} data-frame-fit={transform.frame_fit || 'cover'} data-framing-scale={transform.scale} data-framing-x={transform.translation_x} data-framing-y={transform.translation_y}
           aria-label={`镜头 ${shot.display_number} 构图预览`} className="block max-h-full max-w-full" style={{aspectRatio:frameRatio, width:'100%', height:'100%', objectFit:'contain'}} />
           : <p role="status" className="p-4 text-sm text-muted-foreground">{source.isError ? '画面加载失败，请重新打开后重试。' : '加载画面…'}</p>}
       </div>
       <div className="@container/preview-toolbar">
-        <div className="grid grid-cols-1 items-center gap-3 @min-[1000px]/preview-toolbar:grid-cols-[1fr_auto_1fr]">
-          <div data-zoom-capsule className="flex items-center justify-self-center gap-3 rounded-full border border-border p-1.5 @min-[1000px]/preview-toolbar:col-start-2">
+        <div className="grid grid-cols-1 items-center gap-3">
+          <div data-zoom-capsule className="flex items-center justify-self-center gap-3 rounded-full border border-border p-1.5">
             <Button variant="ghost" size="icon-sm" aria-label="缩小图片" disabled={editDisabled || zoom <= 50} onClick={() => setScale(zoom - 25)} className="rounded-full"><Icons.Minus /></Button>
             <button type="button" aria-label="图片缩放比例，双击恢复100%" title="双击恢复100%居中满框" disabled={editDisabled} onDoubleClick={reset} className="w-[5ch] text-center text-sm tabular-nums">{zoom}%</button>
             <Button variant="ghost" size="icon-sm" aria-label="放大图片" disabled={editDisabled || zoom >= 300} onClick={() => setScale(zoom + 25)} className="rounded-full"><Icons.Plus /></Button>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-2 @min-[1000px]/preview-toolbar:col-start-3">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
+            <Button variant="outline" size="sm" aria-label="载入原图" disabled={editDisabled} onClick={loadOriginal} className="col-start-1 row-start-1 h-8 text-sm"><Icons.Image />载入原图</Button>
+            <div className="col-span-3 row-start-2 flex flex-wrap items-center justify-center gap-2 @min-[560px]/preview-toolbar:col-span-1 @min-[560px]/preview-toolbar:col-start-2 @min-[560px]/preview-toolbar:row-start-1">
             <Button size="sm" aria-label="锁定画面" disabled={editDisabled} onClick={() => void lock()} className="h-8 text-sm"><Icons.Lock />{pending ? '锁定中' : '锁定画面'}</Button>
             <Button variant="outline" size="sm" aria-label="下载构图后的画面" disabled={!image || !transform} onClick={() => void download(false)} className="h-8 text-sm"><Icons.Download />构图下载</Button>
             <Button variant="outline" size="sm" aria-label="下载原图" disabled={!blob} onClick={() => void download(true)} className="h-8 text-sm"><Icons.Download />原图下载</Button>
-            <Button variant="outline" size="sm" aria-label="替换分镜画面" disabled={disabled || pending} onClick={onReplace} className="h-8 text-sm"><Icons.RefreshCw />替换</Button>
+            </div>
+            <Button variant="outline" size="sm" aria-label="替换分镜画面" disabled={disabled || pending} onClick={onReplace} className="col-start-3 row-start-1 h-8 text-sm"><Icons.RefreshCw />替换</Button>
           </div>
         </div>
       </div>

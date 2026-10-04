@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript');
 const loaded={exports:{}};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('apps/web/lib/shot-framing.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{module:loaded,exports:loaded.exports,require:()=>({})});
-const {projectFrameRatio,fullFrame,panFraming,zoomFraming}=loaded.exports;
+const {projectFrameRatio,fullFrame,originalFrame,panFraming,zoomFraming}=loaded.exports;
 assert.equal(projectFrameRatio('2.35:1').value,'47:20');
 assert.equal(projectFrameRatio('16:9').ratio,16/9);
 for(const ratio of ['16:9','2.35:1','9:16']){
@@ -18,3 +18,5 @@ for(const ratio of ['16:9','2.35:1','9:16']){
 assert.throws(()=>projectFrameRatio('custom'));
 assert.throws(()=>projectFrameRatio('0:1'));
 console.log('Project frame ratios, cover, pan coordinates, centered zoom and limits passed.');
+
+for(const dimensions of [[900,1600],[3000,300]]) { const t=originalFrame('16:9',...dimensions); assert.equal(t.frame_fit,'contain'); assert.equal(t.crop.width,1); assert.equal(t.crop.height,1); assert.equal(t.scale,1); assert.equal(t.translation_x,0); const fit=Math.min(400/dimensions[0],225/dimensions[1]); const moved=panFraming(t,25,15,400,225,...dimensions); assert.ok(Math.abs(moved.translation_x*dimensions[0]*fit-25)<1e-9); assert.ok(Math.abs(moved.translation_y*dimensions[1]*fit-15)<1e-9); }

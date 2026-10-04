@@ -1,5 +1,9 @@
 # API route inventory — Legacy reference only
 
+## 2026-10-04 载入原图
+
+MediaTransform新增frame_fit=cover|contain、缺省cover，仍通过现有detail multipart/framing与ImageCropService保存。已有metadata缺省值规范化比较避免假revision；原图/CAS/权限/事务不变，无新路由/DDL。构图命令Shot token纳入同一History step，连续撤销与外部冲突门槛检查通过；本轮针对后端29 passed。 [实施与证据](SHOT_ORIGINAL_FIT_2026-10-04.md)。
+
 ## 2026-10-04 详情保存增加构图参数
 
 现有POST /api/v1/shots/{id}/detail的封闭payload增加可选framing。source包含asset_id/panel_id/presentation_revision/source_version_id，新上传同次构图时必须null；transform复用MediaTransform。服务端复核当前panel/原图、项目比例整数化（2.35:1→47:20）、50–300%及媒体输出限制。共享scale下限扩至0.5，既有资产UI范围保持；原CAS/权限/回滚/no-op、一事务一History语义保持。9项针对后端检查通过，原图保留和undo/redo证据见[实施MD](SHOT_FRAMING_2026-10-04.md)。无新路由或DDL。

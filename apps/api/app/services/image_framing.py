@@ -34,15 +34,18 @@ def render_crop(data, req):
             oriented = oriented.rotate(-req.rotation, expand=True)
         if req.straighten_degrees:
             oriented = oriented.rotate(-req.straighten_degrees, resample=Image.Resampling.BICUBIC)
-        if any((req.scale != 1, req.translation_x, req.translation_y, req.perspective_horizontal, req.perspective_vertical)):
+        contained = req.frame_fit == "contain"
+        scale = 1 if contained else req.scale
+        tx, ty = (0, 0) if contained else (req.translation_x, req.translation_y)
+        if any((scale != 1, tx, ty, req.perspective_horizontal, req.perspective_vertical)):
             w, h = oriented.size
             ph, pv = tan(radians(req.perspective_horizontal)), tan(radians(req.perspective_vertical))
             denominator = 1 - ph / 2 - pv / 2
             coefficients = (
-                (1 / req.scale + ph / 2) / denominator, w * pv / (2 * h * denominator),
-                (w * denominator / 2 - w / (2 * req.scale) - req.translation_x * w) / denominator,
-                h * ph / (2 * w * denominator), (1 / req.scale + pv / 2) / denominator,
-                (h * denominator / 2 - h / (2 * req.scale) - req.translation_y * h) / denominator,
+                (1 / scale + ph / 2) / denominator, w * pv / (2 * h * denominator),
+                (w * denominator / 2 - w / (2 * scale) - tx * w) / denominator,
+                h * ph / (2 * w * denominator), (1 / scale + pv / 2) / denominator,
+                (h * denominator / 2 - h / (2 * scale) - ty * h) / denominator,
                 ph / (w * denominator), pv / (h * denominator),
             )
             oriented = oriented.transform(oriented.size, Image.Transform.PERSPECTIVE, coefficients, Image.Resampling.BICUBIC)
@@ -58,9 +61,17 @@ def render_crop(data, req):
         height = (2 * width * ratio_height + ratio_width) // (2 * ratio_width)
         if height < 1 or height > 3840 or width * height > 14_745_600:
             raise DomainError("输出比例或分辨率超出范围，请调小宽度", code="INVALID_FRAME_SIZE")
-        cropped = ImageOps.fit(cropped, (width, height), method=Image.Resampling.LANCZOS)
+        fit = ImageOps.contain if contained else ImageOps.fit
+        cropped = fit(cropped, (width, height), method=Image.Resampling.LANCZOS)
         framed = Image.new("RGB", (width, height), "black")
         framed.paste(cropped, ((width - cropped.width) // 2, (height - cropped.height) // 2), cropped)
+        if contained and any((req.scale != 1, req.translation_x, req.translation_y)):
+            # Transform inside the project frame so zoom can fill the empty bars.
+            # Output stays bounded; never allocate a scale-multiplied source image.
+            framed = framed.transform((width, height), Image.Transform.AFFINE, (
+                1 / req.scale, 0, width / 2 - width / (2 * req.scale) - req.translation_x * cropped.width,
+                0, 1 / req.scale, height / 2 - height / (2 * req.scale) - req.translation_y * cropped.height,
+            ), Image.Resampling.BICUBIC, fillcolor="black")
         output = BytesIO()
         framed.save(output, format="WEBP", quality=92)
         return output.getvalue()

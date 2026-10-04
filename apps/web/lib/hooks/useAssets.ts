@@ -29,7 +29,7 @@ export function useAssets(productionId: string, filters: { state?: 'active' | 't
 export interface ImageCrop { x: number; y: number; width: number; height: number }
 export interface MediaPresentation {
   revision: number; source_version_id: string;
-  transform: { crop: ImageCrop; rotation: 0 | 90 | 180 | 270; aspect_ratio: string | null; output_width: number;
+  transform: { crop: ImageCrop; frame_fit?: 'cover' | 'contain'; rotation: 0 | 90 | 180 | 270; aspect_ratio: string | null; output_width: number;
     scale: number; translation_x: number; translation_y: number; straighten_degrees: number;
     perspective_horizontal: number; perspective_vertical: number; flip_horizontal: boolean; flip_vertical: boolean };
 }

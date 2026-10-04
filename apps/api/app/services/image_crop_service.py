@@ -100,7 +100,7 @@ class ImageCropService:
         version = await ImageCropService.version(db, asset_id, req.source_version_id)
         original = media_path(media_root, version.storage_key)
         transform = MediaTransform.model_validate(req.model_dump(include=set(MediaTransform.model_fields))).model_dump()
-        if current and current.source_version_id == version.id and current.transform == transform:
+        if current and current.source_version_id == version.id and MediaTransform.model_validate(current.transform).model_dump() == transform:
             return {"asset_id": asset.id, "revision": asset.revision, "version_id": version.id,
                 "presentation_revision": revision, "changed": False}
         source_data = await run_in_threadpool(original.read_bytes)
