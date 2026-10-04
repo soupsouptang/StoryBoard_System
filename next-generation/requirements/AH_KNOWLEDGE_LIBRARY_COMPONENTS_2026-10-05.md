@@ -2,7 +2,7 @@
 
 # FrameForge A–H 专业知识小库组件与跨组件关系
 
-版本：1.0，2026-10-05。状态：组件范围合同，尚未锁定最终 Domain 深度。
+版本：1.1，2026-10-05。状态：组件范围合同，尚未锁定最终 Domain 深度。本版定义135个唯一A–H组件，并显式覆盖83/83专业知识域。
 
 配套：[制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)、[岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)、[工种目录](JOB_CATALOG_DEFINITIONS_2026-10-05.md)。
 
