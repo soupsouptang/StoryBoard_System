@@ -2,7 +2,7 @@
 
 # 岗位驱动知识目录
 
-版本：1.3，2026-10-05。状态：知识范围合同，尚未建立运行知识条目、索引、页面或数据库。基础类型、器材/软件扩展和维护规则统一见 [知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)；跨岗位制作常识、公式及首批器材/软件/格式 seed 见 [制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)。
+版本：1.4，2026-10-05。状态：知识范围合同，尚未建立运行知识条目、索引、页面或数据库。基础类型见 [知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)；共享常识正文见 [制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)；专业域到组件的稳定桥见 [A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)；首批器材/软件/格式范围见 [制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)。
 
 ## 1. 目的与边界
 
