@@ -1,6 +1,6 @@
 # FrameForge VNext 最大化扩展性需求总纲
 
-版本：3.0，2026-10-04。状态：需求和执行依据，功能是否完成按实际工作包验收。
+版本：3.1，2026-10-04。状态：需求和执行依据，功能是否完成按实际工作包验收。
 
 本文规定要做什么、数据归谁、怎样协作及如何验收。本轮完成需求审计和改写，不修改界面、运行服务、在线数据库或部署。代码现状见[职责台账](CANONICAL_OWNER_MATRIX.md)、[工作簿](ACTIVE_WORKSTREAMS.md)和实际证据，不能凭文档存在认定功能完成。
 
@@ -43,7 +43,7 @@
 | D-12 经验贡献 | 后台用户组保留团队归类；新经验自动贡献到采集时项目成员所属的全部团队，既有贡献范围不因成员换组改变；原始回答隔离，团队仅看合格汇总 |
 | D-13 经验采集 | 收工或阶段结束集中提示，每账号跨项目每天最多三个主题，可跳过或稍后，不打断编辑 |
 | D-14 人工智能知识 | 生成内容先在候选区，附独立资料或实际记录，经人工验证才进入正式知识 |
-| D-15 拍摄条次 | 当前不建立空白 Take 表、接口或页面；真实拍摄条次需求出现后单独扩展 |
+| D-15 拍摄条次 | 当前不建立空白 Take 表、接口或页面；真实拍摄条次需求出现后单独扩展。在 Take 上线前，现场闭环以 ScheduleItem 的实际执行事实、镜头完成/未完成与补拍需求、固定 AssetVersion 的素材交接完成，不用虚构 Take 填补链路 |
 | D-16 图片交付 | 原图不改，裁剪、重框选、横竖比例、黑填充和缩略图共用服务；工程文件二维码或 DM 码与隐写水印分别验收 |
 | D-17 编辑 | 去掉独立复制此镜头操作；最新行菜单复制、剪切、向下粘贴，列菜单复制、剪切、向后粘贴；保留 Ctrl/Cmd+C/X/V，永久删除确认后不可撤销 |
 | D-18 界面 | 保留首页整行照片封面及已明确界面，只补缺失页；桌面横屏正常缩放先验收；动画可打断，不增加产品 Reduced Motion 开关 |
@@ -157,6 +157,25 @@
 
 摄影、灯光、制片、演员、剪辑、声音和审阅看同一事实的授权查询。指标写清分母、状态、去重单位和下钻对象；重叠制作方式不相加冒充镜头数，取消排除、过期单列、零分母不显示百分之百。不未经新决定替换原四项概览。
 
+
+### 7.1 Scene / Shot 到实际 Task 的闭环
+
+Scene、Shot、制作方式和项目模板只是工作需求来源，不能把“选择了制作方式”当成“任务已经执行”。系统必须把可复用工作流实例化为真实 Task，再由 Task 承担负责人、计划、实际、输入、产物、交接和执行历史。
+
+首次实例化至少支持以下来源：
+
+- 项目模板提供默认阶段、任务节点和依赖；
+- Scene Requirement、Shot override 和 Production Method 增加或移除适用任务；
+- 用户可以在不套模板时明确创建 Task 和依赖；
+- 同一共享 Scene 准备只生成一项真实 Task，再通过 typed link 服务多个 Shot，不能复制 N 个“完成状态”；
+- 重复应用同一模板或同一自动化来源必须幂等，不重复生成任务。
+
+任务默认执行流为“待安排 → 可开始 → 进行中 → 待交接 → 已完成”，取消与跳过是明确动作；blocked、overdue、input stale 是可并存的派生标记，不替代真实阶段。开始条件来自固定输入、前置依赖、人员和必要准备，不以页面是否打开判断。
+
+Task 的完成不能直接把 Shot、Review 或 Deliverable 写成完成。Task 提交固定输出版本；需要交接时由接收方确认固定 AssetVersion 或明确缺项。输入后来变化，只使相关下游标记过期或返工，不抹去“当时已经完成和交接”的事实。
+
+“我的工作”、部门看板和项目任务视图均查询同一 Task owner。一个 Person 多工种仍是同一现实人员；不同岗位视图不能复制任务正文。未分派、未知工时、缺输入、待交接和冲突必须可单独查询，确保任务可以从 Scene/Shot 真正流向人员执行，而不是停在镜头字段。
+
 ## 8. 时间段资源需求与排期
 
 最新范围见[资源需求方案](RESOURCE_TIME_REQUIREMENTS_2026-10-04.md)。第15问明确取消通用大库房，只保留知识参考和时间段需要什么。没有库存登记、项目数量配额、真实预留、领用审批或库房资格。
@@ -168,6 +187,65 @@
 工作休息窗口、拍摄日分界和实际时间通过配置提供。方案分草稿、当前和被替代修订；同项目及明确摄制组范围最多一个当前方案。一个镜头可以跨日、多摄制组和补拍，片长不是拍摄时段。准备、拍摄、排练、转场和休息明确类型，不重复累计。
 
 人员和场地的跨项目冲突继续依据明确共享身份及受权摘要；不按姓名合并。没有资料显示未知，锁定项不自动解锁。通告发布固定来源和接收范围；正常联动更新可推导未来安排，例外说明原因、负责人和重试，不改变实际执行和旧发布事实。
+
+
+
+### 8.1 排期的事实来源与边界
+
+排期不是 Scene 或 Shot 的日期字段副本。SchedulePlan 是方案 owner；ShootDay 和 ScheduleItem 表达某一方案中真实的时间区间。Scene、Shot、Task、Person、Location、资源需求通过 typed link 进入 ScheduleItem，一个镜头可以出现在多个排期条目中用于跨日、补拍或不同摄制组，不改变镜头本身的内容身份。
+
+ScheduleItem 至少区分准备、妆发/试装、排练、拍摄、休息、转场、撤收等业务类型。预计时长、实际开始/结束和实际结果分开；镜头成片时长不作为拍摄工时。未排期的工作继续存在于待安排队列，不因没有日期而丢失。
+
+SchedulePlan 支持多个草案方案比较，但同一 Production / Unit scope 最多一个 CURRENT。切换 CURRENT 必须原子检查修订；未选中的方案不能驱动当前通告、人员时间线或后期预测。锁定条目、锁定时间窗和人工 override 不被自动重排偷偷覆盖，冲突转入例外。
+
+### 8.2 演职人员排期闭环
+
+Person 的 Availability、项目任职、CastAssignment、TaskAssignee 和 ScheduleItemPerson 分别表达“能不能来”“在项目中做什么”“饰演谁”“负责什么任务”和“某时段实际被安排什么”，不能合并成一个状态。
+
+演员时间线应覆盖适用的试装、妆发、排练、旅行、待命、拍摄、配音/补录和释放；工作人员时间线覆盖准备、Setup、拍摄、撤收、转场和交接。一个现实人员同时兼任多个岗位，只占用同一条 Person 时间线，不按 Role 数重复计算人。
+
+档期缺失是 UNKNOWN，不当作全天可用；TENTATIVE、AVAILABLE、UNAVAILABLE 分开。跨午夜和项目时区按实际区间判断。排期查询必须能从一个 Person 反查关联 Scene、Shot、Task、ShootDay 和 CallSheetRevision，也能从 Scene/Shot 找到所需人员及当前冲突。
+
+人员变更或场景出演关系变化后，系统重算未锁定的未来安排、个人时间线和当前通告草稿；已发生的到场、工作和旧通告确认不被改写。无法成立的安排显示冲突对象、时间、原因和待处理负责人，不自动换演员或替用户作创作决定。
+
+### 8.3 拍摄排期与方案比较
+
+拍摄排期把 Scene/Shot 的内容关系、Task readiness、人员/场地可用性、时间段器材/道具需求、项目工作窗口和明确锁定条件合并为可解释的约束。硬约束不能被优化器违反；软目标只能作为排序/建议依据，未配置优化优先级时只做冲突检测和人工排序，不擅自宣称“全局最优”。
+
+一个拍摄条目的预计区间可由准备、Setup、排练、Shoot、Reset、Strike 等组成；共享场景准备只计算一次。系统允许按 Scene 先排，再展开具体 Shot；也允许明确按 Shot 排。排期方案比较至少能显示拍摄天数、人员冲突、场地冲突、转场数量/时长、锁定冲突、未排工作和后期可开始时间，不能用单一“得分”隐藏不可行条件。
+
+任何自动重排只修改未来未锁定计划。实际开始/结束、已完成工作、已发布旧通告、已交接产物和旧基准保留。用户应能看出“系统算出的时间”“人工锁定时间”和“手动 override”三种来源。
+
+### 8.4 Company Move / 转场闭环
+
+转场是排期中的正式 ScheduleItem 类型，不建立与 SchedulePlan 平行的第二套时间轴。它连接前后拍摄条目和 From / To Location，并保存用于排期的撤收、装载、行驶、卸载、Setup 等组成时长；这些组成只服务该转场的计划和实际，不成为新的一级业务对象。
+
+前一拍摄条目结束后，下一场最早可开始时间必须考虑适用的 Strike、Load、Travel、Unload、Setup，而不是只使用地图行驶时间。人员、器材和车辆如有不同移动路径，通过各自 ScheduleItem / typed link 表达；需要先行组时明确创建先行安排，不把整组强制复制到所有人。
+
+上游延误、地点变化或转场时间修订会重算之后未锁定条目；若下一场地窗口、演员窗口或锁定开拍时间无法满足，形成明确冲突。实际转场时间回写后参与当天剩余计划预测和经验校准。
+
+### 8.5 每日计划与通告闭环
+
+Call Sheet Draft 是 CURRENT SchedulePlan、ShootDay、Scene/Shot、Person、Location 和当日准备事实的授权投影，不是另一套手工维护的数据。正式发布时生成不可变 CallSheetRevision，固定来源 revision vector、接收人范围、个人集合时间、地点、场次/镜头、特殊准备和允许字段。
+
+生成、发布、通知送达、打开查看、个人确认、现场到场和工作完成是不同事实。重要时间或地点变化发布新 revision 后，旧确认仍绑定旧 revision，需要时明确进入重新确认；普通未来计划联动不等待所有人先确认才继续更新。
+
+不同人员可以有不同 Call Time；演员妆发、工作人员 Setup、摄影开机和车辆集合不能默认使用同一时间。CallSheetRevision 可以被撤回或被新 revision 取代，但旧发布内容和当时确认保留历史，不能随当前排期静默漂移。
+
+### 8.6 当天执行与动态重排
+
+ShootDay 开始后，ScheduleItem 记录实际开始、实际结束、执行状态、延误/提前和明确更正。系统使用 Actual 与剩余 Planned 区间持续计算当天剩余时间、预计 Wrap 和后续转场，不把 Actual 反写成原计划或 Baseline。
+
+若某条拍摄实际超时，系统自动重算后续未锁定条目的可行时间并显示影响。超出场地窗口、演员窗口、工作休息限制或当日可用时段时进入例外；系统可以给出移动到后续 ShootDay、调整顺序或保留冲突的候选操作，但不自动删除镜头或替导演决定取消。
+
+现场“已执行 ScheduleItem”不等于 Shot 已满足全部拍摄要求。Shot 可以明确为已满足、部分满足、未满足或产生补拍需求；在 Take 尚未启用期间，用 ScheduleItem 实际事实 + Shot 完成/补拍事实 + Media 交接连接现场和后期，不制造空白 Take。
+
+### 8.7 排期到后期输入的预测
+
+后期计划不等全部拍完才开始。每个需要素材输入的 Task 根据关联 ShootDay / ScheduleItem、预计媒体可用时间和已完成的 MediaHandoff 计算 earliest start。拍摄排期变化自动刷新未来剪辑、AE、UE/3D、声音、调色、Review 和 Delivery 的预测日期；固定交付目标本身不被内部改期偷偷移动。
+
+没有收到固定输入版本时，后期 Task 显示 blocked 或 input pending；计划日期可以存在，但不能冒充“已经可开始”。实际素材交接完成后，预测切换为事实驱动，相关 Task 重新计算 readiness。
+
 
 ## 9. 创作版本、独立历史与撤销重做
 
@@ -232,6 +310,19 @@ HistoryService 是唯一项目持久命令历史，用户加项目最近一百�
 
 旁白区分预计朗读、锁定时长和实际语音合成音频。语速滑杆和可播放样例共用真实服务与异步任务，拖动不每帧请求；按文本、语言、声音、速度和服务版本缓存。没有真实输出明确不可用，不能提供假播放。
 
+
+
+### 12.1 现场结果、素材检查与后期交接闭环
+
+现场完成的 ScheduleItem 可以产生或关联 MediaAsset / AssetVersion；素材身份必须能追溯到 Production、ShootDay、ScheduleItem、Scene/Shot 和产生它的任务/来源。没有 Take 的首版不强制人为创建条次对象，但未来启用 Take 时通过 typed relation 增加粒度，不能改写已有素材身份。
+
+“文件上传成功”“完整性检查通过”“备份验证完成”“可查看代理生成”“已交接给后期”必须是不同事实。原素材、代理、预览和缩略图仍是同一 AssetVersion 的不同组件；固定交接必须引用明确 AssetVersion，不能引用会随当前版本漂移的“最新文件”。
+
+首版若一次交接只服务一项 Task，可由 TaskAssetVersion + 接收事实表达；当同一素材需要多消费者、独立确认、撤回/更正或单独权限时，MediaHandoff 才成为独立 Entity。引入 MediaHandoff 前必须按 §3.1 说明其 owner、生命周期、权限、revision、历史、自动化和 typed relations，不建立万能 handoff JSON。
+
+后期接收方看到的状态至少区分：缺输入、待检查、检查失败、待备份验证、可使用、已交接、输入已过期。素材后来被替换或上游 Shot 产生补拍时，只影响引用了相关输入的下游 Task；已经完成的旧版本和旧交接保留，必要时生成返工需求。
+
+
 ## 13. 导出、工程码、水印与分享
 
 同一授权投影供预览、正文、附件、工程数据和便携包；格式服务只渲染，不另持写权限。导出配置固定格式、范围、字段顺序、布局、纸张方向、图片比例质量、页眉页脚、水印和文件名，不被当前可见列隐式代替。
@@ -246,6 +337,23 @@ HistoryService 是唯一项目持久命令历史，用户加项目最近一百�
 
 下载和分享重验当前权限、期限、撤销和删除。已下载外部副本不能冒称已擦除。更新时间只来自服务器实际确认，刷新提示区分新数据、本地草稿和冲突，打开页面不制造“刚更新”。
 
+
+
+### 13.1 Review → 修改 / 补拍 → Delivery 闭环
+
+Review 永远绑定固定内容或 AssetVersion，不把 Comment 挂在会漂移的“当前 Shot”上。Comment、ReviewDecision 和任务交接各有独立含义；解决一条评论不等于新版本已经制作、QC 或交付。
+
+当 Review 产生可执行修改时，创建或关联唯一 ReworkRequest。ReworkRequest 不能只是 ReviewComment 的字段，因为它需要独立查询、负责人、生命周期、去重、自动化和跨后期/补拍两种去向；它属于 Production scope，通过 typed link 连接源 Review/Comment、受影响 Scene/Shot、输入版本、目标 Task 和后续产物。它不默认成为 Shot 子对象。
+
+后期返工路径为“Review/Comment → ReworkRequest → Task → 固定输入版本 → 新 AssetVersion → Review”。需要补拍时为“Review/现场问题 → ReworkRequest → 拍摄 Task / 待排需求 → SchedulePlan / ShootDay → 现场实际 → Media → 后期 Task → 新 Version → Review”。同一来源、同一目标和同一未解决需求必须幂等，不重复生成任务。
+
+DeliverableItem / Variant 只在存在独立交付对象、查询、权限、生命周期和多版本状态时作为独立 Entity；它们连接所需 AssetVersion、Task、Review/QC 和授权资料。横竖版、时长版、语言版或客户版共享的 Task 只执行一次，差异工作单列。
+
+交付过程不得用一个百分比混合事实。至少分别记录：制作完成、QC 完成、已提交、已送达、接收方已确认、验收通过、退回/替代。退回必须能回到 ReworkRequest / Task；验收通过后仍可有新的追加变体，但不能重写旧验收。
+
+授权资料只管理制作所需的证明及适用范围，不扩展为合同或法务系统。Delivery / Final QC 可以检查相关人物、场地、音乐、素材、字体、Logo/商标、航拍许可等所需文档是否存在、是否在记录范围/期限内；UNKNOWN、缺文件和不适用分开。系统不自动作法律结论。
+
+
 ## 14. 异步任务、事件和自动化
 
 耗时导入、识别、批量导出、语音、缩略图、打包和索引使用持久任务。允许先编辑后上传，但关键事务未确认不能显示完成。
@@ -257,6 +365,33 @@ HistoryService 是唯一项目持久命令历史，用户加项目最近一百�
 复用成熟队列、存储和服务适配器，不新造队列。自动化使用固定版本规则、有限条件和白名单命令，记录因果、去重并防循环。数据库触发器只保护数据约束，不跨模块自动改排期。
 
 影响记录解释自动更新、冲突、锁定、需要处理、负责人和重试，不是第二份审计。人工智能默认不外发，生成建议经人工或已有明确授权规则接受后走命令；知识核验和接受项目建议是两件事。
+
+
+
+### 14.1 全流程自动联动与 ImpactRun
+
+正常制作联动遵循“源事实先提交，未来可推导项自动更新，冲突进入例外”的原则。跨域自动化不能在数据库 Trigger 中直接互改业务表；源命令成功后通过 OutboxEvent 触发受控 consumer，再调用目标 domain 的标准 Command / CAS。
+
+一次源变化形成可解释的 ImpactRun。ImpactRun 记录 source command/event、因果链、已成功目标、失败目标、冲突、锁定项、需人工处理项和重试状态；它不是第二套业务事实，也不复制所有 old/new 正文。
+
+以下变化至少要形成闭环传播：
+
+| 源变化 | 自动重算 / 推进 | 不能自动伪造的事实 |
+| --- | --- | --- |
+| Scene / Shot 内容或要求变化 | Task applicability、Readiness、人员/场地需求、未锁定排期、后期输入与 Checklist | 实际出演、资源已具备、已拍摄、Review 已批准 |
+| Cast / Person 可用性变化 | 人员时间线、相关 ScheduleItem 冲突、Call Sheet 草稿、受影响负责人 | 自动换演员、旧通告已知悉 |
+| Location / 时间窗变化 | 拍摄条目、Company Move、后续地点窗口、通告草稿 | 场地已同意、已到场 |
+| ScheduleItem / ShootDay 改期 | Person、转场、需求时段、Call Sheet 当前 revision 候选、Media ETA、Post earliest start、Delivery forecast | 已执行事实、旧 Call Sheet revision、固定外部目标已改变 |
+| 现场 Actual 延误 | 当天剩余计划、Wrap、转场、后续冲突、后期预计输入 | 自动取消镜头 |
+| MediaHandoff / 输入版本变化 | 下游 Task readiness、input stale、Review target | 旧 Task 从未完成过 |
+| Review 产生修改 | ReworkRequest、返工 Task 或补拍待排需求 | 评论解决、修改已制作 |
+| Delivery 退回 | ReworkRequest、Task、后续 Version / Review | 原验收历史被删除 |
+| 经验校准新版本 | 后续新计划的 estimate baseline / workflow suggestion | 已确认计划、历史 Actual 被重写 |
+
+一个目标 consumer 失败不得回滚已经确认的源事实；失败目标保留原因和重试入口。重复、乱序事件通过 idempotency 和 source revision 去重。undo/redo 被视为新的源变化，重新计算未来计划，但不抹掉已发生执行、交接和发布历史。
+
+锁定条目返回 LOCKED，无法满足条件返回 CONFLICT，需要业务选择返回 REQUIRES_USER，可安全推导并实际提交后才是 AUTO_APPLIED。没有真实变化不产生重复任务、通知或 revision。
+
 
 ## 15. 协作、配置与界面扩展
 
@@ -289,6 +424,32 @@ HistoryService 是唯一项目持久命令历史，用户加项目最近一百�
 设备建议引用目标时间范围、需求型号数量和来源版本，说明条件与缺项；不读取或维护已取消的库存、预留和可用数量。知识不能根据型号参考认定此次器材齐备，也不自动换型或改项目需求。
 
 建议固定项目和知识来源版本、条件、缺项及期限，接受后由原业务命令改未来计划。来源撤回、修正和永久删除使建议失效。问题池和排序策略发布后固定版本，先离线回放；知识关系只在真实检索需求出现后建，不将全项目变成万能关系图。
+
+
+
+### 16.1 项目 Actual → QA → 估时与流程校准闭环
+
+经验库的主要用途是校准后续项目的预计时长和流程关联，不建设“常用设置、设备使用经验、常见问题百科”。具体摄影机、焦段、曝光、灯位、AE/UE 参数和设备组合始终属于 Project / Scene / Shot / Task 的实际数据。
+
+可进入校准的 Actual 至少来自 Task 实际用时、ScheduleItem 的 Prep/Setup/Shoot/Reset/Move/Wrap 实际区间、MediaHandoff、返工/补拍和阶段完成事实。QA 只补充原因、上下文和人工解释，不替代实测 Actual。
+
+经验闭环为：
+
+```text
+Project Actual
+→ ExperienceObservation / QA
+→ 去重与质量核验
+→ Aggregate / EstimateProfile
+→ Calibration Candidate
+→ 人工确认或已批准规则
+→ 更新项目模板 / Shot Pattern / Task estimate / Dependency / Checklist 基线
+→ 仅影响之后的新计划或明确重新预测
+```
+
+一次项目偏差不能直接修改全局基线。校准必须记录样本数、独立执行单位、适用项目/Scene/Shot/Production Method 条件、版本和来源；不足时返回 INSufficient data。新 EstimateProfile 不重写已确认计划、Actual、旧通告或旧任务。
+
+流程关联校准可以提出“某 Shot Pattern 通常还需要 Tracking Task”“某类 Scene 需要额外共享准备”等候选，但正式改变 WorkflowTemplate / Dependency / Checklist 仍走其 own revision 和审核命令，保留旧模板实例所用版本。
+
 
 ## 17. 删除、迁移和恢复
 
@@ -328,3 +489,101 @@ HistoryService 是唯一项目持久命令历史，用户加项目最近一百�
 每次接受记录实际基础提交、改动摘要、执行时间与命令、断言、退出码、脱敏证据和未通过项。完成一包就更新文档、显式暂存、检查、提交推送及核对远端；不混入别人草稿，不冒称持续集成、数据库或视觉通过。
 
 “可执行方案”要求分支、职责、约束、依赖和门槛明确；“功能完成”还要求真实注册、使用入口和实际验证。本轮完成的是需求审计修订，尚未实现的新模块继续保留未开始状态。
+
+
+## 19. 全流程功能闭环总合同
+
+FrameForge 的功能完成不能用“页面存在”“模型存在”“接口可调用”判断。一个环节只有在上游事实能够驱动它、用户可以完成本环节、结果能成为下游明确输入、失败/冲突可解释、历史可追溯并且可以回流时才算闭环。
+
+### 19.1 主制作链
+
+Canonical 功能链为：
+
+```text
+Project / Template
+→ Script / Scene / Shot
+→ Requirement / Production Method
+→ Task / Dependency / Handoff
+→ Person / Cast / Location / 时间段资源需求
+→ SchedulePlan / ShootDay / ScheduleItem
+→ Company Move / Daily Plan
+→ CallSheetRevision / Personal Call
+→ On-set Actual
+→ Media / Integrity / Backup / Handoff
+→ Post Task (Edit / AE / UE-3D / Sound / Color)
+→ AssetVersion
+→ Review
+→ Rework or Reshoot
+→ Deliverable / QC / Delivery
+→ Actual / ExperienceObservation
+→ Estimate / Workflow Calibration
+→ 下一项目或下一次重排
+```
+
+这条链允许并行和回退，不强制线性瀑布：边拍边剪、部分 Scene 先交接、UE/AE 与实拍并行、Review 触发补拍都合法。任何视图、看板或导出只是这组事实的 projection，不建立第二套状态 owner。
+
+### 19.2 每一环的完成条件
+
+| 环节 | 入口事实 | 本环必须产出 | 下游闭环条件 |
+| --- | --- | --- | --- |
+| 项目/模板 | Production + 项目类型 | 实际启用阶段、角色/任务模板、Checklist | 能生成/创建 Scene/Shot 和真实 Task，不只是展示模板 |
+| Scene/Shot | 创作内容、多 Scene relation | Requirement、Production Method、明确 override | 能决定 Task applicability、人员/地点/需求和 Readiness |
+| Task | 模板或人工工作需求 | 主责/协作、输入、计划、产物、依赖、实际状态 | 下游依赖可由固定输入/交接事实解锁 |
+| 人员/选角 | Person、Character、CastAssignment、Membership | 明确出演/任职与 Availability | 排期能使用同一 Person 检冲突并生成个人时间线 |
+| 排期 | Task/Scene/Shot、人员/场地、时间段需求 | SchedulePlan、ShootDay、ScheduleItem、锁定/冲突 | 能生成转场、通告和后期预计输入 |
+| 转场 | 前后 ScheduleItem、Location | 可解释 Move 区间及组成时长 | 下一拍摄条目 earliest start 正确受影响 |
+| 通告 | CURRENT Plan + 当日事实 | immutable CallSheetRevision + Recipient/ack facts | 发布后可确认、改版、保留旧 revision |
+| 现场 | ScheduleItem + Readiness | Actual、镜头满足/补拍事实、素材来源 | Media 可以追溯拍摄来源并进入检查/交接 |
+| 素材 | MediaAsset / AssetVersion | integrity、backup、可用与 handoff 事实 | Post Task 只有固定输入满足后 Ready |
+| 后期 | Post Task + 固定输入 | 新 AssetVersion / 产物 | Review target 固定版本 |
+| Review | 固定版本 + Comment/Decision | 已解决或 ReworkRequest | 修改进入 Task，补拍进入待排，不停在评论 |
+| 补拍/返工 | ReworkRequest | Task 或 Schedule demand + 新产物 | 回到 Media/Post/Review，源问题不重复建单 |
+| 交付 | DeliverableItem/Variant + QC + 授权资料 | submit/deliver/ack/accept/reject 等独立事实 | Reject 回返工；Accept 固定当时版本 |
+| 经验校准 | Planned vs Actual + QA | Aggregate / EstimateProfile / calibration candidate | 只在确认后更新未来 estimate/workflow/checklist 基线 |
+
+### 19.3 闭环所需 Entity 准入说明
+
+以下对象如果进入实现，必须继续遵守 §3.1；这里补齐为什么不能只是某个现有 Entity 的字段：
+
+| Entity | 为什么不能只做字段 | 独立查询/权限/生命周期 | History / Automation | 主要 typed relations |
+| --- | --- | --- | --- | --- |
+| Task | 一个工作可关联 Scene、多个 Shot、Asset、人员和交付，且有独立执行/交接 | 是；独立负责人、revision、状态与权限 | 执行/交接独立历史；参与 DAG 与自动化 | Scene、Shot、Person、AssetVersion、ProductionStep、Deliverable |
+| SchedulePlan | 需要多个方案和唯一 CURRENT，不能把“计划日期”塞回 Shot | 是；DRAFT/CURRENT/SUPERSEDED | 独立计划历史；驱动冲突/通告/预测 | ShootDay、Unit、Task、Scene/Shot |
+| ScheduleItem | 同一 Shot 可跨日/补拍/多 Unit，每次安排有独立时段与 Actual | 是；计划/实际、锁定与冲突 | 计划更正/Actual 独立；驱动后续联动 | Scene、Shot、Task、Person、Location、需求 |
+| CallSheetRevision | 已发布内容必须固定且可被确认，不能随 CURRENT 排期漂移 | 是；发布/撤回/接收人权限 | 独立发布历史；重要变化触发重确认 | ShootDay、ScheduleItem、Person、Location |
+| ReworkRequest | Review 问题需要跨后期和补拍、去重、负责人和状态 | 是；独立 open/resolved/superseded 语义 | 触发 Task / Schedule；保留源问题 | Review/Comment、Shot、AssetVersion、Task、Deliverable |
+| DeliverableItem / Variant | 一个项目有多个真实交付对象、不同规格和验收事实 | 是；接收范围、QC/提交/验收生命周期 | 退回触发返工；发布事实独立 | AssetVersion、Task、Review、Authorization |
+| ExperienceObservation | 项目事实不能被 QA/解释覆盖，经验需独立质量/撤回 | 是；原始项目权限与团队汇总权限分开 | 不进创作版本；进入校准作业 | Task、ScheduleItem、Scene/Shot、KnowledgeSpace |
+| EstimateProfile | 统计版本必须冻结样本/算法/适用范围，不能覆盖模板字段 | 是；不可变计算版本 | 新版本只影响未来建议/预测 | ExperienceObservation、Pattern、WorkflowTemplate |
+
+MediaHandoff 只有在“一份素材存在多消费者、独立确认、更正/撤回或单独权限”时才升为独立 Entity；否则先以 TaskAssetVersion + 接收/检查事实表达。Company Move 当前是 ScheduleItem 类型，因为它没有脱离排期方案的独立 owner、权限和生命周期，不新增一级对象。Take 继续遵循 D-15，不为了补图预建空 Entity。
+
+### 19.4 端到端自动化验收场景
+
+使用合成项目验收，不依赖经济系统：
+
+- 两个 Scene、六个 Shot，其中一个 Shot 关联两个 Scene；
+- 两名演员/现实人员、摄影/灯光/制片/剪辑等任职；
+- 两个 ShootDay、两个 Location、至少一次 Company Move；
+- 一项共享 Scene 准备 Task 和多项 Shot 专属 Task；
+- 一组明确时间段器材/道具需求；
+- 一条拍摄后 Edit → AE 或 UE/3D → Review → Delivery 链；
+- 一个固定 Delivery target 和一项授权资料检查；
+- 一个 Review 修改走后期返工，一个问题走补拍；
+- 项目结束产生 Planned vs Actual 并进入经验校准候选。
+
+验收操作至少包含：
+
+1. 将一个 Scene 从周三移到周五；未锁定的人员安排、转场、需求时段、通告草稿、媒体预计交接、后期 earliest start 和交付预测自动刷新。
+2. 其中一名演员周五不可用、下一场地点窗口不足、一个后期目标日期固定；三项必须形成可解释例外，而不是静默改数据。
+3. 发布新 CallSheetRevision；旧 revision、旧确认和旧计划基准仍可追溯，重要变化需要重新确认。
+4. 第一场实际超时，系统重算 Company Move 和当天剩余计划；锁定条目不移动，预计 Wrap 和冲突更新。
+5. 拍摄完成后建立素材来源，分别记录完整性/备份/交接；未交接前后期 Task 不得伪 Ready。
+6. Review 评论生成唯一 ReworkRequest；后期修改产出新 AssetVersion，补拍问题重新进入排期并产生新媒体，再回到 Review。
+7. Delivery 被退回时回到 ReworkRequest / Task；再次提交和最终验收不覆盖第一次退回历史。
+8. 收工/阶段结束生成经验观察；校准候选可以更新之后的预计时长或流程关系，但不能自动改当前项目已确认计划或具体摄影/AE/UE 设置。
+9. 任一 consumer 中途失败后，源命令仍成立，ImpactRun 显示失败目标并可重试；重复 event 不产生重复 Task、通告或返工需求。
+10. 全流程任何一步的权限撤销、revision 冲突、永久删除或锁定条件都必须返回明确结果，不能通过前端本地状态假装成功。
+
+通过上述场景才可以宣称“制作功能闭环”。单独通过 Shot 编辑、Task API、Schedule 页面、Review 页面或 Export 构建都不能替代端到端闭环验收。
+
