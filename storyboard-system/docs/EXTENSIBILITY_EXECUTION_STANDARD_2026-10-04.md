@@ -14,7 +14,7 @@
 | H-08 留存 | 正式来源追踪与产物版本保留到明确删除；临时预览24小时，可重新生成的下载工件7天；项目可缩短临时留存。永久删除清关联内容，只留无正文的内部删除标记 | 用户本轮明确选择 |
 | 内容历史 | Character 定义、Casting 选择、Scene/Shot 出演关系、镜头和 Lighting 等创作内容进入内容版本。Person 身份/联系方式、成员授权、任务执行/交接、排期发布和 Review 是各自历史域；共享视图与 Moodboard 不进入创作提交，Moodboard 支持撤销 | 已有用户决定及“有必要的管理”授权下的实施分类，详见§5 |
 | UI 写入 | 现有界面以 `montblanc08` 最新修改为准。仅补真正缺失界面；镜头表/菜单/布局、首页整行照片封面和已有设置不覆盖。导航接入只追加获授权入口 | 既有明确要求 |
-| 重新确认的产品合同 | 全部9内置列首次可见，内置Purge禁止；同共享view配置同步；显式团队资源身份支持跨项目冲突；Scene要求动态继承并逐项增补/排除/替换；环境镜头显式值优先、主Scene值附差异 | 2026-10-04用户回答，完整登记于[总纲v2](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md#2-产品决定登记) |
+| 重新确认的产品合同 | 全部9内置列首次可见，内置Purge禁止；同共享view配置同步；显式团队资源身份支持跨项目冲突；Scene要求动态继承并逐项增补/排除/替换；环境镜头显式值优先、主Scene值附差异 | 2026-10-04用户回答，完整登记于[最新总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md#2-产品决定登记) |
 
 原计划 H-01/02/03/05/06/08 已解除抽象决策阻塞。实际项目成员名单、人员账号关联、工作窗口、器材容量和外发渠道属于**具体数据**，通过配置或授权操作提供，不能填猜测值；没有配置不阻塞结构实现，但不得宣称对应业务已就绪。
 
@@ -55,9 +55,9 @@
 
 ### 3.2 回执持久化与并发
 
-`command_receipts` 只保存 production/actor/command_id、规范化 request digest、结果 IDs、返回 revisions、结果类别和时间；唯一 `(production_id, actor_id, command_id)`，有项目与账号 FK。只写最小结果，不复制原正文、联系人、图片或客户端 token。独立组织命令使用自己的受控 scope receipt，不能伪造 Production ID。
+`command_receipts` 只保存 production/actor/command_id、规范化 request digest、结果 IDs、返回 revisions、结果类别和时间；唯一 `(production_id, actor_id, command_id)`，有项目与账号 FK。只写最小结果，不复制原正文、联系人、图片或客户端 token。组织命令使用合法独立作用域回执，不能伪造 Production ID。扩展同一回执负责人：受控 scope_kind 加项目或组织作用域外键，用约束确保恰有一个合法作用域；唯一键包含作用域、actor、command_id。不是把任意 entity 字符串当权限，也不另建平行回执服务。
 
-锁序为项目根 → 按稳定 ID 排序的受影响对象。拿锁后首先检查当前身份/权限/Purge，再查询相同 command_id：同 digest 返回原受权回执；不同 digest 返回409 `COMMAND_ID_REUSED`。重放成功命令不要求旧 expected 仍等于当前值，否则网络重试会误报冲突；但原结果已被 Purge 或权限撤销时不得返回旧内容。
+项目命令按项目根 → 对象的稳定身份顺序锁定。跨项目组织命令明确逐项目回执，不伪装全项目原子成功。取消库房后不引入全站库存锁。所有服务采用同一锁序，不追加无关的全站锁。拿锁后首先检查当前身份/权限/Purge，再查询相同 command_id：同 digest 返回原受权回执；不同 digest 返回409 `COMMAND_ID_REUSED`。重放成功命令不要求旧 expected 仍等于当前值，否则网络重试会误报冲突；但原结果已被 Purge 或权限撤销时不得返回旧内容。
 
 新请求检查 expected 后进入现有域 service。业务行、receipt、Audit、History、Outbox 同 unit of work 提交，失败全回滚。重复并发同 ID 只发生一次业务变更。no-op 可以保存技术回执，但 production/object revision、updated_at、Audit、History、Outbox 都不变化。失败请求不存成功回执；数据库故障可用原 command_id 重试。可重试与不可重试错误分别声明，不能无限重试409或权限失败。
 
@@ -87,7 +87,7 @@ Query 在 SQL/权限投影阶段过滤对象、字段和计数，cursor 用稳�
 | E2-SCENE | Scene 和 Shot 各有 `(production_id,id)` 唯一键；link 两端同项目复合 FK。活跃 `(scene_id,shot_id)` 唯一、最多一个 primary；初版关系为 `related`，不预造闪回/交叉叙事 enum。Scene 内顺序与全局 Shot 顺序分离 | SetShotScenes/ReorderSceneShots、关系差异 query；`services/scene_relation_service.py` / `models/scene_relation.py`；现有 Scene/Shot codec 由集成者适配 |
 | E2-CAST | Character 与 Person 通过 Casting 稳定关系；SceneRequirement 与 ShotAppearance/override 分开，同项目 FK。Shot 的 on_screen/voice/background/stunt 为明确类型。镜头动态继承所有关联场景要求，手动逐项增补/排除/替换，未覆盖项继续随场景更新；保存来源事实与override，不复制有效投影当第二owner | SetCasting/SetSceneRequirements/SetShotOverrides/RestoreInheritance、有效出演/未映射对白来源 query；`services/casting_service.py` / `models/casting.py` |
 | E2-RESOURCE | Location/Equipment 只在真实查询/许可/生命周期接入时建；资源与 Shot/Task/Schedule 用 typed links，同项目校验。容量/档期未配置为 UNKNOWN | 资源 CRUD/绑定及 availability query；`services/resource_service.py` / `models/resource.py` |
-| E2-SHARED-RESOURCE | 项目内Person/EquipmentUnit/Location保留独立ID；显式关联同一物理人员/资源的团队身份。身份管理、预约、忙闲读取权限独立；不按姓名/型号猜合并 | Link/Unlink/PreviewSharedIdentity、受权冲突query；`models/shared_resource_identity.py` / 对应service/schema/router |
+| E2-SHARED-RESOURCE | 项目内Person/Location保留独立ID；显式关联共享人员或场地身份。人员场地冲突查询分别鉴权，不按姓名猜合并。器材仅需求与型号参考，不建立实物库存身份或预约 | Link/Unlink/PreviewSharedIdentity、受权冲突query；`models/shared_resource_identity.py` / 对应service/schema/router |
 | E3-FIELD | 扩展现有 ProjectColumn 的 entity_scope，唯一 `(production_id,scope,key)`；不同实体 typed value 表、复合 FK、唯一 `(entity_id,definition_id)`。binding 非 custom 不进 custom value owner | SetValue/类型转换Preview/Commit、Trash/Restore/Purge；复用 `custom_field_service.py`，按真实实体增值表，不另造万能 EAV |
 | E3-SHARED-VIEW | SavedView.config是共享列显示/顺序/宽度、行高、筛选/排序/分组的唯一持久owner；WorkspaceLayout保留个人呈现，不双写共享配置；config revision/CAS与ACK后广播 | UpdateSharedConfig/ResetAutoSize、config/events query；复用现有view/history模型及SavedViewService，前端改动交指定UI owner |
 | E4-TASK | 单任务最多一名主责、多协作，显式目标 links；状态事实与 ready/blocked/stale 投影分开。产物固定 AssetVersion，template version 不可变。dependency 同项目/非自身，活跃边去重 | Assign/Start/Submit/Handoff/Reopen/Skip、DAG query；`services/task_service.py`、`workflow_service.py`、`models/task.py`；不复制 ProductionStep/Review 的权威状态 |
@@ -101,6 +101,28 @@ Query 在 SQL/权限投影阶段过滤对象、字段和计数，cursor 用稳�
 Entity可以有真正从属的子Entity，但必须先定义所有权、生命周期、作用域和授权/CAS。业务关联不足以构成父子；跨独立Entity使用typed link，删除一端不cascade销毁另一端。从属记录只有在明确的Purge闭包和授权命令下清理，FK cascade不能替代业务影响预览。所有关系scope/FK/CAS在service及适合的PG约束保护；数据库不运行跨域工作流trigger。具体父子合同见总纲§3.1。
 
 任务：未派主责可保存草稿，Start 前必须有主责且所有必需输入就绪；Submit 固定产物与 sender；Handoff 验证接收人权限/任职和指定版本，独立审阅不能自确认。项目更严格配置不得允许跳过必须授权的输入或审片。取消、跳过与完成分开；无变化不造进度事件。
+
+### 4.1 时间段需求、构图与帧率独立工作包
+
+资源规则见[时间段资源需求](RESOURCE_TIME_REQUIREMENTS_2026-10-04.md)。最新第15、16问取消库房、库存、预留和使用方法；仅保留需求、型号和基础知识。原项目权限继续生效，不加拍摄任职资格例外。
+
+| 包 | 持久事实与职责 | 接入边界 |
+| --- | --- | --- |
+| E2-DEMAND | 复用场景要求、镜头覆盖和导入解析的来源候选；查询指定时段型号、数量和出处 | 不重写解析器；不生成库存或预留；排期负责时间关联，未排期另列 |
+| E3-MEDIA-PRESENTATION | 复用ImageCropService和MediaPresentation；默认构图继承、专用构图优先、有效构图固定与缓存失效 | 原图不可变；保留现有镜头预览操作，由UI负责人接入资产库缺口 |
+| E3-FPS | 复用项目和镜头服务、统一时码算法；保留秒数自动重算帧数及派生时码 | 不改实测音频秒数或拍摄时间；不另造时码实现，不修改已确认UI |
+
+同时间独立需求相加，只有明确的共用安排计一次；型号、单位或版本语义不一致不能直接相加。时间区间前闭后开，相邻不重叠；同一来源重复导入不形成第二份需求，多个独立拍摄安排则分别统计。缺数量或时间显示未知，不把片长当拍摄时长，不给出库存缺口或可用量。
+
+| 门槛 | 实际验证要求 |
+| --- | --- |
+| FX-21 范围与权限 | 未授权查询拒绝；器材知识仅型号和基础知识；接口、模型及页面不产生库存、预留或库房资格 |
+| FX-22 来源识别 | 字段及导入重复识别、缺型号或数量、来源修正和删除；同来源候选去重，独立来源不误合并；确认后走原命令 |
+| FX-23 分时汇总 | 同时独立相加、明确共用一次、相邻区间、跨日、未排期及来源覆盖；只统计受权数据，不重复汇总同一使用安排 |
+| FX-24 默认构图 | 未专用当前引用随默认构图更新；专用保持；历史、审片及导出固定有效构图和原图版本；缓存失效后可复现且不拉伸 |
+| FX-25 帧率重算 | 30fps/150帧改60fps为300帧；分数帧率统一舍入、正时长最少一帧、锁秒数保持；累计时码与总量一致，音频与排期不漂移 |
+
+这些是待运行门槛，不是本轮功能测试结果。三个增量各自领取、交付、记录前端缺口，共用已有事务、回执、历史、事件和作业基础。
 
 ## 5. 内容版本、独立活动和撤销矩阵
 
@@ -126,9 +148,9 @@ Commit 绑定 source_hash、parse/catalog versions、frozen plan digest、对象
 
 工程 PDF/ZIP/码仅传同一允许投影：选字段、镜头范围、固定图片版本和构图，metadata 只保留协议必需且受权项。实际从渲染 PDF 像素扫出完整所有码、乱序去重重组、校验分片及整包；附件 ZIP/原图 hash 回读。少码、冲突码、混包、未知 schema、超容量都明确失败。QR-only 无原图 bytes 时返回缺失媒体清单，不冒称图片已恢复；ZIP/附件恢复经过同一 staging。
 
-普通 PDF 六版式、可编辑 Word、好莱坞剧本与分镜表、工程码恢复分别接受；仅生成出文件不算通过。PDF 中文可提取/逐页渲染，长文不丢；竖图/横图/21:9/16:9 不拉伸，按构图适配后黑填充，原图不改写。图片构图由现有 ImageCrop/MediaPresentation owner 生成，资产库与镜头入口引用同一版本。
+普通 PDF 六版式、可编辑 Word、好莱坞剧本与分镜表、工程码恢复分别接受；仅生成出文件不算通过。PDF 中文可提取/逐页渲染，长文不丢；竖图/横图/21:9/16:9 不拉伸，按构图适配后黑填充，原图不改写。图片构图由现有 MediaPresentation 服务生成，素材库修改默认构图，未设专用构图的当前引用继承，已有面板和封面专用构图保留。内容提交和审片固定当时有效构图及默认版本，不能随当前默认值漂移；恢复内容不能改变其他引用的素材默认值。镜头预览保持项目画幅、既有胶囊缩放、锁定和本地草稿撤销界面。帧率改变自动保留秒数重算帧数及派生时码，统一分数帧率及舍入，预览总量差异，不更改实际音频长度或拍摄排期时间。
 
-**隐写追溯单独验收**：二维码/DM、普通hash、文件metadata均不能替代。选成熟库后先测固定种子合成图：原图、四边各裁10%、保留中心70%、1440桌面截图、截图后 JPEG quality80、缩放0.75。每类30个不同 payload＋30个无水印控制；记录成功恢复率/误识别率及不可恢复类型。初始接受目标各类至少27/30正确恢复、控制0/30误识别；这是工程验收目标，不提前声称已达到。达不到时保留 BLOCKED，不写免责标注掩盖失败。PDF/Word 中嵌入图与 raster页、工程纯文本 metadata 的可追溯方式分别标明；不能用图片算法承诺纯文本抗截图能力。
+**隐写追溯单独验收**：二维码/DM、普通hash、文件metadata均不能替代。选成熟库后先测固定种子合成图：原图、四边各裁10%、保留中心70%、1440桌面截图、截图后 JPEG quality80、缩放0.75。每类30个不同 payload＋30个无水印控制；记录成功恢复率/误识别率及不可恢复类型。上述每类30个样本是算法筛查门槛：至少27/30正确恢复、控制0/30误识别，仅用于决定能否进入完整验收。最终接受按功能计划的更严格门槛：每类100个不同追溯标识及100个无水印对照，恢复率至少95%、对照零误识别，包含保留50%面积的裁剪及实际截图链。筛查通过不能降低最终标准；两者都是待运行目标，不提前声称已达到。达不到时保留 BLOCKED，不写免责标注掩盖失败。PDF/Word 中嵌入图与 raster页、工程纯文本 metadata 的可追溯方式分别标明；不能用图片算法承诺纯文本抗截图能力。
 
 ## 7. 迁移与恢复操作门槛
 

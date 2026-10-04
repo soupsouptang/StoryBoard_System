@@ -2,7 +2,7 @@
 
 日期：2026-10-04。状态：**PLANNED / COMPLEMENTARY EXECUTION PLAN**。
 
-主执行者后续补充：本轮人类决定已登记于§13–14，产品总合同已按用户要求重写为[总纲v2](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)。本文配套 [逐批执行标准](EXTENSIBILITY_EXECUTION_STANDARD_2026-10-04.md)、[机器执行清单](extensibility_execution_plan_2026-10-04.json) 与 [Knowledge Layer需求](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)。原代理检查/待选记录保留为历史输入；冲突以最新确认及总纲为准，不能继续将已解除问题当阻塞。
+2026-10-04 全量文档审计后，产品规则见[最新总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)，本计划直接更新实施位置，不再保留失效待选表。配套[执行标准](EXTENSIBILITY_EXECUTION_STANDARD_2026-10-04.md)、[工作包清单](extensibility_execution_plan_2026-10-04.json)、[知识库](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)、[时间段资源需求](RESOURCE_TIME_REQUIREMENTS_2026-10-04.md)。本文的源码盘点是注明提交的历史证据；本轮审计基点为 0e7de58，远端现有界面增量已快进纳入，本轮没有运行产品验收。
 
 本文件承接 [最大化扩展性需求总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md) 与[岗位需求](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md)，给出可拆分执行方案。岗位稿在代理初次检查时尚未跟踪，现由主执行者一并整理上传。表名、接口名和迁移批次为实施细化，除明确引用的已确认决定外，不冒称用户亲自指定。
 
@@ -12,11 +12,11 @@
 
 后续检查时主执行者已提交根协调规则，HEAD为 `23386488bc1fec1d124acf3561564902bf1b02da`，包含 `3aacf18` 与 `2338648` 的并发写集/UI交接规则；本文已读取对应差异。用户最后要求将编写完成的计划推送GitHub，覆盖初始“无提交/无push”边界；只提交本新文档，Git元数据和同步为该动作必要操作，其余dirty保留。最终同步与远端差异核对以本轮实际回执为准，不在文档内预报成功。
 
-本轮唯一内容写入范围为本新文档。没有代码、UI、依赖、AGENTS、canonical 台账修改，没有部署或真实数据操作。续作入口与 owner 台账仅作为输入读取。后续计划的职责划分表示文件所有权，不要求并行开 agent；遵守用户不多开子 agent 的规则。
+初次计划轮仅写本文件；本次全量审计修订相关需求、数据库设计、执行清单与衔接台账。应用代码、界面、依赖、运行数据库与部署不变，已有未提交草稿保留。职责划分表示文件责任，不要求并行开智能体。
 
 ## 1. 固定约束与计划边界
 
-已确认决定依总纲 §3、§6.1、§25.1 执行：可选 `Work → Episode → Production`，简单项目 standalone，无 `Work → Production` 直挂；SceneShot 为 0..N 多对多；User / Person / Character 分离；Take 延后，只保留真实关系扩展 seam，不建空表、空 API 或页面。当前计划不增加 Work 合并需求。
+已确认决定依最新总纲的组织、场景、权限和字段章节执行：可选 `Work → Episode → Production`，简单项目 standalone，无 `Work → Production` 直挂；SceneShot 为 0..N 多对多；User / Person / Character 分离；Take 延后，只保留真实关系扩展 seam，不建空表、空 API 或页面。当前计划不增加 Work 合并需求。
 
 不保存 Import Recipe、客户模板或长期用户导入映射。导出 Profile 可以持久保存，它和一次 Import Plan 是不同合同。Legacy 只保留便携工程文件桥，不做旧数据库迁移、旧 API 兼容或双写。本文的 backfill 专指新增结构对已有 **VNext 合成/隔离数据** 的转换演练。
 
@@ -87,9 +87,9 @@ owner 是逻辑责任；具体执行人由后续集成安排。本轮所有实�
 
 新增命令使用 server-owned actor/context，输入建议为 `{command_id, schema_version, production_id, expected, payload}`；actor、权限及 inverse 不由客户端提交。expected 精确说明 project vector、对象 revision、policy epoch 和 purge epoch 中哪些相关，禁止靠一个任意 revision 数字替代全部对象保护。
 
-业务流程：鉴权 → 权限与 project scope → lock/check → 校验所有成员 → 域服务 → revision advance → Audit / History / Outbox → 原 get_db commit → authoritative receipt。导入、AI 接受、后台结果发布、undo 均使用这条链。锁序统一为项目，再按稳定 ID 排对象；跨项目容器批量命令明确逐项目 receipt，不许假装多次请求是单项目原子命令。
+业务流程：鉴权 → 权限与 project scope → lock/check → 校验所有成员 → 域服务 → revision advance → Audit / History / Outbox → 原 get_db commit → authoritative receipt。导入、AI 接受、后台结果发布、undo 均使用这条链。锁序统一为项目根 → 对象，各层按稳定身份排序；跨项目容器批量命令明确逐项目 receipt，不许假装多次请求是单项目原子命令。
 
-拟增加通用命令 receipt 持久 owner：唯一 `(production_id, actor_id, command_id)`，记录 request digest、result IDs 和 revisions；同 ID 不同 payload 拒绝，同 payload 重试返回同回执。receipt 只含受权最小信息，读取重验权限，Purge 清引用。现有代码并无此通用表，不把随机 event command_id 视为请求幂等保证。真正 no-op 不改业务 revision/updated_at，不新增 Audit/History/Outbox；receipt 是否需要为 no-op 独立保存应保持技术幂等语义，不伪造业务变更记录。
+拟增加统一命令回执：项目或组织使用真实受控作用域；作用域外键及互斥约束、操作者和 command_id 构成唯一身份，不伪造项目；记录 request digest、result IDs 和 revisions；同 ID 不同 payload 拒绝，同 payload 重试返回同回执。receipt 只含受权最小信息，读取重验权限，Purge 清引用。现有代码并无此通用表，不把随机 event command_id 视为请求幂等保证。真正 no-op 不改业务 revision/updated_at，不新增 Audit/History/Outbox；receipt 是否需要为 no-op 独立保存应保持技术幂等语义，不伪造业务变更记录。
 
 权限失败为 403，revision 冲突为 409，输入/非法关系为可解释 validation error；不存在/不可见遵循统一资源策略。保留当前 API 的错误形状，新增跨 runtime 合同用适配方式逐消费者接入，不一次破坏既有接口。
 
@@ -119,7 +119,7 @@ Work/Episode 聚合 query 每个项目鉴权后求并集，不能因有容器访
 
 ### 5.2 SceneShot：安全迁移单 FK
 
-建议 `scene_shots(id, production_id, scene_id, shot_id, relation_type, is_primary, order_index, revision, deleted_at)`；Scene 增加 `(production_id,id)` 唯一键及 revision，link 两端使用 project 复合 FK。active `(scene_id,shot_id,relation_type)` 去重；active `is_primary=true` 对 `(production_id,shot_id)`部分唯一索引保证最多一个 primary。语义与重复规则最终按 H-02 固化，不使用自由文本控制逻辑。
+建议 `scene_shots(id, production_id, scene_id, shot_id, relation_type, is_primary, order_index, revision, deleted_at)`；Scene 增加 `(production_id,id)` 唯一键及 revision，link 两端使用 project 复合 FK。active `(scene_id,shot_id)` 去重；active `is_primary=true` 对 `(production_id,shot_id)`部分唯一索引保证最多一个 primary。首版关系类型固定为 related，活跃同场景同镜头连接唯一，最多一个主场景；未来叙事类型有真实需求时单独扩展，不用自由文本控制逻辑。
 
 `SetShotScenes` 一条命令提交完整 link 差异、link/object revision 与各 Scene order revision；`ReorderSceneShots` 只改某 Scene 内顺序，不改变全项目 Shot 身份/排序。建议 `/productions/{p}/shots/{s}/scene-links` 与 `/productions/{p}/scenes/{s}/shot-order`。Shot 可零 Scene，且额外 Scene 不必 primary；不要自动指定首个 relation 为 primary。
 
@@ -133,11 +133,11 @@ Scene 删除只删除/软删关系，不删除仍存在的 Shot。Scene 内场�
 
 ### 5.3 Person / Character / Membership / typed resources
 
-首批建议项目作用域 Person、Character，Character 不存现实联系方式；Person 与 User 使用显式 identity link，不按名字/邮箱自动匹配。跨项目共享 Person 的 identity 策略见 H-03；初期 project-local 提案避免无授权联系人复用，并不把该提案写成已确认要求。
+首批已确定项目作用域 Person、Character，Character 不存现实联系方式；Person 与 User 使用显式 identity link，不按名字/邮箱自动匹配。项目人员身份独立，跨项目通过明确共享人员关系核对冲突，不复制私人联系授权。此范围已由用户确认，不再作为提案等待。
 
 ProductionMember 以 production_id/person_id 为项目职责上下文，可选 User link，带 status、revision；角色、部门多值采用 membership role/department typed links。Assignment/TaskAssignee 分开表示主责与协作；权限由 membership policy/override owner 计算，不由岗位字符串推断。若 member 同时记录 user_id，必须校验与有效 identity link 一致，禁止两个身份 owner 漂移。
 
-CastAssignment 连接 Character ↔ Person，含候选/确定状态及有效范围；SceneAppearance 与 ShotAppearance 分开。场景需求是候选来源，不自动复制为每个镜头出演。Shot 可显式 on-screen/voice/background/替身关系，依赖 H-04 的继承/对白协议；匿名群演支持数量/组，不制造假账号。Location/Equipment 有独立查询/权限/生命周期时才建实体，与 Scene/Shot/Task/Schedule 的 link 采用同项目复合 FK。关系删除不级联误删人、角色或素材。
+CastAssignment 连接 Character ↔ Person，含候选/确定状态及有效范围；SceneAppearance 与 ShotAppearance 分开。场景要求动态继承为镜头需求，支持按项增补、排除、替换和恢复；实际出演独立记录，不从需求自动推定。Shot 可显式 on-screen/voice/background/替身关系，遵循最新总纲的动态继承和明确对白角色引用合同；匿名群演支持数量/组，不制造假账号。Location/Equipment 有独立查询/权限/生命周期时才建实体，与 Scene/Shot/Task/Schedule 的 link 采用同项目复合 FK。关系删除不级联误删人、角色或素材。
 
 建议 `/productions/{p}/people|characters|members|locations|equipment` 和明确 `/cast-assignments`、`/appearance-links` 命令。停止账号保持业务 Person/履历；解绑账号立即撤销登录上下文。新 membership 切换前必须列项目现有授权，不能用现有全局 Role 为所有项目自动创建成员；新增项目由创建命令明确登记创建者授权，现有 VNext 项目的首批授予方案为 H-01。
 
@@ -173,7 +173,7 @@ SchedulePlan为独立scenario owner，DRAFT/CURRENT/SUPERSEDED表示草案/当�
 
 ScheduleItemScene/Shot/Person/Location/Equipment 是 typed links；同一 Shot 可跨日、多次引用。AvailabilityWindow AVAILABLE/UNAVAILABLE/TENTATIVE/UNKNOWN 共用区间来源，无数据不是“肯定可用”。Company Move 由 ScheduleItem 拥有区间、路线/耗时组件；需要负责人/确认时连 Task，不把时间再复制给 Task 或 Shot。Shot.duration_frames 是镜头内容时长，永不作为日程 start/end 的存储 owner。
 
-首批用 deterministic conflict query 计算资源交叠、availability/dependency/locked/time-window/day-night/move-time。冲突模型返回 source revision 和原因；软/硬约束、允许人工例外见 H-06。初期不承诺全局最优 solver；未来 Provider 提出方案，用户接受后由 Schedule Command CAS 应用。多方案互不重写；发布/确认后的结果显式冻结，普通 conflicts 不作为手写布尔字段。
+首批用 deterministic conflict query 计算资源交叠、availability/dependency/locked/time-window/day-night/move-time。冲突模型返回来源修订和原因；人员、场地使用明确共享身份校验冲突，器材仅统计时间段需求，不建立容量或预留模型。缺信息提示待确认；无权限、无效时间、旧修订及非法依赖拒绝写入。初期不承诺全局最优 solver；未来 Provider 提出方案，用户接受后由 Schedule Command CAS 应用。多方案互不重写；发布/确认后的结果显式冻结，普通 conflicts 不作为手写布尔字段。
 
 `/schedule-plans`、`/shoot-days/{id}/items`、`/queries/shooting-day|availability|resource-conflicts|call-sheet` 是拟议 query seams。Stripboard/Calendar/DOOD/CallSheet draft 从同一事实投影，可缓存重建。CallSheetRevision 固定 source vectors、允许字段与受权 resolved references，发布后改动生成新 revision；发送不在本轮授权范围，任何将来外发须实际授权。旧发布内容的 Purge/撤销例外按 §8 管理，不能宣称既永久不变又可复活已删除隐私。
 
@@ -234,7 +234,7 @@ AutomationRule 使用白名单 event/condition/action IDs、DSL version、policy
 
 沿现有 parser/ImportService 增量增加 ImportSession/ImportPlan owner；来源 hash、sanitized filename、provider/parser version、sheet/page/row/column、原字段片段、mapping/merge decision 是 lineage，不是可套用其他文件的模板。大型解析可 Job，session 暂存输出 TTL；committed lineage 另有持久保留策略 H-08，session 到期不能顺带丢来源追踪。
 
-Provider 产 ParsedDocument → Structure/Header/Fingerprint/SemanticGrouping → existing entity candidates → MergePlan。每个 canonical field 可接受多个 source columns，text 去重/merge_nonempty，enum/number 不一致 conflict，relation 候选需确认；阈值和 ambiguous resolution 见 H-09。纯导入字符串不要擅自生成同名 Person/Casting。
+解析器先识别结构、表头和源列，再提供现有对象候选及逐字段合并计划。多个源列可映射同字段，相同值去重、空值按类型处理；不同非空值默认冲突，文本拼接也须明确策略，关系候选须确认。低置信度或歧义不执行，阈值用合成误匹配样例校准。纯导入字符串不要擅自生成同名 Person/Casting。
 
 冻结 Plan 保存 schema_version/source_hash/parse digest、project vectors/object tokens、provider/catalog versions、每行目标 IDs、CREATE/MERGE/UNCHANGED/CONFLICT/AMBIGUOUS、逐字段决策和媒体 manifest。预览只读；用户确认具体决策后锁定 plan digest。Commit 只执行此 plan，重验当前权限/CAS/epoch/文件 hash；不重新跑模糊推断选另一个实体。过期/数据变化为 409＋新预览。
 
@@ -327,65 +327,55 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 | FX-16 前端（deferred） | 对被接受slice真浏览器读写、403/409、保存失败/重试、dirty draft与refetch、keyboard/IME/localundo、明暗、1440×900和1920×1080桌面横屏/正常缩放 | 只server ack为saved；query/server/draft/derived分层；失效不覆盖草稿；稳定slot权限；表格菜单/选中/列控件及整行照片封面不退化；focus/关闭/动画可打断。按最新用户范围不新增窄屏/缩放验收或产品Reduced Motion开关，不用build代替视觉PASS。 |
 | FX-17 制作联动闭环 | 两Scene/六Shot/两Person、摄影/灯光/制片/剪辑、两拍摄日、一共享设备、一外协Task、一交付变体。将周三计划移至周五：一人不可用、设备时间锁定、交付目标固定；正常链中途故障、重复event与undo | 未来人员/资源准备/通告当前修订/素材交接/后期/交付预测自动更新，可成立项不等确认；三个例外各有原因/负责人，原基准与已完成事实不改。旧通告/确认保留、新重要变化需重确认；失败目标显示并重试，不重复任务/通知。仅制作闭环，不包含费用、付款、合同经营或Take。 |
 | FX-18 同一共享视图 | A/B同view，C另一view；并发改宽/高/筛选/排序/分组；断线重连、列删除、自动尺寸、undo与第三方后来写 | 配置同revision同步，选择/光标/草稿独立；冲突保留草稿；个人布局不双写共享配置；自动尺寸同结果，no-op不增版本，内容hash不变；已接受表格UI接入另由指定owner验收 |
-| FX-19 跨项目资源身份 | 两项目同名Person、同型号两unit、显式共同物理身份、重叠预约、解绑、无权项目、并发预约 | 未关联不猜合并；授权后按共享身份发现冲突；摘要不透出无权项目正文/计数，UNKNOWN不假可用；链接不移动已有预约，锁序/容量真实PG验证 |
+| FX-19 跨项目身份 | 两项目同名Person、独立场地、显式共享身份、时间冲突、解绑、无权项目及并发排期 | 未关联不猜合并；授权后按共享人员/场地身份发现冲突；摘要不透出无权项目正文/计数，未知不假可用；器材不建立库存身份或预留 |
 | FX-20 动态继承/环境 | S1/S2共同Shot；增补/排除/替换一个来源项，修改Scene、清override、删除/恢复来源；主Scene外日、另一Scene内夜；显式地点与无主场景 | 未覆盖要求动态更新，来源/override可解释；恢复取当前来源，来源新ID不套旧override；实际出演/Actual不被推定；环境显式值优先、主值附差异、无主待确认；资源计量按总纲确认规则测试 |
 
-## 11. 精确的人类待选项与实施阻塞
+## 11. 已确认决定与真正前置条件
 
-主执行者可在审查本文后询问下列实际阻塞，再开始相应切片执行。**没有需要把整个计划先停住的问题**：B0证据复核、E0合同/codec/fixture可立即在主执行者授权范围内推进。层级、0..N Scene、多身份分离、Take延期、无ImportRecipe、现有HistoryService、montblanc08现有UI权威及补全缺失页授权均不再询问。
+总纲、岗位、知识库与资源文档直接保存最终行为。旧 H-01/02/03/04/05/06/07/08/11 和 Q-05 的产品选择已经解决，不再逐项重复询问。
 
-### 11.1 旧要求无法确定、到对应门槛必须确认的决定
+| 决定 | 实施含义 |
+| --- | --- |
+| 项目独立授权、人员项目内身份 | 组织仅分类；无账号人员可登记，同名不合并，账号明确关联 |
+| 多场景、动态要求和逐项覆盖 | 主场景可无，镜头篇章独立；实际出演不从要求推定；环境明确值优先，主值显示差异 |
+| 单主责与固定产物交接 | 独立审片不自确认，跳过须管理权限与理由且检查下游输入 |
+| 九个初始列及共享配置 | 预设按需添加；内置不永久删除；SavedView 是共享配置唯一负责人 |
+| 器材知识与需求 | 取消库房；知识仅型号与基础知识，不写使用方法；来源识别生成需求候选，时段清单不承诺实际可用 |
+| 时间与数量 | 独立需求相加，明确共用一次；按已有排期关联，未排期另列，来源、型号、单位和时间可追溯 |
+| 经验贡献 | 复用用户组团队归类，新经验固定采集时成员全部团队；换组只影响之后经验，原始回答隔离 |
+| 图片与帧率 | 默认构图只影响未专用当前引用，版本固定有效构图；修改FPS自动保留秒数重算帧数 |
+| 留存与删除 | 正式来源到明确删除；临时预览24小时、可重建下载7天，永久删除确认并清受控正文 |
 
-以下七项涉及实际授权、稳定identity、不可逆结构/留存或业务完成事实，旧需求没有给出唯一选择。建议只是可审查选项；各项仅阻塞表中对应门槛，不阻塞其他无依赖工作。主执行者可把问题和推荐选项一起提交用户，避免再次询问已确认的大方向。
+实际人员名单、账号关联、需求数量、工作窗口和外发渠道是用户或管理员配置的数据，不能由智能体编造。没有配置不阻塞接口与结构实现，但对应业务不能显示已就绪。默认工种模板可后续提供，用户创建真实节点和依赖的基础工作流可以先实施。
 
-| ID | 需要的具体选择 / 建议提案 | 阻塞的切片 |
+技术验收由实施者完成：实际迁移链、外键和同项目约束、锁序、请求重试、权限收回、构图固定、删除闭包、作业发布、真实格式回读及新页读写。用户确认方案不能替代这些测试。
+
+## 12. 资源、图片与帧率增量批次
+
+原29包加三个独立增量，共32包；机器清单保存准确依赖和允许文件。新增包全部未开始，无虚构通过证据。已取消的库房和预留不再作为工作包。
+
+| 包 | 依赖 | 独立交付 |
 | --- | --- | --- |
-| H-01 容器/成员权限 | Work/Episode权限是否向Production继承；全局permission与项目grant/deny优先级、guest/组继承；现有VNext项目首批成员如何明确授予。提案：容器只组织，项目显式grant、deny优先，岗位不授权限。 | E1权限切换、E2容器批量管理；不能从全局Role自动填所有成员。 |
-| H-02 多Scene细则 | relation_type官方枚举、同场景不同type是否允许；primary可无但最多一；Scene内排序单位；Shot.sequence_id与多Scene所属Sequence冲突如何呈现。提案：main/reference/flashback/cross_scene做候选，不强迫primary。 | M3语义约束/旧DTO转译/导入导出。0..N已确认，无需重问。 |
-| H-03 Person范围 | Person稳定身份是项目本地还是受控跨项目共享；User↔Person关联基数、谁能建立/解绑与重复Person合并权限。提案：项目本地起步，显式账号关联，跨项目共享另建受权link。 | M1 identity /成员关系；不按同名猜合并。 |
-| H-05 任务执行细则 | 具体工种必需产物与接收人、多人主责冲突规则、自交接/提前开始/跳过的允许条件。使用生命周期稿R-WORK默认状态作细化提案，不再要求重选抽象枚举；DAG准备态派生、Review独立。 | M7执行/交接/跳过接受；默认模板节点可后续，RW示例不是必填配置。 |
-| H-06 排期规则 | CURRENT作用域含哪些Unit；采用哪一项目时区/拍摄日跨午夜分界；具体资源排他/容量与项目休息/工作窗口。未知不能认定可用、锁定不自动解锁已明确，实际参数仍需提供。 | M10正式排期/发布。区间与事实投影结构可先实现，默认联动不再待选。 |
-| H-07 新域内容版本 | 生命周期R-GOV-02已将执行、排期发布、Review与创作版本分开；仍需选Character/出演及Person公开协作字段哪些是创作内容、哪些仅活动codec。私人资料/权限不默认入内容提交。 | 新域创作snapshot/restore/merge接受；已有Lighting/Moodboard/Review及执行/发布分离不重问。 |
-| H-08 留存/隐私/Purge | committed lineage/源文件、jobs/event trace、发布工件/CallSheet/追溯水印保留多久；人物联系人实际收集范围；Purge redaction与审计最小保留、备份删除账策略。提案：敏感档案不默认收集，旧工件可撤下载，明确无法追回外部副本。 | 新域Purge/GC、长期工件与发布功能，不能靠任意TTL决定隐私。 |
+| E2-DEMAND | E2-RESOURCE、E2-CAST、E3-FIELD、E5-JOB、E7-IMPORT | 复用源字段及导入结果生成需求候选，来源去重、缺值、明确共用、时段查询；不登记库存 |
+| E3-MEDIA-PRESENTATION | E0-RECEIPT、E0-CODEC、E1-POLICY | 默认与专用构图优先级，固定历史有效构图及缓存失效，复用现有媒体服务 |
+| E3-FPS | E0-RECEIPT、E0-CODEC | 保留秒数重算帧数、统一舍入和时码、影响预览；不修改音频及拍摄时间 |
+| E6-SCHEDULE | 原依赖，加E2-DEMAND | 排期负责时间匹配，人员和场地冲突；器材清单只表达需要什么 |
+| K3-RECOMMENDATION | 原依赖，加E2-DEMAND | 知识只提供型号和基础知识，不生成使用方法、不猜库存或自动改需求 |
 
-H-05中“默认岗位/模板”只在准备发布默认配置时需要选择；可以先实现用户明确创建的空工作流＋实际节点/DAG命令，不能因为缺默认模板把M7结构停住。必须先确定的是多人主责与交接/跳过完成协议。
+需求由resource_demand_service负责；构图继续由ImageCropService/MediaPresentation负责；帧率由现有项目、镜头服务编排唯一时码算法。三包不写进同一个万能服务，不新造解析器、队列、权限或历史基础。公共模型注册、路由、迁移链及内容快照由集成者独占处理。
 
-### 11.2 可保持受控默认、稍后确认的细项
+场景要求和镜头覆盖是持久事实，有效时段需求是可重建投影。人员、场地可以显式关联共享身份；器材型号是知识参考，不是实物身份。不新增库存、预留、库房作用域或库房操作历史。
 
-这些不是启动整个计划的待批问题，不能为它们全局等待。保持未解析/未启用或现有行为，在相应产品入口上线前再定细则。
+## 13. 实施和接受顺序
 
-| ID / 细项 | 可继续执行的范围 / 保守状态 | 后续真正需要选择的时点 |
-| --- | --- | --- |
-| H-04 出演/对白继承 | Scene需求与Shot出演分别保存，暂不自动继承；保留原对白与未解析来源，不自动引入DialogueSegment | 开启多Scene自动候选/覆盖规则或结构化多说话人编辑前，再选冲突优先级和权威对白codec。 |
-| H-09 模糊匹配操作 | 阈值是用合成误匹配fixture校准的实现选择；低置信度/ambiguous不执行，任何不同非空内容为conflict，Commit执行冻结Plan | 中置信度自动预选、批量确认或改变合并展示次序的具体产品流程上线前；无模板/不覆盖无需重问。 |
-| H-10 联动执行上下文 | 正常制作联动自动生效已明确；先实现受限policy principal、因果/CAS/Purge fence与影响通知，AI保持proposal | 需要人工介入的例外授权、实际外发接收方/渠道配置或新AI规则上线时再细化；不重问正常联动是否自动。 |
-| H-11 pending预设 | Entity字段/typed links继续；pending保持只读/待映射，不靠自定义值冒充canonical binding | 给shot_reference/location/int_ext/day_night及notes/feasibility/replacement/execution_method/edit_transition开放写入前，确定语义和多Scene投影。 |
-| 新指标与路由呈现 | 保留现有四指标；实际Task完成率采用§5.7的1/4示例、取消排除/过期另列；补缺页按§3.1与montblanc08协调 | 加入新加权KPI/特殊skip口径时再确认；已有导航/页面由UI负责人协调，不当作全局freeze。 |
+先复核 B0 已有画板、导入和导出实际增量；E0 回执、历史编解码、配置可以独立推进。依赖满足后做身份与项目权限、场景与人员、字段、资源、任务和异步基础，再接时段需求与排期、交付、联动与知识。
 
-技术接受问题另列，不要求用户重复选已确认产品要求：父会话 B0 的实际测试/浏览器/PG证据何时通过；最终唯一 Alembic head 与新批次 parent；当前各业务命令的project vector/Event/History覆盖矩阵；旧JSON/schema_version/History codec转换可否无损；存储引用manifest、GC claim和epoch校验是否完整。由 Integrator 用代码/测试/隔离演练解决，有证据后再接受，不能用用户一次“确认方案”代替技术验收。
+缺失页面按逐域已接受接口接入；已有分镜工作台、详情卡、图片预览、项目封面和设置由 montblanc08 当前界面负责，不因后端缺口重写。任何改变先记录 DTO、版本、错误、缓存、历史、权限、允许文件与真实证据，交接给对应负责人。
 
-## 12. 本文交付状态
+一包完成后拉取并核对他人增量，定向检查，更新文档，显式暂存、提交、推送并核对远端。不能以旧整份文件覆盖协作者，也不能把未提交或未运行结果写成远端通过。
 
-本轮完成的是新执行计划及源码证据盘点。实现、Alembic演练、fixture运行、前端接入与浏览器验收均未在本轮执行。下一安全实施起点为 B0证据复核与E0合同/codec等价切片；每次开工重新检查实际Git状态及父会话增量，拿到独立写集后才改代码。
+## 14. 本轮交付与未完成范围
 
-总纲基础完成仍需真实新域贯穿、权限/并发/Purge/恢复与前端consumer证据；本文件不把任何PLANNED能力提升为CUT_OVER。用户已授权本新文档提交/推送，该授权不扩大为后端代码、既有UI或生产变更。
+本轮完成需求访谈和文档修订。FX-01至FX-25、KL-01至KL-11是待执行门槛；新增时段需求、默认构图继承、帧率重算、知识及相关接口仍保留未开始状态。既有实施记录只说明各自提交当时的证据，不推广到新增模块。
 
-## 13. 主执行者审查后的已确认决定与执行补充
-
-2026-10-04 用户要求继续补到可执行落地标准，随后逐项确认：H-01项目独立授权/拒绝优先/已有项目管理员明确授予；H-02可选主场景且镜头篇章独立/跨篇章提示；H-03项目内Person身份与显式账号关联；H-05单主责多协作/固定产物交接/独立审片不得自确认/跳过须权限与理由；H-06默认Asia/Shanghai、可更改偏好或新项目默认；H-08正式来源/产物保留至删除、预览24小时/可重建工件7天、项目可缩短临时留存/Purge仅留无正文内部标记。上述抽象选择已解除，不再询问。
-
-H-07沿用户已授权的“有必要的管理”分类具体化：Character/Casting/出演关系属于创作内容；Person资料/账号关联、成员授权、任务执行/交接、排期发布、Review归独立历史；共享视图与Moodboard不进入内容版本，Moodboard支持undo。类型/格式版本与业务revision分开，具体codec/Purge闭包门槛见执行标准。
-
-知识层新增明确决定：团队内经验默认贡献，原始数据项目权限隔离、不跨团队；集中提示，每账号跨项目每天最多3个主题、可跳过/稍后、不抢编辑；AI候选隔离，独立资料或实际证据＋人工核验后才入正式知识。知识/设备参考/实际库存/项目事实由不同owner负责，不直接修改项目。Knowledge任务K0–K5已接入机器执行清单，复用E0/E1/E4/E5，不另起身份/权限/journal/Job架构。
-
-配套执行标准已明确工作包的写集/依赖/验证类型、命令回执、数据约束、迁移/恢复边界、导入冲突和实际工程码测试、隐写验收目标；§14补充后共29包。清单校验只验证结构，不表示这些工作包已接受。当前已发布Board后端仍有PG/真实consumer门槛，import/export和新UI未提交草稿继续独立保护。前端修改仅限用户最新授权的真正缺失页，保留montblanc08既有UI及整行照片封面；不生产部署。
-
-## 14. 总纲重写后的执行差异（2026-10-04）
-
-用户点名重写总纲并重新确认含糊处；[总纲v2](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)取代原总纲，不以本文历史待选表推翻最新决定。内置列只删除/恢复，预设与自定义可确认Purge；新项目全部9内置列可见。共享view配置实时同步，个人选择/光标/草稿独立。Person仍项目本地，显式团队共享人员/设备/场地身份用于跨项目受权冲突。
-
-场景演员/场地/设备要求动态继承，镜头按项增补、排除、替换、恢复；有效要求是来源＋override投影，实际出演/已预约/已完成事实不能从继承推定。环境预设镜头显式值优先，否则显示主Scene值及其他Scene差异，无主场景/信息缺失不猜值。原H-04“暂不继承”及默认约7列建议不再是目标。
-
-一级Entity可以拥有真正从属的子Entity，父子必须明确所有权、生命周期、scope和授权/CAS；跨独立Entity使用typed link。总纲§3.1给出Production/Shot/Panel、Asset/Version/component、Work/Episode及Task绑定的具体行为，不使用泛化禁止层级的表述。
-
-机器清单现为29包，新增E2-SHARED-RESOURCE和E3-SHARED-VIEW，FX-18/19/20覆盖共享配置、跨项目资源和继承/环境规则。清单字段及门槛均是计划；没有把未运行结果登记为pass。多Scene同一资源的数量合并若仍待答复，以总纲待确认表及机器清单为准，只暂停该合并行为。
+下一步按清单实施独立工作包。缺真实PostgreSQL、来源解析、构图历史、工程扫码、水印样本或桌面读写证据时，准确记录未验收项，不以“文档可执行”宣称功能已落地。

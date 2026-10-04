@@ -76,7 +76,7 @@ flowchart LR
 | 4 | 时长 | Shot.duration_frames | bigint 帧；NULL/0 分开，秒为呈现，业务值可 purge |
 | 5 | 镜头标题 | name；Legacy title | text，Shot，可复用 |
 | 6 | 篇章 | sequence_id/Sequence；Legacy chapter | 关联/自由文本待分流，重名不凭名称自动 join |
-| 7 | 场景/地点 | Scene.location；Legacy shot.scene | Scene 默认/Shot override/场景实体关系待定 |
+| 7 | 场景/地点 | Scene.location；Legacy shot.scene | 镜头明确值优先，否则主场景，其他场景不同显示差异；无主场景待确认 |
 | 8 | 景别 | shot_size | 枚举/扩展词表，未知保留，不强转全景 |
 | 9 | 焦段 | lens_mm；Legacy lens | numeric mm；区间/变焦/型号保留原值，不强转单 float |
 | 10 | 运镜 | camera_movement；Legacy movement | 版本化 JSON/来源文本，转换器需确认 |
@@ -86,9 +86,9 @@ flowchart LR
 | 14 | 制作方式 | primary_method+secondary_methods | 主/辅方法，保留各自语义，不等于执行方式 |
 | 15 | 状态 | Shot.status | 业务枚举，与安全权限/审片决策分开 |
 | 16 | 责任部门 | department | 业务部门，与 Role 权限分开 |
-| 17 | 内外景 | Scene.int_ext | 继承/Shot override 待定，不改无关联 Scene |
+| 17 | 内外景 | Scene.int_ext | 镜头明确值优先，否则主场景值附差异；不改其他场景 |
 | 18 | 日夜 | Scene.day_night | 同上，不等于拍摄时间/TC |
-| 19 | 对白角色 | dialogue_character，待定 | text/多值/角色实体待定，不绑负责人/用户 |
+| 19 | 对白角色 | dialogue_character，待定 | 明确剧情角色引用，未解析文本保留来源，不绑负责人/用户 |
 | 20 | 表演提示 | performance | text，Shot，可复用，与 action 分开 |
 | 21 | 对白 | dialogue | text，Shot，可复用 |
 | 22 | 剪辑/转场 | Legacy transition/UI edit_transition | VNext 对应持久属性未定，不写 composition |
@@ -126,7 +126,7 @@ purge 取锁后重验权限、token 未用未过期、scope/digest/revisions/高
 
 | 位置 | purge 处理 | 可实现语义 |
 | --- | --- | --- |
-| 当前/回收 Shot/实体 | builtin 值、custom、已提交 import 原值、rich text、派生物化值 | 全部清理并增 revision，不保留改名内部副本 |
+| 当前/回收 Shot/实体 | 被确认永久删除的预设或自定义值、相应导入原值和派生值；不清内置值 | 全部清理并增 revision，不保留改名内部副本 |
 | ShotVersion/ProjectSnapshot/Share snapshot | 嵌套定义/值、图引用、比较差异 | 授权 purge 是历史内容删除例外；移除旧 payload 中该列，不保留可下载旧件 |
 | 评论/quote/anchor/回复 | 匹配 column/version 的引用、正文复制、图像/TC anchor 及关联线程内容 | 清正文/quote/anchor，保留技术 ID、作者/事件和 redaction marker；不能保留另一份 quote |
 | audit/change events | old/new、diff、metadata 中该列值 | 内容脱敏，保留 actor、ID、时间、操作、数量、结果；不存可反推低熵值的 hash |
@@ -174,9 +174,9 @@ SavedView 为共享布局唯一 owner，所有项目读者看到相同持久配�
 
 | 已有表 | 拟调整字段 | 键/索引/删除规则 |
 | --- | --- | --- |
-| productions | revision/schema_revision/order_revision/content_revision bigint default 1；purge_epoch bigint default 0 | PK id；revision>0；content_revision 在所有新增历史/评论/副本依赖命令递增，用于 purge preview 高水位 |
-| shots | 业务值 nullable/fieldstorage；revision bigint；comment_event_seq bigint default 0 | unique production/id；活动 `(production_id,sort_index,id)`；不以 display_number 为身份 |
-| sequences/scenes | 同项目 unique/FK；默认/override 语义确认后扩展 | RESTRICT；删列不硬删技术实体/权限 |
+| productions | revision/schema_revision/order_revision/content_revision bigint default 1；purge_epoch bigint default 0 | PK id；revision>0；content_revision 只反映创作内容；评论与审阅使用自己的修订；删除预览另捕获相关依赖版本，不把所有活动塞入内容向量 |
+| shots | 各业务值按真实合同设置可空性，内置值不因普通删列改空；revision bigint；comment_event_seq bigint default 0 | unique production/id；活动 `(production_id,sort_index,id)`；不以 display_number 为身份 |
+| sequences/scenes | 同项目 unique/FK；已确认多场景动态要求与逐项覆盖，镜头明确环境值优先，否则主场景附差异 | RESTRICT；删列不硬删技术实体/权限 |
 | panels/production_steps | production_id；asset/input/output 版本引用收敛 | Shot/Asset composite FK；历史引用时 RESTRICT，显式硬删流程清依赖 |
 | users | annotation_color varchar(7) NULL，revision bigint | CHECK NULL 或规范化 #RRGGBB；只本人/授权管理员可改 |
 | comments | revision bigint、event_seq/last_activity_seq bigint、version_id/anchor_column_id NULL、anchor_type、anchor_json、content_deleted_at NULL；body可空 | 同项目/Shot parent/version/column校验；活动 project/shot/last_activity 索引；解决独立于已读 |
@@ -197,6 +197,8 @@ CREATE TABLE project_columns (
   key text NOT NULL,
   label text NOT NULL,
   origin text NOT NULL CHECK (origin IN ('builtin','preset','custom','import')),
+  column_class text NOT NULL CHECK (column_class IN ('builtin','preset','custom')),
+  entity_scope text NOT NULL DEFAULT 'shot',
   binding_kind text NOT NULL CHECK (binding_kind IN ('entity','derived','custom','pending')),
   binding_key text,
   field_type text NOT NULL,
@@ -208,13 +210,14 @@ CREATE TABLE project_columns (
   purged_at timestamptz,
   created_at timestamptz NOT NULL,
   updated_at timestamptz NOT NULL,
-  UNIQUE (production_id,key),
+  UNIQUE (production_id,entity_scope,key),
   UNIQUE (production_id,id),
   CHECK ((state = 'purged') = (purged_at IS NOT NULL)),
-  CHECK (state <> 'trashed' OR deleted_at IS NOT NULL)
+  CHECK (state <> 'trashed' OR deleted_at IS NOT NULL),
+  CHECK (column_class <> 'builtin' OR state IN ('active','trashed'))
 );
 CREATE UNIQUE INDEX uq_project_columns_live_binding
- ON project_columns(production_id,binding_key)
+ ON project_columns(production_id,entity_scope,binding_key)
  WHERE binding_key IS NOT NULL AND binding_kind <> 'pending' AND state <> 'purged';
 CREATE INDEX ix_project_columns_state ON project_columns(production_id,state);
 
@@ -231,23 +234,9 @@ CREATE TABLE shot_column_values (
 );
 CREATE INDEX ix_column_values_lookup ON shot_column_values(production_id,column_id,shot_id);
 
-CREATE TABLE column_layouts (
-  production_id text NOT NULL,
-  saved_view_id text NOT NULL,
-  column_id text NOT NULL,
-  position integer NOT NULL CHECK (position >= 0),
-  visible boolean NOT NULL,
-  width_mode text NOT NULL CHECK (width_mode IN ('manual','auto')),
-  manual_width_px integer CHECK (manual_width_px > 0),
-  computed_width_px integer CHECK (computed_width_px > 0),
-  wrap_text boolean NOT NULL,
-  frozen boolean NOT NULL,
-  PRIMARY KEY (saved_view_id,column_id),
-  UNIQUE (saved_view_id,position) DEFERRABLE INITIALLY DEFERRED,
-  FOREIGN KEY (production_id,saved_view_id) REFERENCES saved_views(production_id,id) ON DELETE CASCADE,
-  FOREIGN KEY (production_id,column_id) REFERENCES project_columns(production_id,id) ON DELETE RESTRICT,
-  CHECK (width_mode <> 'manual' OR manual_width_px IS NOT NULL)
-);
+-- 共享布局不再建立另一张权威 column_layouts 表。
+-- 列显示、顺序、宽度、行高、筛选、排序和分组统一保存在 SavedView.config。
+-- config 格式版本与业务 revision 分开，保存时校验列/镜头身份及权限。
 ```
 
 前置 migration 为 shots/saved_views 加对应 composite unique。custom values 仅允许 custom binding，不能给 builtin 写 EAV 第二份值；类型/选项由统一 schema 验证。purged 定义清 label/description/options/default 等含业务内容，保留最小 id/key/binding/type/timestamp/tombstone；label 可为空字符串。JSON 内容和多态 owner 引用不是自动 FK，须显式依赖登记+command 验证。
@@ -258,7 +247,7 @@ CREATE TABLE column_layouts (
 
 | 表 | 字段/类型 | 键、索引、生命周期 |
 | --- | --- | --- |
-| view_row_layouts | production_id/view_id/shot_id text、height_mode text、manual_height_px integer NULL | PK(view_id,shot_id)，view删除CASCADE、Shot RESTRICT；height>0；只存手动覆盖/策略，不存列高 |
+| SavedView.config 行高配置 | 全表策略及按稳定镜头身份的手动覆盖、自动测量版本 | 唯一共享配置，不新建第二份可写 view_row_layouts；不存可自定义列高 |
 | view_measurements | id、production_id/view_id text、generation bigint、context_json jsonb、source_content_revision/schema_revision/view_revision bigint、dependency_hash char(64)、result_artifact_id text NULL、status text | unique(view_id,generation)；artifact同项目FK；view/generation索引；computed cache可失效，不与手动值竞争 |
 | column_aliases | id、production_id/column_id/source_format/source_header text、source_schema_version/converter_version integer、confirmed_by text | unique(project,format,header,schema_version)；column/user FK；purge清规则 |
 | purge_previews | id、production_id/actor_id text、token_hash char(64)、scope/digests/counts JSONB、expected_revisions JSONB、content_revision/purge_epoch bigint、expires_at/consumed_at(NULL) timestamptz | token_hash unique；project/actor/expiry索引；消耗与purge同事务，无value |
@@ -282,14 +271,24 @@ CREATE TABLE column_layouts (
 | watermark_profiles | id、production_id NULL、carrier/algorithm_id/algorithm_version/key_id text、parameters JSONB、required boolean | scope/carrier索引；key只引用受控管理；carrier text/render/image/audio；算法待验证 |
 | watermark_instances | id、production_id/artifact_id/profile_id/trace_id/key_id/embedded_payload_hash text、embedding_status/verification_status text、verification_report_artifact_id NULL | trace unique；artifact/profile/report FK；映射受限，无正文/凭据；未嵌入不能verified |
 | tts_renders | id、production_id/provider_profile_id/input_digest/voice/model/language/pronunciation_version text、rate numeric、shot_id/column_id/version_id/audio_artifact_id NULL、duration_ms/sample_count bigint NULL、sample_rate integer NULL、sample_kind/status text | 缓存唯一键含scope+输入+provider/model/voice/rate/lang/词典；FK同项目；rate>0；project/shot/column索引；真实duration绑定audio |
-| command_receipts | production_id/actor_id/command_id/request_digest text、result_ref JSONB、committed_at | PK(project,actor,command)；同事务，无value副本；重试结果按现权限/tombstone再过滤 |
+| command_receipts | 合法项目或组织作用域、actor_id/command_id/request_digest、最小结果及提交时间 | 作用域外键和互斥约束；按作用域/账号/请求唯一，不伪造项目；同事务，无正文副本，重试重查当前权限和删除 |
 | outbox_events | id、production_id/command_id/event_type text、entity_ids JSONB、revision bigint、published_at NULL、attempt integer | unique(project,command,type)；未发布time索引；同事务写提交后发，不含正文/秘密 |
 
-媒体编辑的数据合同采用“immutable source + versioned presentation”：上传后的原始文件与 AssetVersion 为不可变事实；裁剪、缩放、平移、旋转、拉直、透视和翻转只更新 media_presentations。编辑 command 记录 expected presentation revision，成功后 revision +1；Undo/Redo 恢复 presentation 状态而不是复制旧文件。“恢复原图”表示回到 identity presentation，不删除历史 AssetVersion。
+媒体编辑的数据合同采用“immutable source + versioned presentation”：上传后的原始文件与 AssetVersion 为不可变事实；裁剪、缩放、平移、旋转、拉直、透视和翻转只更新 media_presentations。编辑 command 记录 expected presentation revision，成功后 revision +1；Undo/Redo 恢复 presentation 状态而不是复制旧文件。“载入原图”遵循最新镜头界面：完整原图按项目画幅适配、居中填黑，保留当前默认铺满及已有胶囊缩放、锁定、草稿撤销规则；不删除源 AssetVersion。资产库更新素材默认构图，只影响没有专用构图的当前引用，面板与封面专用构图保持。项目内容提交、审阅与交付固定当时有效构图和默认版本，历史恢复不更改资产的全局默认值。
 
 Review 的 Before/After 读取两个明确 revision 的 AssetVersion + media presentation，并渲染成实际图片供视觉比较。数据库可以保存参数用于可复现渲染、审计和版本恢复，但 Review API/UI 不以 crop 数值或 transform JSON 作为用户主要差异展示。派生缩略图/预览是可失效 artifact，presentation revision 改变后必须按 dependency 使旧缓存失效并允许 GC；不得把派生图当新的原图版本。
 
-旧 exports 先引用 job/artifact，消费者迁完后变兼容投影并退出，不能长期两套 export 状态机。全套表不是一次上线要求；具体迁移批次、源数据回填与回滚演练尚待完善，见交接文档。schema 确认后才写 Alembic。
+旧 exports 先引用 job/artifact，消费者迁完后变兼容投影并退出，不能长期两套 export 状态机。全套表不是一次上线要求；具体迁移批次、源数据回填与回滚演练尚待完善，见交接文档。实施时核验最新模型和唯一 Alembic 节点，按独立工作包新增迁移，不照本节旧全表草案重复建已存在表。
+
+### 7.4 最新资源与时间合同
+
+第15、16问取消库房、库存和预留，只记录指定时段需要什么，器材知识只含型号和基础知识、不含使用方法。来源候选和需求查询由独立resource_demand_service负责，复用场景要求、镜头逐项覆盖、已有导入结果及项目权限，见[资源方案](RESOURCE_TIME_REQUIREMENTS_2026-10-04.md)。
+
+同时间独立需求相加，明确共用只计一次，不同时段分别汇总；未排期或缺型号、数量、单位分别列出，不假设资源可用。时间区间采用UTC前闭后开，需求投影可重建、不作第二套可编辑事实。不创建库存、预留、数量配额或库房资格表；人员场地仍在原排期模块，显式共享身份后校验跨项目冲突。项目根→对象的稳定锁序保持。
+
+FPS改变自动保留镜头秒数重算帧数，统一分数帧率与舍入，派生时码同事务更新；正秒数至少一帧，总量舍入差异预览。音频实测秒数和UTC排期不变。共享视图布局仍由SavedView独占，个人布局退出权威配置双写。
+
+知识贡献复用后台用户组的团队归类，采集时固定项目成员全部团队；成员换组只影响之后的新经验。数据库保存稳定贡献范围及对应版本，原始回答与团队合格汇总分别鉴权，详见[知识库](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)。
 
 ## 8. Legacy 数据迁移设计已取消；保留文件桥接
 

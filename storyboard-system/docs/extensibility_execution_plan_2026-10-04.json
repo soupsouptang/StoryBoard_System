@@ -17,12 +17,18 @@
     "KL-AI-CURATE",
     "SHARED-VIEW",
     "BUILTIN-PURGE-PROTECTED",
-    "TEAM-RESOURCE-LINK",
     "SCENE-INHERIT",
     "OVERRIDE-PER-ITEM",
     "ENVIRONMENT-PRIMARY",
     "DEFAULT-NINE-COLUMNS",
-    "ENTITY-OWNERSHIP"
+    "ENTITY-OWNERSHIP",
+    "EXPLICIT-SHARED-PEOPLE-LOCATION",
+    "CANCEL-WAREHOUSE",
+    "TIME-DEMAND",
+    "MODEL-BASIC-KNOWLEDGE-ONLY",
+    "ASSET-DEFAULT-PRESENTATION",
+    "FPS-KEEP-SECONDS",
+    "KNOWLEDGE-CONTRIBUTION-SNAPSHOT"
   ],
   "shared_integration_paths": [
     "apps/api/main.py",
@@ -249,7 +255,7 @@
     },
     {
       "id": "E1-POLICY",
-      "title": "项目独立授权与全入口统一权限",
+      "title": "项目独立授权及后台用户组的团队归类",
       "owner": "E1",
       "dependencies": [
         "E1-IDENTITY"
@@ -260,7 +266,12 @@
         "apps/api/app/services/project_permission_service.py",
         "tests/backend/test_project_permissions.py",
         "apps/api/app/schemas/membership.py",
-        "apps/api/app/api/v1/members.py"
+        "apps/api/app/api/v1/members.py",
+        "apps/api/app/models/group.py",
+        "apps/api/app/services/group_service.py",
+        "apps/api/app/schemas/group.py",
+        "apps/api/app/api/v1/groups.py",
+        "tests/backend/test_group_team_classification.py"
       ],
       "excluded_paths": [
         "storyboard-system/static/",
@@ -380,7 +391,7 @@
     },
     {
       "id": "E2-RESOURCE",
-      "title": "有真实consumer的Location/Equipment资源",
+      "title": "器材道具需求与型号引用，不做库存和预留",
       "owner": "E2",
       "dependencies": [
         "E1-POLICY",
@@ -415,7 +426,7 @@
     },
     {
       "id": "E2-SHARED-RESOURCE",
-      "title": "显式团队共享人员/资源身份与受权冲突基础",
+      "title": "人员与场地的显式跨项目共享身份，不建立器材实物库存身份",
       "owner": "E2",
       "dependencies": [
         "E2-RESOURCE",
@@ -632,7 +643,8 @@
       "dependencies": [
         "E4-TASK",
         "E5-JOB",
-        "E2-SHARED-RESOURCE"
+        "E2-SHARED-RESOURCE",
+        "E2-DEMAND"
       ],
       "state": "not_started",
       "allowed_paths": [
@@ -650,7 +662,8 @@
         "FX-09",
         "FX-12",
         "FX-13",
-        "FX-19"
+        "FX-19",
+        "FX-23"
       ],
       "verification": [],
       "blockers": [],
@@ -768,7 +781,8 @@
       "owner": "E9",
       "dependencies": [
         "E1-POLICY",
-        "E2-SCENE"
+        "E2-SCENE",
+        "E2-DEMAND"
       ],
       "state": "not_started",
       "allowed_paths": [
@@ -851,7 +865,8 @@
         "KL-03",
         "KL-04",
         "KL-05",
-        "KL-08"
+        "KL-08",
+        "KL-11"
       ],
       "verification": [],
       "blockers": [],
@@ -901,7 +916,8 @@
       "owner": "K3",
       "dependencies": [
         "K2-CALIBRATION",
-        "E0-RECEIPT"
+        "E0-RECEIPT",
+        "E2-DEMAND"
       ],
       "state": "not_started",
       "allowed_paths": [
@@ -918,7 +934,8 @@
       "required_gates": [
         "KL-02",
         "KL-07",
-        "KL-08"
+        "KL-08",
+        "KL-11"
       ],
       "verification": [],
       "blockers": [],
@@ -986,19 +1003,132 @@
         "browser",
         "contract"
       ]
+    },
+    {
+      "id": "E2-DEMAND",
+      "title": "时间段器材道具需求与来源识别",
+      "owner": "E2-DEMAND",
+      "dependencies": [
+        "E2-RESOURCE",
+        "E2-CAST",
+        "E3-FIELD",
+        "E5-JOB",
+        "E7-IMPORT"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/resource_demand.py",
+        "apps/api/app/services/resource_demand_service.py",
+        "apps/api/app/schemas/resource_demand.py",
+        "apps/api/app/api/v1/resource_demands.py",
+        "tests/backend/test_resource_demands.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py",
+        "apps/web/app/(workspace)/productions/",
+        "apps/web/app/(workspace)/production/[id]/shots/",
+        "apps/web/app/(workspace)/production/[id]/settings/",
+        "apps/web/components/shot/",
+        "packages/ui/"
+      ],
+      "required_gates": [
+        "FX-21",
+        "FX-22",
+        "FX-23"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "全部门槛须有实际执行的脱敏证据，依赖已接受、唯一负责人和真实消费者已验证；文档结构通过不代表功能完成。",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E3-MEDIA-PRESENTATION",
+      "title": "素材默认构图继承与固定历史构图",
+      "owner": "E3-MEDIA",
+      "dependencies": [
+        "E0-RECEIPT",
+        "E0-CODEC",
+        "E1-POLICY"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/services/image_crop_service.py",
+        "apps/api/app/services/image_asset_service.py",
+        "apps/api/app/services/image_framing.py",
+        "apps/api/app/services/panel_media_service.py",
+        "apps/api/app/models/media.py",
+        "tests/backend/test_media_presentation_inheritance.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py",
+        "apps/web/app/(workspace)/productions/",
+        "apps/web/app/(workspace)/production/[id]/shots/",
+        "apps/web/app/(workspace)/production/[id]/settings/",
+        "apps/web/components/shot/",
+        "packages/ui/"
+      ],
+      "required_gates": [
+        "FX-12",
+        "FX-24"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "全部门槛须有实际执行的脱敏证据，依赖已接受、唯一负责人和真实消费者已验证；文档结构通过不代表功能完成。",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres",
+        "artifact"
+      ]
+    },
+    {
+      "id": "E3-FPS",
+      "title": "修改帧率后保留秒数自动重算",
+      "owner": "E3-FPS",
+      "dependencies": [
+        "E0-RECEIPT",
+        "E0-CODEC"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/services/production_service.py",
+        "apps/api/app/services/shot_service.py",
+        "apps/api/app/services/timecode_format.py",
+        "packages/timecode/src/",
+        "packages/timecode/tests/",
+        "tests/backend/test_production_fps_conversion.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py",
+        "apps/web/app/(workspace)/productions/",
+        "apps/web/app/(workspace)/production/[id]/shots/",
+        "apps/web/app/(workspace)/production/[id]/settings/",
+        "apps/web/components/shot/",
+        "packages/ui/"
+      ],
+      "required_gates": [
+        "FX-02",
+        "FX-25"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "全部门槛须有实际执行的脱敏证据，依赖已接受、唯一负责人和真实消费者已验证；文档结构通过不代表功能完成。",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres",
+        "contract"
+      ]
     }
   ],
   "requirements": "storyboard-system/docs/VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md",
-  "pending_product_decisions": [
-    {
-      "id": "Q-05",
-      "question": "多关联Scene对同一物理资源的数量/互斥要求如何合并",
-      "affected_packages": [
-        "E2-RESOURCE",
-        "E2-CAST",
-        "E6-SCHEDULE"
-      ],
-      "blocked_behavior": "同一继承资源的多来源数量合并；其他明确结构和命令可推进"
-    }
-  ]
+  "pending_product_decisions": [],
+  "resource_standard": "storyboard-system/docs/RESOURCE_TIME_REQUIREMENTS_2026-10-04.md"
 }

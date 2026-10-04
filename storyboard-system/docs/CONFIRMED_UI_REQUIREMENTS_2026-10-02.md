@@ -1,3 +1,5 @@
+> 2026-10-04审计说明：本文保留10月2日原始需求作为历史来源，当前规则以最新总纲、列模型、SHOT_COLUMNS_MENUS、SHOT_DETAIL、SHOT_FRAMING及SHOT_TOOLBAR实施记录为准。旧32列全集改为9内置、20预设，新项目9列可见；旧上下双向粘贴被行向下、列向后替代，剪切保留；选择统计使用实际完整数量，不用旧99上限截断。原始批注数量样式不因选择数变化自动改写。已有窄屏测试是历史证据，本轮新增页面只验桌面横屏；不得按本文旧布局重做已明确界面。
+
 # FRAMEFORGE 已确认修改需求及额度恢复续作计划
 
 更新日期：2026-10-02，Asia/Hong_Kong。
@@ -233,10 +235,10 @@
 
 ## 6. 本地续作上下文
 
-- 仓库：`/Users/montblanc/Documents/Codex/2026-09-30/new-chat/work/StoryBoard_System`。
+- 仓库：当前任务绑定的FrameForge工作区；公开文档不记录私人绝对路径。
 - 分支：`master`，跟踪 `soupsouptang/master`；上传到 `https://github.com/soupsouptang/StoryBoard_System.git`。
 - 写本文前本地基于 `640284d`；远端新增 `6c1e75f` 已 fast-forward，同步保留用户上传的 Excel 文件，未将其认定为合成测试数据。
-- 本地 Web：`http://127.0.0.1:3001`；本地 API：`http://127.0.0.1:8001`。
+- 本机预览和API使用当前任务的已有服务；具体地址留本地，不发布私有网络信息。
 - 合成验收 Production：`84c18c13-cddf-45fc-98e6-662f63d630ee`。
 - 隔离验收数据库：`/private/tmp/storyboard-ui-20261001.db`；媒体目录：`/private/tmp/storyboard-ui-20261001-media`。启动前确认路径和环境，不回退到默认/生产数据库。
 - 本地运行时先前已验证 HTTP 200；重启后需要重新核实，本文不是实时健康状态。

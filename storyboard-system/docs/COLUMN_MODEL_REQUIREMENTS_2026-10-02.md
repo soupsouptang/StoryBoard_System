@@ -14,7 +14,7 @@ FrameForge 的业务列正式分为三类：
 2. **预设列 Preset**：FrameForge 官方提供的可选业务字段模板。项目按需添加；允许隐藏、删除、恢复和**永久删除**。
 3. **自定义列 Custom**：用户在项目内自行创建的字段。允许隐藏、删除、恢复和**永久删除**。
 
-“是否默认显示”与“列类别”必须解耦。内置列不要求全部默认显示；预设列也可以由模板默认启用。
+“是否默认显示”与“列类别”分开。最新确认的新项目初始视图显示全部9个内置列，20个预设列按需添加；之后按共享视图修改显隐。明确项目模板可以启用预设，但不能把旧约7列初始化建议当当前默认。
 
 技术 ID、revision、权限、FK、审计序号、内部排序身份等不是业务列，不进入这三类目录，也不出现在普通列管理中。
 
@@ -80,7 +80,7 @@ FrameForge 的业务列正式分为三类：
 | 序 | key | 名称 | 建议类型/归属 |
 | --- | --- | --- | --- |
 | 1 | `shot_reference` | 镜头 | text；语义与镜号 / Shot ID 分离 |
-| 2 | `location` | 场景/地点 | text / Scene 映射待合同确认 |
+| 2 | `location` | 场景/地点 | 镜头明确值优先，否则主场景值；其他关联场景不同提示差异，无主场景不猜 |
 | 3 | `shot_size` | 景别 | select |
 | 4 | `lens_mm` | 焦段 | number / 保留无法标准化的来源文本策略 |
 | 5 | `camera_movement` | 运镜 | structured/select |
@@ -89,7 +89,7 @@ FrameForge 的业务列正式分为三类：
 | 8 | `department` | 责任部门 | select |
 | 9 | `int_ext` | 内外景 | select |
 | 10 | `day_night` | 日夜 | select |
-| 11 | `dialogue_character` | 对白角色 | text/multiselect，角色实体化另行决定 |
+| 11 | `dialogue_character` | 对白角色 | 明确剧情角色引用，原始未解析文本留导入来源；不绑负责人或登录账号 |
 | 12 | `performance` | 表演提示 | textarea |
 | 13 | `dialogue` | 对白 | textarea |
 | 14 | `edit_transition` | 剪辑/转场 | text/select |
