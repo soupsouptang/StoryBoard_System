@@ -143,6 +143,26 @@ CastAssignment 连接 Character ↔ Person，含候选/确定状态及有效范�
 
 统一 PermissionContext 至少含 authenticated principal、active membership、允许 actions、对象/字段 policy、分享 grant、policy revision/epoch 与 purge epoch。普通协作身份、受限联系资料和未来敏感档案分别投影；当前不要求采集合同/证件/薪酬。列表、搜索、计数、历史、Review、WS、媒体、导出预览/工件下载都在相同 scope 上判定。
 
+### 5.3A AuthorizationRecord / AuthorizationRequirement：制作授权资料，不做合同
+
+授权资料属于 Production scope 的制作事实，不进入合同/财务领域。首批类型覆盖演员肖像、场地拍摄、音乐、素材、字体、Logo/商标、航拍许可及项目明确增加的其他制作授权类型；类型扩展不自动获得法务含义。
+
+AuthorizationRecord 具有独立 owner、revision、普通删除/恢复、替代/撤回、权限和文件引用。它可通过 typed links 关联 Person、Location、Scene/Shot、AssetVersion、Deliverable；同一授权可覆盖多个对象，所以不能降成 Shot 字段。授权文件引用固定 AssetVersion，文件存在只证明系统持有该记录，不自动判断全部用途在法律上有效。
+
+AuthorizationRequirement 表达 Project Template、Scene/Shot Requirement 或 Deliverable 明确要求的授权条件，区分 hard/soft、适用对象/范围/期限、是否允许 N/A。Hard 的 missing/expired/UNKNOWN 使对应 Readiness 或 Final QC 不通过；soft 只提示。N/A 必须由定义允许并由有权限用户显式确认。系统可按记录中的明确有效期判断 expired，但不推断法律结论、合同履约、地域/媒体之外的隐含许可或费用。
+
+建议 `/productions/{p}/authorizations`、`/authorization-requirements` 和 authorized readiness projection；命令 Create/Update/Replace/Withdraw/Trash/Restore/LinkRequirement。权限撤销、文件Purge、对象Purge和旧Delivery引用需进入删除闭包。授权变化只影响未来 readiness/QC 和当前草稿预测，不改已发生拍摄、旧CallSheetRevision或历史交付事实。
+
+### 5.3B ChecklistDefinition / ChecklistResult：只检查，不做 SOP
+
+ChecklistDefinition 保存可复用检查条件、适用Project/Scene/Shot/Task/ShootDay/Deliverable类型、required/optional、allow_n_a、来源Template/Production Method及definition revision。它只描述“需要检查什么/是否满足”，不保存逐步操作说明，不演变为SOP。
+
+ChecklistResult 保存某一实际目标的检查事实、操作者、结果、可选证据引用、revision和时间；required、optional、N/A、UNKNOWN分开。Readiness 是 Task/Input/Checklist/Authorization 等权威事实的派生查询，不提供用户直接写 `ready=true` 的入口。Required Checklist 未通过时阻塞对应 readiness；optional 未完成只提示；允许N/A时必须显式选择并保存理由/操作者。
+
+Scene/Shot/Production Method/模板变化使自动Checklist不再适用时，尚未确认且无证据的自动实例可停用；已经完成、N/A确认或附证据的结果保留历史并标记来源失效，不自动删除。Checklist Definition 更新不重写既有实例；新版本用于后续实例或受控更新。经验校准只提出Checklist调整候选，正式变更经K3受权接受及Definition revision。
+
+建议 `/productions/{p}/checklists`、`/checklist-definitions`、`/queries/readiness`；不新增SOP页面、步骤执行器或知识文章owner。
+
 ### 5.4 FieldDefinitions / typed Values / bindings
 
 **扩展 ProjectColumn 现有定义 owner**，逻辑名称可为 ProjectFieldDefinition，但不要再建一张长期并存 definitions 镜像表。首批给 project_columns 增加 entity_scope，已有列标 shot；唯一键从 `(production_id,key)`转为 `(production_id,scope,key)`，binding 唯一范围同时扩展。稳定 IDs 与 `builtin:`/custom keys、生命周期保持，现有 DTO 通过 shot scope adapter 消费。
@@ -204,11 +224,13 @@ ScheduleItemScene/Shot/Person/Location及ResourceRequirement 是 typed links；�
 
 | 包 | 职责 | 依赖与边界 |
 | --- | --- | --- |
+| E2-AUTHORIZATION | 制作授权资料与hard/soft requirement；文件固定AssetVersion；供Readiness/Final QC消费 | 依赖E1-POLICY、E2-SCENE；不做合同、法务判断或费用，不把文件存在等同全部用途有效 |
+| E4-CHECKLIST | Checklist Definition/Result与派生Readiness；required/optional/N-A/UNKNOWN分离 | 依赖E2-SCENE、E2-AUTHORIZATION、E4-TASK、E0-CONFIG；只检查是否满足，不做SOP |
 | E6-MEDIA-HANDOFF | On-set Actual / AssetVersion → IntegrityCheck → BackupVerification → Preview / Formal Handoff → Post input readiness | 依赖 E4-TASK、E5-JOB、E6-SCHEDULE；不重复 AssetVersion owner，不把 Preview 当正式交接 |
 | E7-DELIVERY-LOOP | Review → ReworkRequest → 后期返工或补拍待排 → 新 Version → Review；Deliverable/QC/submit/deliver/ack/accept/reject | 依赖 E4-TASK、E6-SCHEDULE、E6-MEDIA-HANDOFF、E5-OUTBOX、E7-EXPORT；不把 Review/Task/Deliverable 混成一个状态 |
 | Z0-PRODUCTION-CLOSED-LOOP | 使用总纲 §19.4 从项目/镜头一路跑到经验校准并受控影响后续计划，验证所有包的真实组合而不拥有第二套业务写入 | 依赖 E8-IMPACT、E7-DELIVERY-LOOP、K3-RECOMMENDATION；只做集成验收和真实消费者证据，任何单包通过都不能替代 |
 
-E4-TASK、E6-SCHEDULE、E8-IMPACT 的职责保持不变；新增包只填原清单没有 owner 的闭环段，不复制现有 Task/Schedule/Review/Asset/Export owner。
+E2-AUTHORIZATION 和 E4-CHECKLIST 填补原总纲中“授权资料/Readiness已有引用但无独立owner”的缺口；E4-TASK、E6-SCHEDULE、E8-IMPACT 的职责保持不变。新增包只填原清单没有 owner 的闭环段，不复制现有 Task/Schedule/Review/Asset/Export owner。
 
 ## 6. Provider / Event / Job / Config 接入
 
@@ -373,7 +395,7 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 
 ## 12. 资源、图片与帧率增量批次
 
-原29包加需求、构图、帧率三个服务增量，再把需求新页从场景新页拆成独立包形成33包；本轮闭环审计再增加 E6-MEDIA-HANDOFF、E7-DELIVERY-LOOP、Z0-PRODUCTION-CLOSED-LOOP 三包，共36包。机器清单保存准确依赖和允许文件。新增包全部未开始，无虚构通过证据。已取消的库房和预留不再作为工作包。
+原29包加需求、构图、帧率三个服务增量，再把需求新页从场景新页拆成独立包形成33包；第一轮闭环审计增加 E6-MEDIA-HANDOFF、E7-DELIVERY-LOOP、Z0-PRODUCTION-CLOSED-LOOP 三包形成36包；再次审计补 E2-AUTHORIZATION、E4-CHECKLIST 两包，共38包。机器清单保存准确依赖和允许文件。新增包全部未开始，无虚构通过证据。已取消的库房和预留不再作为工作包。
 
 | 包 | 依赖 | 独立交付 |
 | --- | --- | --- |
@@ -383,9 +405,11 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 | E6-SCHEDULE | 原依赖，加E2-DEMAND | 排期负责时间匹配，人员和场地冲突；器材清单只表达需要什么 |
 | K3-RECOMMENDATION | 原依赖，加E2-DEMAND | 知识只提供型号和基础知识，不生成使用方法、不猜库存或自动改需求 |
 | E9-DEMAND-UI | E2-DEMAND、E6-SCHEDULE | 仅补仍缺失的需求页面、组件和hook；与场景新页分开领取，保留现有UI |
+| E2-AUTHORIZATION | E1-POLICY、E2-SCENE | 制作授权Record/Requirement、hard/soft、期限/文件/typed links；不做合同、法务、费用 |
+| E4-CHECKLIST | E2-SCENE、E2-AUTHORIZATION、E4-TASK、E0-CONFIG | Checklist Definition/Result、required/optional/N-A与派生Readiness；不做SOP |
 | E6-MEDIA-HANDOFF | E4-TASK、E5-JOB、E6-SCHEDULE | 正式素材交接的完整性/备份门槛、Preview与Formal分离、后期输入readiness |
-| E7-DELIVERY-LOOP | E4-TASK、E6-SCHEDULE、E6-MEDIA-HANDOFF、E5-OUTBOX、E7-EXPORT | Review返工/补拍回流、Deliverable/QC/提交/送达/验收/退回分离 |
-| Z0-PRODUCTION-CLOSED-LOOP | E8-IMPACT、E7-DELIVERY-LOOP、K3-RECOMMENDATION | 只做端到端闭环接受；经验候选必须经受权接受再影响未来计划，必须真实组合运行，不创建第二套业务owner |
+| E7-DELIVERY-LOOP | E4-TASK、E4-CHECKLIST、E2-AUTHORIZATION、E6-SCHEDULE、E6-MEDIA-HANDOFF、E5-OUTBOX、E7-EXPORT | Review返工/补拍回流、Deliverable/QC/提交/送达/验收/退回分离，并检查required Checklist与hard授权 |
+| Z0-PRODUCTION-CLOSED-LOOP | E8-IMPACT、E7-DELIVERY-LOOP、E2-AUTHORIZATION、E4-CHECKLIST、K3-RECOMMENDATION | 只做端到端闭环接受；required Checklist/hard授权和经验受权接受均必须贯穿，必须真实组合运行，不创建第二套业务owner |
 
 需求由resource_demand_service负责；构图继续由ImageCropService/MediaPresentation负责；帧率由现有项目、镜头服务编排唯一时码算法。三包不写进同一个万能服务，不新造解析器、队列、权限或历史基础。公共模型注册、路由、迁移链及内容快照由集成者独占处理。
 
@@ -401,6 +425,6 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 
 ## 14. 本轮交付与未完成范围
 
-本轮完成需求访谈和文档修订。FX-01至FX-30、KL-01至KL-11是待执行门槛；新增任务失效边界、通告发布边界、正式素材交接、Review/返工/补拍/交付闭环、时段需求、默认构图继承、帧率重算、知识及相关接口仍保留未开始状态。既有实施记录只说明各自提交当时的证据，不推广到新增模块。
+本轮完成需求访谈和文档修订。FX-01至FX-32、KL-01至KL-11是待执行门槛；新增任务失效边界、通告发布边界、正式素材交接、Review/返工/补拍/交付闭环、时段需求、默认构图继承、帧率重算、知识及相关接口仍保留未开始状态。既有实施记录只说明各自提交当时的证据，不推广到新增模块。
 
 下一步按清单实施独立工作包。缺真实PostgreSQL、来源解析、构图历史、工程扫码、水印样本或桌面读写证据时，准确记录未验收项，不以“文档可执行”宣称功能已落地。
