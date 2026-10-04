@@ -2,9 +2,9 @@
 
 # FrameForge 知识体系需求与实施合同
 
-版本：2.4，2026-10-05。状态：需求已审计；知识模块仍待实施和实际验收。本版同步已确认组织/能力边界；保留知识库基础类型、A–H分库、器材/软件扩展和粗粒度时间校准合同，不修改界面、运行数据库或部署。
+版本：2.5，2026-10-05。状态：需求已审计；知识模块仍待实施和实际验收。本版在既有组织/能力边界上新增制作常识库、细化知识对象/关系、光学/单位转换、固定镜头、多机位、格式数据流及首批 reference seed 合同，不修改界面、运行数据库或部署。
 
-配套：[总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)、[岗位方案](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md)、[工种目录](JOB_CATALOG_DEFINITIONS_2026-10-05.md)、[岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)、[知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)、[时间段资源需求](RESOURCE_TIME_REQUIREMENTS_2026-10-04.md)、[执行标准](TECHNICAL_ACCEPTANCE.md)、[实施计划](ACCEPTANCE_SCENARIOS.md)。
+配套：[总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)、[岗位方案](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md)、[工种目录](JOB_CATALOG_DEFINITIONS_2026-10-05.md)、[岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)、[知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)、[制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)、[时间段资源需求](RESOURCE_TIME_REQUIREMENTS_2026-10-04.md)、[执行标准](TECHNICAL_ACCEPTANCE.md)、[实施计划](ACCEPTANCE_SCENARIOS.md)。
 
 ## 1. 目标、使用者与边界
 
@@ -18,7 +18,7 @@
 | 设备型号参考 | 经核验的型号规格、单位、接口、配件兼容和适用条件 | 现场库存和可用数量 |
 | 时间段资源需求 | 拍摄需要什么、型号数量、时间范围与来源 | 根据需求猜实际可用量或建立库存 |
 | 项目事实 | 镜头、场景、任务、实际执行、素材和审阅 | 知识模块的第二份可修改正文 |
-| 一次经验 | 实测、自报、原因解释、修正和对应来源 | 所有人都适用的制作定律 |
+| 一次时间观察 | 系统Actual或必要的粗粒度时长、自报精度、修正和对应来源 | 故障原因、设备经验、人员能力或所有人都适用的制作定律 |
 | 统计与建议 | 合格样本分布、条件匹配、计划候选 | 自动修改事实或员工能力评分 |
 
 器材知识以厂商官方结构化规格为权威值，人工备注与官方值分离；兼容关系结构化保存。器材知识不扩展为使用方法或操作教程。软件知识只记录适配的制作能力范围，不建立功能更新日志或操作教程。本文不建立常见问题库。QA/主动提问只在系统 Actual 不足时补充粗粒度时间信息，用于预计时长校准；不询问故障原因、设备心得或解决办法。不加入预算、采购合同、薪酬、财务或复杂耗材管理。
@@ -37,7 +37,7 @@
 
 JOB_CATALOG 1.1 包含139个可任职岗位编号（与1.0的岗位行完全相同）。知识体系不复制岗位名称/职责行，而由[岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)使用稳定岗位编号建立专业知识域绑定，覆盖A项目管理与制片、B策划/内容/导演、C视觉设计与美术、D摄影/灯光/录音/现场、E出镜/表演/造型、F AE/MG/二维/合成、G三维/实时/三维视效、H剪辑/声音/成片/交付。
 
-岗位检索至少可以返回：相关概念、工作输入、产出类型、上下游交接、专业原理/判断维度、质量关注点、相关设备或软件基础参考、团队QA及来源版本。这里的“方法”解释专业原理和生产关系，不提供逐步操作教程；Checklist继续只表达是否满足，不恢复SOP。
+岗位检索至少可以返回：相关概念、工作输入、产出类型、上下游交接、专业原理/判断维度、质量关注点、相关官方器材/接口/兼容关系、软件适用能力范围、格式/色彩数据流、粗粒度时间校准及来源版本。这里的“方法”解释专业原理和生产关系，不提供逐步操作教程；Checklist继续只表达是否满足，不恢复SOP。
 
 方案岗位和执行岗位必须保持知识分支。B14与G09a继续保留专业分支。一个现实人员可以同时关联多个岗位知识，但人员数量、工时和任务仍按原业务事实计算。
 
@@ -148,14 +148,14 @@ E1-POLICY负责后台用户组及团队归类，K1-EXPERIENCE只保存贡献引�
 
 | 工作包 | 独占职责 | 前置与约束 |
 | --- | --- | --- |
-| K0-REFERENCE | 知识事实、来源、型号、岗位专业知识域及修订；保存 RoleKnowledgeBinding，复用后台用户组与团队归类 | E1-POLICY、E0-RECEIPT；岗位定义只引用 JOB_CATALOG stable role ID，不复制岗位目录，不新建知识成员或库房团队 |
+| K0-REFERENCE | 制作常识Topic/Revision/Alias、Formula、来源、官方型号/规格、接口/兼容、软件能力、格式/色彩基础、岗位专业知识域及 RoleKnowledgeBinding | E1-POLICY、E0-RECEIPT；不复制岗位目录，不建万能KnowledgeEntry/Relation，不新建知识成员或库房团队 |
 | K1-EXPERIENCE | 真实 Actual、必要时的粗粒度时间补充、经验贡献和撤回 | K0、E4-TASK、E5-OUTBOX；不建立常见问题/故障题库，不采集原因或解决方案 |
 | K2-CALIBRATION | 固定样本、统计、不可变估计和留出验证 | K1、E5-JOB；权限、取消、删除和迟到发布受控 |
 | K3-RECOMMENDATION | 受权查询、建议与标准命令接受 | K2、E2-DEMAND；读取受权时间段需求，不猜实际库存 |
 | K4-RELATIONS | 官方型号兼容关系、软件能力范围及真实检索需要的知识关系 | K0；不建立自适应问题池或常见问题图谱 |
 | K5-KNOWLEDGE-UI | 新版知识浏览、型号与经验总结页 | 对应新版接口、权限和数据验收后实施新界面，不继承旧封面或布局 |
 
-技术名称仅用于实施定位：KnowledgeSpace 是共享范围投影；ProfessionalKnowledgeDomain 保存 KX/KA–KH 专业知识域，RoleKnowledgeBinding 连接 role catalog version + stable role ID + domain ID；KnowledgeEntry 保存正式知识事实/摘要及来源。EquipmentCategory、SpecificationDefinition/Value、EquipmentNote、CompatibilityRelation 和 SoftwareProduct/SoftwareScope 按基础合同保存设备/软件知识。ExperienceObservation 只保存实际或粗粒度时间观察；EstimateProfile 保存不可变时间统计版本。它们统一使用本代新建的权限、命令历史、持久作业、事务事件和配置转换基础。组与团队由统一身份模块负责，从零建立账号和组配置，知识只记录其固定贡献引用。团队归类由新版身份职责接入，不把它误报成已存在接口。
+技术名称仅用于实施定位：KnowledgeLibrary/KnowledgeDomain 组织共享常识与 A–H 专业知识；KnowledgeTopic 是稳定语义身份，KnowledgeRevision 保存不可变正文，KnowledgeAlias/SourceReference/FormulaDefinition 分别处理别名、来源和公式。RoleKnowledgeBinding 连接 role catalog version + stable role ID + domain/topic。Manufacturer/EquipmentProductFamily/EquipmentModel/Variant、ImagingDevice/EmbeddedImagingModule/SensorRecordingMode、SpecificationDefinition/Value/Note、Interface/CompatibilityPath、SoftwareProduct/CapabilitySupport、FormatDefinition/Relation 按基础合同保存参考知识。ExperienceObservation 只保存实际或粗粒度时间观察；EstimateProfile 保存不可变时间统计版本。它们统一使用本代新建的权限、命令历史、持久作业、事务事件和配置转换基础。组与团队由统一身份模块负责，从零建立账号和组配置，知识只记录其固定贡献引用。团队归类由新版身份职责接入，不把它误报成已存在接口。
 
 拟议接口包括知识空间查询、项目经验、问题与回答、知识建议；实际路径和请求响应经统一合同接受后冻结。API 类型从同一权威合同生成，不在前后端和文档分别手写四份。核心关系用外键、同项目校验、修订和时间，统计条件可以用带格式版本的结构化输入。
 
@@ -196,5 +196,13 @@ E1-POLICY负责后台用户组及团队归类，K1-EXPERIENCE只保存贡献引�
 | KL-21 | SoftwareScope只表达软件/版本范围的Capability support level；能表达“三维软件不用于剪辑”等边界，不生成教程、快捷键或版本功能日志 |
 | KL-22 | 正式知识中不存在FAILURE_PATTERN/常见问题库；ExperienceObservation只含Actual或粗粒度时间，不含故障原因、设备心得、最佳设置和解决方案 |
 | KL-23 | 知识模块不创建KnowledgeAdmin/Editor等专用权限体系；知识读写、核验、发布、撤回统一消费系统权限和用户组判定 |
+| KL-24 | Common Knowledge 首批 Topic 可分别查询；FOV、Camera Angle、Perspective 为三个稳定Topic且关系可解释，焦距变化不直接伪造透视变化 |
+| KL-25 | Spatial Push、Optical Zoom、机位+焦距混合、机内Digital Zoom、Post Reframe分别建模；拍摄阶段和后期放大不混为同一动作 |
+| KL-26 | FOV优先官方值，CALCULATED值标来源；有效SensorRecordingMode参与计算；Anamorphic/Fisheye按适用模型；F-number/T-stop、Shutter Angle/Time、ISO/EI/Gain只在确认映射下转换 |
+| KL-27 | 固定镜头设备选择后锁定EmbeddedImagingModule；Mavic类多模组在同一机型内选择模组；多机位逐Body独立计算，Project Mount Preference只排序不改兼容真相 |
+| KL-28 | Compatibility以Domain接口推导为主、厂商型号级断言为override；自动路径最多两个intermediate；Adapter/Accessory分别保存机械、电控、AF、光圈、metadata、power、control等能力 |
+| KL-29 | FormatDefinition只有一个canonical identity；D/F/G/H通过PRODUCES/CONSUMES/IMPORTS/EXPORTS/TRANSCODES_TO关联；共享色彩Topic与Camera/Composite/Render/Post数据流Domain分离 |
+| KL-30 | 首批seed至少覆盖RED KOMODO原版、ZEISS CP.3完整焦段、Osmo Pocket 4、Mavic 4 Pro、RS 5、Focus Pro、DJI Transmission/SDR、Nanlite Forza 200/旧Forza 300B/FC-120B/FC-300B/PavoTube II 15C、Aputure STORM 1200x、Tiffen 4×5.65 Pro-Mist/Black Pro-Mist、Blender/UE5/AE；具体参数只从官方来源入SpecificationValue |
+| KL-31 | 时间校准读取Call Sheet/Schedule/制作表estimate与Actual；Shot/Scene/ShootDay可作aggregate，Setup/Rehearsal/Shoot/Reset/Strike/Move/Task/Post作component，aggregate/component不重复计样本且不按Person统计 |
 
 真实 PostgreSQL、接口、并发、来源、统计回放、删除恢复和新页证据均需绑定实际提交。文档校验只能证明合同与清单结构一致，本轮没有把新知识模块登记为已接受。
