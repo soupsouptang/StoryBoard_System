@@ -1,5 +1,11 @@
 # FRAMEFORGE 续作入口
 
+## 2026-10-04 详情高度标准基准bug修复（本地代码f11427d）
+
+用户截图指出内容撑高镜头行会导致详情按倍数增高。真实样本006标准行84.594px、008行313px，旧详情008达到1252px；ShotDetailSlot现固定为原标准布局470px，只观察内容区宽度，取消相邻TR测量/订阅。其他表格行高/布局、末行借空间、固定左图、内部滚动和保存语义保持，此段覆盖此前实测行高×4计算。未修改项目数据、API、DB或shared primitives。
+
+实际006/008打开详情均470px；1440/1024/768/375/320宽度也均470px且无根横向溢出，干净Esc收起正常。既有shot-detail-card检查、最终生产Webpack/TypeScript、diff及Regression Guard以5ee8abc为base通过。本机Web3002已经重载`.next/detail-standard-height/standalone/apps/web`，API8002/PG55432保留，viewport恢复；截图outputs/shot-detail-standard-height-2026-10-04.png仅本机。代码与详细MD/ACTIVE本地提交f11427d，续作MD随后独立本地提交。GitHub具体仓库授权仍未获用户明确回复，未重试或绕过之前自动审批拒绝，不能声称本次已上传；未知`:memory:.ses`保持未上传。没有扩展其他旧待办，文件上传/下载实机门槛维持历史记录。
+
 ## 2026-10-04 四行详情、等宽列、制作方式名称与本机部署恢复（本地代码cf17489）
 
 最新用户要求“部署软件让浏览器能够访问”已完成：本机入口http://127.0.0.1:3002/productions，实际浏览器原有4个项目正常加载，合成详情12镜头及图片可读。Web使用生产Webpack/TypeScript已通过的`.next/detail-method-verified/standalone/apps/web`，显式同源proxy→8002，两服务独立后台运行、绑定127.0.0.1；本次启动时API45531/Web45590，PG55432保留，后续不能将PID当永久事实。临时viewport已恢复，用户项目大厅保留；不是公网部署，机器休眠/重启后须重新检查进程。
