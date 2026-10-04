@@ -134,4 +134,4 @@ Template/Production Method生成required和optional Checklist；Scene/Shot/Task/
 
 ## 其他模块的验收
 
-岗位场景 RW-01—RW-10 见[岗位需求](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md)；知识场景 KL-01—KL-11 见[知识需求](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)。语义、单位与统计验收见[总纲第20节](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)。
+岗位场景 RW-01—RW-10 见[岗位需求](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md)；知识场景 KL-01—KL-16 见[知识需求](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)，其中KL-12—KL-16覆盖岗位驱动知识完整性、方案/执行分支、检索边界和版本绑定。语义、单位与统计验收见[总纲第20节](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)。
