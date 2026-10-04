@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1020" role="img" aria-labelledby="title desc"><title id="title">下一代信息密度与对象排列</title><desc id="desc">新绘合成场景列表、人员卡片和分组排期；未实现，不复制旧UI或照片。</desc><rect width="1440" height="1020" fill="#f5f5f5"/><g font-family="Microsoft YaHei, sans-serif">
+<text x="36" y="40" font-size="24" fill="#262626" font-weight="700">下一代布局研究 · 场景 / 人员 / 排期</text>
+<text x="36" y="70" font-size="15" fill="#666" font-weight="400">新绘合成示意。借鉴对齐与密度；字号、颜色和尺寸需真实浏览器验收。</text>
+<rect x="36" y="95" width="180" height="880" rx="6" fill="#ededed" stroke="#dedede"/>
+<text x="55" y="130" font-size="18" fill="#262626" font-weight="700">项目上下文</text>
+<text x="55" y="176" font-size="15" fill="#444" font-weight="400">内容</text>
+<text x="55" y="207" font-size="15" fill="#444" font-weight="400">场景与剧本</text>
+<text x="55" y="239" font-size="15" fill="#444" font-weight="400">分镜</text>
+<text x="55" y="293" font-size="15" fill="#444" font-weight="400">人员与准备</text>
+<text x="55" y="324" font-size="15" fill="#444" font-weight="400">演职人员</text>
+<text x="55" y="356" font-size="15" fill="#444" font-weight="400">时间段需求</text>
+<text x="55" y="410" font-size="15" fill="#444" font-weight="400">计划与执行</text>
+<text x="55" y="441" font-size="15" fill="#444" font-weight="400">任务</text>
+<text x="55" y="473" font-size="15" fill="#444" font-weight="400">拍摄排期</text>
+<text x="55" y="505" font-size="15" fill="#444" font-weight="400">通告</text>
+<text x="55" y="559" font-size="15" fill="#444" font-weight="400">审阅与交付</text>
+<text x="55" y="590" font-size="15" fill="#444" font-weight="400">版本与审阅</text>
+<text x="55" y="622" font-size="15" fill="#444" font-weight="400">交付</text>
+<text x="244" y="123" font-size="20" fill="#262626" font-weight="700">场景 · 8 个有权对象</text>
+<text x="244" y="157" font-size="15" fill="#262626" font-weight="400">新建　导入剧本</text>
+<text x="850" y="157" font-size="15" fill="#262626" font-weight="400">搜索　筛选　排序　多选　列　导出</text>
+<text x="252" y="192" font-size="13" fill="#666" font-weight="400">编号</text>
+<text x="320" y="192" font-size="13" fill="#666" font-weight="400">场景 / 摘要</text>
+<text x="850" y="192" font-size="13" fill="#666" font-weight="400">拍摄日</text>
+<text x="974" y="192" font-size="13" fill="#666" font-weight="400">摄制组</text>
+<text x="1090" y="192" font-size="13" fill="#666" font-weight="400">镜头</text>
+<text x="1180" y="192" font-size="13" fill="#666" font-weight="400">预计拍摄</text>
+<rect x="244" y="204" width="1160" height="51" rx="6" fill="#fff" stroke="#dedede"/>
+<text x="260" y="227" font-size="14" fill="#262626" font-weight="700">001</text>
+<text x="320" y="225" font-size="14" fill="#262626" font-weight="700">外景 · 地点甲 · 日</text>
+<text x="320" y="245" font-size="13" fill="#777" font-weight="400">短描述一行；完整正文与来源在详情查看</text>
+<text x="850" y="233" font-size="14" fill="#262626" font-weight="400">10月08日</text>
+<text x="974" y="233" font-size="14" fill="#262626" font-weight="400">摄制组甲</text>
+<text x="1090" y="233" font-size="14" fill="#262626" font-weight="400">2</text>
+<text x="1180" y="233" font-size="14" fill="#262626" font-weight="400">45 分钟</text>
+<text x="1370" y="233" font-size="18" fill="#262626" font-weight="400">⋯</text>
+<rect x="244" y="258" width="1160" height="51" rx="6" fill="#fafafa" stroke="#dedede"/>
+<text x="260" y="281" font-size="14" fill="#262626" font-weight="700">002</text>
+<text x="320" y="279" font-size="14" fill="#262626" font-weight="700">内景 · 地点乙 · 夜</text>
+<text x="320" y="299" font-size="13" fill="#777" font-weight="400">短描述一行；完整正文与来源在详情查看</text>
+<text x="850" y="287" font-size="14" fill="#262626" font-weight="400">10月08日</text>
+<text x="974" y="287" font-size="14" fill="#262626" font-weight="400">摄制组甲</text>
+<text x="1090" y="287" font-size="14" fill="#262626" font-weight="400">3</text>
+<text x="1180" y="287" font-size="14" fill="#262626" font-weight="400">45 分钟</text>
+<text x="1370" y="287" font-size="18" fill="#262626" font-weight="400">⋯</text>
+<rect x="244" y="312" width="1160" height="51" rx="6" fill="#fff" stroke="#dedede"/>
+<text x="260" y="335" font-size="14" fill="#262626" font-weight="700">003</text>
+<text x="320" y="333" font-size="14" fill="#262626" font-weight="700">待确认环境 · 场景丙</text>
+<text x="320" y="353" font-size="13" fill="#777" font-weight="400">短描述一行；完整正文与来源在详情查看</text>
+<text x="850" y="341" font-size="14" fill="#262626" font-weight="400">未安排</text>
+<text x="974" y="341" font-size="14" fill="#262626" font-weight="400">摄制组甲</text>
+<text x="1090" y="341" font-size="14" fill="#262626" font-weight="400">4</text>
+<text x="1180" y="341" font-size="14" fill="#262626" font-weight="400">待确认</text>
+<text x="1370" y="341" font-size="18" fill="#262626" font-weight="400">⋯</text>
+<rect x="244" y="366" width="1160" height="51" rx="6" fill="#fafafa" stroke="#dedede"/>
+<text x="260" y="389" font-size="14" fill="#262626" font-weight="700">004</text>
+<text x="320" y="387" font-size="14" fill="#262626" font-weight="700">外景 · 地点甲 · 日</text>
+<text x="320" y="407" font-size="13" fill="#777" font-weight="400">短描述一行；完整正文与来源在详情查看</text>
+<text x="850" y="395" font-size="14" fill="#262626" font-weight="400">10月08日</text>
+<text x="974" y="395" font-size="14" fill="#262626" font-weight="400">摄制组甲</text>
+<text x="1090" y="395" font-size="14" fill="#262626" font-weight="400">5</text>
+<text x="1180" y="395" font-size="14" fill="#262626" font-weight="400">45 分钟</text>
+<text x="1370" y="395" font-size="18" fill="#262626" font-weight="400">⋯</text>
+<rect x="244" y="420" width="1160" height="51" rx="6" fill="#fff" stroke="#dedede"/>
+<text x="260" y="443" font-size="14" fill="#262626" font-weight="700">005</text>
+<text x="320" y="441" font-size="14" fill="#262626" font-weight="700">内景 · 地点丁 · 日</text>
+<text x="320" y="461" font-size="13" fill="#777" font-weight="400">短描述一行；完整正文与来源在详情查看</text>
+<text x="850" y="449" font-size="14" fill="#262626" font-weight="400">10月08日</text>
+<text x="974" y="449" font-size="14" fill="#262626" font-weight="400">摄制组甲</text>
+<text x="1090" y="449" font-size="14" fill="#262626" font-weight="400">6</text>
+<text x="1180" y="449" font-size="14" fill="#262626" font-weight="400">45 分钟</text>
+<text x="1370" y="449" font-size="18" fill="#262626" font-weight="400">⋯</text>
+<text x="244" y="510" font-size="20" fill="#262626" font-weight="700">人员卡片 · 人员与角色分别查询</text>
+<rect x="244" y="530" width="370" height="124" rx="6" fill="#fff" stroke="#dedede"/>
+<text x="260" y="558" font-size="18" fill="#262626" font-weight="700">人员甲</text>
+<text x="260" y="590" font-size="14" fill="#262626" font-weight="400">摄影 / 当前任务 2</text>
+<text x="260" y="620" font-size="13" fill="#666" font-weight="400">详情查看档期与来源</text>
+<rect x="516" y="544" width="82" height="96" rx="4" fill="#ececec" stroke="#dedede"/>
+<text x="527" y="598" font-size="13" fill="#777" font-weight="400">无头像</text>
+<rect x="634" y="530" width="370" height="124" rx="6" fill="#fff" stroke="#dedede"/>
+<text x="650" y="558" font-size="18" fill="#262626" font-weight="700">人员乙</text>
+<text x="650" y="590" font-size="14" fill="#262626" font-weight="400">演员 / 饰演角色乙</text>
+<text x="650" y="620" font-size="13" fill="#666" font-weight="400">详情查看档期与来源</text>
+<rect x="906" y="544" width="82" height="96" rx="4" fill="#ececec" stroke="#dedede"/>
+<text x="917" y="598" font-size="13" fill="#777" font-weight="400">无头像</text>
+<rect x="1024" y="530" width="370" height="124" rx="6" fill="#fff" stroke="#dedede"/>
+<text x="1040" y="558" font-size="18" fill="#262626" font-weight="700">角色丙</text>
+<text x="1040" y="590" font-size="14" fill="#262626" font-weight="400">尚未确定演员</text>
+<text x="1040" y="620" font-size="13" fill="#666" font-weight="400">详情查看档期与来源</text>
+<rect x="1296" y="544" width="82" height="96" rx="4" fill="#ececec" stroke="#dedede"/>
+<text x="1307" y="598" font-size="13" fill="#777" font-weight="400">无头像</text>
+<text x="244" y="707" font-size="20" fill="#262626" font-weight="700">拍摄排期 · 场景条带</text>
+<text x="244" y="743" font-size="15" fill="#262626" font-weight="400">方案甲 · 只读　　进入编辑　　日期范围：10月08日—09日</text>
+<rect x="244" y="761" width="1160" height="34" rx="6" fill="#e8e8e8" stroke="#dedede"/>
+<text x="260" y="784" font-size="14" fill="#262626" font-weight="700">拍摄日 1 · 10月08日 · 摄制组甲 · 缺项 1</text>
+<rect x="244" y="800" width="1160" height="45" rx="6" fill="#fff" stroke="#dedede"/>
+<text x="260" y="828" font-size="15" fill="#262626" font-weight="400">09:00—09:45　场景甲　·　地点甲　·　人物要求甲</text>
+<rect x="244" y="850" width="1160" height="45" rx="6" fill="#fff" stroke="#dedede"/>
+<text x="260" y="878" font-size="15" fill="#262626" font-weight="400">09:45—10:15　转场　·　撤收 / 装载 / 行驶 / 卸载 / 搭建</text>
+<rect x="244" y="901" width="1160" height="48" rx="6" fill="#e5e5e5" stroke="#dedede"/>
+<text x="260" y="931" font-size="14" fill="#262626" font-weight="700">日末汇总　拍摄 45m　准备 待确认　转场 30m　休息另计　｜　不是已完成状态</text>
+</g></svg>

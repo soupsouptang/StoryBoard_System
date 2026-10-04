@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1000" role="img" aria-labelledby="title desc"><title id="title">下一代纸张与个人通告</title><desc id="desc">新绘合成三区页头、部门集合与日程，手机确认固定修订；没有真实联系人、地址或地图。</desc><rect width="1440" height="1000" fill="#f5f5f5"/><g font-family="Microsoft YaHei, sans-serif">
+<text x="36" y="40" font-size="24" fill="#262626" font-weight="700">下一代通告研究 · 同一固定修订，两种授权投影</text>
+<text x="36" y="71" font-size="15" fill="#666" font-weight="400">合成结构示意，正式纸张需毫米排版和实际渲染验收。</text>
+<rect x="36" y="98" width="860" height="854" rx="0" fill="#fff" stroke="#dedede"/>
+<rect x="54" y="118" width="270" height="207" rx="0" fill="#fff" stroke="#dedede"/>
+<rect x="324" y="118" width="270" height="207" rx="0" fill="#fff" stroke="#dedede"/>
+<rect x="594" y="118" width="270" height="207" rx="0" fill="#fff" stroke="#dedede"/>
+<text x="72" y="150" font-size="18" fill="#262626" font-weight="700">制作信息</text>
+<text x="72" y="180" font-size="15" fill="#262626" font-weight="400">合成项目甲</text>
+<text x="72" y="210" font-size="13" fill="#262626" font-weight="400">必要现场联系：按授权显示</text>
+<text x="72" y="242" font-size="14" fill="#262626" font-weight="400">发布修订 2</text>
+<text x="72" y="275" font-size="14" fill="#262626" font-weight="400">日期 / 时区固定</text>
+<text x="342" y="150" font-size="17" fill="#262626" font-weight="700">拍摄日 1 · 摄制组甲</text>
+<text x="342" y="185" font-size="17" fill="#262626" font-weight="400">2026-10-08</text>
+<text x="342" y="230" font-size="15" fill="#262626" font-weight="400">总体集合</text>
+<text x="342" y="284" font-size="36" fill="#262626" font-weight="700">08:00</text>
+<text x="612" y="150" font-size="18" fill="#262626" font-weight="700">可选现场信息</text>
+<text x="612" y="185" font-size="14" fill="#262626" font-weight="400">天气：未录入</text>
+<text x="612" y="219" font-size="14" fill="#262626" font-weight="400">医疗点：未录入</text>
+<text x="612" y="254" font-size="13" fill="#777" font-weight="400">不复制样例地址与电话</text>
+<text x="54" y="359" font-size="19" fill="#262626" font-weight="700">部门 / 个人集合</text>
+<rect x="54" y="376" width="810" height="68" rx="0" fill="#f7f7f7" stroke="#dedede"/>
+<text x="68" y="404" font-size="15" fill="#262626" font-weight="400">摄影准备 08:00　｜　演员甲妆发 08:30　｜　开机计划 09:00</text>
+<text x="68" y="430" font-size="13" fill="#666" font-weight="400">这些时间各有来源，不由总体集合时间自动填充。</text>
+<text x="54" y="482" font-size="19" fill="#262626" font-weight="700">地点与集合点</text>
+<rect x="54" y="496" width="810" height="77" rx="0" fill="#f7f7f7" stroke="#dedede"/>
+<text x="68" y="526" font-size="15" fill="#262626" font-weight="400">地点甲 · 集合点按授权事实显示</text>
+<text x="68" y="553" font-size="13" fill="#666" font-weight="400">没有地图服务时保留地址文字和授权在线入口，不放假地图。</text>
+<text x="54" y="613" font-size="19" fill="#262626" font-weight="700">当日安排</text>
+<rect x="54" y="628" width="810" height="34" rx="0" fill="#e9e9e9" stroke="#dedede"/>
+<text x="68" y="651" font-size="14" fill="#262626" font-weight="400">时间　　　　　　类型 / 场景　　　　地点　　　　角色 / 准备</text>
+<text x="68" y="694" font-size="14" fill="#262626" font-weight="400">09:00—09:45　拍摄 · 场景甲　　　　地点甲　　　角色甲</text>
+<text x="68" y="742" font-size="14" fill="#262626" font-weight="400">09:45—10:15　转场　　　　　　　　　甲 → 乙　　分段时间</text>
+<text x="68" y="790" font-size="14" fill="#262626" font-weight="400">10:15—11:00　拍摄 · 场景乙　　　　地点乙　　　准备待确认</text>
+<text x="54" y="848" font-size="13" fill="#666" font-weight="400">工作、转场、休息、未知分别汇总；剧本页数固定来源版本。</text>
+<text x="54" y="910" font-size="13" fill="#666" font-weight="400">修订 2 · Asia/Shanghai · 页码 / 字段投影 / 可见水印按模板</text>
+<rect x="954" y="118" width="440" height="804" rx="16" fill="#fff" stroke="#dedede"/>
+<text x="979" y="162" font-size="22" fill="#262626" font-weight="700">本人通告 · 人员甲</text>
+<text x="979" y="197" font-size="16" fill="#262626" font-weight="400">10月08日 · 摄制组甲 · 修订 2</text>
+<text x="979" y="233" font-size="14" fill="#666" font-weight="400">Asia/Shanghai</text>
+<text x="979" y="287" font-size="17" fill="#262626" font-weight="400">本人集合</text>
+<text x="979" y="344" font-size="46" fill="#262626" font-weight="700">08:30</text>
+<rect x="979" y="371" width="390" height="66" rx="6" fill="#ededed" stroke="#dedede"/>
+<text x="995" y="397" font-size="16" fill="#262626" font-weight="700">重要变化</text>
+<text x="995" y="424" font-size="15" fill="#262626" font-weight="400">比修订 1 晚 30 分钟</text>
+<rect x="979" y="467" width="390" height="74" rx="6" fill="#fafafa" stroke="#dedede"/>
+<text x="995" y="494" font-size="16" fill="#262626" font-weight="700">地点</text>
+<text x="995" y="523" font-size="14" fill="#666" font-weight="400">地点甲 · 集合点详见授权资料</text>
+<rect x="979" y="557" width="390" height="74" rx="6" fill="#fafafa" stroke="#dedede"/>
+<text x="995" y="584" font-size="16" fill="#262626" font-weight="700">准备</text>
+<text x="995" y="613" font-size="14" fill="#666" font-weight="400">妆发 / 服装 / 本人安排</text>
+<rect x="979" y="647" width="390" height="74" rx="6" fill="#fafafa" stroke="#dedede"/>
+<text x="995" y="674" font-size="16" fill="#262626" font-weight="700">阅读与下载</text>
+<text x="995" y="703" font-size="14" fill="#666" font-weight="400">有权查看此修订的原版通告</text>
+<rect x="979" y="759" width="390" height="50" rx="6" fill="#262626" stroke="#262626"/>
+<text x="1005" y="791" font-size="18" fill="#fff" font-weight="700">确认已阅读修订 2</text>
+<text x="979" y="850" font-size="14" fill="#666" font-weight="400">查看、确认、到场独立记录。</text>
+<text x="979" y="880" font-size="14" fill="#666" font-weight="400">离线或失败不显示已确认。</text>
+</g></svg>

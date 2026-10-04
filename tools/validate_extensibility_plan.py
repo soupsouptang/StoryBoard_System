@@ -176,6 +176,9 @@ def main():
         if not manifest.is_relative_to(ROOT):
             raise ValueError("manifest must be inside the checkout")
         plan = json.loads(manifest.read_text(encoding="utf-8"))
+        if isinstance(plan, dict) and plan.get("status") == "moved_to_next_generation":
+            print("Execution plan moved to the separate next-generation branch; implementation is not authorized. No validation or product tests ran.", file=sys.stderr)
+            return 2
         errors = validate(plan)
     except (ValueError, OSError) as error:
         print(f"Invalid execution manifest: {error}", file=sys.stderr)

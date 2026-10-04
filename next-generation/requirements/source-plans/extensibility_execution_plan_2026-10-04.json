@@ -1,0 +1,1380 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-04",
+  "execution_standard": "storyboard-system/docs/EXTENSIBILITY_EXECUTION_STANDARD_2026-10-04.md",
+  "implementation_plan": "storyboard-system/docs/EXTENSIBILITY_IMPLEMENTATION_PLAN_2026-10-04.md",
+  "knowledge_standard": "storyboard-system/docs/VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md",
+  "decision_ids": [
+    "H-01",
+    "H-02",
+    "H-03",
+    "H-05",
+    "H-06",
+    "H-07",
+    "H-08",
+    "KL-SHARING",
+    "KL-QA-BUDGET",
+    "KL-AI-CURATE",
+    "SHARED-VIEW",
+    "BUILTIN-PURGE-PROTECTED",
+    "SCENE-INHERIT",
+    "OVERRIDE-PER-ITEM",
+    "ENVIRONMENT-PRIMARY",
+    "DEFAULT-NINE-COLUMNS",
+    "ENTITY-OWNERSHIP",
+    "EXPLICIT-SHARED-PEOPLE-LOCATION",
+    "CANCEL-WAREHOUSE",
+    "TIME-DEMAND",
+    "MODEL-BASIC-KNOWLEDGE-ONLY",
+    "ASSET-DEFAULT-PRESENTATION",
+    "FPS-KEEP-SECONDS",
+    "KNOWLEDGE-CONTRIBUTION-SNAPSHOT",
+    "TASK-AUTO-INACTIVATE",
+    "CALLSHEET-EXPLICIT-PUBLISH",
+    "MEDIA-FORMAL-HANDOFF",
+    "AUTHORIZATION-DOCUMENTS-ONLY",
+    "CHECKLIST-NO-SOP"
+  ],
+  "shared_integration_paths": [
+    "apps/api/main.py",
+    "apps/api/app/models/__init__.py",
+    "apps/api/alembic/versions/",
+    "apps/api/app/services/project_snapshot.py",
+    "storyboard-system/docs/ACTIVE_WORKSTREAMS.md",
+    "storyboard-system/docs/CANONICAL_OWNER_MATRIX.md",
+    "storyboard-system/docs/BACKEND_FRONTEND_HANDOFF_2026-10-04.md",
+    "apps/api/app/api/v1/productions.py",
+    "apps/api/app/api/v1/assets.py",
+    "apps/api/app/api/v1/panel_media.py",
+    "apps/api/app/schemas/production.py",
+    "apps/api/app/schemas/image_crop.py",
+    "apps/api/app/models/user.py",
+    "packages/contracts/",
+    "packages/types/"
+  ],
+  "protected_ui_paths": [
+    "apps/web/app/(workspace)/productions/",
+    "apps/web/app/(workspace)/production/[id]/shots/",
+    "apps/web/app/(workspace)/production/[id]/settings/",
+    "apps/web/components/shot/",
+    "packages/ui/"
+  ],
+  "work_packages": [
+    {
+      "id": "B0-BOARD",
+      "title": "Board后端剩余PG与真实消费者接受",
+      "owner": "Integrator",
+      "dependencies": [],
+      "state": "in_progress",
+      "allowed_paths": [
+        "apps/api/app/services/board_service.py",
+        "tests/backend/test_boards_api.py",
+        "tests/backend/test_board_migration.py",
+        "apps/web/app/(workspace)/production/[id]/lighting/",
+        "apps/web/app/(workspace)/production/[id]/moodboard/",
+        "apps/web/components/boards/",
+        "apps/web/lib/hooks/useBoards.ts"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-01",
+        "FX-06",
+        "FX-12",
+        "FX-16"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres",
+        "browser"
+      ]
+    },
+    {
+      "id": "B0-IMPORT",
+      "title": "现有导入草稿的冲突、冻结计划与原子回滚",
+      "owner": "Integrator",
+      "dependencies": [],
+      "state": "in_progress",
+      "allowed_paths": [
+        "apps/api/app/services/import_service.py",
+        "apps/api/app/services/document_import.py",
+        "tests/backend/test_import_modes.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-02",
+        "FX-15"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "B0-EXPORT",
+      "title": "六版式、实际工程码扫码与附件回读",
+      "owner": "Integrator",
+      "dependencies": [],
+      "state": "in_progress",
+      "allowed_paths": [
+        "apps/api/app/services/document_export.py",
+        "apps/api/app/services/engineering_pdf.py",
+        "tests/backend/test_export_layouts.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-11",
+        "FX-12",
+        "FX-15"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "artifact"
+      ]
+    },
+    {
+      "id": "E0-RECEIPT",
+      "title": "标准命令上下文与幂等回执",
+      "owner": "E0",
+      "dependencies": [],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/services/command_receipt_service.py",
+        "apps/api/app/models/command_receipt.py",
+        "apps/api/app/schemas/command.py",
+        "tests/backend/test_command_receipts.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-02"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E0-CODEC",
+      "title": "原HistoryService等价codec seam",
+      "owner": "E0",
+      "dependencies": [],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/services/history_service.py",
+        "apps/api/app/services/history_codecs/",
+        "tests/backend/test_history_codecs.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-01",
+        "FX-02"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E0-CONFIG",
+      "title": "纯配置migrator与真实消费者版本适配",
+      "owner": "E0",
+      "dependencies": [],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/services/config_migration_service.py",
+        "tests/backend/test_config_migrations.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-02"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api"
+      ]
+    },
+    {
+      "id": "E1-IDENTITY",
+      "title": "项目Person/Character与账号显式关联",
+      "owner": "E1",
+      "dependencies": [
+        "E0-RECEIPT",
+        "E0-CODEC"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/person.py",
+        "apps/api/app/services/person_service.py",
+        "apps/api/app/schemas/person.py",
+        "apps/api/app/api/v1/people.py",
+        "tests/backend/test_people_api.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-04",
+        "FX-12"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E1-POLICY",
+      "title": "项目独立授权及后台用户组的团队归类",
+      "owner": "E1",
+      "dependencies": [
+        "E1-IDENTITY"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/membership.py",
+        "apps/api/app/services/project_permission_service.py",
+        "tests/backend/test_project_permissions.py",
+        "apps/api/app/schemas/membership.py",
+        "apps/api/app/api/v1/members.py",
+        "apps/api/app/models/group.py",
+        "apps/api/app/services/group_service.py",
+        "apps/api/app/schemas/group.py",
+        "apps/api/app/api/v1/groups.py",
+        "tests/backend/test_group_team_classification.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-05",
+        "FX-12"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E2-ORG",
+      "title": "可选Work/Episode与项目挂接",
+      "owner": "E2",
+      "dependencies": [
+        "E1-POLICY"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/organization.py",
+        "apps/api/app/services/organization_service.py",
+        "tests/backend/test_organization_api.py",
+        "apps/api/app/schemas/organization.py",
+        "apps/api/app/api/v1/organization.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-03"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E2-SCENE",
+      "title": "SceneShot多对多安全转换",
+      "owner": "E2",
+      "dependencies": [
+        "E1-POLICY",
+        "E0-CODEC"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/scene_relation.py",
+        "apps/api/app/services/scene_relation_service.py",
+        "tests/backend/test_scene_relations.py",
+        "apps/api/app/schemas/scene_relation.py",
+        "apps/api/app/api/v1/scene_relations.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-06",
+        "FX-12"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E2-CAST",
+      "title": "Casting与独立场景需求/镜头出演",
+      "owner": "E2",
+      "dependencies": [
+        "E2-SCENE",
+        "E1-IDENTITY"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/casting.py",
+        "apps/api/app/services/casting_service.py",
+        "tests/backend/test_casting_api.py",
+        "apps/api/app/schemas/casting.py",
+        "apps/api/app/api/v1/casting.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-04",
+        "FX-06",
+        "FX-12",
+        "FX-20"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E2-RESOURCE",
+      "title": "器材道具需求与型号引用，不做库存和预留",
+      "owner": "E2",
+      "dependencies": [
+        "E1-POLICY",
+        "E2-SCENE"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/resource.py",
+        "apps/api/app/services/resource_service.py",
+        "tests/backend/test_resources_api.py",
+        "apps/api/app/schemas/resource.py",
+        "apps/api/app/api/v1/resources.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-04",
+        "FX-12",
+        "FX-14",
+        "FX-20"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E2-SHARED-RESOURCE",
+      "title": "人员与场地的显式跨项目共享身份，不建立器材实物库存身份",
+      "owner": "E2",
+      "dependencies": [
+        "E2-RESOURCE",
+        "E1-IDENTITY",
+        "E1-POLICY"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/shared_resource_identity.py",
+        "apps/api/app/services/shared_resource_identity_service.py",
+        "apps/api/app/schemas/shared_resource_identity.py",
+        "apps/api/app/api/v1/shared_resource_identities.py",
+        "tests/backend/test_shared_resource_identity.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py",
+        "apps/web/components/shot/",
+        "apps/web/app/(workspace)/production/[id]/shots/"
+      ],
+      "required_gates": [
+        "FX-04",
+        "FX-05",
+        "FX-19"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates require actual sanitized evidence; planned seams are not registered capabilities. Existing UI changes belong to the designated UI owner.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E3-FIELD",
+      "title": "扩展唯一定义owner与typed值/转换",
+      "owner": "E3",
+      "dependencies": [
+        "E2-SCENE",
+        "E2-RESOURCE",
+        "E0-CONFIG"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/field.py",
+        "apps/api/app/services/custom_field_service.py",
+        "tests/backend/test_entity_fields.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-07",
+        "FX-12",
+        "FX-14",
+        "FX-20"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E3-SHARED-VIEW",
+      "title": "SavedView共享配置唯一owner与个人布局分离；UI接入交接",
+      "owner": "E3",
+      "dependencies": [
+        "E3-FIELD",
+        "E1-POLICY",
+        "E0-CONFIG",
+        "E5-OUTBOX"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/view.py",
+        "apps/api/app/models/history.py",
+        "apps/api/app/services/saved_view_service.py",
+        "apps/api/app/schemas/saved_view.py",
+        "apps/api/app/api/v1/saved_views.py",
+        "tests/backend/test_shared_view_sync.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py",
+        "apps/web/components/shot/",
+        "apps/web/app/(workspace)/production/[id]/shots/"
+      ],
+      "required_gates": [
+        "FX-02",
+        "FX-05",
+        "FX-12",
+        "FX-18"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates require actual sanitized evidence; planned seams are not registered capabilities. Existing UI changes belong to the designated UI owner.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E4-TASK",
+      "title": "任务、DAG、主责与固定产物交接",
+      "owner": "E4",
+      "dependencies": [
+        "E2-CAST",
+        "E2-RESOURCE",
+        "E3-FIELD",
+        "E0-RECEIPT"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/task.py",
+        "apps/api/app/services/task_service.py",
+        "apps/api/app/services/workflow_service.py",
+        "tests/backend/test_tasks_dag.py",
+        "apps/api/app/schemas/task.py",
+        "apps/api/app/api/v1/tasks.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-08",
+        "FX-09",
+        "FX-12",
+        "FX-26"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E5-OUTBOX",
+      "title": "可恢复发布与独立consumer收据",
+      "owner": "E5",
+      "dependencies": [
+        "E0-RECEIPT",
+        "E1-POLICY"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/command.py",
+        "apps/api/app/services/outbox_service.py",
+        "apps/worker/worker.py",
+        "tests/backend/test_outbox_delivery.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-10",
+        "FX-12"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E5-JOB",
+      "title": "持久Job、Storage与发布fence",
+      "owner": "E5",
+      "dependencies": [
+        "E5-OUTBOX"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/job.py",
+        "apps/api/app/services/job_service.py",
+        "tests/backend/test_jobs_storage.py",
+        "apps/api/app/schemas/job.py",
+        "apps/api/app/api/v1/jobs.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-11",
+        "FX-12"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E6-SCHEDULE",
+      "title": "项目时区、资源区间与通告发布",
+      "owner": "E6",
+      "dependencies": [
+        "E4-TASK",
+        "E5-JOB",
+        "E2-SHARED-RESOURCE",
+        "E2-DEMAND"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/schedule.py",
+        "apps/api/app/services/schedule_service.py",
+        "tests/backend/test_schedule_api.py",
+        "apps/api/app/schemas/schedule.py",
+        "apps/api/app/api/v1/schedules.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-09",
+        "FX-12",
+        "FX-13",
+        "FX-19",
+        "FX-23",
+        "FX-27"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E7-IMPORT",
+      "title": "多实体来源与frozen ImportPlan",
+      "owner": "E7",
+      "dependencies": [
+        "B0-IMPORT",
+        "E3-FIELD",
+        "E5-JOB"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/services/import_service.py",
+        "apps/api/app/models/import_plan.py",
+        "tests/backend/test_import_plans.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-07",
+        "FX-12",
+        "FX-14",
+        "FX-15"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E7-EXPORT",
+      "title": "受权Profile与工件生命周期",
+      "owner": "E7",
+      "dependencies": [
+        "B0-EXPORT",
+        "E3-FIELD",
+        "E5-JOB"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/services/document_export.py",
+        "apps/api/app/services/export_template_service.py",
+        "tests/backend/test_deliverable_profiles.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-11",
+        "FX-12",
+        "FX-14",
+        "FX-15"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E8-IMPACT",
+      "title": "正常联动、异常与白名单规则",
+      "owner": "E8",
+      "dependencies": [
+        "E4-TASK",
+        "E6-SCHEDULE",
+        "E5-OUTBOX",
+        "E6-MEDIA-HANDOFF",
+        "E7-DELIVERY-LOOP"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/services/impact_service.py",
+        "apps/api/app/services/automation_service.py",
+        "tests/backend/test_production_impact.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-10",
+        "FX-14",
+        "FX-17"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E9-MISSING-UI",
+      "title": "场景管理缺失页面的独立接入与桌面验收",
+      "owner": "E9",
+      "dependencies": [
+        "E1-POLICY",
+        "E2-SCENE"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/web/app/(workspace)/production/[id]/scenes/",
+        "apps/web/components/scenes/",
+        "apps/web/lib/hooks/useScenes.ts"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-16"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "browser",
+        "contract"
+      ]
+    },
+    {
+      "id": "K0-REFERENCE",
+      "title": "影视与设备参考事实/来源版本",
+      "owner": "K0",
+      "dependencies": [
+        "E1-POLICY",
+        "E0-RECEIPT"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/knowledge.py",
+        "apps/api/app/services/knowledge_service.py",
+        "apps/api/app/api/v1/knowledge.py",
+        "tests/backend/test_knowledge_reference.py",
+        "apps/api/app/schemas/knowledge.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "KL-01",
+        "KL-02",
+        "KL-03"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "K1-EXPERIENCE",
+      "title": "真实事实触发QA与默认团队贡献",
+      "owner": "K1",
+      "dependencies": [
+        "K0-REFERENCE",
+        "E4-TASK",
+        "E5-OUTBOX",
+        "E6-SCHEDULE"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/experience.py",
+        "apps/api/app/services/experience_service.py",
+        "apps/api/app/services/qa_learning_service.py",
+        "tests/backend/test_experience_qa.py",
+        "apps/api/app/schemas/experience.py",
+        "apps/api/app/api/v1/experience.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "KL-03",
+        "KL-04",
+        "KL-05",
+        "KL-08"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "K2-CALIBRATION",
+      "title": "去重聚合/不可变profile与回测",
+      "owner": "K2",
+      "dependencies": [
+        "K1-EXPERIENCE",
+        "E5-JOB"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/knowledge_calibration.py",
+        "apps/api/app/services/knowledge_calibration.py",
+        "tests/backend/test_knowledge_calibration.py",
+        "apps/api/app/schemas/knowledge_calibration.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "KL-05",
+        "KL-06",
+        "KL-08"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "K3-RECOMMENDATION",
+      "title": "受权知识建议与标准Command接受",
+      "owner": "K3",
+      "dependencies": [
+        "K2-CALIBRATION",
+        "E0-RECEIPT",
+        "E2-DEMAND"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/services/knowledge_recommendation.py",
+        "tests/backend/test_knowledge_recommendations.py",
+        "apps/api/app/models/knowledge_recommendation.py",
+        "apps/api/app/schemas/knowledge_recommendation.py",
+        "apps/api/app/api/v1/knowledge_recommendations.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "KL-02",
+        "KL-07",
+        "KL-08",
+        "KL-11"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "K4-ADAPTIVE",
+      "title": "有效性回放与受控问题排序",
+      "owner": "K4",
+      "dependencies": [
+        "K2-CALIBRATION"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/services/qa_question_policy.py",
+        "tests/backend/test_qa_adaptive_policy.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "KL-04",
+        "KL-06",
+        "KL-09"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "K5-MISSING-UI",
+      "title": "知识/经验新consumer真实桌面验收",
+      "owner": "K5",
+      "dependencies": [
+        "K3-RECOMMENDATION"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/web/app/(workspace)/knowledge/",
+        "apps/web/components/knowledge/",
+        "apps/web/lib/hooks/useKnowledge.ts"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "KL-10"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "All required gates must have executed, sanitized evidence; dependencies accepted; canonical owners and real consumers verified.",
+      "required_evidence_kinds": [
+        "browser",
+        "contract"
+      ]
+    },
+    {
+      "id": "E2-DEMAND",
+      "title": "时间段器材道具需求与来源识别",
+      "owner": "E2-DEMAND",
+      "dependencies": [
+        "E2-RESOURCE",
+        "E2-CAST",
+        "E3-FIELD",
+        "E5-JOB",
+        "E7-IMPORT"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/resource_demand.py",
+        "apps/api/app/services/resource_demand_service.py",
+        "apps/api/app/schemas/resource_demand.py",
+        "apps/api/app/api/v1/resource_demands.py",
+        "tests/backend/test_resource_demands.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py",
+        "apps/web/app/(workspace)/productions/",
+        "apps/web/app/(workspace)/production/[id]/shots/",
+        "apps/web/app/(workspace)/production/[id]/settings/",
+        "apps/web/components/shot/",
+        "packages/ui/"
+      ],
+      "required_gates": [
+        "FX-21",
+        "FX-22",
+        "FX-23"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "全部门槛须有实际执行的脱敏证据，依赖已接受、唯一负责人和真实消费者已验证；文档结构通过不代表功能完成。",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E3-MEDIA-PRESENTATION",
+      "title": "素材默认构图继承与固定历史构图",
+      "owner": "E3-MEDIA",
+      "dependencies": [
+        "E0-RECEIPT",
+        "E0-CODEC",
+        "E1-POLICY"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/services/image_crop_service.py",
+        "apps/api/app/services/image_asset_service.py",
+        "apps/api/app/services/image_framing.py",
+        "apps/api/app/services/panel_media_service.py",
+        "apps/api/app/models/media.py",
+        "tests/backend/test_media_presentation_inheritance.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py",
+        "apps/web/app/(workspace)/productions/",
+        "apps/web/app/(workspace)/production/[id]/shots/",
+        "apps/web/app/(workspace)/production/[id]/settings/",
+        "apps/web/components/shot/",
+        "packages/ui/"
+      ],
+      "required_gates": [
+        "FX-12",
+        "FX-24"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "全部门槛须有实际执行的脱敏证据，依赖已接受、唯一负责人和真实消费者已验证；文档结构通过不代表功能完成。",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres",
+        "artifact"
+      ]
+    },
+    {
+      "id": "E3-FPS",
+      "title": "修改帧率后保留秒数自动重算",
+      "owner": "E3-FPS",
+      "dependencies": [
+        "E0-RECEIPT",
+        "E0-CODEC"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/services/production_service.py",
+        "apps/api/app/services/shot_service.py",
+        "apps/api/app/services/timecode_format.py",
+        "packages/timecode/src/",
+        "packages/timecode/tests/",
+        "tests/backend/test_production_fps_conversion.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py",
+        "apps/web/app/(workspace)/productions/",
+        "apps/web/app/(workspace)/production/[id]/shots/",
+        "apps/web/app/(workspace)/production/[id]/settings/",
+        "apps/web/components/shot/",
+        "packages/ui/"
+      ],
+      "required_gates": [
+        "FX-02",
+        "FX-25"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "全部门槛须有实际执行的脱敏证据，依赖已接受、唯一负责人和真实消费者已验证；文档结构通过不代表功能完成。",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres",
+        "contract"
+      ]
+    },
+    {
+      "id": "E9-DEMAND-UI",
+      "title": "时间段器材道具需求的独立缺失界面，不含库房",
+      "owner": "E9-DEMAND-UI",
+      "dependencies": [
+        "E2-DEMAND",
+        "E6-SCHEDULE"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/web/app/(workspace)/production/[id]/resource-demands/",
+        "apps/web/components/resource-demands/",
+        "apps/web/lib/hooks/useResourceDemands.ts"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py",
+        "apps/web/app/(workspace)/productions/",
+        "apps/web/app/(workspace)/production/[id]/shots/",
+        "apps/web/app/(workspace)/production/[id]/settings/",
+        "apps/web/components/shot/",
+        "packages/ui/"
+      ],
+      "required_gates": [
+        "FX-16",
+        "FX-21",
+        "FX-23"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "对应API已接受；仅创建仍缺失需求页，真实桌面读写与失败回读；不建库房或覆盖既有UI。",
+      "required_evidence_kinds": [
+        "browser",
+        "contract"
+      ]
+    },
+    {
+      "id": "E6-MEDIA-HANDOFF",
+      "title": "现场素材完整性、备份验证与正式交接",
+      "owner": "E6-MEDIA",
+      "dependencies": [
+        "E4-TASK",
+        "E5-JOB",
+        "E6-SCHEDULE"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/media_handoff.py",
+        "apps/api/app/services/media_handoff_service.py",
+        "apps/api/app/schemas/media_handoff.py",
+        "apps/api/app/api/v1/media_handoffs.py",
+        "tests/backend/test_media_handoff.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-09",
+        "FX-12",
+        "FX-28"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "正式交接固定AssetVersion并通过完整性与项目配置备份门槛；Preview只允许草稿预处理，不冒充正式input readiness。",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E7-DELIVERY-LOOP",
+      "title": "Review返工补拍与交付验收回流",
+      "owner": "E7-DELIVERY",
+      "dependencies": [
+        "E4-TASK",
+        "E6-SCHEDULE",
+        "E6-MEDIA-HANDOFF",
+        "E5-OUTBOX",
+        "E7-EXPORT",
+        "E2-AUTHORIZATION",
+        "E4-CHECKLIST"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/rework.py",
+        "apps/api/app/models/deliverable.py",
+        "apps/api/app/services/rework_service.py",
+        "apps/api/app/services/deliverable_service.py",
+        "apps/api/app/schemas/rework.py",
+        "apps/api/app/schemas/deliverable.py",
+        "apps/api/app/api/v1/rework.py",
+        "apps/api/app/api/v1/deliverables.py",
+        "tests/backend/test_rework_delivery_loop.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-09",
+        "FX-12",
+        "FX-15",
+        "FX-29",
+        "FX-31",
+        "FX-32"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "Review问题能唯一进入返工Task或补拍排期并回到新Version/Review；Final QC消费required Checklist和hard授权；QC、提交、送达、确认、验收、退回事实分离。",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "Z0-PRODUCTION-CLOSED-LOOP",
+      "title": "全制作主链端到端闭环接受",
+      "owner": "INTEGRATOR",
+      "dependencies": [
+        "E8-IMPACT",
+        "E7-DELIVERY-LOOP",
+        "K3-RECOMMENDATION",
+        "E2-AUTHORIZATION",
+        "E4-CHECKLIST"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "tests/backend/test_production_closed_loop.py",
+        "storyboard-system/docs/visual-evidence/2026-10-04/Z0-PRODUCTION-CLOSED-LOOP/"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-17",
+        "FX-26",
+        "FX-27",
+        "FX-28",
+        "FX-29",
+        "FX-30",
+        "KL-05",
+        "KL-06",
+        "KL-07",
+        "FX-31",
+        "FX-32"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "总纲§19.4合成项目必须从Project/Scene/Shot跑到Experience/Calibration，并经K3受权接受影响后续计划；required Checklist、hard授权、API、真实PostgreSQL、真实consumer/浏览器及合同证据齐全，任何单包PASS不能冒充整链闭环。",
+      "required_evidence_kinds": [
+        "api",
+        "postgres",
+        "browser",
+        "contract"
+      ]
+    },
+    {
+      "id": "E2-AUTHORIZATION",
+      "title": "制作授权资料与授权Requirement",
+      "owner": "E2-AUTHORIZATION",
+      "dependencies": [
+        "E1-POLICY",
+        "E2-SCENE"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/authorization.py",
+        "apps/api/app/services/authorization_service.py",
+        "apps/api/app/schemas/authorization.py",
+        "apps/api/app/api/v1/authorizations.py",
+        "tests/backend/test_authorization_records.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-05",
+        "FX-12",
+        "FX-31"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "只管理制作授权记录、文件、范围、期限及hard/soft Requirement；不做合同、法务判断或费用；真实Readiness/Final QC consumer通过。",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E4-CHECKLIST",
+      "title": "Checklist结果与派生Readiness",
+      "owner": "E4-CHECKLIST",
+      "dependencies": [
+        "E2-SCENE",
+        "E2-AUTHORIZATION",
+        "E4-TASK",
+        "E0-CONFIG"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/checklist.py",
+        "apps/api/app/services/checklist_service.py",
+        "apps/api/app/schemas/checklist.py",
+        "apps/api/app/api/v1/checklists.py",
+        "tests/backend/test_checklist_readiness.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-09",
+        "FX-12",
+        "FX-32"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "Checklist只检查是否满足，不做SOP；required/optional/N-A/UNKNOWN与来源失效正确，Readiness由事实派生且不可直接写布尔绕过。",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    }
+  ],
+  "requirements": "storyboard-system/docs/VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md",
+  "pending_product_decisions": [],
+  "resource_standard": "storyboard-system/docs/RESOURCE_TIME_REQUIREMENTS_2026-10-04.md"
+}
