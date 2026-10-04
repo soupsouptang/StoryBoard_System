@@ -2,7 +2,7 @@
 
 # FrameForge 知识库基础内容、类型与扩展合同
 
-版本：1.3，2026-10-05。状态：需求合同，尚未创建运行数据库、知识条目、索引、维护页面或权限规则。本版已形成制作常识、243 Topic/13公式和135个A–H组件基线，并据真实规模锁定分类最大深度为 Library→Domain→Component→可选Subcomponent；Topic/器材/软件/格式不作为继续嵌套的树层。
+版本：1.4，2026-10-05。状态：需求合同，尚未创建运行数据库、知识条目、索引、维护页面或权限规则。本版在常识/组件/层级基线上纳入首批已填 Reference Seed Data，并强化官方来源状态、UNKNOWN语义与固定/多内置成像模组规则。
 
 ## 1. 总原则
 
@@ -65,6 +65,12 @@ KnowledgeLibrary
 含 Library 最多四级。KnowledgeTopic、EquipmentModel、SoftwareProduct、FormatDefinition、FormulaDefinition 都是独立实体，通过 relation / facet 连接分类节点，不能继续扩成第五层以上目录。
 
 这条规则同时解决“镜头→焦段→光圈”等错误：焦段、F-number、T-stop、FOV、Focus、Coverage 是并列知识维度，通过 relation/公式互联，不存在父子数据关系。品牌、型号、卡口Variant也通过结构化字段检索，不进入知识分类层。
+
+## 2.4 已填 Reference Seed 与来源状态
+
+首批实际填充数据统一见 [首批 Reference Seed Data](REFERENCE_SEED_DATA_2026-10-05.md)。每个结构化字段必须区分 OFFICIAL_VERIFIED / OFFICIAL_PARTIAL / OFFICIAL_CONFLICT / UNKNOWN / DERIVED；没有官方确认的值保持 UNKNOWN，不能用零值、默认值或第三方页面补成官方事实。
+
+固定镜头设备允许一个 ImagingDevice 拥有一个或多个 EmbeddedImagingModule。模组数量由具体厂商官方事实决定：例如多摄无人机或双镜头口袋相机可以在机身内部切换模组，但这些内置镜头仍不能进入独立 Lens Picker。
 
 ## 3. 基础知识类型
 
