@@ -195,7 +195,18 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
   const identityFields = shortFields.filter(field => field.key === 'display_number' || field.key === 'tc_in');
   const longFields = visible.filter(field => ['textarea', 'json'].includes(field.kind));
   return <div ref={card} tabIndex={-1} data-local-history role="region" aria-label={`镜头 ${shot.display_number} 详情`} style={{ height }} className="@container/shot-detail flex min-h-0 flex-col overflow-hidden rounded-none border border-border bg-card text-sm outline-none" onClick={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()}>
-    <header className="flex shrink-0 items-center justify-between gap-4 border-b border-border p-4"><h2 className="min-w-0 truncate text-base font-semibold">镜头 {shot.display_number} · 详情 <span className="ml-2 text-xs font-normal text-muted-foreground">REV {shot.revision}</span></h2><Button size="sm" variant="destructive" disabled={!canWrite || busy} onClick={() => setTrash(true)} className="h-8 shrink-0 text-sm"><Icons.Trash2 />删除镜头</Button></header>
+    <header data-detail-header className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border p-4">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <h2 className="whitespace-nowrap text-base font-semibold">镜头 {shot.display_number} · 详情</h2>
+        <span className="text-xs font-normal text-muted-foreground">REV {shot.revision}</span>
+        <span role="status" className="text-xs text-muted-foreground">{busy ? '保存中…' : dirty ? '有未保存修改' : '已同步'}</span>
+        <Button size="icon-sm" variant="destructive" aria-label="删除镜头" title="删除镜头" disabled={!canWrite || busy} onClick={() => setTrash(true)} className="shrink-0 rounded-md"><Icons.Trash2 /></Button>
+      </div>
+      <div className="ml-auto flex shrink-0 items-center gap-4">
+        <Button size="sm" disabled={!canWrite || busy} onClick={() => void submit()} className="h-8 w-16 px-0 text-sm">保存</Button>
+        <Button size="sm" variant="outline" disabled={busy} onClick={onClose} className="h-8 w-16 px-0 text-sm">取消</Button>
+      </div>
+    </header>
     <div ref={body} className="min-h-0 flex-1 overflow-hidden p-4" data-detail-body style={{ '--detail-image-width': `${pictureHeight * pictureRatio}px` } as React.CSSProperties}>
       <div className={`grid h-full min-h-0 min-w-0 gap-4 ${pictures.length ? 'grid-rows-[100px_minmax(0,1fr)] @min-[760px]/shot-detail:grid-rows-1 @min-[760px]/shot-detail:grid-cols-[minmax(0,min(var(--detail-image-width),36%))_minmax(0,1fr)]' : 'grid-rows-1'}`}>
         {pictures.length > 0 && <aside data-detail-picture className="min-h-0 min-w-0 overflow-hidden">{pictures.map(field => fieldView(field))}</aside>}
@@ -214,7 +225,6 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
         </div>
       </div>
     </div>
-    <footer className="flex shrink-0 items-center justify-end gap-4 border-t border-border p-4"><span className="mr-auto text-xs text-muted-foreground">{busy ? '保存中…' : dirty ? '有未保存修改' : '已同步'}</span><Button size="sm" disabled={!canWrite || busy} onClick={() => void submit()} className="h-8 text-sm"><Icons.Check />保存</Button><Button size="sm" variant="outline" disabled={busy} onClick={onClose} className="h-8 text-sm">取消</Button></footer>
     <Dialog open={discard} onOpenChange={open => { if (!open && !busy) forceClose(); }}><DialogContent hideCloseButton onEscapeKeyDown={event => { event.preventDefault(); if (!busy) forceClose(); }} onPointerDownOutside={event => event.preventDefault()}><DialogTitle>放弃未保存的修改？</DialogTitle><DialogDescription>取消或按 Esc 将放弃修改并收起详情。</DialogDescription><DialogFooter><Button variant="outline" onClick={() => setDiscard(false)}>返回编辑</Button><Button disabled={busy} onClick={forceClose}>取消并收起</Button></DialogFooter></DialogContent></Dialog>
     <Dialog open={trash} onOpenChange={setTrash}><DialogContent><DialogTitle>删除镜头 {shot.display_number}？</DialogTitle><DialogDescription>镜头会移入废纸篓；未保存的修改将放弃。</DialogDescription><DialogFooter><Button variant="outline" disabled={busy} onClick={() => setTrash(false)}>取消</Button><Button variant="destructive" disabled={busy} onClick={async () => { try { await deletion.mutateAsync(shot.id); forceClose(); } catch (cause) { setError(cause instanceof Error ? cause.message : '删除失败'); } }}>确认删除</Button></DialogFooter></DialogContent></Dialog>
     <ShotFeedbackDialog message={message || error} onClose={() => { setMessage(null); setError(null); }} />

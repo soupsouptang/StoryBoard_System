@@ -1,5 +1,11 @@
 # 2026-10-04 分镜详情卡片与图片预览实施记录
 
+## 最新追加：操作全部置顶，取消底部占位
+
+用户要求移除同步/保存/取消底部行，为内容留更多空间，内容布局与卡片边缘留白保持。仅ShotDetailCard呈现修改：header依次为镜头标题、REV、同步状态、删除icon，元数据项间gap8px；右侧保存/取消均64×32px、同字体、无图标。删除为32×32px圆角正方形，保留Trash2 icon、aria-label/title“删除镜头”与原二次确认；保存/取消/权限/pending/dirty/ACK/Esc仍归既有处理函数，无第二个命令或状态owner。footer DOM删除，470px标准本体及body p16/gap16保持；窄屏header自然换行，按钮始终可见，底部仍有16px内容内留白。
+
+既有详情草稿/原子保存/no-op/冲突/取消检查、生产Webpack/TypeScript、diff通过。真实合成末行桌面body由338px增至403px（释放原65pxfooter），header元数据间隔8px、删除32×32/radius8/icon1，保存取消64×32/icon0；2560/1440/1024/768/375/320均470px、body padding16、无根横向溢出。窄屏按钮组换行后clean body363px，320脏状态换行后331px，所有操作可达。无修改Save提示保存成功、REV6保持并不收起；删除icon打开二次确认且Esc关闭，临时标题修改后header显示未保存状态，顶部Cancel询问/再次Esc丢弃，重开原值，无数据写入。最终截图outputs/shot-detail-header-actions-2026-10-04.png仅本机，临时viewport恢复。Web3002已更新`.next/detail-header-actions/standalone/apps/web`，API/DB/媒体保留。本段覆盖此前底部固定footer描述，其他消费者/旧Inspector不变；GitHub同步仍等待已说明的具体目的地授权，不重试被拒绝操作。
+
 ## 最新修复：详情高度以标准布局为基准
 
 用户指出：制作方式多项等内容撑高镜头行后，详情也被行高倍数放大。实际样本006标准行84.594px，008十项方式行313px，旧逻辑rowHeight×4使008详情高1252px。仅ShotDetailSlot改为标准布局固定470px，移除前一条TR的测量及ResizeObserver订阅；Observer只随可视内容区宽度更新，末行向上借空间/横向sticky/内部滚动及保存语义保持。此处覆盖历史max(470px,实测行高×4)，不是修改表格自身行高或新增UI owner。
