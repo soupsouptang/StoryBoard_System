@@ -1,5 +1,15 @@
 # 2026-10-04 分镜详情卡片与图片预览实施记录
 
+## 最新追加：版本、保存状态与亮红删除按钮
+
+本段覆盖历史REV/已同步/保存成功弹窗规则。版本显示“第 N 版修改”，数字使用tabular-nums且最小3ch，预留三位数字不补零；标题、版本、状态与删除横向间距16px，窄屏自然换行。已保存使用8px实心绿灯及加粗700文字，均为用户指定RGB(80,255,0)/#50FF00，绿灯有轻微光晕；dirty显示灰色“未保存”，pending显示灰色“保存中…”，均不显示绿灯。删除局部按钮为#FF454D，hover #F53540，明确覆盖深色主题原destructive透明色；29px圆角正方形、16px图标不变。
+
+保存ACK和no-op不再打开成功提示；仍保持卡片展开，原失败/冲突提示及草稿保留不变。保存状态由既有busy/dirty和服务端ACK推导，没有另建成功状态。渲染/草稿/事件继续归ShotDetailCard，请求和事务/历史沿用useSaveShotDetail与原API owner；没有API、DB、依赖或共享primitive改动。
+
+验证：实际组件shot-detail-card检查（ACK无提示、no-op无命令/提示、原失败/冲突/取消）通过；最终Webpack生产构建及TypeScript通过。真实3002合成012修改标题后灰色未保存且无灯，保存后第22版/绿色已保存且Dialog数量0，保持展开；项目撤销恢复原业务标题。删除确认按Esc取消，无删除写入。1440/1024/768/375/320根与header无横向溢出，本体470px、删除29px；header高65/65/65/102/134px，三位占位最小28.686px，窄屏操作自然换行。实际97镜头项目008只读查看“第27版修改”，颜色rgb(80,255,0)/rgb(255,69,77)及间距已核验，未保存用户项目。viewport恢复、QA页关闭；截图outputs/shot-detail-save-status-2026-10-04.jpg仅本机。
+
+本机Web3002更新为.next/detail-save-status-final standalone（部署时PID63921）；API8002 PID61874、现有PG55432与媒体保持，无DDL。未知:memory:.ses保留未stage。代码及配套记录按已确认soupsouptang/StoryBoard_System master正常快进同步，续作入口随后独立更新上传。
+
 ## 最新追加：辅助制作方式全选
 
 用户要求标题后增加全选，与下方复选项垂直对齐、标题同行。ShotDetailCard辅助组标题行沿用下方同一两/三列等宽网格与8px列gap，“辅助制作方式”第一列、全选第二列；框16px/icon12px、文字14px/20px行高与下方一致。沿用shared Checkbox：十项全选checked、无项unchecked、部分项indeterminate；勾选设置现有secondary草稿为当前十项，取消设置为空，不发请求。disabled复用现有权限/pending；数据提交仍由现有明确Save及原子CAS路径管理，没有第二个owner/API/DB修改。

@@ -48,7 +48,6 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
   const [framing, setFraming] = useState<ShotFraming | null>(null);
   const [frameUndo, setFrameUndo] = useState<(ShotFraming | null)[]>([]);
   const [frameRedo, setFrameRedo] = useState<(ShotFraming | null)[]>([]);
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [discard, setDiscard] = useState(false);
   const [trash, setTrash] = useState(false);
@@ -154,14 +153,14 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
         if (locked !== baseline.current.shot.timing_locked) changes.timing_locked = locked;
       }
       if (fields.some(field => field.key === 'primary_method' && !field.readonly) && !equalDetailValue(secondary, baseline.current.shot.secondary_methods || [])) changes.secondary_methods = secondary;
-      if (!Object.keys(changes).length && !custom_values.length && !image && !framing) { setMessage('保存成功'); return; }
+      if (!Object.keys(changes).length && !custom_values.length && !image && !framing) { setError(null); return; }
       const saved = await save.mutateAsync({ id: shot.id, revision: baseline.current.shot.revision, changes, custom_values, image, framing });
       const values = { ...baseline.current.values, ...Object.fromEntries(custom_values.map(item => [item.field_id, item.value])) };
       baseline.current = { shot: saved, values, fields };
       setDraft(Object.fromEntries(fields.map(field => [field.key, detailFieldValue(field, saved, values)])));
       setDuration(`${saved.duration_frames}f`); setSecondary(saved.secondary_methods || []); setLocked(saved.timing_locked); setImage(null);
       setFraming(null); setFrameUndo([]); setFrameRedo([]);
-      setError(null); setMessage('保存成功');
+      setError(null);
     } catch (cause) { setError(cause instanceof Error ? cause.message : '保存失败，草稿已保留'); }
   };
   const change = (key: string, value: unknown) => setDraft(current => ({ ...current, [key]: value }));
@@ -231,11 +230,14 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
   const longFields = visible.filter(field => ['textarea', 'json'].includes(field.kind));
   return <div ref={card} tabIndex={-1} data-local-history role="region" aria-label={`镜头 ${shot.display_number} 详情`} style={{ height }} className="@container/shot-detail flex min-h-0 flex-col overflow-hidden rounded-none border border-border bg-card text-sm outline-none" onClick={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()}>
     <header data-detail-header className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border p-4">
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
         <h2 className="whitespace-nowrap text-base font-semibold">镜头 {shot.display_number} · 详情</h2>
-        <span className="text-xs font-normal text-muted-foreground">REV {shot.revision}</span>
-        <span role="status" className="text-xs text-muted-foreground">{busy ? '保存中…' : dirty ? '有未保存修改' : '已同步'}</span>
-        <Button size="icon-sm" variant="destructive" aria-label="删除镜头" title="删除镜头" disabled={!canWrite || busy} onClick={() => setTrash(true)} className="size-[29px] shrink-0 rounded-md"><Icons.Trash2 /></Button>
+        <span className="inline-flex items-center whitespace-nowrap text-xs font-normal text-muted-foreground">第<span className="inline-block min-w-[3ch] text-center tabular-nums">{shot.revision}</span>版修改</span>
+        <span role="status" className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs ${busy || dirty ? 'text-muted-foreground' : 'font-bold text-[#50FF00]'}`}>
+          {!busy && !dirty && <span aria-hidden="true" data-saved-indicator className="size-2 shrink-0 rounded-full bg-current shadow-[0_0_6px_currentColor]" />}
+          {busy ? '保存中…' : dirty ? '未保存' : '已保存'}
+        </span>
+        <Button size="icon-sm" variant="destructive" aria-label="删除镜头" title="删除镜头" disabled={!canWrite || busy} onClick={() => setTrash(true)} className="size-[29px] shrink-0 rounded-md bg-[#FF454D] hover:bg-[#F53540] dark:bg-[#FF454D] dark:hover:bg-[#F53540]"><Icons.Trash2 /></Button>
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-4">
         <Button size="sm" disabled={!canWrite || busy} onClick={() => void submit()} className="h-8 w-16 px-0 text-sm">保存</Button>
@@ -262,6 +264,6 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
     </div>
     <Dialog open={discard} onOpenChange={open => { if (!open && !busy) forceClose(); }}><DialogContent hideCloseButton onEscapeKeyDown={event => { event.preventDefault(); if (!busy) forceClose(); }} onPointerDownOutside={event => event.preventDefault()}><DialogTitle>放弃未保存的修改？</DialogTitle><DialogDescription>取消或按 Esc 将放弃修改并收起详情。</DialogDescription><DialogFooter><Button variant="outline" onClick={() => setDiscard(false)}>返回编辑</Button><Button disabled={busy} onClick={forceClose}>取消并收起</Button></DialogFooter></DialogContent></Dialog>
     <Dialog open={trash} onOpenChange={setTrash}><DialogContent><DialogTitle>删除镜头 {shot.display_number}？</DialogTitle><DialogDescription>镜头会移入废纸篓；未保存的修改将放弃。</DialogDescription><DialogFooter><Button variant="outline" disabled={busy} onClick={() => setTrash(false)}>取消</Button><Button variant="destructive" disabled={busy} onClick={async () => { try { await deletion.mutateAsync(shot.id); forceClose(); } catch (cause) { setError(cause instanceof Error ? cause.message : '删除失败'); } }}>确认删除</Button></DialogFooter></DialogContent></Dialog>
-    <ShotFeedbackDialog message={message || error} onClose={() => { setMessage(null); setError(null); }} />
+    <ShotFeedbackDialog message={error} onClose={() => setError(null)} />
   </div>;
 }

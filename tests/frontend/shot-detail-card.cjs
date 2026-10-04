@@ -96,11 +96,11 @@ async function flush() {await new Promise(yes => setImmediate(yes));render();}
   feedback().props.onClose();render();button('保存').props.onClick();
   shot={...shot,name:'新标题',revision:2};resolve(shot);await flush();
   assert.equal(store.getState().isInspectorOpen,true,'Acknowledged save remains expanded');
-  assert.equal(feedback().props.message,'保存成功');
-  feedback().props.onClose();render();
+  assert.equal(feedback().props.message,null,'Acknowledged save uses the header status without a success dialog');
   const count = calls.length;button('保存').props.onClick();await flush();
   assert.equal(calls.length,count,'Repeated no-op save emits no command');
-  feedback().props.onClose();render();edit('镜头标题','放弃');
+  assert.equal(feedback().props.message,null,'No-op save does not open a success dialog');
+  edit('镜头标题','放弃');
   const escape=()=>listeners.forEach(fn=>fn({key:'Escape',defaultPrevented:false,preventDefault(){}}));
   escape();render();assert.equal(store.getState().isInspectorOpen,true);
   find(node=>node.type==='DialogContent' && node.props.onEscapeKeyDown).props.onEscapeKeyDown({preventDefault(){}});

@@ -1,5 +1,9 @@
 # UI primitive parity ledger
 
+## 2026-10-04 详情保存状态组合
+
+ShotDetailCard局部状态组合新增aria-hidden绿灯并沿用role=status，颜色/字重按明确用户要求覆盖；删除按钮复用Button/Icons.Trash2，显式普通及dark颜色确保主题一致，几何尺寸不变。未改共享primitive/主题token/依赖；错误Dialog继续拥有关闭/Esc。五宽度真实渲染及保存反馈验证通过。[记录](SHOT_DETAIL_2026-10-04.md)。
+
 ## 2026-10-04 载入原图
 
 载入原图复用已导出的Icons.Image及现有Button；Dialog仍独占Esc/窗外/层级，不新增primitive或依赖。业务组合保持居中胶囊及左右同排按钮，五宽度渲染验证通过。 [实施与证据](SHOT_ORIGINAL_FIT_2026-10-04.md)。

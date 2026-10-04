@@ -1,5 +1,9 @@
 # FrameForge VNext 原生重构工作簿
 
+## 2026-10-04 详情版本与保存状态
+
+用户追加的详情header已实现：第N版修改（三位占位）、#50FF00加粗绿灯/已保存、灰色未保存、亮红删除icon及16px间距；成功/no-op不弹窗，失败/冲突保留。真实合成保存ACK/项目撤销恢复、删除Esc与五宽度无溢出通过；实际008只读验收。3002为detail-save-status-final，API/PG/业务owner保持，不扩展其他待办。[实施与证据](SHOT_DETAIL_2026-10-04.md)。
+
 ## 2026-10-04 载入原图
 
 新增载入原图按钮与居中cover/contain规则已接通两种缩略图，沿用原锁定/草稿/保存 owner；新增frame_fit只扩展既有presentation metadata，无DDL。连续撤销的Shot token遗漏已修复，29项后端/四份前端及生产构建通过，真实原图加载/取消/保存/恢复/下载与五宽度完成；本机3002为shot-original-fit、8002新API，合成基线恢复。原生drag/wheel旧门槛保持，不扩展任务。 [实施与证据](SHOT_ORIGINAL_FIT_2026-10-04.md)。
