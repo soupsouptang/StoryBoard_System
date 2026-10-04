@@ -6,7 +6,7 @@
 
 旧全文可从[固定来源提交](https://github.com/soupsouptang/StoryBoard_System/tree/493bbb24e92f42315ad54e451629ef005fd5ab00/storyboard-system/docs)或[master弃用目录](https://github.com/soupsouptang/StoryBoard_System/tree/master/deprecated)定向回查。提取新需求前核对用户最新决定，不能把旧服务、兼容、封面或完成状态带回本代。
 
-J-01—J-08仍未决；其他agent正在补写的需求澄清草稿不因仓库整理而自动获接受。已确认权限、团队贡献、取消库房等规则不重问，也不由参考图改写。
+2026-10-05用户对完整审阅稿作出“没问题了，可以上传”的最终许可，本次发布[组织与能力规则](../requirements/USER_TEAM_AGENCY_RULES_2026-10-05.md)和[权限规则](../requirements/PERMISSION_RULES_2026-10-05.md)。J系列状态以工种目录第3.2节为准；ACL-01—ACL-06仍未决。其他未确认草稿不因仓库整理自动获接受，岗位139行和最新知识库基础合同保留；已确认团队贡献及取消库房规则不重问。
 
 两批参考截图的个人资料、Logo、地图等不直接上传。仅保存[结构分析](../REFERENCE_LAYOUT_STUDY.md)和合成SVG；参数是提案，不是截图实测或用户定稿。
 

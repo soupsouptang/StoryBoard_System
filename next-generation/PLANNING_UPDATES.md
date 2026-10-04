@@ -2,6 +2,20 @@
 
 本记录只跟踪 `next-generation/` 的文档储备，不是当前版本工作包或应用实施进度。设计参数未定稿，重构未启动。
 
+## 2026-10-05：确认并发布用户、团队、Agency与权限规则
+
+用户对完整审阅稿1.1作出“没问题了，可以上传”的最终许可。基础提交：`420f6028b42c1fe1fff5cff6d2de8d78232ecea3`；发布分支：`docs/next-generation-plan`。使用干净的独立工作区，未更改master默认分支或原运行工作区的未提交文件。
+
+新增[组织与能力合同](requirements/USER_TEAM_AGENCY_RULES_2026-10-05.md)1.0及[独立权限合同](requirements/PERMISSION_RULES_2026-10-05.md)1.0。统一记录个人能力/团队需求/展示审批、加入与退出、唯一管理员移交、每队200人、Agency触发/不可移交及所属团队管理、项目唯一归属、分工/通知、离队缺口和解散历史。三套人数配置仍为建议，不设成默认模板。
+
+同步工种目录1.1、岗位工作流2.1、知识需求2.4、岗位知识目录1.2及总纲4.1，更新入口/来源索引、AGENTS范围和ORG-01—ORG-09待运行验收规格。旧“J-01—J-08全部待定”、泛化组织不授权和完全禁止归档的表述已按新规则细化；明确拒绝与组织管理员冲突仍标ACL-02待确认，不自行选择优先级。
+
+本包写集仅14份Markdown：两份新增合同、工种目录、岗位工作流、知识需求、岗位知识目录、总纲、验收场景、requirements/README、目录README、已确认需求、AGENTS、来源清单和本记录。不写应用、数据库、部署、master/deprecated、既有知识库基础合同或旧运行交接文件。原个人/项目资料、截图和139项重复快照均不上传。
+
+实际检查：本地Markdown文件链接全部可解析，新增表格列数与差异空白检查通过；139项岗位编号唯一，A10/B16/C18/D20/E15/F18/G24/H18与岗位表正文逐字不变；83个专业域、7个共用域、139/139知识绑定及定义正文未改动；知识贡献范围第2节及最新知识库基础合同逐字保留。上传前重新获取远端确认基础提交未变，采用正常快进推送，不覆盖其他提交。
+
+未实施：应用、身份/鉴权、审批/通知、归档、API及数据库均未启动，未运行浏览器或软件验收。ACL-01—ACL-06、实际部门映射、岗位定义生命周期/版本迁移、默认岗位及类型配置、建议算法、通知/解散过渡态和跨团队整体转移仍待后续确认。发布许可不代替这些问题的答案。
+
 ## 2026-10-05：确认知识库基础模型与扩展边界
 
 用户确认知识库直接按 A–H 八大类建立专业知识小库；共用基础知识作为共享基础层，不作为第九个项目部门。新增 `KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md`，定义 KnowledgeLibrary/Domain/Entry/Revision、EquipmentCategory/Model、SpecificationDefinition/Value、EquipmentNote、CompatibilityRelation、SoftwareProduct/Scope、RoleKnowledgeBinding、ExperienceObservation/EstimateProfile 的职责和扩展边界。
