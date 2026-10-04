@@ -450,6 +450,7 @@ Project Actual
 → 去重与质量核验
 → Aggregate / EstimateProfile
 → Calibration Candidate
+→ K3 受权 Recommendation / 原业务 Command 接受
 → 人工确认或已批准规则
 → 更新项目模板 / Shot Pattern / Task estimate / Dependency / Checklist 基线
 → 仅影响之后的新计划或明确重新预测
@@ -612,7 +613,7 @@ MediaHandoff 只有在“一份素材存在多消费者、独立确认、更正/
 | Review → Rework / Reshoot → 再 Review | E7-DELIVERY-LOOP | FX-29 | ReworkRequest 去重；返工回 Task，补拍回 Schedule，产生新版本再审 |
 | Deliverable / QC / Delivery | E7-DELIVERY-LOOP、E7-EXPORT | FX-15、FX-29 | QC、提交、送达、确认、验收、退回分开；退回能回返工 |
 | 全流程 Impact | E8-IMPACT | FX-10、FX-17 | 源事实先提交；未来项自动联动；LOCKED/CONFLICT/REQUIRES_USER 可解释可重试 |
-| Actual → QA → Calibration | K1-EXPERIENCE、K2-CALIBRATION | KL-04、KL-05、KL-06、KL-08 | 实测与解释分开；去重；不可变 profile；只更新未来估时/流程候选 |
-| 全流程产品闭环 | Z0-PRODUCTION-CLOSED-LOOP | FX-17、FX-26、FX-27、FX-28、FX-29、FX-30、KL-05、KL-06 | 使用 §19.4 的完整合成项目，从创作到经验校准真实跑通；API/PG/真实消费者证据齐全后才能称“闭环” |
+| Actual → QA → Calibration → 未来基线 | K1-EXPERIENCE、K2-CALIBRATION、K3-RECOMMENDATION | KL-04、KL-05、KL-06、KL-07、KL-08 | 实测与解释分开；去重；不可变 profile；必须经受权接受后才更新未来估时/流程候选 |
+| 全流程产品闭环 | Z0-PRODUCTION-CLOSED-LOOP | FX-17、FX-26、FX-27、FX-28、FX-29、FX-30、KL-05、KL-06、KL-07 | 使用 §19.4 的完整合成项目，从创作到经验校准并受控影响后续计划真实跑通；API/PG/真实消费者证据齐全后才能称“闭环” |
 
 FX-26 至 FX-30 的具体 fixture 写在实施计划并列入机器清单。任何上游工作包即使单独 accepted，只表示该环节能力通过，不代表 Z0 或整个 Production workflow 已闭环。
