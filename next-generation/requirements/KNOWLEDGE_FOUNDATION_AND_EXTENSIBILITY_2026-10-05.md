@@ -2,7 +2,7 @@
 
 # FrameForge 知识库基础内容、类型与扩展合同
 
-版本：1.0，2026-10-05。状态：需求合同，尚未创建运行数据库、知识条目、索引、维护页面或权限规则。
+版本：1.1，2026-10-05。状态：需求合同，尚未创建运行数据库、知识条目、索引、维护页面或权限规则。本版新增制作常识库、细化基础对象/关系及首批 reference seed；详见 [制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)。
 
 ## 1. 总原则
 
@@ -11,7 +11,7 @@
 本版确认：
 
 - 直接按 JOB_CATALOG 的 A–H 八大类建立八个专业知识小库；
-- 共用基础知识作为共享基础层，被 A–H 引用，不建立第九个“部门”；
+- 共用基础知识先建立为制作常识 Topic / Formula / Relation，再被 A–H 引用，不建立第九个“部门”；
 - 软件只记录“适用能力范围”，不建立功能更新日志、操作步骤或软件教程；
 - 器材结构化规格以厂商官方资料为权威来源；允许人工备注，但备注不得覆盖官方规格；
 - 器材必须支持结构化兼容关系，包括“直接兼容”“需要转接”“明确不兼容”和带条件兼容；
@@ -72,33 +72,112 @@ A–H 是**知识空间**，不等同项目实际 Department。一个 KnowledgeE
 
 ## 4. 基础对象与关系
 
-建议基础对象职责：
+基础对象不再由一个 KnowledgeEntry 和一个万能 Relation 承担。首版按职责拆成：
+
+### 4.1 常识正文与来源
 
 ```text
-KnowledgeLibrary        A-H知识小库
-KnowledgeDomain         小库内的专业领域
-KnowledgeEntry          一条canonical知识事实
-KnowledgeRevision       不可变修订
-KnowledgeSource         来源及访问/版本信息
-
-EquipmentCategory       Camera/Lens/Light/Audio/Support...
-EquipmentModel          厂商具体型号
-SpecificationDefinition 某类设备可填写什么规格
-SpecificationValue      某型号在某规格上的官方值
-EquipmentNote           人工备注，不覆盖官方规格
-
-SoftwareProduct         软件身份
-SoftwareScope           软件/版本范围与制作能力的适配关系
-
-KnowledgeRelation       知识之间的typed relation
-CompatibilityRelation   器材之间的typed兼容关系
-RoleKnowledgeBinding    JOB_CATALOG岗位到知识域的绑定
-
-ExperienceObservation   项目Actual用于时间校准的引用
-EstimateProfile         不可变时间统计版本
+KnowledgeLibrary
+KnowledgeDomain
+KnowledgeTopic
+KnowledgeRevision
+KnowledgeAlias
+KnowledgeSource
+SourceReference
+DomainTopicLink
+KnowledgeRelation
+FormulaDefinition
 ```
 
-KnowledgeEntry 不做万能 JSON。核心身份、类型、来源、revision、状态和关系使用明确字段/表；只有不同知识类型确实稀疏且不参与关键约束的补充属性才能进入带 schema version 的扩展字段。
+KnowledgeTopic 是稳定语义身份；KnowledgeRevision 保存不可变正文。Alias 只用于检索，不产生第二个 Topic。SourceReference 只保存来源位置、版本和访问时间，不要求网页证据快照。
+
+### 4.2 器材身份与规格
+
+```text
+Manufacturer
+EquipmentCategory
+EquipmentProductFamily
+EquipmentModel
+EquipmentVariant
+AccessoryModel
+AdapterModel
+SpecificationDefinition
+SpecificationDefinitionRevision
+SpecificationValue
+SpecificationValueRevision
+UnitDefinition
+EquipmentNote
+```
+
+厂商视为新一代/Mark II/Pro 等独立世代时建立新的 EquipmentModel；卡口、地区、容量等才是 Variant。官方规格写 SpecificationValue；人工备注不限内容但只能进入 EquipmentNote，不能覆盖官方值或参与官方筛选/兼容推导。
+
+### 4.3 成像设备
+
+```text
+ImagingDevice
+EmbeddedImagingModule
+SensorDefinition
+SensorRecordingMode
+LensModel
+LensVariant
+```
+
+固定镜头设备以 EmbeddedImagingModule 表达。内置镜头可被镜头/光学知识检索，但不出现在独立 Lens Picker；多内置摄像模组的设备仍保持一个 ImagingDevice，由用户选择具体 EmbeddedImagingModule。
+
+### 4.4 接口、支撑与兼容
+
+```text
+InterfaceDefinition
+SupportInterfaceDefinition
+EquipmentInterfaceLink
+SupportComponent
+QuickReleaseComponent
+CompatibilityRelation
+CompatibilityPath
+```
+
+接口按知识 Domain 组织，例如 D.Camera.LensMount、D.CameraSupport.QuickRelease、D.Lighting.ModifierMount、D.Audio.AudioConnector。USB-C、HDMI 等可以共享物理 Definition，但各 Domain 保存用途 link。兼容关系以接口推导为主，厂商 model-level compatibility assertion 为 override。
+
+### 4.5 软件、格式与能力
+
+```text
+SoftwareVendor
+SoftwareProduct
+SoftwareVersionScope
+CapabilityDefinition
+SoftwareCapabilitySupport
+
+FormatDefinition
+FormatRelation
+```
+
+FormatDefinition 只有一份 canonical identity；D/F/G/H 等通过 PRODUCES / CONSUMES / IMPORTS / EXPORTS / TRANSCODES_TO 关联，不建立独立“格式部门库”。
+
+### 4.6 岗位与时间校准
+
+```text
+RoleKnowledgeBinding
+ExperienceObservation
+CalibrationTargetLink
+EstimateProfile
+```
+
+RoleKnowledgeBinding 不是权限、任职或 TaskAssignment。ExperienceObservation 只保存 Actual 或粗粒度时间信息；Shot/Scene/ShootDay aggregate 与其 component metric 不得重复计样本。
+
+### 4.7 Relation 不做万能图
+
+至少分开：
+
+- KnowledgeRelation：Topic ↔ Topic；
+- DomainTopicLink：Domain ↔ Topic；
+- RoleKnowledgeBinding：岗位 ↔ Domain/Topic；
+- EquipmentInterfaceLink：设备/Variant ↔ Interface；
+- CompatibilityRelation：设备/接口 ↔ 设备/接口；
+- SoftwareCapabilitySupport：SoftwareVersionScope ↔ Capability；
+- FormatRelation：产品/Domain ↔ Format；
+- CalibrationTargetLink：Observation/Profile ↔ Shot/Scene/ShootDay/Task/Move/Post type。
+
+核心身份、类型、来源、revision、状态和关系使用明确字段/表；只有低频、非关键且不参与核心约束的补充属性才能进入带 schema version 的扩展字段。
 
 ## 5. 可维护性与 Revision
 
@@ -164,19 +243,22 @@ status
 
 ```text
 mount
-focal_length_min_mm
-focal_length_max_mm
-max_aperture_wide
-max_aperture_tele
-min_aperture
-coverage
+physical_focal_length_mm / focal_length_min_mm / focal_length_max_mm
+f_number_min / f_number_max
+t_stop_min / t_stop_max
+image_circle / coverage
+official_horizontal_aov_by_format
 minimum_focus_distance_m
-filter_thread_mm
+filter_thread_mm / front_diameter_mm
 weight_g
 length_mm
 stabilization
 autofocus
+spherical_or_anamorphic
+squeeze_ratio
 ```
+
+F-number 与 T-stop 分开保存；只有官方提供对应 transmission/映射时才允许换算。FOV 优先读取厂商官方 Angle of View；特殊镜头按厂商 projection model 处理。
 
 数值保存 typed value + unit；枚举保存受控值；UNKNOWN 不等于 0。
 
@@ -246,6 +328,8 @@ Bowens Mount accessory
 
 兼容关系的 revision 独立于设备名称修改。项目选择设备时可查询兼容条件，但知识库不能据此声称项目当前实际拥有转接环或设备可用。
 
+自动推荐 CompatibilityPath 硬性最多 2 个 intermediate components；超过两层只有在厂商资料或真实拍摄案例明确证明时才能作为特殊知识记录，默认组合器不得自动推荐。Adapter/Accessory 的机械连接、电子通信、AF、光圈控制、metadata、stabilization、focus control、power、video/data/control passthrough 分开保存，不能把“能装上”当成全部功能兼容。
+
 ## 8. 软件知识
 
 软件知识不做功能百科、版本更新日志或教程，只回答：
@@ -288,7 +372,7 @@ source
 revision
 ```
 
-例如“三维软件不能作为剪辑系统使用”应表达为对应软件在 `EDITING` 上的 `NOT_SUPPORTED` 或明确受限范围，而不是写一篇“为什么不能剪辑”的文章。
+软件能力必须逐具体产品/版本范围按官方能力录入；不得因为产品被归类为 3D DCC、NLE 或合成软件，就自动推导某 Capability 为 NOT_SUPPORTED。例如具体 3D 软件若官方提供视频编辑能力，应记录其真实 SupportLevel，而不是由类别先验判断。
 
 不记录按钮路径、快捷键、插件操作步骤、版本新功能清单或教程。
 
@@ -318,6 +402,8 @@ captured_at
 ```
 
 EstimateProfile 只用于更新未来的粗粒度时长参考和计划候选。统计仍要求去重、样本门槛、不可变版本和历史可回查；新统计不改已确认计划、Actual 或已发布通告。
+
+时间校准优先读取 Call Sheet / Schedule / 制作表中的 planned/estimated 与实际 Actual。允许 Shot、Scene、ShootDay 作为 aggregate target，同时保存 Setup / Rehearsal / Shoot / Reset / Strike、Company Move、Task、Post Work 等 component metric；aggregate 与 component 不能重复累计为样本，且绝不按 Person 汇总效率。
 
 ## 10. 岗位知识绑定
 
@@ -359,4 +445,11 @@ J-04 未确认前，JOB_CATALOG 新版本只生成“绑定待复核”；不按
 - 知识系统中不存在 Failure Pattern / 常见问题库；
 - 时间 QA 不采集故障原因，只能形成粗粒度时长观察与校准；
 - 知识模块不创建专用权限角色，所有读写动作走统一权限/用户组判定；
-- 知识 revision、deprecated/withdrawn、来源更新均不改写历史项目固定引用。
+- 知识 revision、deprecated/withdrawn、来源更新均不改写历史项目固定引用；
+- FOV、Camera Angle、Perspective 是三个不同 Topic，并有可解释 typed relation；
+- 固定镜头设备锁定 EmbeddedImagingModule，多模组设备可选内置模组但不能替换内置镜头；
+- 多机位逐 Camera Body 独立计算 Lens/Adapter Path，项目卡口偏好只排序；
+- 自动 CompatibilityPath 最多两个中间节点；
+- F-number/T-stop、Shutter Angle/Time、ISO/EI/Gain 只在已确认适用规则下转换；
+- Canonical Format 可被多个 D/F/G/H 数据流引用，颜色基础与具体 Camera/Composite/Render/Post Pipeline 分离；
+- 首批常识 Topic、公式、器材/软件/格式 seed 范围以制作常识与 Seed Catalog 为准。
