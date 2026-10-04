@@ -9,6 +9,7 @@
 | [时段需求](RESOURCE_TIME_REQUIREMENTS_2026-10-04.md) | 器材道具的来源、缺值、动态继承和分时汇总 |
 | [知识体系](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md) | 型号基础知识、经验贡献及受控校准 |
 | [工种定义](JOB_CATALOG_DEFINITIONS_2026-10-05.md) | 岗位详细表；J-01—J-08仍待用户决定 |
+| [岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md) | 139个岗位所需的跨岗位共同知识、A–H专业知识域及稳定岗位编号映射 |
 | [技术接受要求](TECHNICAL_ACCEPTANCE.md) | 本代命令、权限、历史、导入导出、媒体及空库要求 |
 | [验收场景](ACCEPTANCE_SCENARIOS.md) | FX-01—FX-32及其他业务场景，全部未运行 |
 
