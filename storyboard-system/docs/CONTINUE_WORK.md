@@ -1,3 +1,5 @@
+> 2026-10-04文档审计续作入口：已完成16问，第一批14份需求/合同文档360d4fb已正常上传master并核对远端。用户最新取消通用库房和器材使用方法，只保留型号、基础知识和时间段需求，独立相加、明确共用一次；默认构图、自动重算帧率、固定经验贡献范围均写入合同。第二批补执行细则和协作登记。新增功能仍待实施验收；其他会话应用草稿未提交，服务器、部署及已确认UI未改。先读[全量审计](EXTENSIBILITY_GRILL_AUDIT_2026-10-04.md)、[机器清单](extensibility_execution_plan_2026-10-04.json)与[前后端交接](BACKEND_FRONTEND_HANDOFF_2026-10-04.md)，按独立包继续，不恢复取消范围或覆盖montblanc08最新UI。
+
 # FRAMEFORGE 续作入口
 
 ## 2026-10-04 项目大厅信息顺序完成、代码已上传
@@ -6,7 +8,7 @@
 
 正式生产Webpack/TypeScript、既有shot-summary检查、diff/Regression Guard（base058771e）通过。真实四卡片帧时码与顺序核验，1440字号12px/行高16px/横gap12px；1440/1024/768完整，五宽度根横向溢出0。375/320旧横向卡片左区被右侧日期/按钮挤压仍在，按明确不改版式要求保留，不宣称整体移动布局验收通过，记录SCREEN台账。真实截图outputs/project-summary-order-2026-10-04.png仅工作区保留，临时QA关闭/viewport恢复，未写用户业务数据。
 
-Web3002为.next/project-summary-order standalone PID77271，原API8002/PG55432及媒体保持。刷新 http://127.0.0.1:3002/productions 可查看。生成tsconfig复原，未知:memory:.ses保留未stage。
+Web3002为.next/project-summary-order standalone PID77271，原API8002/PG55432及媒体保持。刷新 本机服务（3002）/productions 可查看。生成tsconfig复原，未知:memory:.ses保留未stage。
 
 代码与配套MD a94e6da已正常快进上传soupsouptang/StoryBoard_System master（058771e→a94e6da）；本文随后独立更新上传并核对远端SHA。当前用户确认的排序工作完成，不扩展窄屏重排或其他旧待办；额度可用，未使用恢复券。详见[记录](PROJECT_LOBBY_METADATA_2026-10-04.md)。
 
@@ -18,7 +20,7 @@ ShotCountSummary与原导航共用数量展示，表格showCount=false避免重�
 
 三项针对消费者检查（bulk-controls/shot-summary/storyboard-handoff）、最终正式Webpack/TypeScript、diff和Regression Guard（basebcbf160）通过。真实97镜头项目搜索显示1/97→97、选择0→1→0、删除确认Esc不执行、320宽新增Esc无创建；列管理/表头右键/单元格右键可打开并Esc关闭、表格与卡片路由往返通过。2560宽四组同排及间距/按钮尺寸确认；1440/1024/768/375/320根横向溢出均0，工具区自身滚动。首次375键盘焦点部分裁切已修正为完整滚入，并重建及五宽度复核；320取消选择Tab完整可见，确认窗288px/左右16px。业务镜头/媒体未保存或删除。
 
-Web3002最终.next/shot-toolbar-compact standalone PID76225，原API8002 PID61874、PG55432及媒体保持。用户刷新 http://127.0.0.1:3002/production/aaab21df-7d26-468f-98f3-37a174d8ae81/shots 查看。生成tsconfig复原，未知:memory:.ses原样保留未stage；临时QA页关闭、viewport恢复、测试选择清空。真实截图工作区outputs/shot-toolbar-compact-2026-10-04.png仅本机保留。
+Web3002最终.next/shot-toolbar-compact standalone PID76225，原API8002 PID61874、PG55432及媒体保持。用户刷新 本机服务（3002）/production/aaab21df-7d26-468f-98f3-37a174d8ae81/shots 查看。生成tsconfig复原，未知:memory:.ses原样保留未stage；临时QA页关闭、viewport恢复、测试选择清空。真实截图工作区outputs/shot-toolbar-compact-2026-10-04.png仅本机保留。
 
 代码及配套台账277fbb6已正常快进上传用户授权的soupsouptang/StoryBoard_System master（bcbf160→277fbb6），开始及上传前fetch均无待合入提交。本文在代码上传后独立提交上传，随后核对远端SHA；不force改写他人历史。当前布局工作全部完成，不扩展旧图片原生drag/wheel工具门槛或其他历史待办，不重启已暂停自动任务；普通额度可用、未使用恢复券。详见[实施与真实验证](SHOT_TOOLBAR_2026-10-04.md)。
 
@@ -38,7 +40,7 @@ Web3002最终.next/shot-toolbar-compact standalone PID76225，原API8002 PID6187
 
 五份定向前端检查、正式Webpack/TypeScript、diff/Regression Guard（basee5df0c0）通过。真实合成012小图125%Lock、Undo100%/Redo125%、Ctrl+Z/Ctrl+Y，最终Undo回原100%；详情125%草稿Lock、Undo/Redo及Meta快捷键、最终Undo并Esc退出，版本29及已保存状态保持，无详情保存写入。实际97镜头008两入口只读检查，32px按钮/16pxicon同款。1440/1024/768/375/320根/Dialog无横向溢出、按钮完整，窗口608/400/288/288/288px，默认1280两入口528px一致。临时viewport恢复、QA页关闭；证据outputs/shot-preview-history-table-2026-10-04.jpg与shot-preview-history-detail-2026-10-04.jpg仅保留本机。
 
-3002为.next/preview-history standalone（部署时Web PID68349）；API8002 PID61874及PG55432/媒体保持，无DDL。用户刷新 http://127.0.0.1:3002/production/aaab21df-7d26-468f-98f3-37a174d8ae81/shots 可看。生成tsconfig已复原、未知:memory:.ses未stage。
+3002为.next/preview-history standalone（部署时Web PID68349）；API8002 PID61874及PG55432/媒体保持，无DDL。用户刷新 本机服务（3002）/production/aaab21df-7d26-468f-98f3-37a174d8ae81/shots 可看。生成tsconfig已复原、未知:memory:.ses未stage。
 
 fetch核验授权目标soupsouptang/StoryBoard_System master无新增待合入提交，代码及配套MD 418a9de已正常快进上传（e5df0c0→418a9de）。本文随后独立提交上传并查询远端SHA核验；不覆盖他人历史。当前图片浮窗追加无剩余工作，旧原生drag/wheel工具门槛保持历史记录，不扩展其他任务；额度可用，未使用恢复额度券，也未重启已暂停的续作自动任务。
 
@@ -50,7 +52,7 @@ fetch核验授权目标soupsouptang/StoryBoard_System master无新增待合入�
 
 只改既有ShotDetailCard呈现/成功反馈与消费者检查，没有API/DB/依赖/共享primitive/ownership变更。实际消费者检查、最终生产Webpack/TypeScript、diff及Regression Guard（base9589692）通过。真实合成012灰色未保存→保存ACK绿色已保存且Dialog数量0，项目撤销恢复原业务标题；删除确认Esc取消未执行删除。1440/1024/768/375/320根/header无横向溢出，470px本体，窄屏按需换行；实际97镜头项目008只读查看第27版和亮色/间距，未写用户项目。viewport恢复、临时QA页关闭，证据outputs/shot-detail-save-status-2026-10-04.jpg仅本机保留。
 
-Web3002 PID63921运行.next/detail-save-status-final standalone；API8002 PID61874、现有PG55432及媒体保持，无DDL。用户刷新 http://127.0.0.1:3002/production/aaab21df-7d26-468f-98f3-37a174d8ae81/shots 查看。生成tsconfig已复原，未知:memory:.ses原样保留未stage。
+Web3002 PID63921运行.next/detail-save-status-final standalone；API8002 PID61874、现有PG55432及媒体保持，无DDL。用户刷新 本机服务（3002）/production/aaab21df-7d26-468f-98f3-37a174d8ae81/shots 查看。生成tsconfig已复原，未知:memory:.ses原样保留未stage。
 
 fetch核验远端无新增待合入提交，用户明确授权的soupsouptang/StoryBoard_System master代码及配套MD dabcf71 已正常快进上传（9589692→dabcf71）。本文随后独立提交上传并查询远端SHA核验；不使用force覆盖他人提交。当前详情追加无剩余工作，不扩展其他旧待办。已有载入原图功能和其历史实机工具限制保持此前记录；没有重新打开已暂停续作自动任务，额度可用、未使用额度券。
 
@@ -64,7 +66,7 @@ frame_fit仅扩展既有MediaTransform/MediaPresentation JSON，无新owner/路�
 
 后端四份original_fit/shot_detail/image_assets/command_history 29 passed，前端四份坐标及真实组件检查通过；正式Webpack/TypeScript、diff、Regression Guard（base f712396）通过。真实3002合成900×1600竖图cover/contain、Lock持久化、双击后Esc恢复、详情Undo/Redo与Save提示、修复后两次连续Undo回到原蓝黄图片通过。五宽度1440/1024/768/375/320根及Dialog无溢出、居中与左右按钮同排通过。构图PNG实际下载1920×1080，中心/四色边/黑边像素核验完整原图。实际97镜头项目008只读试用后Esc，未保存/替换。
 
-本机Web3002 PID56372运行 .next/shot-original-fit standalone，API8002 PID61874已更新；现有PG55432与用户数据/媒体保持，无DDL。viewport恢复、QA页关闭。用户可刷新 http://127.0.0.1:3002/production/aaab21df-7d26-468f-98f3-37a174d8ae81/shots 查看。证据outputs/shot-original-fit-2026-10-04.jpg和shot-original-fit-user-2026-10-04.jpg只保留本机；未知 :memory:.ses 原样保留未stage。
+本机Web3002 PID56372运行 .next/shot-original-fit standalone，API8002 PID61874已更新；现有PG55432与用户数据/媒体保持，无DDL。viewport恢复、QA页关闭。用户可刷新 本机服务（3002）/production/aaab21df-7d26-468f-98f3-37a174d8ae81/shots 查看。证据outputs/shot-original-fit-2026-10-04.jpg和shot-original-fit-user-2026-10-04.jpg只保留本机；未知 :memory:.ses 原样保留未stage。
 
 用户明确授权的soupsouptang/StoryBoard_System master已fetch核验无新待合入提交，代码及配套MD d623358 正常快进push回执 f712396→d623358。本文随后单独提交和上传；最终远端SHA在上传后查询核验，不使用force改写。当前请求没有剩余实现工作；原生drag/wheel旧实机工具门槛仍待，未宣称整站cutover。额度按用户要求在恢复后一分钟查询，已确认普通额度恢复，未使用额度券；本轮完成后暂停对应续作自动任务，不自行扩展旧任务。
 
@@ -86,7 +88,7 @@ frame_fit仅扩展既有MediaTransform/MediaPresentation JSON，无新owner/路�
 
 双下载实际收到Downloads：镜头012_构图画面 (1).png为1920×1080，镜头012_原图.png为800×450，尺寸/像素核验。浏览器download事件timeout但本机文件回执已确认，不能继续沿用旧“真实文件上传/下载未完成”状态。本轮实际选择/替换提交及下载门槛已补。
 
-最终1440/1024/768/375/320无根/弹窗横向溢出，内容区中心差0、胶囊中心齐画框；宽608/400/288/288/288。截图outputs/shot-framing-preview-2026-10-04.jpg仅本机保留；QA页关闭、viewport已恢复。3002最终.next/shot-framing-interaction standalone Web PID53266/API8002 PID52490，现有运行环境/PG55432及原媒体保留，无DDL。入口http://127.0.0.1:3002/productions，用户刷新加载新代码。
+最终1440/1024/768/375/320无根/弹窗横向溢出，内容区中心差0、胶囊中心齐画框；宽608/400/288/288/288。截图outputs/shot-framing-preview-2026-10-04.jpg仅本机保留；QA页关闭、viewport已恢复。3002最终.next/shot-framing-interaction standalone Web PID53266/API8002 PID52490，现有运行环境/PG55432及原媒体保留，无DDL。入口本机服务（3002）/productions，用户刷新加载新代码。
 
 **尚待门槛**：当前DOM浏览器API无原生drag/wheel，Codex原生应用控制被工具明确禁止，未绕过。真实组件事件/坐标/松开停留/边界测试已通过，原生鼠标实机仍需用户复核或合法工具补验，整体INTEGRATED_NOT_CUT_OVER。GitHub push此前被自动审批拒绝，要求具体目的地/分支上传授权；soupsouptang/StoryBoard_System master的询问仍未获回复。本轮未push/force，不能声称MD已上传。
 
@@ -130,7 +132,7 @@ frame_fit仅扩展既有MediaTransform/MediaPresentation JSON，无新owner/路�
 
 ## 2026-10-04 四行详情、等宽列、制作方式名称与本机部署恢复（本地代码cf17489）
 
-最新用户要求“部署软件让浏览器能够访问”已完成：本机入口http://127.0.0.1:3002/productions，实际浏览器原有4个项目正常加载，合成详情12镜头及图片可读。Web使用生产Webpack/TypeScript已通过的`.next/detail-method-verified/standalone/apps/web`，显式同源proxy→8002，两服务独立后台运行、绑定127.0.0.1；本次启动时API45531/Web45590，PG55432保留，后续不能将PID当永久事实。临时viewport已恢复，用户项目大厅保留；不是公网部署，机器休眠/重启后须重新检查进程。
+最新用户要求“部署软件让浏览器能够访问”已完成：本机入口本机服务（3002）/productions，实际浏览器原有4个项目正常加载，合成详情12镜头及图片可读。Web使用生产Webpack/TypeScript已通过的`.next/detail-method-verified/standalone/apps/web`，显式同源proxy→8002，两服务独立后台运行、绑定本机服务；本次启动时API45531/Web45590，PG55432保留，后续不能将PID当永久事实。临时viewport已恢复，用户项目大厅保留；不是公网部署，机器休眠/重启后须重新检查进程。
 
 本节覆盖旧“本机未应用画板迁移”运行停点：旧API已退出，当前HistoryService需要画板表，先有效pg_dump备份`/private/tmp/frameforge-before-preview-20261004.dump`、恢复独立副本，以及独立空库完整Alembic→c14f8a63b920演练；两条链成功，35张原业务表的逐行JSON排序SHA256/数量在副本及本机升级后完全相同。随后使用既有官方迁移升级原本机预览数据库，增加两张画板表，未修改API或迁移源码，未读取Legacy数据；原配置/媒体保留，未输出或上传凭据/备份/媒体。API健康和Web同源健康都200/healthy。仅本机部署必要迁移完成，不代表画板UI/完整产品已验收。
 
@@ -144,7 +146,7 @@ frame_fit仅扩展既有MediaTransform/MediaPresentation JSON，无新owner/路�
 
 ## 2026-10-04 扩展性总纲v2与执行合同（文档检查点）
 
-用户要求重写[扩展性总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)，重新询问不清晰处，并明确父子所有权：一级Entity可以拥有真正从属子Entity，父子须明确所有权/生命周期/scope；独立实体业务连接使用typed link。已确认全部9内置列初始可见、内置禁止Purge、同共享view配置同步、团队共享资源身份显式关联、Scene要求动态继承/逐项覆盖、环境主值与差异提示。多Scene同一资源的数量合并仍等待Q-05回答，只暂停该规则。
+用户要求重写[扩展性总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)，重新询问不清晰处，并明确父子所有权：一级Entity可以拥有真正从属子Entity，父子须明确所有权/生命周期/scope；独立实体业务连接使用typed link。已确认全部9内置列初始可见、内置禁止Purge、同共享view配置同步、团队共享资源身份显式关联、Scene要求动态继承/逐项覆盖、环境主值与差异提示。该历史阶段的Q-05已由本轮第3、15、16问解决，当前按时段独立相加、明确共用一次；取消库房和使用方法。
 
 配套[执行标准](EXTENSIBILITY_EXECUTION_STANDARD_2026-10-04.md)、[知识层合同](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)、[29包机器清单](extensibility_execution_plan_2026-10-04.json)、岗位稿及实施计划一并整理。执行清单校验、拒绝环/无证据接受/待确认接受/越界路径检查、六文档本地链接核对通过；这些仅为文档结构验证，不是产品测试、真实PG或视觉验收。
 
@@ -158,7 +160,7 @@ frame_fit仅扩展既有MediaTransform/MediaPresentation JSON，无新owner/路�
 
 写集仅ShotDetailCard及SHOT_DETAIL记录/ACTIVE/本文；未改API、数据库、shared primitives、请求/保存语义、导航或其他页面。检查现有shot-detail-card.cjs、最终生产Webpack/TypeScript、diff与Regression Guard通过。真实3002合成项目2560/1440/1024/768/375/320宽度均无root/body溢出、352px、圆角0；镜号/时码X一致，1440标题单轨173px、制作方式row 1 / span 2，大屏辅助两列。末尾TYPE滚动选项实际可达（内部scrollTop176），Esc二次丢弃重开未选中、没有写数据。截图outputs/shot-detail-grouped-2026-10-04.png保留本机不入Git；临时viewport恢复、独立QA页保留。
 
-本机3002已更新`.next/detail-grouped-final/standalone/apps/web`，入口http://127.0.0.1:3002/productions；API8002/PG55432及新画板迁移停点不动。旧文件上传/下载浏览器环境门槛维持，未绕过或声称全站cutover。发布前fetch两remote均无待合入UI，未知`:memory:.ses`保留未上传。代码/对应MD已正常快进push到soupsouptang/StoryBoard_System master回执3182aad；本文随后独立提交上传，最终回执以Git为准，不宣称CI通过。当前追加需求实现与页面检查完成，待用户新反馈，不扩展旧产品待办。
+本机3002已更新`.next/detail-grouped-final/standalone/apps/web`，入口本机服务（3002）/productions；API8002/PG55432及新画板迁移停点不动。旧文件上传/下载浏览器环境门槛维持，未绕过或声称全站cutover。发布前fetch两remote均无待合入UI，未知`:memory:.ses`保留未上传。代码/对应MD已正常快进push到soupsouptang/StoryBoard_System master回执3182aad；本文随后独立提交上传，最终回执以Git为准，不宣称CI通过。当前追加需求实现与页面检查完成，待用户新反馈，不扩展旧产品待办。
 
 ## 2026-10-04 详情五列试用与均等间距（代码47f7576已上传）
 
@@ -166,7 +168,7 @@ frame_fit仅扩展既有MediaTransform/MediaPresentation JSON，无新owner/路�
 
 检查：现有shot-detail-card.cjs与Webpack生产构建/TypeScript、diff和Regression Guard通过。真实3002合成项目1440/1200/1024/768/375/320分别为5/4/3/3/2/1列；全部352px、内边距/gap16px、root/body横向溢出0、footer桌面899.125px／手机739.125px可见。桌面图236×144，长文本跨三列约551px，208字完整保留；聚焦内部滚动而footer固定。临时标题修改第一次Esc询问、第二次Esc丢弃后重开原值，未写入现有项目数据。截图工作区outputs/shot-detail-five-columns-2026-10-04.png不入Git；浏览器临时viewport已恢复，独立QA页保留供查看。
 
-部署：Web3002已替换本会话原预览为`.next/detail-five-columns/standalone/apps/web`，入口http://127.0.0.1:3002/productions，显式同源proxy仍指8002。API8002、PG55432、本地现有项目与新画板迁移停点保持，未改数据库/API或其他页面。真实上传/下载此前两个环境验收门槛仍待补，不重试权限限制，不宣称全站cutover。
+部署：Web3002已替换本会话原预览为`.next/detail-five-columns/standalone/apps/web`，入口本机服务（3002）/productions，显式同源proxy仍指8002。API8002、PG55432、本地现有项目与新画板迁移停点保持，未改数据库/API或其他页面。真实上传/下载此前两个环境验收门槛仍待补，不重试权限限制，不宣称全站cutover。
 
 同步：发布前fetch两个remote，soupsouptang无新改动，origin/master全部已在本地祖先历史。代码与对应记录正常快进上传soupsouptang/StoryBoard_System master回执47f7576；未force或绕过审批。本文随后单独提交上传，最新回执以Git查询为准，不声称本次GitHub CI已通过。未知`:memory:.ses`原样保留未上传。当前新增五列/间距实现及页面检查已完成，无新反馈时不扩展其他旧产品待办。
 
@@ -180,7 +182,7 @@ frame_fit仅扩展既有MediaTransform/MediaPresentation JSON，无新owner/路�
 
 **代码先上传完成**：正常快进push到soupsouptang/StoryBoard_System master，远端回执为`3e7d651689ef7a369c0e5e3bcffaba1fd4e7b70e`；没有force、改写历史或绕过审批。代码含相应owner/API/screen/product/UI台账与[详细实施MD](SHOT_DETAIL_2026-10-04.md)。本文随后单独提交并上传，最终MD SHA以Git远端查询为准；不宣称GitHub CI已通过。
 
-**本机部署**：最新Web3002 `.next/detail-center` standalone保留，入口http://127.0.0.1:3002/productions；显式同源API proxy→8002，未放宽CORS/PNA。API8002 PID13309、PG55432继续保留本会话本地环境，不涉及公网/生产。8002未重启合入后新画板启动代码，本机未执行c14f8a63b920在线DDL；后续重启最新API须按画板独立PG迁移门槛演练，不能把本次前端预览说成新画板部署完成。
+**本机部署**：最新Web3002 `.next/detail-center` standalone保留，入口本机服务（3002）/productions；显式同源API proxy→8002，未放宽CORS/PNA。API8002 PID13309、PG55432继续保留本会话本地环境，不涉及公网/生产。8002未重启合入后新画板启动代码，本机未执行c14f8a63b920在线DDL；后续重启最新API须按画板独立PG迁移门槛演练，不能把本次前端预览说成新画板部署完成。
 
 **实际文件操作门槛尚待用户环境**：Chrome扩展Allow access to file URLs关闭，实际选图/替换提交未完成；接口/合成消费者已验证Atomic image Save。下载按钮已实际点击但Chrome自动化未返回完成回执，真实下载收据未核验。两个门槛BLOCKED_VISUAL，已说明且未替用户放宽权限/绕过浏览器限制。用户开启ChatGPT Chrome扩展文件URL权限后可补实际上传/替换；下载以用户实际收到文件复核。共享reduced-motion CSS保留，未改系统设置做专项切换。其余本轮代码和页面检查已完成，整体INTEGRATED_NOT_CUT_OVER、不扩展其他旧待办。未知`:memory:.ses`原样保留未上传。
 
@@ -197,7 +199,7 @@ HistoryService/get_db原事务拥有日志/补偿，现有域service仍拥有正
 
 **实际验证**：完整后端137 passed（1项已有框架弃用warning），11项新增history事务/API测试；快捷键/shot-summary/shot-column-sort、生产Webpack构建/TypeScript、diff和Regression Guard（基于3f91fd9）通过。PG55432独立空库完整迁移与既有库副本迁移、真实HTTP undo/redo/CAS409和compound列位置通过。本机预览升级前有效备份 `/private/tmp/frameforge-before-history-20261003-verified.dump` 已验证，合成原项目/镜头/素材/批注/列数量保持；该备份与配置不进入Git。真实Chrome独立项目验证创建/宽度/后插列undo/redo、Ctrl+Y刷新持久、弹窗输入不触发项目历史和Esc，五宽度1440/1024/768/375/320无根溢出；列管理/表头右键菜单、键盘焦点可达。截图工作区outputs/project-undo-redo-2026-10-03.png，仅留本机。
 
-**浏览器预览**：3002和API8002已重启载入最新构建/源码，PG55432保留。独立验收项目 `54374ea3-0b02-46c6-97c4-0fe9bfb3930a`，1镜头及“可撤销列”保留；入口 `http://127.0.0.1:3002/production/54374ea3-0b02-46c6-97c4-0fe9bfb3930a/shots`。独立验收tab关闭、临时视口恢复，用户原页面保留。视频样本97镜头和原106镜头项目未改动。
+**浏览器预览**：3002和API8002已重启载入最新构建/源码，PG55432保留。独立验收项目 `54374ea3-0b02-46c6-97c4-0fe9bfb3930a`，1镜头及“可撤销列”保留；入口 `本机服务（3002）/production/54374ea3-0b02-46c6-97c4-0fe9bfb3930a/shots`。独立验收tab关闭、临时视口恢复，用户原页面保留。视频样本97镜头和原106镜头项目未改动。
 
 **上传完成**：用户在确切目的地确认后回复“强制上传GitHub”，本次明确授权已承接。重新fetch核实远端无新增提交、规则无变化，Regression Guard通过；随后正常快进上传 `soupsouptang/StoryBoard_System master`，远端从 `9e1f69c`更新到 `1d6018a`。包含代码 `74f76a27e9d2df46a3140330455cdde87627b2ca`、续作MD `1d6018a`及此前未同步的16个提交；保留原远端历史，没有改写或换remote。此前自动审批阻挡已解除，本段覆盖下方历史“尚未上传/等待授权”状态。最终上传状态MD随后单独提交并上传；当前远端SHA以Git查询为准。未宣称本次GitHub CI已通过。
 
@@ -215,7 +217,7 @@ HistoryService/get_db原事务拥有日志/补偿，现有域service仍拥有正
 
 ## 2026-10-03 用户视频全列样本与 Excel / PDF 导入文件
 
-本批请求已完成：使用用户提供的视频创建独立本机样本项目，不覆盖原有106镜头项目；输出一份 Excel 和四卷 PDF 供测试导入。样本项目 `aaab21df-7d26-468f-98f3-37a174d8ae81`，代码 `HERO_SAMPLE_20261003`，入口 `http://127.0.0.1:3002/production/aaab21df-7d26-468f-98f3-37a174d8ae81/shots`。97个候选分镜段、97张真实视频抽帧、34项数据；30fps、1282×720，全片11491帧，时长 `00:06:23:01`。按画面变化检测，剔除不足0.4秒短段，IN含起点／OUT不含，仍需剪辑师复核，不宣称人工逐帧剪辑定稿。
+本批请求已完成：使用用户提供的视频创建独立本机样本项目，不覆盖原有106镜头项目；输出一份 Excel 和四卷 PDF 供测试导入。样本项目 `aaab21df-7d26-468f-98f3-37a174d8ae81`，代码 `HERO_SAMPLE_20261003`，入口 `本机服务（3002）/production/aaab21df-7d26-468f-98f3-37a174d8ae81/shots`。97个候选分镜段、97张真实视频抽帧、34项数据；30fps、1282×720，全片11491帧，时长 `00:06:23:01`。按画面变化检测，剔除不足0.4秒短段，IN含起点／OUT不含，仍需剪辑师复核，不宣称人工逐帧剪辑定稿。
 
 既有 ImportService / ShotService / PanelMediaService / CustomFieldService 通过正常本机 API 创建数据；无直接 SQL、迁移、架构或产品源码变更，无公网部署，无 Legacy 数据读取／迁移。为本请求将用户视频抽帧写入独立样本；其余项目与未知 `:memory:.ses` 保留。焦段、运镜、制作分工、表演与替代方案标明重拍建议，不能作为原片元数据。字幕由 macOS Vision 离线 OCR 抽样、核对明显误字，非完整原声／旁白转写，无可靠信息的字段标为待核对；没有外部 AI 上传。负责人字段使用本地已有测试账号有效 ID，非原片真实制作人员；换环境需清空或替换负责人映射。
 
@@ -410,7 +412,7 @@ OCR 当前限制：40 MB/文件、10000 行、200 列、PDF 30 页、图片 10 M
 ## 6. 本地续作注意
 
 - 当前工作区仓库为 `work/StoryBoard_System`。另一个交接中的 `work/FrameForge` 和相关 worktree 属于其他环境/会话，不混用或清理。
-- 本轮 Web/API 验收地址为本机 `127.0.0.1:3001` / `127.0.0.1:8001`。服务是否仍运行、加载哪一提交需重新检查；文档不保证进程存活。本轮 API 已重载实现提交b2ad7b5；Web开发服务运行最新代码。下次仍须现场核对，不能依历史PID启动/停止。
+- 本轮 Web/API 验收地址为本机 `本机服务（3001）` / `本机服务（8001）`。服务是否仍运行、加载哪一提交需重新检查；文档不保证进程存活。本轮 API 已重载实现提交b2ad7b5；Web开发服务运行最新代码。下次仍须现场核对，不能依历史PID启动/停止。
 - 本轮独立合成项目 `b8035d24-2937-42b9-9e32-1e9e6301e14f`；此前 `383170ee-28de-4e1a-aaed-f76edba6ba3c` 亦为历史合成验收项目；保留用户原浏览器页和草稿。登录配置留本机，凭据不写本文或公开仓库。
 - 本轮截图在工作区 `outputs/column-qa-2026-10-02/column-menu-desktop.jpg`；追加删除/文字检查截图清单见执行文档§5；本批约1440/1024/768/375/320暗色定向验收，不代表全部功能/主题通过。旧验收截图保存在本地 `frameforge-qa/table-{1440,1024,768,375,320}.jpg`、`mirror-drag-final.jpg`；详细证据见执行记录，不假定新主机存在这些文件。
 - 仓库有未跟踪 `:memory:.ses`，未上传、未删除；先核查来源，禁止 `git add .` 带入。

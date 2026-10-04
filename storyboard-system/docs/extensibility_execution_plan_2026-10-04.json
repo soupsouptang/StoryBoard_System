@@ -37,7 +37,15 @@
     "apps/api/app/services/project_snapshot.py",
     "storyboard-system/docs/ACTIVE_WORKSTREAMS.md",
     "storyboard-system/docs/CANONICAL_OWNER_MATRIX.md",
-    "storyboard-system/docs/BACKEND_FRONTEND_HANDOFF_2026-10-04.md"
+    "storyboard-system/docs/BACKEND_FRONTEND_HANDOFF_2026-10-04.md",
+    "apps/api/app/api/v1/productions.py",
+    "apps/api/app/api/v1/assets.py",
+    "apps/api/app/api/v1/panel_media.py",
+    "apps/api/app/schemas/production.py",
+    "apps/api/app/schemas/image_crop.py",
+    "apps/api/app/models/user.py",
+    "packages/contracts/",
+    "packages/types/"
   ],
   "protected_ui_paths": [
     "apps/web/app/(workspace)/productions/",
@@ -777,12 +785,11 @@
     },
     {
       "id": "E9-MISSING-UI",
-      "title": "逐域补缺UI，保留montblanc08既有修改",
+      "title": "场景管理缺失页面的独立接入与桌面验收",
       "owner": "E9",
       "dependencies": [
         "E1-POLICY",
-        "E2-SCENE",
-        "E2-DEMAND"
+        "E2-SCENE"
       ],
       "state": "not_started",
       "allowed_paths": [
@@ -865,8 +872,7 @@
         "KL-03",
         "KL-04",
         "KL-05",
-        "KL-08",
-        "KL-11"
+        "KL-08"
       ],
       "verification": [],
       "blockers": [],
@@ -1124,6 +1130,42 @@
         "unit",
         "api",
         "postgres",
+        "contract"
+      ]
+    },
+    {
+      "id": "E9-DEMAND-UI",
+      "title": "时间段器材道具需求的独立缺失界面，不含库房",
+      "owner": "E9-DEMAND-UI",
+      "dependencies": [
+        "E2-DEMAND",
+        "E6-SCHEDULE"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/web/app/(workspace)/production/[id]/resource-demands/",
+        "apps/web/components/resource-demands/",
+        "apps/web/lib/hooks/useResourceDemands.ts"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py",
+        "apps/web/app/(workspace)/productions/",
+        "apps/web/app/(workspace)/production/[id]/shots/",
+        "apps/web/app/(workspace)/production/[id]/settings/",
+        "apps/web/components/shot/",
+        "packages/ui/"
+      ],
+      "required_gates": [
+        "FX-16",
+        "FX-21",
+        "FX-23"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "对应API已接受；仅创建仍缺失需求页，真实桌面读写与失败回读；不建库房或覆盖既有UI。",
+      "required_evidence_kinds": [
+        "browser",
         "contract"
       ]
     }

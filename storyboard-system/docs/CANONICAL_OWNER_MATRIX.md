@@ -1,3 +1,5 @@
+> 2026-10-04需求审计：resource_demand_service为拟议需求查询负责人；ImageCropService/MediaPresentation继续拥有构图；项目与镜头服务编排统一帧率转换；E1-POLICY拥有组的团队归类，K1只存贡献范围引用。没有库房或预留负责人。目标合同待实施，不提升迁移状态，见[审计](EXTENSIBILITY_GRILL_AUDIT_2026-10-04.md)。
+
 # FRAMEFORGE canonical owner matrix
 
 ## 2026-10-04 分镜工具栏排列
@@ -21,9 +23,9 @@ ShotImagePreview统一小图/详情图预览事件及未锁定构图，useShotFr
 | 能力 | 当前事实 / 目标owner | 接入与接受边界 |
 | --- | --- | --- |
 | 同一共享view配置 | 现有SavedView/WorkspaceLayout含个人配置；目标SavedView拥有共享列/行高/筛选/排序/分组，WorkspaceLayout仅个人呈现 | E3-SHARED-VIEW，CAS/ACK广播、无双写、FX-18；前端改动由指定UI owner接入，不直接覆盖表格 |
-| 团队资源身份 | 当前无已接受共享身份闭环；目标独立identity link与Resource/Schedule owner | E2-SHARED-RESOURCE＋E6；项目Person独立、显式确认关联，FX-19受权跨项目冲突，UNKNOWN不猜可用 |
-| Scene要求继承 | 目标SceneRequirement事实＋Shot逐项override，有效要求为projection；实际出演/预约仍归原域 | E2-CAST/E2-RESOURCE/E3-FIELD；FX-20、当前Q-05计量规则待确认 |
-| 知识层 | Knowledge/Experience/Profile/Recommendation分域，复用统一权限、Command、Job和History | K0–K5按[知识合同](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)，KL-01..10；文档不证明已实现 |
+| 人员场地共享身份 | 当前无已接受闭环；目标独立identity link与Schedule owner | E2-SHARED-RESOURCE＋E6；Person独立、显式关联，FX-19受权跨项目冲突；器材库存身份取消 |
+| Scene要求继承 | 目标SceneRequirement事实＋Shot逐项override，有效要求为projection；实际出演和拍摄安排仍归原域 | E2-CAST/E2-RESOURCE/E3-FIELD；FX-20及FX-23；计量已确认，按时段独立相加、明确共用一次，不建库存或预留 |
+| 知识层 | Knowledge/Experience/Profile/Recommendation分域，复用统一权限、Command、Job和History | K0–K5按[知识合同](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)，KL-01..11；文档不证明已实现 |
 
 父子Entity的所有权/生命周期/scope按[总纲§3.1](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md#31-entity从属关系的判定)判定；关联关系不是父子。现有Board/History/ShotDetail等已记录owner保持，本段不撤销已有实现证据，也不将上述目标提升为CUT_OVER。
 

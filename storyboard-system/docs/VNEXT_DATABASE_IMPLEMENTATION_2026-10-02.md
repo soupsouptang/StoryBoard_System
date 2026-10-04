@@ -1,3 +1,5 @@
+> 2026-10-04审计更新：本文件保存历史提交的真实数据库和测试证据，不推广为新要求已完成。当前新项目默认全部九内置列，原生项目历史已接通；共享视图、来源关系、默认构图固定和新增域仍以最新执行合同逐项验收。取消库房、预留和器材使用方法；知识贡献范围按采集时固定。不得用历史约七列建议、旧素材源版本方案或未完成项覆盖最新实现。详见[审计](EXTENSIBILITY_GRILL_AUDIT_2026-10-04.md)与[执行标准](EXTENSIBILITY_EXECUTION_STANDARD_2026-10-04.md)。
+
 # VNext 数据库实施记录（2026-10-02）
 
 本轮按最新需求完善 `apps/api` 数据库，源提交 `f4ea6f1`。不连接或迁移 Legacy 数据库，不执行生产 DDL，不操作部署。设计合同见 [数据库计划](UI_DATABASE_PLAN_2026-10-02.md)，本文只记录实际实现与证据。
@@ -113,7 +115,7 @@ Alembic `c58f2d01e739` 为 Asset 增加 revision/category，约束同资产 vers
 - 官方PostgreSQL16隔离loopback55432：空库完整19迁移至 `b03e7a42f185`，32 ORM表/timestamptz与schema一致；跨项目composite FK拒绝、真实project row lock阻塞竞争writer、CAS过期409、批注个人水位、audit/outbox原子回滚、builtin SQL绕过拒绝、soft-delete/restore通过。
 - `frameforge_final_rehearsal` pg_dump→新的 `frameforge_finalrestore_rehearsal` pg_restore，revision、UTC瞬间、批注事件/水位、stable export field IDs及schema/内置列保护复核通过。备份 `/private/tmp/frameforge-final-rehearsal.dump` 仅合成数据，未上传。未执行生产DDL，未部署。
 - 独立3002/8002真实Web验收：镜号删除/回收站/恢复001原值、官方旁白预设添加、原800×600图保存9:16/翻转后源图与单一AssetVersion仍保留，Review真实Before/After，交付模板“仅标题 QA”保存后刷新读取，字段仅标题PDF可见且1页。额外拖动/缩放草稿取消。裁剪弹窗320/375/768/1024/1440无根横向溢出；非全站完整视觉通过。
-- 合成截图留本机：`/Users/montblanc/Documents/Codex/2026-09-30/new-chat/media-before-after-qa.png`、`export-template-pdf-qa.png`。原用户3001服务未改接合成库；本輪API/Web/PG验收进程结束后停止，数据目录和dump保留。
+- 合成截图留本机：`本机固定证据目录media-before-after-qa.png`、`export-template-pdf-qa.png`。原用户3001服务未改接合成库；本輪API/Web/PG验收进程结束后停止，数据目录和dump保留。
 
 ### 9.3 尚未完成，下一次不可忽略
 

@@ -171,7 +171,7 @@ Derived evaluator 在 API owner 内解析受控 AST，同实体字段、项目 f
 
 SchedulePlan为独立scenario owner，DRAFT/CURRENT/SUPERSEDED表示草案/当前/被后续修订替代，不提供“归档”操作。同一项目/明确Unit scope最多一个CURRENT（partial unique index），切换CurrentPlan为原子CAS。ShootDay/ScheduleItem用UTC区间、项目IANA时区及duration CHECK，保存拍摄日当地日期；默认Asia/Shanghai，不推定未知工作窗口或容量。
 
-ScheduleItemScene/Shot/Person/Location/Equipment 是 typed links；同一 Shot 可跨日、多次引用。AvailabilityWindow AVAILABLE/UNAVAILABLE/TENTATIVE/UNKNOWN 共用区间来源，无数据不是“肯定可用”。Company Move 由 ScheduleItem 拥有区间、路线/耗时组件；需要负责人/确认时连 Task，不把时间再复制给 Task 或 Shot。Shot.duration_frames 是镜头内容时长，永不作为日程 start/end 的存储 owner。
+ScheduleItemScene/Shot/Person/Location及ResourceRequirement 是 typed links；同一 Shot 可跨日、多次引用。AvailabilityWindow AVAILABLE/UNAVAILABLE/TENTATIVE/UNKNOWN 共用区间来源，无数据不是“肯定可用”。Company Move 由 ScheduleItem 拥有区间、路线/耗时组件；需要负责人/确认时连 Task，不把时间再复制给 Task 或 Shot。Shot.duration_frames 是镜头内容时长，永不作为日程 start/end 的存储 owner。
 
 首批用 deterministic conflict query 计算资源交叠、availability/dependency/locked/time-window/day-night/move-time。冲突模型返回来源修订和原因；人员、场地使用明确共享身份校验冲突，器材仅统计时间段需求，不建立容量或预留模型。缺信息提示待确认；无权限、无效时间、旧修订及非法依赖拒绝写入。初期不承诺全局最优 solver；未来 Provider 提出方案，用户接受后由 Schedule Command CAS 应用。多方案互不重写；发布/确认后的结果显式冻结，普通 conflicts 不作为手写布尔字段。
 
@@ -352,7 +352,7 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 
 ## 12. 资源、图片与帧率增量批次
 
-原29包加三个独立增量，共32包；机器清单保存准确依赖和允许文件。新增包全部未开始，无虚构通过证据。已取消的库房和预留不再作为工作包。
+原29包加需求、构图、帧率三个服务增量，再把需求新页从场景新页拆成独立包，共33包；机器清单保存准确依赖和允许文件。新增包全部未开始，无虚构通过证据。已取消的库房和预留不再作为工作包。
 
 | 包 | 依赖 | 独立交付 |
 | --- | --- | --- |
@@ -361,6 +361,7 @@ Purge 后使服务端旧工件 withdrawn/不可下载并清受控缓存；外部
 | E3-FPS | E0-RECEIPT、E0-CODEC | 保留秒数重算帧数、统一舍入和时码、影响预览；不修改音频及拍摄时间 |
 | E6-SCHEDULE | 原依赖，加E2-DEMAND | 排期负责时间匹配，人员和场地冲突；器材清单只表达需要什么 |
 | K3-RECOMMENDATION | 原依赖，加E2-DEMAND | 知识只提供型号和基础知识，不生成使用方法、不猜库存或自动改需求 |
+| E9-DEMAND-UI | E2-DEMAND、E6-SCHEDULE | 仅补仍缺失的需求页面、组件和hook；与场景新页分开领取，保留现有UI |
 
 需求由resource_demand_service负责；构图继续由ImageCropService/MediaPresentation负责；帧率由现有项目、镜头服务编排唯一时码算法。三包不写进同一个万能服务，不新造解析器、队列、权限或历史基础。公共模型注册、路由、迁移链及内容快照由集成者独占处理。
 
