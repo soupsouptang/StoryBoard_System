@@ -1,6 +1,21 @@
 """Bounded, typed input for one explicit detail-card save."""
 from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from app.schemas.image_crop import MediaTransform
+
+
+class ShotFramingSource(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    asset_id: str = Field(min_length=1)
+    panel_id: str = Field(min_length=1)
+    presentation_revision: int = Field(ge=0)
+    source_version_id: str = Field(min_length=1)
+
+
+class ShotFramingSave(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    source: ShotFramingSource | None = None
+    transform: MediaTransform
 
 
 class ShotDetailChanges(BaseModel):
@@ -45,3 +60,4 @@ class ShotDetailSave(BaseModel):
     revision: int = Field(ge=1)
     changes: ShotDetailChanges = Field(default_factory=ShotDetailChanges)
     custom_values: list[ShotDetailFieldValue] = Field(default_factory=list, max_length=200)
+    framing: ShotFramingSave | None = None

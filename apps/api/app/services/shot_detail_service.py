@@ -42,5 +42,8 @@ class ShotDetailService:
             if not (permissions.get('*') or permissions.get('production.write')):
                 raise DomainError('当前账号没有上传分镜画面的权限', code='FORBIDDEN')
             await PanelMediaService.save_panel_image(db, shot=shot, data=image, filename=filename, user_id=user.id, media_root=media_root)
+        if req.framing is not None:
+            await PanelMediaService.save_framing(db, shot=shot, framing=req.framing, user=user,
+                media_root=media_root, uploaded=image is not None)
         await db.flush()
         return (await db.execute(select(Shot).where(Shot.id == shot_id).options(selectinload(Shot.panels)).execution_options(populate_existing=True))).scalar_one()

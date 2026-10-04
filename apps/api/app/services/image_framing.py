@@ -1,9 +1,22 @@
 """Explicit crop/reframe rendering; never stretches or overwrites originals."""
 from io import BytesIO
+from fractions import Fraction
 from math import radians, tan
 from PIL import Image, ImageOps
 from app.core.exceptions import DomainError
 from app.services.image_storage import prepare_image
+
+
+def project_frame_ratio(value):
+    """Canonical integer ratio for project decimal ratios, e.g. 2.35:1."""
+    try:
+        width, height = str(value).split(':')
+        ratio = Fraction(width) / Fraction(height)
+        if ratio <= 0 or max(ratio.numerator, ratio.denominator) > 9999:
+            raise ValueError()
+        return f'{ratio.numerator}:{ratio.denominator}'
+    except (ValueError, ZeroDivisionError):
+        raise DomainError('项目画幅比例无效，请检查项目设置', code='INVALID_FRAME_RATIO')
 
 
 def render_crop(data, req):

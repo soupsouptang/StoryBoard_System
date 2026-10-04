@@ -9,7 +9,10 @@ import { useSaveShotDetail } from '@/lib/hooks/useShotDetail';
 import { detailFieldValue, equalDetailValue, type DetailField } from '@/lib/shot-detail-fields';
 import { getMethodLabel, getStatusBadge } from '@/lib/media-resolver';
 import { parseShotDuration } from '@/lib/shot-display';
-import { ShotPanelImage } from './ShotPanelImage';
+import { ShotPanelImage, primaryPanelAssetId } from './ShotPanelImage';
+import { ShotImagePreview } from './ShotImagePreview';
+import { ShotFramingImage } from './ShotFramingImage';
+import { projectFrameRatio, type ShotFraming } from '@/lib/shot-framing';
 import { ShotFeedbackDialog } from './ShotFeedbackDialog';
 
 function valueText(value: unknown) {
@@ -41,6 +44,10 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
   const [locked, setLocked] = useState(shot.timing_locked);
   const [image, setImage] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [framing, setFraming] = useState<ShotFraming | null>(null);
+  const [frameUndo, setFrameUndo] = useState<(ShotFraming | null)[]>([]);
+  const [frameRedo, setFrameRedo] = useState<(ShotFraming | null)[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [discard, setDiscard] = useState(false);
@@ -56,6 +63,7 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
     const [width, height] = (production.aspect_ratio || '16:9').split(':').map(Number);
     return width > 0 && height > 0 ? width / height : 16 / 9;
   });
+  useEffect(() => { try { setPictureRatio(projectFrameRatio(production.aspect_ratio).ratio); } catch { /* preview reports invalid project ratio */ } }, [production.aspect_ratio]);
   useLayoutEffect(() => {
     const element = body.current;
     if (!element || typeof ResizeObserver === 'undefined') return;
@@ -68,7 +76,7 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
   let durationFrames: number | null = null;
   try { durationFrames = parseShotDuration(duration, fps); } catch { /* present invalid draft without writing */ }
   const editableFields = baseline.current.fields.filter(field => !field.readonly);
-  const dirty = Boolean(image) || editableFields.some(field => field.key !== 'duration_frames' && !equalDetailValue(draft[field.key], detailFieldValue(field, baseline.current.shot, baseline.current.values)))
+  const dirty = Boolean(image || framing) || editableFields.some(field => field.key !== 'duration_frames' && !equalDetailValue(draft[field.key], detailFieldValue(field, baseline.current.shot, baseline.current.values)))
     || (editableFields.some(field => field.key === 'duration_frames') && (durationFrames !== baseline.current.shot.duration_frames || locked !== baseline.current.shot.timing_locked))
     || (editableFields.some(field => field.key === 'primary_method') && !equalDetailValue(secondary, baseline.current.shot.secondary_methods || []));
 
@@ -126,7 +134,7 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
     try {
       for (const field of editableFields) {
         if (fields.some(current => current.key === field.key && !current.readonly)) continue;
-        const changed = field.kind === 'image' ? Boolean(image) : field.kind === 'duration'
+        const changed = field.kind === 'image' ? Boolean(image || framing) : field.kind === 'duration'
           ? durationFrames !== baseline.current.shot.duration_frames || locked !== baseline.current.shot.timing_locked
           : !equalDetailValue(draft[field.key], detailFieldValue(field, baseline.current.shot, baseline.current.values));
         if (changed) throw new Error(`${field.label}的列状态已变化，请恢复该列后保存，或取消本次修改`);
@@ -146,16 +154,29 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
         if (locked !== baseline.current.shot.timing_locked) changes.timing_locked = locked;
       }
       if (fields.some(field => field.key === 'primary_method' && !field.readonly) && !equalDetailValue(secondary, baseline.current.shot.secondary_methods || [])) changes.secondary_methods = secondary;
-      if (!Object.keys(changes).length && !custom_values.length && !image) { setMessage('保存成功'); return; }
-      const saved = await save.mutateAsync({ id: shot.id, revision: baseline.current.shot.revision, changes, custom_values, image });
+      if (!Object.keys(changes).length && !custom_values.length && !image && !framing) { setMessage('保存成功'); return; }
+      const saved = await save.mutateAsync({ id: shot.id, revision: baseline.current.shot.revision, changes, custom_values, image, framing });
       const values = { ...baseline.current.values, ...Object.fromEntries(custom_values.map(item => [item.field_id, item.value])) };
       baseline.current = { shot: saved, values, fields };
       setDraft(Object.fromEntries(fields.map(field => [field.key, detailFieldValue(field, saved, values)])));
       setDuration(`${saved.duration_frames}f`); setSecondary(saved.secondary_methods || []); setLocked(saved.timing_locked); setImage(null);
+      setFraming(null); setFrameUndo([]); setFrameRedo([]);
       setError(null); setMessage('保存成功');
     } catch (cause) { setError(cause instanceof Error ? cause.message : '保存失败，草稿已保留'); }
   };
   const change = (key: string, value: unknown) => setDraft(current => ({ ...current, [key]: value }));
+  const lockFraming = (next: ShotFraming) => {
+    if (equalDetailValue(next,framing)) return;
+    setFrameUndo(rows => [...rows.slice(-49),framing]); setFrameRedo([]); setFraming(next);
+  };
+  const frameHistory = (back: boolean) => {
+    const rows = back ? frameUndo : frameRedo;
+    if (!rows.length || busy) return;
+    const next = rows[rows.length - 1];
+    if (back) { setFrameUndo(rows.slice(0,-1)); setFrameRedo(rows => [...rows,framing]); }
+    else { setFrameRedo(rows.slice(0,-1)); setFrameUndo(rows => [...rows,framing]); }
+    setFraming(next);
+  };
   const fieldView = (field: DetailField, span = '') => {
     const value = draft[field.key];
     const disabled = field.readonly || !canWrite || busy;
@@ -166,13 +187,16 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
         if (!next) return;
         if (next.size > 10 * 1024 * 1024) { setError('图片不得超过 10 MB'); return; }
         setImage(next);
+        setFraming(null);setFrameUndo([]);setFrameRedo([]);
       }} />
-      <button type="button" disabled={disabled} aria-label="上传或替换详情分镜画面" onClick={() => file.current?.click()} onLoadCapture={event => {
-        const loaded = event.target;
-        if (loaded instanceof HTMLImageElement && loaded.naturalWidth && loaded.naturalHeight) setPictureRatio(loaded.naturalWidth / loaded.naturalHeight);
-      }} className="relative block h-20 w-full min-h-0 flex-1 @min-[760px]/shot-detail:h-auto overflow-hidden rounded-md border border-border bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default">
-        {imageUrl ? <img src={imageUrl} alt="待保存分镜画面" className="h-full w-full object-contain" /> : <ShotPanelImage shot={shot} className="h-full w-full object-contain"><span className="text-muted-foreground">点击上传分镜画面</span></ShotPanelImage>}
+      <button type="button" disabled={busy || (!image && !primaryPanelAssetId(shot) && disabled)} aria-label={image || primaryPanelAssetId(shot) ? '预览详情分镜画面' : '上传详情分镜画面'}
+        onClick={() => image || primaryPanelAssetId(shot) ? setPreviewOpen(true) : file.current?.click()}
+        className="relative block h-20 w-full min-h-0 flex-1 @min-[760px]/shot-detail:h-auto overflow-hidden rounded-md border border-border bg-muted focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default">
+        {framing ? <ShotFramingImage shot={shot} file={image} framing={framing} /> : imageUrl ? <img src={imageUrl} alt="待保存分镜画面" className="h-full w-full object-cover" /> : <ShotPanelImage shot={shot} className="h-full w-full object-cover"><span className="text-muted-foreground">点击上传分镜画面</span></ShotPanelImage>}
       </button>
+      {previewOpen && <ShotImagePreview shot={shot} aspectRatio={production.aspect_ratio} open={previewOpen} onClose={() => setPreviewOpen(false)}
+        onReplace={() => file.current?.click()} disabled={disabled} file={image} framing={framing} onLock={lockFraming}
+        canUndo={frameUndo.length>0} canRedo={frameRedo.length>0} onUndo={() => frameHistory(true)} onRedo={() => frameHistory(false)} />}
     </> : field.kind === 'timecode' ? <div className="overflow-x-auto whitespace-nowrap font-mono text-sm"><div>IN {timecode?.in || '—'}</div><div>OUT {timecode?.out || '—'}</div></div>
       : field.readonly ? <div className="line-clamp-3 whitespace-pre-wrap break-words text-sm" title={valueText(value)}>{valueText(value) || '—'}</div>
       : field.kind === 'duration' ? <><Input aria-label="详情时长" value={duration} disabled={disabled} onChange={event => setDuration(event.target.value)} className="h-9 text-sm" /><label className="mt-1 flex items-center gap-2 text-xs text-muted-foreground"><Checkbox aria-label="锁定时长" checked={locked} disabled={disabled} onCheckedChange={checked => setLocked(checked === true)} />锁定时长 · f帧 / s秒 / m分 / h时</label>{durationFrames == null && <span className="text-xs text-[#FF0082]">请输入有效时长</span>}</>

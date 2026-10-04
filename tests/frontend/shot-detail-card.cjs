@@ -33,7 +33,9 @@ const {ShotDetailCard} = load('apps/web/components/shot/ShotDetailCard.tsx', {
   '@/lib/shot-detail-fields':fieldsModule,
   '@/lib/media-resolver':{getMethodLabel:v => v,getStatusBadge:v => ({label:v})},
   '@/lib/shot-display':{parseShotDuration:value => {const match=/^(\d+)(f|s)?$/.exec(value);if(!match) throw Error('invalid');return Number(match[1])*(match[2]==='f'?1:25);}},
-  './ShotPanelImage':{ShotPanelImage:'ShotPanelImage'},'./ShotFeedbackDialog':{ShotFeedbackDialog:'ShotFeedbackDialog'}
+  './ShotPanelImage':{ShotPanelImage:'ShotPanelImage',primaryPanelAssetId:()=>null},'./ShotFeedbackDialog':{ShotFeedbackDialog:'ShotFeedbackDialog'},
+  './ShotImagePreview':{ShotImagePreview:'ShotImagePreview'},'./ShotFramingImage':{ShotFramingImage:'ShotFramingImage'},
+  '@/lib/shot-framing':{projectFrameRatio:()=>({ratio:16/9})}
 });
 let shot = {id:'A',production_id:'P',display_number:'001',revision:1,name:'原标题',duration_frames:75,timing_locked:false,primary_method:'live',secondary_methods:[]};
 const fields = fieldsModule.shotDetailFields(['name','duration_frames','primary_method','panel_image','custom','hidden'],['name','duration_frames','primary_method','panel_image','custom'], {name:'镜头标题',custom:'备注',hidden:'隐藏'}, [{id:'F',column_key:'custom',field_type:'textarea',revision:4},{id:'H',column_key:'hidden',field_type:'text',revision:1}]);
@@ -70,12 +72,22 @@ async function flush() {await new Promise(yes => setImmediate(yes));render();}
   const file = {name:'synthetic.png',size:100};
   find(node => node.props.type==='file').props.onChange({target:{files:[file],value:''}});render();
   assert.equal(calls.length,0,'Selecting a detail image must remain local until Save');
+  find(node => node.props['aria-label']==='预览详情分镜画面').props.onClick();render();
+  const preview = () => find(node => node.type==='ShotImagePreview');
+  const framing = {source:null,transform:{aspect_ratio:'16:9',scale:1.5,translation_x:.1,translation_y:0}};
+  preview().props.onLock(framing);render();
+  assert.equal(calls.length,0,'Locking in the detail card stays in its draft transaction');
+  assert.equal(preview().props.framing,framing);
+  preview().props.onUndo();render();assert.equal(preview().props.framing,null);
+  preview().props.onRedo();render();assert.equal(preview().props.framing,framing);
+  preview().props.onClose();render();
   store.getState().setFilter('searchQuery','new search');render();
   assert.equal(store.getState().filters.searchQuery,'','Filtering must not unmount a dirty draft');
   assert.equal(find(node => node.type==='Dialog').props.open,true);
   button('返回编辑').props.onClick();render();
   button('保存').props.onClick();render();
   assert.equal(calls.length,1);assert.equal(calls[0].image,file);assert.equal(calls[0].revision,1);
+  assert.equal(calls[0].framing,framing,'Image composition and field edits use one acknowledged save');
   assert.deepEqual(JSON.parse(JSON.stringify(calls[0].changes)),{name:'新标题'});
   assert.deepEqual(JSON.parse(JSON.stringify(calls[0].custom_values)),[{field_id:'F',field_revision:4,value:'新备注'}]);
   reject(Error('409 conflict'));await flush();

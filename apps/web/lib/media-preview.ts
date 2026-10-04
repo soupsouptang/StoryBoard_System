@@ -1,11 +1,11 @@
 import type { MediaPresentation } from '@/lib/hooks/useAssets';
 
 /** Preview only. The authoritative renderer and immutable sources remain in the API. */
-export function drawMediaPreview(canvas: HTMLCanvasElement, image: HTMLImageElement, transform: MediaPresentation['transform']) {
+export function drawMediaPreview(canvas: HTMLCanvasElement, image: HTMLImageElement, transform: MediaPresentation['transform'], maxDimension = 960) {
   const rotated = transform.rotation % 180 !== 0;
   const width = rotated ? image.naturalHeight : image.naturalWidth;
   const height = rotated ? image.naturalWidth : image.naturalHeight;
-  const fit = Math.min(1, 960 / Math.max(width, height));
+  const fit = Math.min(1, maxDimension / Math.max(width, height));
   canvas.width = Math.max(1, Math.round(width * fit)); canvas.height = Math.max(1, Math.round(height * fit));
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) throw new Error('浏览器无法生成图片预览。');
@@ -20,7 +20,7 @@ export function drawMediaPreview(canvas: HTMLCanvasElement, image: HTMLImageElem
   const ph = Math.tan(transform.perspective_horizontal * Math.PI / 180);
   const pv = Math.tan(transform.perspective_vertical * Math.PI / 180);
   const d = 1 - ph / 2 - pv / 2, w = canvas.width, h = canvas.height;
-  // Same inverse homography as Pillow; preview uses nearest pixels at <=960px.
+  // Same inverse homography as Pillow; interaction defaults to <=960px.
   // ponytail: bounded preview sampling; use a GPU shader if profiling shows drag latency.
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const denominator = ph * x / (w * d) + pv * y / (h * d) + 1;

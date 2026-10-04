@@ -1,5 +1,9 @@
 # UI primitive parity ledger
 
+## 2026-10-04 构图预览基础组件
+
+packages/ui显式Icons加入Minus/Redo2，复用Plus/Lock/Download/RefreshCw/Undo2。Dialog/Radix继续独占层级、Esc、窗外关闭及焦点返回；Button沿用既有尺寸/variant，胶囊为业务组合，不造第二套primitive。截图及五宽度检查通过；原生drag/wheel实机门槛仍待。[记录](SHOT_FRAMING_2026-10-04.md)。
+
 ## 2026-10-04 详情图片缩放图标消费
 
 UI-root仅显式追加Lucide ZoomIn/ZoomOut导出，真实ShotImagePreview通过Icons消费；不新增图标库或业务primitive。详情/预览继续使用既有Button/Input/Select/Checkbox/Dialog，焦点、Esc和reduced-motion沿用共享owner。新增inline卡片是apps/web局部feature，未冒充全站primitive cutover；本轮五宽度、键盘/菜单验收和未取得的文件操作证据见[记录](SHOT_DETAIL_2026-10-04.md)。

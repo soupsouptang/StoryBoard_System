@@ -1,5 +1,9 @@
 # API route inventory — Legacy reference only
 
+## 2026-10-04 详情保存增加构图参数
+
+现有POST /api/v1/shots/{id}/detail的封闭payload增加可选framing。source包含asset_id/panel_id/presentation_revision/source_version_id，新上传同次构图时必须null；transform复用MediaTransform。服务端复核当前panel/原图、项目比例整数化（2.35:1→47:20）、50–300%及媒体输出限制。共享scale下限扩至0.5，既有资产UI范围保持；原CAS/权限/回滚/no-op、一事务一History语义保持。9项针对后端检查通过，原图保留和undo/redo证据见[实施MD](SHOT_FRAMING_2026-10-04.md)。无新路由或DDL。
+
 ## 2026-10-04 原子镜头详情保存
 
 新增V-API `POST /api/v1/shots/{id}/detail`：multipart `payload`为封闭ShotDetailSave（expected Shot revision、可修改Shot字段、custom_values的定义revision）；可选image≤10MiB，payload≤1MiB。ShotDetailService先锁项目/Shot并复核权限与CAS，再经既有三个service写入；function-scoped get_db在commit及History确认后才返回ShotOut。401/403权限、404对象、409 revision、422格式、400领域及413大小均不冒充成功。真实ASGI覆盖内置＋自定义＋图片一事务、一undo/redo、无值变更no-op、晚期无效图片整步回滚、定义/镜头冲突及必填校验；新路由已被真实Web详情保存消费。沿用原schema/媒体存储owner，无Legacy对等或新DDL。完整后端146 passed；新画板远端增量保持独立，未宣称其Web集成。[记录](SHOT_DETAIL_2026-10-04.md)。

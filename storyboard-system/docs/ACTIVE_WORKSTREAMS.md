@@ -1,5 +1,9 @@
 # FrameForge VNext 原生重构工作簿
 
+## 2026-10-04 分镜固定画框构图
+
+两种缩略图共用ShotImagePreview：项目画幅、pan/wheel、50–300%胶囊、双击100%居中复位；小图仅Lock保存，详情Lock本地草稿历史后原子Save。原图/构图双下载已收到并核验，真实文件替换取消、锁定、项目撤销、详情局部undo/redo及Save通过，五宽度最终无溢出。原生drag/wheel实机受工具能力限制，仅真实组件事件检查通过，仍待复核。3002最终shot-framing-interaction/API8002已重启，PG不做DDL。两个remote无待合入增量；仅本地提交，具体GitHub目的地授权仍待此前回复。[证据与限制](SHOT_FRAMING_2026-10-04.md)。
+
 ## 2026-10-04 扩展性需求重写与已确认产品规则
 
 [总纲v2](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)按最新用户要求重写，明确Entity真正从属与typed link边界。用户重新确认：全部9内置列默认可见/内置禁止Purge；同共享view布局及筛选/排序/分组同步；显式团队资源身份跨项目冲突；Scene要求动态继承且逐项覆盖；环境镜头显式值优先，否则主值附差异。Q-05资源数量合并待回答，不暂停其他明确包。

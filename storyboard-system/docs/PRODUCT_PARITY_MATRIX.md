@@ -1,5 +1,9 @@
 # FRAMEFORGE Product Parity Matrix
 
+## 2026-10-04 分镜构图能力追加
+
+小镜头和详情大图使用固定项目画幅、50–300%缩放/位移、居中胶囊、双击100%复位、显式Lock、原图/构图双下载。小图未锁定替换或调整可Esc/窗外取消；详情Lock可撤销草稿，卡片Save一事务提交。原不可变源媒体和项目Undo/Redo保留，不恢复详情有图点击直接替换的旧行为。真实合成文件/保存/恢复和下载核验通过；原生drag/wheel实机仍待，整体INTEGRATED_NOT_CUT_OVER。[记录](SHOT_FRAMING_2026-10-04.md)。
+
 ## 2026-10-04 用户确认的详情交互覆盖
 
 表格详情按最新用户明确要求改为行下卡片，集中当前横向镜头字段、只读隐藏列及一次显式保存；取消旧表格侧滑Inspector/分节X，不构成未经授权的能力删除。Card/Wall仍保留原Inspector。字段、custom values与staged图片一次事务/一历史步；dirty guard、409留草稿、真正no-op和图预览中心缩放已接通。文件上传/下载实机证据仍有浏览器权限/回执门槛，整体INTEGRATED_NOT_CUT_OVER，不改变其他产品恢复门槛。[记录](SHOT_DETAIL_2026-10-04.md)。

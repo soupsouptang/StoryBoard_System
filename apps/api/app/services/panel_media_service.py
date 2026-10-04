@@ -29,6 +29,43 @@ class ShotRevisionConflict(ConflictError):
 
 class PanelMediaService:
     @staticmethod
+    async def save_framing(db, *, shot, framing, user, media_root, uploaded=False):
+        from app.core.exceptions import DomainError
+        from app.services.image_crop_service import ImageCropService
+        from app.services.asset_service import AssetService
+        from app.services.image_framing import project_frame_ratio
+        from app.schemas.image_crop import ImageCropRequest
+        panel = await db.scalar(select(Panel).where(Panel.shot_id == shot.id, Panel.deleted_at.is_(None))
+            .order_by(Panel.sort_index, Panel.id).limit(1))
+        if not panel or not panel.asset_id:
+            raise DomainError('请先上传分镜画面', code='MISSING_PANEL_IMAGE')
+        project = await db.get(Production, shot.production_id)
+        transform = framing.transform
+        if transform.aspect_ratio != project_frame_ratio(project.aspect_ratio):
+            raise DomainError('构图比例必须与项目画幅一致', code='INVALID_FRAME_RATIO')
+        if not .5 <= transform.scale <= 3:
+            raise DomainError('构图缩放须在50%至300%之间', code='INVALID_FRAME_SCALE')
+        source = framing.source
+        if uploaded:
+            if source is not None:
+                raise DomainError('替换图片不能沿用旧原图的构图版本', code='INVALID_FRAME_SOURCE')
+            saved = await ImageCropService.presentation(db, shot.production_id, panel.asset_id, user, 'panel', panel.id)
+            source_version_id, presentation_revision = saved['source_version_id'], saved['revision']
+        else:
+            if source is None or source.asset_id != panel.asset_id or source.panel_id != panel.id:
+                raise DomainError('构图原图与当前镜头不一致，请重新打开画面', code='INVALID_FRAME_SOURCE')
+            source_version_id, presentation_revision = source.source_version_id, source.presentation_revision
+        asset = await AssetService.asset(db, shot.production_id, panel.asset_id, lock=True)
+        result = await ImageCropService.crop(db, shot.production_id, asset.id, ImageCropRequest(
+            revision=asset.revision, presentation_revision=presentation_revision,
+            source_version_id=source_version_id, owner_type='panel', owner_id=panel.id,
+            **transform.model_dump()), user, media_root)
+        if result['changed']:
+            shot.revision += 1
+            shot.updated_at = datetime.now(timezone.utc)
+        return result
+
+    @staticmethod
     async def get_upload_shot(
         db: AsyncSession,
         *,
