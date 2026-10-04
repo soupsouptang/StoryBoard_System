@@ -2,7 +2,7 @@
 
 # FrameForge 制作常识 Topic Catalog
 
-版本：1.0，2026-10-05。状态：首批常识正文合同，尚未建立运行知识条目。
+版本：1.1，2026-10-05。状态：首批常识正文合同，尚未建立运行知识条目。本版作为243个唯一共享Topic与13个FormulaDefinition的内容基线。
 
 配套：[制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)、[知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)、[知识体系](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)。
 
