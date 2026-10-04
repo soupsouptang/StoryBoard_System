@@ -2,6 +2,16 @@
 
 本记录只跟踪 `next-generation/` 的文档储备，不是当前版本工作包或应用实施进度。设计参数未定稿，重构未启动。
 
+## 2026-10-05：展开制作常识正文与A–H组件
+
+在已确认的制作常识/Seed合同之上继续推进，不新增产品范围。新增 [制作常识 Topic Catalog](requirements/PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md) 1.1，把原条目清单展开为243个唯一共享Topic与13个FormulaDefinition，覆盖镜头语言、Camera Angle/FOV/Perspective、光学、五类放大/运镜、曝光/帧率、灯光、色彩数据流、声音、媒体/格式、二维合成、三维/实时、制作工作流、接口兼容和时间校准。FOV/透视/摄影角度继续独立；F-number/T-stop和特殊光学公式边界保持。
+
+新增 [A–H知识小库组件](requirements/AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md) 1.1，建立135个唯一专业Component和首批跨组件INPUT/OUTPUT/HANDOFF/SUPPORT关系。A–H组件只保存专业增量，共享FOV/DOF/Timecode/Alpha/Task等常识统一引用PC-* Topic，不复制正文。明确内容→实拍、分镜/预演→3D/VFX、实拍素材→后期、CG→合成→后期、现场声音→声音后期、表演/造型→连续性的知识链。
+
+补充83/83 KA–KH专业知识域到已定义KLC Component的显式映射，使139个JOB_CATALOG岗位可按 RoleKnowledgeBinding → ProfessionalKnowledgeDomain → Component → Common Topic 路径检索，不再按名称猜归属。最终Domain最大层级仍未锁定；只有真实内容量、独立查询/生命周期或岗位只需部分内容时才拆Subcomponent，禁止把焦段→光圈等独立概念误做树状父子数据。
+
+知识需求更新到2.6、基础合同到1.2、岗位知识目录到1.4，知识验收扩展到KL-35。机械检查确认243 Topic ID与13 Formula ID唯一，135个Component定义唯一，83/83专业知识域均有有效Component目标。本轮仍只修改下一代规划文档，没有创建实际知识数据库、接口、索引或UI。
+
 ## 2026-10-05：建立制作常识库与首批官方 Seed
 
 用户完成多轮知识模型确认并授权开始统一写入。本轮新增 [制作常识与 Seed Catalog](requirements/PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)，要求知识建设顺序从“制作常识 Topic → 公式/关系 → 基础大类知识 → 器材/软件/格式能力映射”开始，后续才继续 A–H 小库内部组件和最终层级深度。
