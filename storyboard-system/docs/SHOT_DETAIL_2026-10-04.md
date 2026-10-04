@@ -1,5 +1,9 @@
 # 2026-10-04 分镜详情卡片与图片预览实施记录
 
+## 最新追加：详情删除按钮缩小
+
+用户要求宽高各缩小约2–3px且icon不变。仅ShotDetailCard顶部删除按钮增加size-[29px]，覆盖原32px；Trash2保持16×16px，圆角8px与原色、aria-label/title、权限/disabled、确认和Esc行为保持。真实1440/1024/768/375/320均按钮29×29、icon16×16、中心偏差0、卡片470px、根无横向溢出；正常点击打开合成012删除确认，Esc取消，未删除或保存任何数据。生产Webpack/TypeScript与diff通过。本机3002更新.next/detail-delete-compact，API/DB不变，临时viewport恢复/QA页关闭；截图outputs/shot-detail-delete-compact-2026-10-04.png仅本机。本段覆盖历史32px删除按钮描述，GitHub具体仓库授权仍未回复，没有重试被拒上传。
+
 ## 最新追加：放大辅助制作方式选项
 
 用户要求不改变卡片框架、不增加滚动或折行的情况下放大选项。ShotDetailCard原组11px字号/16px行高、12px框改为14px字号/20px行高、16px框与12px勾选icon；保留横gap8px/纵gap4px。只在辅助组使用命名容器查询：组可用宽度至少260px时三列四行，否则两列五行；十项名称保持nowrap，移除独立滚动的既有规则保持。显式important仅作用于选项文字，避免表格统一字号覆盖。470px标准卡片本体、最多六等宽内容轨、固定左图、16px内容留白/字段间距与置顶操作保持；没有shared primitive/API/DB/枚举/草稿或保存owner变化。

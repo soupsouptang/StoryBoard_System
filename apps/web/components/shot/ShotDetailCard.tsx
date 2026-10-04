@@ -200,7 +200,7 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
         <h2 className="whitespace-nowrap text-base font-semibold">镜头 {shot.display_number} · 详情</h2>
         <span className="text-xs font-normal text-muted-foreground">REV {shot.revision}</span>
         <span role="status" className="text-xs text-muted-foreground">{busy ? '保存中…' : dirty ? '有未保存修改' : '已同步'}</span>
-        <Button size="icon-sm" variant="destructive" aria-label="删除镜头" title="删除镜头" disabled={!canWrite || busy} onClick={() => setTrash(true)} className="shrink-0 rounded-md"><Icons.Trash2 /></Button>
+        <Button size="icon-sm" variant="destructive" aria-label="删除镜头" title="删除镜头" disabled={!canWrite || busy} onClick={() => setTrash(true)} className="size-[29px] shrink-0 rounded-md"><Icons.Trash2 /></Button>
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-4">
         <Button size="sm" disabled={!canWrite || busy} onClick={() => void submit()} className="h-8 w-16 px-0 text-sm">保存</Button>
