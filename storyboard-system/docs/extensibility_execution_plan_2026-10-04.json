@@ -31,7 +31,9 @@
     "KNOWLEDGE-CONTRIBUTION-SNAPSHOT",
     "TASK-AUTO-INACTIVATE",
     "CALLSHEET-EXPLICIT-PUBLISH",
-    "MEDIA-FORMAL-HANDOFF"
+    "MEDIA-FORMAL-HANDOFF",
+    "AUTHORIZATION-DOCUMENTS-ONLY",
+    "CHECKLIST-NO-SOP"
   ],
   "shared_integration_paths": [
     "apps/api/main.py",
@@ -1221,7 +1223,9 @@
         "E6-SCHEDULE",
         "E6-MEDIA-HANDOFF",
         "E5-OUTBOX",
-        "E7-EXPORT"
+        "E7-EXPORT",
+        "E2-AUTHORIZATION",
+        "E4-CHECKLIST"
       ],
       "state": "not_started",
       "allowed_paths": [
@@ -1243,7 +1247,9 @@
         "FX-09",
         "FX-12",
         "FX-15",
-        "FX-29"
+        "FX-29",
+        "FX-31",
+        "FX-32"
       ],
       "verification": [],
       "blockers": [],
@@ -1261,7 +1267,9 @@
       "dependencies": [
         "E8-IMPACT",
         "E7-DELIVERY-LOOP",
-        "K3-RECOMMENDATION"
+        "K3-RECOMMENDATION",
+        "E2-AUTHORIZATION",
+        "E4-CHECKLIST"
       ],
       "state": "not_started",
       "allowed_paths": [
@@ -1281,7 +1289,9 @@
         "FX-30",
         "KL-05",
         "KL-06",
-        "KL-07"
+        "KL-07",
+        "FX-31",
+        "FX-32"
       ],
       "verification": [],
       "blockers": [],
@@ -1291,6 +1301,76 @@
         "postgres",
         "browser",
         "contract"
+      ]
+    },
+    {
+      "id": "E2-AUTHORIZATION",
+      "title": "制作授权资料与授权Requirement",
+      "owner": "E2-AUTHORIZATION",
+      "dependencies": [
+        "E1-POLICY",
+        "E2-SCENE"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/authorization.py",
+        "apps/api/app/services/authorization_service.py",
+        "apps/api/app/schemas/authorization.py",
+        "apps/api/app/api/v1/authorizations.py",
+        "tests/backend/test_authorization_records.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-05",
+        "FX-12",
+        "FX-31"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "只管理制作授权记录、文件、范围、期限及hard/soft Requirement；不做合同、法务判断或费用；真实Readiness/Final QC consumer通过。",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
+      ]
+    },
+    {
+      "id": "E4-CHECKLIST",
+      "title": "Checklist结果与派生Readiness",
+      "owner": "E4-CHECKLIST",
+      "dependencies": [
+        "E2-SCENE",
+        "E2-AUTHORIZATION",
+        "E4-TASK",
+        "E0-CONFIG"
+      ],
+      "state": "not_started",
+      "allowed_paths": [
+        "apps/api/app/models/checklist.py",
+        "apps/api/app/services/checklist_service.py",
+        "apps/api/app/schemas/checklist.py",
+        "apps/api/app/api/v1/checklists.py",
+        "tests/backend/test_checklist_readiness.py"
+      ],
+      "excluded_paths": [
+        "storyboard-system/static/",
+        "storyboard-system/server.py"
+      ],
+      "required_gates": [
+        "FX-09",
+        "FX-12",
+        "FX-32"
+      ],
+      "verification": [],
+      "blockers": [],
+      "acceptance": "Checklist只检查是否满足，不做SOP；required/optional/N-A/UNKNOWN与来源失效正确，Readiness由事实派生且不可直接写布尔绕过。",
+      "required_evidence_kinds": [
+        "unit",
+        "api",
+        "postgres"
       ]
     }
   ],
