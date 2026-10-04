@@ -2,7 +2,7 @@
 
 # FrameForge A–H 专业知识小库组件与跨组件关系
 
-版本：1.1，2026-10-05。状态：组件范围合同，尚未锁定最终 Domain 深度。本版定义135个唯一A–H组件，并显式覆盖83/83专业知识域。
+版本：1.2，2026-10-05。状态：组件范围合同。本版基于135个唯一A–H组件和83/83专业知识域的真实规模，锁定知识分类最大深度：Library → Domain → Component → 可选Subcomponent；Topic不作为继续嵌套的分类层。
 
 配套：[制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)、[岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)、[工种目录](JOB_CATALOG_DEFINITIONS_2026-10-05.md)。
 
@@ -466,17 +466,97 @@ JOB_CATALOG role
 
 这类 relation 只说明知识/制作关系，不自动创建项目 Task 或权限。
 
-## 12. 后续拆分与层级规则
+## 12. 知识分类最大层级
 
-现在**仍不规定最大层数**。先用以下判断决定是否拆 Subcomponent：
+经过首批243个共享Topic、135个专业Component和83个专业Domain展开后，分类深度已足够确定。
 
-- 单组件出现明显不同对象生命周期；
-- 需要独立型号/格式/公式/输入输出查询；
-- 组件内容大到无法清晰维护；
-- 与其他组件有大量独立 cross-links；
-- 岗位只需要其中一部分，而不是整个组件。
+### 12.1 最大分类深度
 
-相反，仅因为“看起来可以再分一层”不得拆。比如 D03 Lens & Optical System 内的 Focal Length、F-number、T-stop、FOV 是独立共享 Topic/规格，不应该变成“镜头→焦段→光圈”这样的错误树。
+```text
+KnowledgeLibrary
+→ KnowledgeDomain
+→ KnowledgeComponent
+→ KnowledgeSubcomponent (optional)
+```
+
+**含 Library 最多四级；不含 Library 最多三级。**
+
+`KnowledgeTopic` 不是第五级分类树。Topic 是独立知识实体，可通过 DomainTopicLink / ComponentTopicLink / KnowledgeRelation 被 Library、Domain、Component 或 Subcomponent 引用。
+
+不允许：
+
+```text
+D 摄影
+→ 镜头
+→ 焦段
+→ 35mm
+→ 光圈
+```
+
+因为 Focal Length、F-number、T-stop、FOV、Focus Distance 是相互关联但不同维度的 Topic/Specification，不是彼此的父子分类。
+
+正确表达可以是：
+
+```text
+D
+→ Camera / Optics Domain
+→ Lens & Optical System Component
+   ├─ Optical Geometry Subcomponent (optional)
+   ├─ Aperture / Transmission Subcomponent (optional)
+   ├─ Focus / DOF Subcomponent (optional)
+   └─ Projection / Coverage Subcomponent (optional)
+
+PC-OPT-001 Focal Length
+PC-OPT-007 F-number
+PC-OPT-008 T-stop
+PC-CAM-009 FOV
+...
+通过relation互联
+```
+
+### 12.2 何时允许 Subcomponent
+
+只有出现下列至少一项才拆第四级：
+
+- 一个 Component 内存在明显不同、稳定的维护边界；
+- 需要独立查询/过滤/导航；
+- 岗位只需要其中一部分知识；
+- 一组 Topic 有独立输入输出/格式/器材映射；
+- 内容量已经使 Component 无法清晰维护。
+
+### 12.3 何时禁止继续拆层
+
+- 只是某个数值/规格不同；
+- 只是品牌/型号不同；
+- 只是同一个 Topic 的别名；
+- 只是焦段、光圈、FOV等不同知识维度；
+- 只是不同格式/软件/器材引用同一 Topic；
+- 想用树层替代 typed relation。
+
+超过 Subcomponent 后仍需组织内容时，应使用 Topic、Tag、Relation、Facet、SpecificationDefinition 或查询过滤，而不是增加第五/第六级目录。
+
+### 12.4 器材/软件/格式不占知识分类深度
+
+EquipmentModel、SoftwareProduct、FormatDefinition 是独立参考对象，通过 relation 连接 Domain/Component/Topic，不作为：
+
+```text
+Library → Domain → Component → Brand → Model → Variant
+```
+
+这样的知识树。品牌、型号、Variant 用结构化字段和Facet检索。
+
+### 12.5 Shared Foundation 同样受限
+
+共享基础层可使用：
+
+```text
+Shared Foundation
+→ Base Domain
+→ Component (optional)
+→ Subcomponent (optional)
+```
+
+但共享Topic仍保持独立 stable identity。
 
 ## 13. 首批组件验收
 
@@ -489,4 +569,4 @@ JOB_CATALOG role
 - D Camera / Lighting / Audio / Support 接口不混树；
 - F/G/H 的 Format 与 Color pipeline 可通过跨组件关系连接；
 - A Library 只提供知识/协调语义，不复制 Schedule/Task/Delivery 的业务事实 owner；
-- 最终层级深度保持未锁定，直到真实内容量和导航需求可测。
+- 分类最大深度固定为 Library→Domain→Component→可选Subcomponent；Topic/器材/软件/格式通过relation和facet组织，不继续增加目录深度。
