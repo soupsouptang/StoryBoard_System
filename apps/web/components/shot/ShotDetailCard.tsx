@@ -234,7 +234,7 @@ export function ShotDetailCard({ shot, production, fields, customValues, sequenc
         <h2 className="whitespace-nowrap text-base font-semibold">镜头 {shot.display_number} · 详情</h2>
         <span className="inline-flex items-center whitespace-nowrap text-xs font-normal text-muted-foreground">第<span className="inline-block min-w-[3ch] text-center tabular-nums">{shot.revision}</span>版修改</span>
         <span role="status" className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs ${busy || dirty ? 'text-muted-foreground' : 'font-bold text-[#50FF00]'}`}>
-          {!busy && !dirty && <span aria-hidden="true" data-saved-indicator className="size-2 shrink-0 rounded-full bg-current shadow-[0_0_6px_currentColor]" />}
+          {!busy && !dirty && <span aria-hidden="true" data-saved-indicator className="size-2 shrink-0 rounded-full bg-current" />}
           {busy ? '保存中…' : dirty ? '未保存' : '已保存'}
         </span>
         <Button size="icon-sm" variant="destructive" aria-label="删除镜头" title="删除镜头" disabled={!canWrite || busy} onClick={() => setTrash(true)} className="size-[29px] shrink-0 rounded-md bg-[#FF454D] hover:bg-[#F53540] dark:bg-[#FF454D] dark:hover:bg-[#F53540]"><Icons.Trash2 /></Button>

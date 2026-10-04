@@ -1,5 +1,9 @@
 # FrameForge VNext 原生重构工作簿
 
+## 2026-10-04 已保存无发光微调
+
+用户要求圆点/文字仅上色，已移除绿灯shadow；实际008两者boxShadow/textShadow/filter均none，#50FF00与字重/间距保持。生产构建与真实页面验证通过，3002为saved-status-flat，业务owner及API/PG不变。[记录](SHOT_DETAIL_2026-10-04.md)。
+
 ## 2026-10-04 图片浮窗统一历史控件
 
 表格与详情仍共用ShotImagePreview，Undo/Redo按钮/快捷键只保留一份；表格接原项目历史，详情接原构图草稿。项目菜单与浮窗共用useProjectCommandHistory客户端，未复制持久owner。两入口真实撤销/重做、取消/基线恢复、五宽度及五份针对检查/生产构建通过；3002为preview-history，API/DB保持。[记录](SHOT_FRAMING_2026-10-04.md)。

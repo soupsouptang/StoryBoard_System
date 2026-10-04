@@ -1,5 +1,9 @@
 # FRAMEFORGE Screen Parity Matrix
 
+## 2026-10-04 已保存无光晕覆盖
+
+绿色圆点及文字均为纯色#50FF00，实际computed boxShadow/textShadow/filter为none；8px圆点/700字重/原布局保持。真实008只读截图outputs/shot-saved-status-no-glow-2026-10-04.jpg留本机，生产构建通过；不改其他布局/交互。[记录](SHOT_DETAIL_2026-10-04.md)。
+
 ## 2026-10-04 共用图片历史按钮
 
 ShotImagePreview标题后始终显示Undo2/Redo2，两个入口同一份32px按钮/16px图标；空历史置灰，不隐藏。实际008两入口只读截图已保存，五宽度1440/1024/768/375/320根/Dialog无横向溢出，窗口608/400/288/288/288px、两个按钮完整可见，默认1280两入口528px一致。[记录](SHOT_FRAMING_2026-10-04.md)。

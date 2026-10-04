@@ -1,5 +1,9 @@
 # 2026-10-04 分镜详情卡片与图片预览实施记录
 
+## 最新微调：已保存纯色、无外发光
+
+按最新用户要求移除绿灯的box-shadow；圆点和文字只保留#50FF00纯色、原700字重/8px圆点/间距。真实3002样本008只读核验，两者computed boxShadow/textShadow/filter均none，绿色rgb(80,255,0)；截图outputs/shot-saved-status-no-glow-2026-10-04.jpg及标题栏局部图仅本机。生产Webpack/TypeScript及diff检查通过，无数据/API/状态逻辑变更。3002已更新.next/saved-status-flat standalone，API/PG/媒体保持。本段覆盖下方历史“轻微光晕”。
+
 ## 最新追加：版本、保存状态与亮红删除按钮
 
 本段覆盖历史REV/已同步/保存成功弹窗规则。版本显示“第 N 版修改”，数字使用tabular-nums且最小3ch，预留三位数字不补零；标题、版本、状态与删除横向间距16px，窄屏自然换行。已保存使用8px实心绿灯及加粗700文字，均为用户指定RGB(80,255,0)/#50FF00，绿灯有轻微光晕；dirty显示灰色“未保存”，pending显示灰色“保存中…”，均不显示绿灯。删除局部按钮为#FF454D，hover #F53540，明确覆盖深色主题原destructive透明色；29px圆角正方形、16px图标不变。
