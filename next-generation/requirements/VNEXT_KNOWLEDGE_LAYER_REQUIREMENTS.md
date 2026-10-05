@@ -2,7 +2,7 @@
 
 # FrameForge 知识体系需求与实施合同
 
-版本：2.8，2026-10-05。状态：需求已审计；知识模块仍待实施和实际验收。本版开始填充首批官方Reference Seed，建立字段级官方来源状态、UNKNOWN语义、设备/软件/格式实际种子数据，并按DJI当前官方资料修正Osmo Pocket 4为双内置成像模组。
+版本：2.9，2026-10-05。状态：需求已审计；知识模块仍待实施和实际验收。本版重分知识类别、统一型号字段、分离真实数据样例并补齐岗位专业关联；来源和缺值独立维护。Pocket首批型号按用户指定采用4P，旧混用参数按官方资料纠正，未逐字段核验的数据仍待补。
 
 配套：[总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)、[岗位方案](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md)、[工种目录](JOB_CATALOG_DEFINITIONS_2026-10-05.md)、[岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)、[知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)、[制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)、[制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)、[A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)、[首批 Reference Seed Data](REFERENCE_SEED_DATA_2026-10-05.md)、[时间段资源需求](RESOURCE_TIME_REQUIREMENTS_2026-10-04.md)、[执行标准](TECHNICAL_ACCEPTANCE.md)、[实施计划](ACCEPTANCE_SCENARIOS.md)。
 
@@ -134,9 +134,9 @@ E1-POLICY负责后台用户组及团队归类，K1-EXPERIENCE只保存贡献引�
 
 设备与软件基础模型统一遵循[知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)。
 
-设备型号保存厂商、型号、变体、分类、官方规格 revision、单位和官方来源。官方规格参与筛选、查询和兼容判断；人工备注使用独立 EquipmentNote，不覆盖官方 SpecificationValue，也不作为兼容自动判断依据。新型号通过 EquipmentCategory + SpecificationDefinition 录入，不能要求为每个新品修改主业务表。
+设备型号、变体、模组、模式、规格、接口与配件各自拥有明确资料。权威字段字典见[器材字段合同](EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md)；型号不把变体或单一来源地址混成固定属性。官方规格参与筛选、查询和兼容判断；人工备注使用独立 EquipmentNote，不覆盖官方 SpecificationValue，也不作为兼容自动判断依据。新型号通过 EquipmentCategory + SpecificationDefinition 录入，不能要求为每个新品修改主业务表。
 
-兼容关系使用 typed CompatibilityRelation，至少区分 DIRECT_COMPATIBLE、REQUIRES_ADAPTER、INCOMPATIBLE、CONDITIONAL_COMPATIBLE。兼容示例必须来自已核实的真实接口：例如 FC-120B 原生 FM Mount，官方 Bowens Mount Adapter 是明确 intermediate component；不能把 Bowens 误写成机身原生 mount。正式兼容仍以厂商官方资料为准。
+兼容关系使用 typed CompatibilityRelation，至少区分 DIRECT_COMPATIBLE、REQUIRES_ADAPTER、INCOMPATIBLE、CONDITIONAL_COMPATIBLE。类别文档只定义接口、适用范围、必要中间件、功能和证据字段；真实连接样例只放数据样例，逐端标明所属大类、型号、条件和来源。原生接口不能被转接结果替代；正式兼容以厂商证据及全部必要条件为准。
 
 软件只保存 SoftwareProduct / version scope 到 Capability Domain 的适配关系，例如某三维软件对 THREE_D_MODELING 为 PRIMARY，而对 EDITING 为 NOT_SUPPORTED 或受限。软件知识不保存按钮路径、快捷键、插件教程或逐版本新功能文章。
 
@@ -157,7 +157,7 @@ E1-POLICY负责后台用户组及团队归类，K1-EXPERIENCE只保存贡献引�
 
 技术名称仅用于实施定位：KnowledgeLibrary/KnowledgeDomain 组织共享常识与 A–H 专业知识；KnowledgeTopic 是稳定语义身份，KnowledgeRevision 保存不可变正文，KnowledgeAlias/SourceReference/FormulaDefinition 分别处理别名、来源和公式。RoleKnowledgeBinding 连接 role catalog version + stable role ID + domain/topic。Manufacturer/EquipmentProductFamily/EquipmentModel/Variant、ImagingDevice/EmbeddedImagingModule/SensorRecordingMode、SpecificationDefinition/Value/Note、Interface/CompatibilityPath、SoftwareProduct/CapabilitySupport、FormatDefinition/Relation 按基础合同保存参考知识。ExperienceObservation 只保存实际或粗粒度时间观察；EstimateProfile 保存不可变时间统计版本。它们统一使用本代新建的权限、命令历史、持久作业、事务事件和配置转换基础。组与团队由统一身份模块负责，从零建立账号和组配置，知识只记录其固定贡献引用。团队归类由新版身份职责接入，不把它误报成已存在接口。
 
-拟议接口包括知识空间查询、项目经验、问题与回答、知识建议；实际路径和请求响应经统一合同接受后冻结。API 类型从同一权威合同生成，不在前后端和文档分别手写四份。核心关系用外键、同项目校验、修订和时间，统计条件可以用带格式版本的结构化输入。
+拟议接口包括知识空间查询、项目经验、粗粒度时间补充、知识建议；实际路径和请求响应经统一合同接受后冻结。API 类型从同一权威合同生成，不在前后端和文档分别手写四份。核心关系用外键、同项目校验、修订和时间，统计条件可以用带格式版本的结构化输入。
 
 ## 10. 历史、删除、导入导出
 
@@ -200,16 +200,25 @@ E1-POLICY负责后台用户组及团队归类，K1-EXPERIENCE只保存贡献引�
 | KL-25 | Spatial Push、Optical Zoom、机位+焦距混合、机内Digital Zoom、Post Reframe分别建模；拍摄阶段和后期放大不混为同一动作 |
 | KL-26 | FOV优先官方值，CALCULATED值标来源；有效SensorRecordingMode参与计算；Anamorphic/Fisheye按适用模型；F-number/T-stop、Shutter Angle/Time、ISO/EI/Gain只在确认映射下转换 |
 | KL-27 | 固定镜头设备选择后锁定EmbeddedImagingModule；Mavic类多模组在同一机型内选择模组；多机位逐Body独立计算，Project Mount Preference只排序不改兼容真相 |
-| KL-28 | Compatibility以Domain接口推导为主、厂商型号级断言为override；自动路径最多两个intermediate；Adapter/Accessory分别保存机械、电控、AF、光圈、metadata、power、control等能力 |
+| KL-28 | 专用配件先匹配宿主名单；通用配件按专业接口生成候选并校验条件，型号级断言优先；自动路径最多两个intermediate；Adapter/Accessory分别保存机械、电控、AF、光圈、metadata、power、control等能力 |
 | KL-29 | FormatDefinition只有一个canonical identity；D/F/G/H通过PRODUCES/CONSUMES/IMPORTS/EXPORTS/TRANSCODES_TO关联；共享色彩Topic与Camera/Composite/Render/Post数据流Domain分离 |
-| KL-30 | 首批seed至少覆盖RED KOMODO原版、ZEISS CP.3完整焦段、Osmo Pocket 4、Mavic 4 Pro、RS 5、Focus Pro、DJI Transmission/SDR、Nanlite Forza 200/旧Forza 300B/FC-120B/FC-300B/PavoTube II 15C、Aputure STORM 1200x、Tiffen 4×5.65 Pro-Mist/Black Pro-Mist、Blender/UE5/AE；具体参数只从官方来源入SpecificationValue |
+| KL-30 | 首批seed至少覆盖RED KOMODO原版、ZEISS CP.3完整焦段、Osmo Pocket 4P、Mavic 4 Pro、RS 5、Focus Pro、DJI Transmission/SDR、Nanlite Forza 200/旧Forza 300B/FC-120B/FC-300B/PavoTube II 15C、Aputure STORM 1200x、Tiffen 4×5.65 Pro-Mist/Black Pro-Mist、Blender/UE5/AE；具体参数只从官方来源入SpecificationValue |
 | KL-31 | 时间校准读取Call Sheet/Schedule/制作表estimate与Actual；Shot/Scene/ShootDay可作aggregate，Setup/Rehearsal/Shoot/Reset/Strike/Move/Task/Post作component，aggregate/component不重复计样本且不按Person统计 |
-| KL-32 | 制作常识Topic Catalog中的stable ID唯一；243个首批Topic和13个FormulaDefinition可分别检索，公式有适用/禁止条件；共享Topic只有一个canonical revision |
+| KL-32 | 制作常识Topic Catalog中的stable ID唯一；全部登记主题和13个FormulaDefinition可分别检索，公式有适用/禁止条件；共享Topic只有一个canonical revision |
 | KL-33 | A–H组件ID唯一；83个KA–KH专业知识域全部显式映射到已定义Component，139个JOB_CATALOG岗位可沿Role→Domain→Component→Topic链检索，不靠名称猜归属 |
 | KL-34 | 内容→实拍、分镜/预演→3D/VFX、实拍→后期、CG→合成→后期、现场声音→声音后期、表演/造型→连续性等跨组件链有显式INPUT/OUTPUT/HANDOFF/SUPPORT关系；这些关系不自动创建Task或权限 |
 | KL-35 | 分类层级固定为Library→Domain→Component→可选Subcomponent，含Library最多四级；Focal Length/F-number/T-stop/FOV等独立Topic不得因导航树被误做父子数据 |
-| KL-36 | Topic、EquipmentModel、SoftwareProduct、FormatDefinition、FormulaDefinition不占第五级目录；品牌/型号/Variant通过结构化字段/Facet，跨概念通过typed relation，超过Subcomponent不得继续造第五/第六级知识树 |
+| KL-36 | 主题及参考对象不占第五级知识实体；器材浏览按大类→该类内品牌→型号→字段/子项展开，不混建品牌总库；跨概念用明确关系，知识树不超过四级 |
 | KL-37 | 首批Reference Seed每个结构化字段都有OFFICIAL_VERIFIED/OFFICIAL_PARTIAL/OFFICIAL_CONFLICT/UNKNOWN/DERIVED等来源状态；OFFICIAL_VERIFIED能回溯SourceReference，UNKNOWN不显示为0/false/默认值且不得用第三方资料冒充官方事实 |
-| KL-38 | 已填Seed至少包含KOMODO原版及SensorRecordingMode、CP.3十焦段完整官方表、Pocket 4双内置模组、Mavic 4 Pro三内置模组、RS5/Focus Pro/Transmission/SDR组件、Nanlite/Aputure/Tiffen首批灯光/滤镜、Blender/UE5/AE能力和首批FormatDefinition；部分旧款/未完整SKU明确保持PARTIAL/UNKNOWN而不猜值 |
+| KL-38 | 已填Seed至少包含KOMODO原版及SensorRecordingMode、CP.3十焦段资料候选及逐字段核验位置、Pocket 4P双内置模组、Mavic 4 Pro三内置模组、RS5/Focus Pro/Transmission/SDR组件、Nanlite/Aputure/Tiffen首批灯光/滤镜、Blender/UE5/AE能力和首批FormatDefinition；部分旧款/未完整SKU明确保持PARTIAL/UNKNOWN而不猜值 |
+| KL-39 | 运镜、人物调度、镜头覆盖策略、轴线连续性、拍摄准备分别归类；所有主题、组件和参数定义有中文名称，不用英文缩写替代可读标题 |
+| KL-40 | 型号、变体、模组、模式、接口、套装、配件与备注按唯一字段合同关联；已填字段都有对象/定义/单位/条件/具体证据位置，不在各篇维护冲突定义 |
+| KL-41 | Osmo Pocket 4P增广镜只命中官方明确的宿主名单，在CP.3可用配件检索中不出现；空名单、概念引用、同品牌、同类别和套装随附都不形成兼容事实 |
+| KL-42 | 黑柔4×5.65长方片通过尺寸/厚度匹配的托盘及架/遮光斗形成实际安装配置；前口径不等于滤镜螺纹，导管系统、叠片、视场遮挡和云台空间分别校验，缺证据明确待核实 |
+| KL-43 | 来源性质、核验结果、访问状态、字段缺值和产品覆盖程度分轴；未取得旧款官方证据不标已核实；不得把Pocket 4的107GB/240分钟/4倍跟踪数据移给4P |
+| KL-44 | 两层自动推荐限制计入真实中间组件；遮光斗安装链超限按已证明特例完整登记，不通过把托盘或连接环藏进备注绕过规则 |
+| KL-45 | 类别与字段文档只定义大类、对应项、字段、子项及支持内容；实际型号、参数和直接配对只在数据样例，连接每端标完整所属大类、型号、条件及来源 |
+| KL-46 | 岗位编号→专业域→组件→所属大类→知识链可以往返检索；相关知识按本专业和其他专业分组并说明原因、方向、条件、来源及修订；不复制正文，不推导器材兼容、权限或自动任务 |
+
 
 真实 PostgreSQL、接口、并发、来源、统计回放、删除恢复和新页证据均需绑定实际提交。文档校验只能证明合同与清单结构一致，本轮没有把新知识模块登记为已接受。

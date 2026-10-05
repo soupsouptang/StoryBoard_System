@@ -2,7 +2,7 @@
 
 # 岗位驱动知识目录
 
-版本：1.4，2026-10-05。状态：知识范围合同，尚未建立运行知识条目、索引、页面或数据库。基础类型见 [知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)；共享常识正文见 [制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)；专业域到组件的稳定桥见 [A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)；首批器材/软件/格式范围见 [制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)。
+版本：1.5，2026-10-05。状态：知识范围合同，尚未建立运行知识条目、索引、页面或数据库。基础类型见 [知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)；共享常识正文见 [制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)；专业域到组件的稳定桥见 [A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)；首批器材/软件/格式范围见 [制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)。
 
 ## 1. 目的与边界
 
@@ -202,3 +202,7 @@ JOB_CATALOG 后续改名、改分类或拆分时，在 J-04 未解决前只允�
 JOB_CATALOG 1.1 当前解析到 **139 个可任职岗位编号**：A 10、B 16、C 18、D 20、E 15、F 18、G 24、H 18。本文件要求每个编号至少映射一个专业知识域；当前映射覆盖 139/139，无未知岗位编号。
 
 特别保持以下分支，不因知识相邻而合并岗位身份：B12a/B12b、B14/G09a、C02b/C02c、F02a/F02b、F08a/F08b、F09a/F09b、G15a/G15b、G16a/G16b、G17a/G17b、G18a/G18b。
+
+## 9. 相关知识按专业类别展开
+
+用户已要求岗位专业类别之间的相关知识相互关联。采用本篇稳定岗位编号和知识域，以及A–H组件的专业域映射，不按名字猜归属。每条关系的中文名称、专业大类、关联原因、方向、条件、来源和修订按[知识目录第13节](KNOWLEDGE_CATALOG_STRUCTURE_2026-10-05.md)维护；相关不等于从属、器材兼容、权限或任务创建。岗位列表和知识域原映射保持，所有入口引用同一主题正文。

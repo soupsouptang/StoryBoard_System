@@ -2,7 +2,7 @@
 
 # FrameForge 知识库基础内容、类型与扩展合同
 
-版本：1.4，2026-10-05。状态：需求合同，尚未创建运行数据库、知识条目、索引、维护页面或权限规则。本版在常识/组件/层级基线上纳入首批已填 Reference Seed Data，并强化官方来源状态、UNKNOWN语义与固定/多内置成像模组规则。
+版本：1.5，2026-10-05。状态：需求合同，尚未创建运行数据库、知识条目、索引、维护页面或权限规则。本版在常识/组件/层级基线上纳入首批已填 Reference Seed Data，并强化官方来源状态、UNKNOWN语义与固定/多内置成像模组规则。
 
 ## 1. 总原则
 
@@ -64,7 +64,7 @@ KnowledgeLibrary
 
 含 Library 最多四级。KnowledgeTopic、EquipmentModel、SoftwareProduct、FormatDefinition、FormulaDefinition 都是独立实体，通过 relation / facet 连接分类节点，不能继续扩成第五层以上目录。
 
-这条规则同时解决“镜头→焦段→光圈”等错误：焦段、F-number、T-stop、FOV、Focus、Coverage 是并列知识维度，通过 relation/公式互联，不存在父子数据关系。品牌、型号、卡口Variant也通过结构化字段检索，不进入知识分类层。
+这条规则同时解决“镜头→焦段→光圈”等错误：焦段、F-number、T-stop、FOV、Focus、Coverage 是并列知识维度，通过 relation/公式互联，不存在父子数据关系。品牌、型号、卡口变体不增加知识实体深度；器材检索导航按所属大类→该类内品牌→型号→字段和子项逐层展开。
 
 ## 2.4 已填 Reference Seed 与来源状态
 
@@ -122,6 +122,7 @@ EquipmentModel
 EquipmentVariant
 AccessoryModel
 AdapterModel
+EquipmentBundle
 SpecificationDefinition
 SpecificationDefinitionRevision
 SpecificationValue
@@ -241,60 +242,19 @@ EquipmentModel 的结构化规格只录入厂商官方资料可确认的值。�
 
 如果官方资料未给出某值，保持 UNKNOWN/空值，不以人工猜测补成官方参数。
 
-### 6.2 固定身份字段
+### 6.2 身份、变体和字段归属
 
-所有 EquipmentModel 至少包含：
+型号保存稳定身份、厂商、可空系列、中英文名称、产品代码、分类和修订。变体是真正从属型号的0到多个官方差异，不是每个型号强制填写的字符串。来源为独立记录及逐字段引用，不在主表只放一个网址。成像模组、传感器和录制模式各自拥有对应参数。
 
-```text
-manufacturer
-model
-variant
-equipment_category
-region_or_market (optional)
-official_source
-official_source_version
-status
-```
+唯一字段字典见[器材字段合同2—4节](EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md)。本篇不再重复维护一套镜头参数表；规格、配件安装链、套装和备注均遵循该合同。
 
-### 6.3 分类规格定义
+### 6.3 分类规格定义与新产品录入
 
-规格由 EquipmentCategory + SpecificationDefinition 扩展，不为每个新品改主表。
+规格由器材分类和规格定义修订扩展，不为每个新品修改型号主表或Shot结构。新24–70mm F2.8镜头按官方资料填写焦距范围和几何光圈，再分别核验卡口、像场、对焦、接口与功能。不能凭名称补出未公开数据。
 
-例如 Lens 首批规格可以定义：
+定焦50mm可保存范围两端相同，但等效焦距不能自动成为物理焦距。F值与T值分别存储；转换需官方对应关系。视场角优先官方数据，理论计算受投影模型、有效区域和公式条件约束。
 
-```text
-mount
-physical_focal_length_mm / focal_length_min_mm / focal_length_max_mm
-f_number_min / f_number_max
-t_stop_min / t_stop_max
-image_circle / coverage
-official_horizontal_aov_by_format
-minimum_focus_distance_m
-filter_thread_mm / front_diameter_mm
-weight_g
-length_mm
-stabilization
-autofocus
-spherical_or_anamorphic
-squeeze_ratio
-```
-
-F-number 与 T-stop 分开保存；只有官方提供对应 transmission/映射时才允许换算。FOV 优先读取厂商官方 Angle of View；特殊镜头按厂商 projection model 处理。
-
-数值保存 typed value + unit；枚举保存受控值；UNKNOWN 不等于 0。
-
-新上市 24–70mm F2.8 镜头只需：
-
-1. 新建 EquipmentModel；
-2. Category 选择 Lens；
-3. 系统加载当前 Lens SpecificationDefinition；
-4. 按官方资料填写 24、70、2.8 等值并固定来源 revision；
-5. 添加兼容关系；
-6. 如有需要另写人工备注。
-
-不要求为“新镜头上市”新增数据库列或改 Shot schema。
-
-定焦镜头使用同一 schema，例如 50mm 时 `focal_length_min_mm = focal_length_max_mm = 50`。如果未来 Lens 新增一个真正需要结构化查询的属性，则新增 SpecificationDefinition revision；旧型号该值为 UNKNOWN，不能批量猜值。
+新增结构化参数先建规格定义和类型/单位/适用条件；旧产品该值为未知，不批量猜值。完整性要求是适用字段有值或明确未知/不适用，而不是所有设备填同一张万能参数表。
 
 ### 6.4 不允许无限自由字段替代规格定义
 
@@ -321,22 +281,11 @@ Core Identity
 | `INCOMPATIBLE` | 明确不能按该连接方式直接使用 |
 | `CONDITIONAL_COMPATIBLE` | 在明确条件满足时可兼容 |
 
-CompatibilityRelation 至少保存：
+兼容关系的字段和判定流程统一见[器材字段合同5节](EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md)。来源宿主与目标配件按具体型号/变体/模组确定；分类只能帮助检索，不能替代适配证据。专用配件命中明确名单后才继续校验，通用接口仅生成受条件约束的候选。空名单不匹配全部产品。
 
-```text
-source_model_or_category
-target_model_or_category
-relation
-required_intermediate_model (optional)
-conditions (typed/structured where possible)
-official_source
-source_revision
-status
-```
+遮光斗、滤镜架、滤镜托盘、连接环和支撑件必须说明实际安装路径。4×5.65滤镜不能因属于镜头配件就直接关联所有镜头；专用增广镜不能出现在未经官方宿主名单覆盖的独立镜头可用配件列表。套装随附关系、概念引用和可兼容关系分别保存。
 
-关系应尽量指向 EquipmentModel / EquipmentCategory / InterfaceDefinition，而不是写成一句自然语言。
-
-兼容示例必须使用已核实的真实型号和官方接口。例如 FC-120B 的原生 modifier interface 是 FM Mount，官方随附 Bowens Mount Adapter；因此知识关系应表达“FC-120B → FM Mount”以及“FC-120B + 官方 Bowens Adapter → Bowens modifier ecosystem”，不能把 Bowens 直接写成 FC-120B 原生 mount。具体参数和附件仍以对应厂商官方资料为准。
+类别与字段文档不写真实品牌、型号或直接配对。具体安装结构和证据只在真实数据样例展开，每个端点标明所属大类；原生接口、转接后的结果和功能支持分开，不从标准接口名称反推所有产品兼容。
 
 兼容关系的 revision 独立于设备名称修改。项目选择设备时可查询兼容条件，但知识库不能据此声称项目当前实际拥有转接环或设备可用。
 
@@ -465,3 +414,11 @@ J-04 未确认前，JOB_CATALOG 新版本只生成“绑定待复核”；不按
 - F-number/T-stop、Shutter Angle/Time、ISO/EI/Gain 只在已确认适用规则下转换；
 - Canonical Format 可被多个 D/F/G/H 数据流引用，颜色基础与具体 Camera/Composite/Render/Post Pipeline 分离；
 - 首批常识 Topic、公式、器材/软件/格式 seed 范围以制作常识与 Seed Catalog 为准。
+
+## 13. 本轮分类与字段一致性要求
+
+主题、导航分类、规格字段和项目事实四者分开。运镜、覆盖策略、轴线连续性、人物调度、拍摄准备分别查询；中文名必填，英文术语和字段键供检索/实现。全量目录分组以制作常识规划和主题目录为准。已填参数、安装配件、来源定位、条件和变体覆盖须分别审计，名称齐全不代表数据齐全。
+
+## 14. 按岗位专业类别关联知识
+
+采用知识目录第13节的岗位编号→专业域→组件→所属大类→主题/资料入口，复用现有映射。跨专业连接说明原因、条件、两端修订与来源，正文身份不重复，不把专业关联当作安装适配、权限或任务事实。

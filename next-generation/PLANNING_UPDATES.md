@@ -2,6 +2,18 @@
 
 本记录只跟踪 `next-generation/` 的文档储备，不是当前版本工作包或应用实施进度。设计参数未定稿，重构未启动。
 
+## 2026-10-05：重分知识类别、统一器材字段及岗位专业关联
+
+按用户最新确认，类别与字段文档只保留大类、对应项、字段、子项和支持内容；真实器材、数值和明确连接迁入[数据样例](requirements/REFERENCE_SEED_DATA_2026-10-05.md)，逐项注明所属大类。新增[知识目录规则](requirements/KNOWLEDGE_CATALOG_STRUCTURE_2026-10-05.md)和[器材字段合同](requirements/EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md)，不建立品牌和接口混杂总库。器材逐层浏览导航与四级知识实体分类分开。
+
+运镜、人物调度、覆盖、轴线连续性、拍摄准备重新分组；243个共享主题、135个专业组件保留编号并增加中文名称，13个公式保留。补齐遮光斗、滤镜架/托盘、连接环与支撑，以及专用配件的宿主名单和完整安装条件。
+
+按岗位专业类别建立相关知识入口，沿139岗位→83专业知识域→135组件→所属大类→知识资料检索，关联说明原因、方向、条件和来源，不复制正文、不授予权限、不创建任务、不作为器材适配事实。需求、岗位目录、组件合同、已确认需求和AGENTS同步。
+
+历史纠错：本记录下方旧条目把Pocket 4与4P的对比列混用，旧双模组和整机参数说法不能作为有效合同。用户已指定4P，本轮数据样例5.1按官方资料重新记录；旧记录仅保留讨论历史。未逐字段重查的资料不得凭原稿的统一已核验标签导入。
+
+实际检查与尚缺资料见[核对记录](requirements/KNOWLEDGE_RECONCILIATION_AUDIT_2026-10-05.md)。全部为下一代Markdown规划，没有改UI或启动数据库/接口实现。
+
 ## 2026-10-05：填充首批官方Reference Seed数据
 
 用户要求在知识架构闭合后直接“填”首批数据。本轮新增 [首批 Reference Seed Data](requirements/REFERENCE_SEED_DATA_2026-10-05.md)，不再只列Seed范围，而是按字段写入官方已确认值，并统一区分 OFFICIAL_VERIFIED / OFFICIAL_PARTIAL / OFFICIAL_CONFLICT / UNKNOWN / DERIVED / FRAMEFORGE_CLASSIFICATION。没有厂商官方证据的值保持UNKNOWN，不用第三方规格、0/false或相邻新型号字段填空。

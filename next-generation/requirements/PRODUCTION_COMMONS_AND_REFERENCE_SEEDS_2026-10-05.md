@@ -2,7 +2,7 @@
 
 # FrameForge 制作常识库、基础大类知识与首批 Seed Catalog
 
-版本：1.2，2026-10-05。状态：已确认规划合同，尚未实施。首批常识正文见 [制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)，A–H组件与跨组件关系见 [A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)，已填官方结构化数据见 [首批 Reference Seed Data](REFERENCE_SEED_DATA_2026-10-05.md)。
+版本：1.3，2026-10-05。状态：已确认规划合同，尚未实施。首批常识正文见 [制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)，A–H组件与跨组件关系见 [A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)，已填官方结构化数据见 [首批 Reference Seed Data](REFERENCE_SEED_DATA_2026-10-05.md)。
 
 配套：[知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)、[知识体系](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)、[岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)。
 
@@ -25,7 +25,7 @@
 
 ## 2. 基础知识内容模板
 
-### 2.1 Concept Topic
+### 2.1 专业概念主题
 
 最少包含：
 
@@ -39,222 +39,135 @@
 - authoritative sources；
 - revision / status。
 
-### 2.2 Method / Principle
+### 2.2 方法原理
 
 最少包含目标、核心原理、适用条件、判断维度、边界和关联 Topic。只解释专业原理，不写按钮路径、快捷键或逐步 SOP。
 
-### 2.3 Equipment Model
+### 2.3 器材型号资料（Equipment Model）
 
-最少包含 Manufacturer、Product Family、Model、Variant、EquipmentCategory、官方来源、官方结构化规格、Interface、Compatibility、Accessory/Adapter relation 和人工 Note。官方 SpecificationValue 与 EquipmentNote 必须分离。
+本节规定完整资料由哪些对象组成，不把每块资料都塞成型号主表的一列。字段名、类型、单位、缺值、来源和配件匹配以[器材字段合同](EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md)为唯一入口。
 
-### 2.4 Software Scope
+| 内容 | 中文对象 / 技术名 | 必填或缺值要求 |
+| --- | --- | --- |
+| 产品身份 | 厂商Manufacturer、产品系列EquipmentProductFamily、型号EquipmentModel | 稳定身份、中英文名称、官方产品代码、分类、修订；系列可空 |
+| 官方差异 | 产品变体EquipmentVariant | 官方卡口、密度、颜色等差异；0到多个，不虚构默认变体 |
+| 成像资料 | 成像设备ImagingDevice、内置模组EmbeddedImagingModule、传感器及录制模式 | 归属明确；型号、模组、模式各自参数不得互相覆盖 |
+| 官方参数 | 规格定义SpecificationDefinition与规格值SpecificationValue | 类型、单位、适用条件、来源位置及核验状态；未知不冒充0 |
+| 连接 | 接口InterfaceDefinition及器材接口连接 | 专业范围、方向、机械/电气/光学/协议约束 |
+| 适配 | 兼容关系CompatibilityRelation与路径CompatibilityPath | 宿主范围、必要转接件、条件、功能和官方证据 |
+| 配件 | 配件AccessoryModel、转接件AdapterModel、支撑资料SupportComponent | 独立身份；专用配件仅匹配明确宿主，通用配件仍校验安装条件 |
+| 套装 | 套装EquipmentBundle及成员关系 | 官方成员与数量；随附不等于全功能兼容 |
+| 人工说明 | 独立备注EquipmentNote | 不覆盖官方值、不用于自动兼容判断 |
+
+遮光斗、滤镜架、托盘、镜头连接环和导管支撑必须形成实际安装链。4×5.65黑柔不是可直接拧在镜头前端的圆形滤镜，不能只录滤镜而不交代由谁承载、如何连接及限制条件。
+
+### 2.4 软件能力范围
 
 最少包含 Vendor、Product、VersionScope、CapabilityDefinition、SupportLevel（PRIMARY / SUPPORTED / LIMITED / NOT_SUPPORTED）和官方来源。软件大类不能自动推出能力事实。
 
-### 2.5 Format Reference
+### 2.5 格式参考
 
 最少包含 canonical format、类别、容器/编码/序列/工程身份、典型 Produces/Consumes/Imports/Exports/Transcodes relations、官方/规范来源和 revision。格式只保存一份 canonical identity，不建立与 A–H 平行的“格式部门库”。
 
-### 2.6 Formula Definition
+### 2.6 公式定义
 
 最少包含稳定 ID、输入量、输入单位、输出量、适用条件、公式/转换规则、来源、精度和禁止条件。项目计算结果不写回知识条目。
 
-### 2.7 Time Calibration
+### 2.7 时间校准
 
 最少包含 source object/revision、planned duration、actual duration/range、work type、aggregate level、measurement quality、project、captured_at。不得记录人员效率、故障原因、设备心得或解决方案。
 
-## 3. 制作常识库首批 Topic
+## 3. 制作常识按知识维度拆分
 
-### 3.1 镜头语言与覆盖
+每个分类只描述一种稳定知识维度，概念通过关系关联，不能因为常在同一拍摄现场出现就归成一项。所有标题及条目提供中文名称，英文术语作检索别名；字段键可以英文。具体定义与稳定ID见[知识主题目录](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)。
 
-- Scene / Shot；
-- Establishing / Master / Coverage / Insert / Reaction / OTS / Two Shot / POV；
-- Blocking、Rehearsal、Setup、Shoot、Reset、Strike；
-- 180° Axis、Screen Direction、Eyeline Match、30° Rule、Match on Action。
+### 3.1 内容、连续性和执行活动分开
 
-### 3.2 摄影角度、视场角与透视必须分离
+| 独立分类 | 内容 | 边界 |
+| --- | --- | --- |
+| 制作单元 | 场景Scene、镜头Shot | 多对多联系，不以列表排列创建父子 |
+| 叙事用途与覆盖策略 | 建立镜头、主镜头、插入、反应、过肩、双人、主观镜头 | 覆盖策略不是镜头像场覆盖，不包含运镜和准备活动 |
+| 人物与机位调度 | 人物行动、站位、机位协同 | 调度影响覆盖和连续性，但不与两者合并 |
+| 空间连续性 | 动作轴线/180度规则、屏幕方向、视线匹配 | 轴线规则不是摄影机运动类型 |
+| 剪辑衔接 | 30度规则、动作匹配 | 与空间连续性相关但独立，规则不是不可违背的物理定律 |
+| 现场准备与执行 | 排练Rehearsal、拍摄准备Setup、拍摄执行Shoot、复位Reset、撤场Strike | 工作阶段及工时，不是镜头语言或设备型号参数 |
 
-以下三个 Topic 永远独立：
+### 3.2 观察角度、视场角与透视
 
-1. `CAMERA_ANGLE`：摄影角度/机位高度与方向；
-2. `FIELD_OF_VIEW`：由光学、有效成像区域及具体镜头数据决定的视场；
-3. `PERSPECTIVE`：主要由摄影机与被摄物的空间位置关系决定。
+摄影角度（Camera Angle）、视场角（Field of View）和透视（Perspective）是三个独立主题。机位位置与高度、观察方向、构图组织各自分类，不能合并成“视角”字段。
 
-必须建立 typed relation，但不得写成“焦距直接决定透视”。
+同机位、同有效成像区域下，35mm与50mm主要改变取景范围；为维持相同主体比例而移动摄影机后，透视才随位置关系变化。不同光学结构优先读官方视角及投影数据；无官方值且模型成立时，才产生标为计算结果的理论值。
 
-同一机位、同一有效成像区域下，35mm 与 50mm 首先改变 FOV/取景范围；若为保持相同构图而改变 Camera Position，则 Perspective 随空间关系改变。
+### 3.3 光学不是一条父子链
 
-对于同标称焦距但光学设计不同的镜头，优先使用厂商官方 Angle of View / projection 数据；没有官方值时只能在适用模型成立时产生 `CALCULATED` 值，不能冒充 `OFFICIAL`。
+| 独立分类 | 中文内容（英文术语） |
+| --- | --- |
+| 焦距与镜头类型 | 物理焦距Physical Focal Length、定焦Prime、变焦Zoom |
+| 成像区域与像场覆盖 | 有效成像区域Effective Imaging Area、录制窗口Recording Window、像场Image Circle、像场覆盖Lens Coverage |
+| 光圈机构与透光 | 几何光圈F-number、透光光圈T-stop、光圈机构Iris、透光率Transmission |
+| 对焦 | 对焦距离Focus Distance、最近对焦距离Minimum Focus Distance、焦点转移Rack Focus、呼吸效应Focus Breathing |
+| 景深与衍射 | 景深Depth of Field、超焦距Hyperfocal、弥散圆Circle of Confusion、衍射Diffraction |
+| 投影模型 | 直线投影Rectilinear、鱼眼Fisheye、非变形成像Spherical、变形成像Anamorphic |
+| 变形成像恢复 | 挤压倍率Squeeze Ratio、去挤压Desqueeze、恢复后的水平视场与垂直视场 |
 
-### 3.3 成像与镜头 Topic
+这些维度相互关联，不建立“焦距→光圈→景深→35mm”的分类树。F值和T值禁止混写为一个光圈值。
 
-- Physical Focal Length；
-- Effective Imaging Area / Sensor Recording Window；
-- Image Circle / Coverage；
-- Prime / Zoom；
-- F-number；
-- T-stop；
-- Iris；
-- Transmission；
-- Focus Distance；
-- Minimum Focus Distance；
-- Rack Focus；
-- Focus Breathing；
-- Depth of Field；
-- Hyperfocal；
-- Circle of Confusion；
-- Diffraction；
-- Rectilinear / Fisheye；
-- Spherical / Anamorphic；
-- Squeeze Ratio / Desqueeze；
-- Horizontal / Vertical / Diagonal FOV。
+### 3.4 运镜、承托方式和取景变化
 
-F-number 与 T-stop 是独立物理量，不能用一个 `aperture` 字段混写。
+| 独立分类 | 内容 | 改变的量 |
+| --- | --- | --- |
+| 摄影机旋转 | 水平摇Pan、俯仰Tilt、滚转Roll | 朝向，不必改变位置 |
+| 摄影机位移 | 升降Pedestal、横移/跟移Truck/Track、前推后拉Dolly、环绕Orbit、摇臂Jib | 空间位置；与光学变焦分开 |
+| 承托与平台 | 手持、肩扛、三脚架云台、稳定器、机械稳定系统、无人机 | 支撑与承托方式，不是具体运动轨迹 |
+| 空间推进 | 焦距不变，机位靠近或远离 | 位置、透视、构图 |
+| 光学变焦 | 机位不变，焦距改变 | 视场与构图，不能声称透视随焦距改变 |
+| 混合变化 | 机位与焦距同时改变 | 可形成移动变焦等组合；并非所有混合运动都维持相同主体比例 |
+| 机内电子裁切 | 拍摄时传感器裁切、数字变焦 | 记录画面与有效区域，不改变光学透视 |
+| 后期重构图 | 已有图像的裁切、缩放 | 后期画面，不改写拍摄光学事实 |
 
-### 3.4 运镜与“放大”必须拆型
+### 3.5 曝光、帧率和片长
 
-Camera Movement：
+曝光量、感光度ISO、曝光指数EI、增益Gain分别解释；快门速度/曝光时间、快门角度单独维护。减光ND、曝光档级Stops、曝光值EV各自定义。项目基准帧率、拍摄帧率、回放帧率分开；运动模糊、升格/降格为相关现象，不与工作工时混在一起。
 
-- Pan / Tilt / Roll；
-- Pedestal；
-- Truck / Track；
-- Dolly In / Out；
-- Arc / Orbit；
-- Crane / Jib；
-- Handheld / Shoulder / Tripod Head / Gimbal / Steadicam / Drone。
+已确认转换：快门角度与时间需已知帧率；F/T转换需官方透光映射；ISO/EI/Gain仅按具体机型/模式官方映射。默认显示切换不改变底层量及来源。
 
-放大/取景变化单独拆为：
+### 3.6 灯光分为作用、光质、光度、色度和器材
 
-| 类型 | 机位 | 焦距/光学 | 阶段 |
-| --- | --- | --- | --- |
-| Spatial Push / Dolly | 改变 | 不变 | 拍摄 |
-| Optical Zoom | 不变 | 改变 | 拍摄 |
-| Dolly Zoom / Mixed | 改变 | 改变 | 拍摄 |
-| In-camera Digital Crop/Zoom | 不变 | 电子裁切/数字 | 拍摄 |
-| Post Reframe / Digital Zoom | 不变 | 后期裁切/缩放 | 后期 |
+主光/补光/背光是画面作用；硬光/软光、光源表观尺寸、入射方向和距离是光质与几何；反差比、照度平方反比、照度单位是光度；相关色温CCT与绿洋红偏移Tint是色度。灯具、菲涅耳、柔光箱、蜂巢、投影附件是器材种类，不与上述物理量混为一组。
 
-前期电子放大和后期放大必须是不同 Topic / operation。
+原生控光卡口、灯架支撑、供电、数据和控制分别建接口；具体参数以器材字段合同维护。裸灯/反光罩照度、输出功率/耗电不能混写。
 
-### 3.5 曝光与时间
+### 3.7 色彩基础与各阶段数据流
 
-- Exposure；
-- ISO；
-- EI；
-- Gain；
-- Shutter Speed / Exposure Time；
-- Shutter Angle；
-- ND / Stops；
-- Exposure Value；
-- Frame Rate；
-- Project FPS / Capture FPS / Playback FPS；
-- Motion Blur；
-- Overcrank / Undercrank。
+白平衡、色彩空间、传递函数、伽马、对数编码、线性光、查找表LUT、位深、色度采样、标准/高动态范围分别建主题。Rec.709、Rec.2020、sRGB、Display P3、Gamma 2.4、PQ、HLG、ACES、RED IPP2与Log3G10保持各自含义。
 
-转换规则：
+摄影记录、合成、三维渲染、后期/交付分别维护色彩数据流；共享基础不能归后期独占。色彩空间、传递函数、工作空间、显示变换和文件格式不能合并成一个“颜色”参数。
 
-- Shutter Angle ↔ Shutter Time：只有 FPS 已知时自动换算；
-- F-number ↔ T-stop：只有厂商提供相应 transmission / 对应官方数据时转换；
-- ISO / EI / Gain：只按具体机型、模式的官方 mapping 转换，禁止全局通用换算；
-- UI 可以切换默认显示单位/方式，但底层保留原始量、来源与转换依据。
+### 3.8 声音、同步和后期声音内容
 
-### 3.6 灯光
+话筒类型与拾音指向性、挑杆/领夹放置形式、话筒/线路电平、采样率、位深、时间码、同步分别维护。现场录音、对白、音效、音乐、混音按输入输出关联，不将接口、电平、岗位和制作阶段混为一种分类。
 
-- Key / Fill / Back；
-- Hard / Soft；
-- Source Size；
-- Direction；
-- Distance；
-- Contrast Ratio；
-- Inverse Square Law；
-- CCT / Tint；
-- Modifier / Projection / Fresnel / Softbox / Grid；
-- Lighting Modifier Interface；
-- Lighting Power / Control Interface。
+### 3.9 媒体身份与制作环节
 
-### 3.7 色彩与数据流
+容器Container、编解码Codec、图像序列Image Sequence、工程交换Project Interchange是表示方式；原始Original、代理Proxy、预览Preview、母版Master是产物身份；元数据Metadata单独维护。素材卸载、完整性校验、备份验证、正式交接是实际环节；套底、质量检查和交付事实各自明确。
 
-共享基础 Topic：
+### 3.10 二维、三维和业务协调
 
-- White Balance；
-- Color Space；
-- Transfer Function；
-- Gamma；
-- Log；
-- Linear；
-- LUT；
-- Bit Depth；
-- Chroma Sampling；
-- SDR / HDR；
-- Rec.709；
-- Rec.2020；
-- sRGB；
-- Display P3；
-- Gamma 2.4；
-- ST2084 / PQ；
-- HLG；
-- ACES；
-- RED IPP2 / Log3G10。
+透明通道Alpha与遮罩Matte是数据；抠像、逐帧描绘、跟踪、擦除和合成是处理能力；动态图形、文字动画、二维动画分别分类。三维的网格、拓扑、纹理坐标、材质、着色器、绑定是资产结构；布局、动画、模拟、缓存、灯光、渲染和分层输出是独立制作概念；实时渲染、虚拟制作、动捕、摄影测量单独维护。
 
-共享 Topic 之外，必须再建立阶段数据流 Domain：
+任务、依赖、工作交接、计划/预测/实际、排期、通告、可开始条件、检查、制作授权、审阅、返工和交付只提供业务概念与输入输出。知识条目不复制实际Task、排期或发布状态，不因知识关系自动创建业务任务。
 
-- D.Camera Recording Pipeline；
-- F.Composite Color Pipeline；
-- G.Render Color Pipeline；
-- H.Post / Delivery Color Pipeline。
+## 4. 分类和引用执行规则
 
-颜色基础不归 H 独占。
+以上是可独立查询的知识维度，具体主题按目录分组。A–H专业库引用同一主题正文，不把全部相关内容复制进“摄影语言”“镜头覆盖”这样的宽泛分类。
 
-### 3.8 声音与同步
+分类最大仍为知识库→知识域→专业组件→可选子组件，最多四级；主题不是第五级。器材浏览单独按大类→该类内品牌→型号→资料分组展开；这是检索导航，不增加知识实体深度。变体、数值和单位按结构化字段检索。运镜、空间连续性、现场准备只有关系连接，没有相互的父子关系。
 
-- Microphone Type / Pickup Pattern；
-- Boom / Lav；
-- Mic Level / Line Level；
-- Sample Rate；
-- Audio Bit Depth；
-- Timecode / Sync；
-- Production Sound / Dialogue / Music / SFX / Mix。
-
-### 3.9 媒体、格式与后期
-
-基础概念：
-
-- Container；
-- Codec；
-- Image Sequence；
-- Project Interchange；
-- Proxy / Original / Preview / Master；
-- Metadata；
-- Offload / Integrity / Backup / Formal Handoff；
-- Editing / Conform / Compositing / Color / Sound / Online / QC / Delivery；
-- Alpha / Matte / Keying / Roto / Tracking / Cleanup；
-- Mesh / Topology / UV / Material / Shader / Rig / Animation / Simulation / Cache / Render / AOV；
-- Realtime Rendering / Virtual Camera / Virtual Production。
-
-## 4. 基础大类知识
-
-Common Topic 不能直接堆成一张无限列表，先按以下大类建立稳定 Domain；后续 A–H 小库引用这些 Domain，不复制 Topic 正文：
-
-1. Narrative & Coverage；
-2. Camera Angle / Composition / Spatial Perspective；
-3. Optics / Lens / Imaging Geometry；
-4. Camera Movement / Framing Change；
-5. Exposure / Capture Time；
-6. Lighting / Photometry / Color Temperature；
-7. Color Science / Image Pipeline；
-8. Production Sound / Sync；
-9. Media / Codec / Format / Metadata；
-10. Production Workflow / Schedule / Handoff；
-11. 2D / Motion / Compositing；
-12. 3D / VFX / Realtime；
-13. Formula / Unit / Derived Calculation；
-14. Equipment Interface / Compatibility；
-15. Time Calibration。
-
-这些是“基础知识大类”，不是项目 Department，也不等同 A–H 专业小库。
+字段是实际数据参数，主题是知识概念，分类是导航组织，三者不得互换。中文名称用于阅读，稳定ID和英文键用于关联；编号前缀不决定主题当前归类。
 
 ## 5. 基础对象进一步拆分
 
-### 5.1 知识正文
+### 5.1 知识正文与来源
 
 ```text
 KnowledgeLibrary
@@ -281,6 +194,7 @@ EquipmentModel
 EquipmentVariant
 AccessoryModel
 AdapterModel
+EquipmentBundle
 EquipmentNote
 ```
 
@@ -299,9 +213,7 @@ LensVariant
 
 固定镜头设备使用 EmbeddedImagingModule。内置镜头可被 Lens/Optics Knowledge 检索，但不出现在独立 Lens Picker。
 
-Mavic 4 Pro 仍是一个 ImagingDevice；三个内置摄像模组作为三个可选择 EmbeddedImagingModule，各自拥有 sensor / focal / aperture / recording capability。
-
-Osmo Pocket 4 是一个 ImagingDevice + 两个可切换但不可拆换的 EmbeddedImagingModule；当前官方资料确认广角20mm等效f/2.0与中长焦60mm等效f/1.8。选择机身后只能在内置模组间切换，独立 Lens Picker 不可替换镜头。
+多模组设备保持一个成像设备身份，各内置模组分别拥有传感器、光学和录制能力。不可拆换模组不进入独立镜头选择器；真实机型、模组和参数见数据样例。
 
 ### 5.4 规格
 
@@ -404,7 +316,7 @@ EstimateProfile
 
 Aggregate target 与其 component 不得重复作为独立样本相加。
 
-## 6. Relation 分类
+## 6. 关系分类
 
 禁止单个万能 relation 表吞掉所有业务语义。至少区分：
 
@@ -439,7 +351,7 @@ value_origin = OFFICIAL | CALCULATED
 
 FOV 计算基于当前 Camera Body + SensorRecordingMode 的实际有效成像区域，不只看“Full Frame / S35”营销标签。
 
-### 7.4 Anamorphic
+### 7.4 变形成像
 
 至少保存：
 
@@ -451,7 +363,7 @@ FOV 计算基于当前 Camera Body + SensorRecordingMode 的实际有效成像�
 
 不使用一个虚假的“等效焦距”覆盖 physical focal length。
 
-## 8. FormulaDefinition 首批
+## 8. 首批公式定义
 
 - Horizontal / Vertical / Diagonal FOV；
 - Anamorphic desqueezed FOV；
@@ -490,6 +402,8 @@ Camera Body 实际接口与官方兼容
 
 ## 10. 兼容路径
 
+专用配件先校验明确宿主名单，不进入通用接口扩展推导。专用光学配件不得扩展到未被官方名单覆盖的独立镜头。遮光斗、滤镜架、托盘、连接环和支撑件的真实安装路径、条件及超过两层的特例，按[器材字段合同4.6和5节](EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md)完整记录。
+
 CompatibilityRelation 至少：
 
 - DIRECT_COMPATIBLE；
@@ -497,7 +411,7 @@ CompatibilityRelation 至少：
 - INCOMPATIBLE；
 - CONDITIONAL_COMPATIBLE。
 
-兼容推导以 Interface 为主；厂商明确 Camera/Lens/Accessory Compatibility 作为 model-level assertion / override。
+仅通用接口配件按所属专业范围的接口规则生成候选，厂商明确的型号适配和否定规则优先。专用配件必须命中宿主名单；空名单不是全部兼容。安装、控制、供电与光学功能逐项校验，不能由类别直接推出兼容。
 
 自动推荐路径硬性最多 **2 个 intermediate components**。知识图可以记录经真实拍摄/厂商资料证明的特殊更长路径，但默认组合器不得自动推荐。
 
@@ -528,59 +442,59 @@ Adapter / Accessory 必须保存所有与兼容有关的官方数据，例如：
 
 首批 CapabilityDefinition 至少：
 
-- EDITING；
-- COMPOSITING；
-- MOTION_GRAPHICS；
-- TWO_D_ANIMATION；
-- THREE_D_MODELING；
-- SCULPTING；
-- TEXTURING；
-- MATERIAL_LOOKDEV；
-- RIGGING；
-- THREE_D_ANIMATION；
-- SIMULATION；
-- LIGHTING；
-- RENDERING；
-- REALTIME_PRODUCTION；
-- VIRTUAL_PRODUCTION；
-- COLOR；
-- AUDIO_EDITING；
-- AUDIO_MIXING；
-- SUBTITLE_LOCALIZATION；
-- IMAGE_EDITING；
-- VECTOR_GRAPHICS；
-- ASSET_MANAGEMENT；
-- PIPELINE_AUTOMATION。
+- 剪辑（`EDITING`）；
+- 合成（`COMPOSITING`）；
+- 动态图形（`MOTION_GRAPHICS`）；
+- 二维动画（`TWO_D_ANIMATION`）；
+- 三维建模（`THREE_D_MODELING`）；
+- 数字雕刻（`SCULPTING`）；
+- 纹理制作（`TEXTURING`）；
+- 材质外观开发（`MATERIAL_LOOKDEV`）；
+- 绑定（`RIGGING`）；
+- 三维动画（`THREE_D_ANIMATION`）；
+- 模拟（`SIMULATION`）；
+- 灯光（`LIGHTING`）；
+- 渲染（`RENDERING`）；
+- 实时制作（`REALTIME_PRODUCTION`）；
+- 虚拟制作（`VIRTUAL_PRODUCTION`）；
+- 调色（`COLOR`）；
+- 音频编辑（`AUDIO_EDITING`）；
+- 混音（`AUDIO_MIXING`）；
+- 字幕本地化（`SUBTITLE_LOCALIZATION`）；
+- 图像编辑（`IMAGE_EDITING`）；
+- 矢量图形（`VECTOR_GRAPHICS`）；
+- 资产管理（`ASSET_MANAGEMENT`）；
+- 流程自动化（`PIPELINE_AUTOMATION`）。
 
 不能因为 Blender 属于 3D DCC 就自动推导 `EDITING = NOT_SUPPORTED`；具体产品按官方能力录入。
 
-## 13. 首批 FormatDefinition
+## 13. 首批格式定义
 
-### 13.1 Container
+### 13.1 媒体容器
 
 MOV、MP4、MXF。
 
-### 13.2 Camera RAW / Acquisition
+### 13.2 摄影原始格式
 
 R3D、BRAW、ARRIRAW、CinemaDNG。
 
-### 13.3 Codec / Intermediate
+### 13.3 编码与中间格式
 
 ProRes、DNxHR、H.264、H.265。
 
-### 13.4 Image Sequence / Still
+### 13.4 图像序列与静帧
 
 EXR、DPX、TIFF、PNG、JPEG。
 
-### 13.5 Audio
+### 13.5 音频
 
 WAV。
 
-### 13.6 Subtitle
+### 13.6 字幕
 
 SRT。
 
-### 13.7 Editorial / Project Interchange
+### 13.7 剪辑与工程交换
 
 OTIO、EDL、XML。
 
@@ -610,232 +524,15 @@ Post Work
 
 高层 aggregate 用于排期预测，但不能与组成 component 重复累计为样本。
 
-## 15. 首批 Reference Seed
+## 15. 具体器材数据的维护入口
 
-原则：实施时必须重新读取官方页面/手册并尽可能全量写入该对象类别可表达的官方参数、接口、附件和兼容关系。本文只固定对象范围和已核实的关键身份，避免规划文档变成过期的手抄规格表。
+真实品牌、型号、参数与安装组合全部在[真实数据样例](REFERENCE_SEED_DATA_2026-10-05.md)维护；首批范围及尚缺资料也归该篇，不在类别文档重复。每个对象先写所属大类，再展开品牌、型号、变体、字段和子项；连接两端均保留完整所属路径。
 
-### 15.1 RED
+类别的字段与支持内容见[知识目录规则](KNOWLEDGE_CATALOG_STRUCTURE_2026-10-05.md)，字段定义见[器材字段合同](EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md)。接口字段复用不等于混建品牌总库。
 
-#### RED KOMODO 6K（仅原版）
+## 16. 具体软件数据的维护入口
 
-Seed 至少包括：
-
-- KOMODO 6K body；
-- Super 35 global-shutter sensor；
-- active sensor size / recording modes；
-- RF mount；
-- R3D / ProRes recording capability；
-- RED/Canon 官方明确兼容的 RF→PL、RF→EF 等 adapter relation；
-- 对 adapter 的电子通信/metadata 等能力按官方资料分别保存；
-- RED 官方 KOMODO accessory relation。
-
-官方 seed source：
-- https://www.red.com/komodo
-- https://www.red.com/komodo-brain-parent
-- https://docs.red.com/955-0196/955-0196_V1.7%20Rev-B%20RED%20PS%2C%20KOMODO%20Operation%20Guide%20HTML/Content/A_TechSpecs/Specs_KOMODO_6K.htm
-
-不顺带建立 KOMODO-X。
-
-### 15.2 ZEISS Compact Prime CP.3
-
-完整官方焦段系列建立独立 LensModel：
-
-- 15mm T2.9；
-- 18mm T2.9；
-- 21mm T2.9；
-- 25mm T2.1；
-- 28mm T2.1；
-- 35mm T2.1；
-- 50mm T2.1；
-- 85mm T2.1；
-- 100mm T2.1 CF；
-- 135mm T2.1。
-
-每支镜头保存官方 Close Focus、Length、Front Diameter、Weight，以及 ZEISS 提供的 Full Frame / APS-H / Super 35 / Normal 35 / APS-C / MFT Horizontal Angle of View。Mount Variant 从 ZEISS 官方 mount-change 文档建立，不按名称猜。
-
-官方 seed source：
-- https://www.zeiss.com/content/dam/consumer-products/downloads/cinematography/brochures/en/brochure-zeiss-compact-prime-cp3-lenses.pdf
-
-### 15.3 DJI Osmo Pocket 4
-
-一个 ImagingDevice + 两个可切换 EmbeddedImagingModule，镜头均固定在设备内部：
-
-- Wide Module：1-inch CMOS、20mm format equivalent、f/2.0、focus 0.09m–∞；
-- Medium-Tele Module：1/1.28-inch CMOS、60mm format equivalent、f/1.8、focus 0.20m–∞；
-- 两个内置镜头都不出现在独立 Lens Picker；
-- 切换内置模组时 Sensor、Focal、Aperture、FOV/recording capability 与相关附件能力同步变化；
-- 完整 ISO / shutter / codec / recording-mode matrix 只从 DJI 官方详细规格继续补，不根据旧 Pocket 型号推断。
-
-官方 seed source：
-- https://store.dji.com/ca/product/osmo-pocket-4
-- https://store.dji.com/ca/event/dji-osmo-pocket-series
-
-### 15.4 DJI Mavic 4 Pro
-
-一个 ImagingDevice，建立三个可选择 EmbeddedImagingModule。每个模组分别保存官方 Sensor、Lens/Focal、Aperture、FOV/recording capability、codec/color capability 和支持的拍摄模式。机型本身不拆成三个 EquipmentModel。
-
-官方 seed source：
-- https://www.dji.com/mavic-4-pro/specs
-
-### 15.5 DJI RS 5
-
-Seed 至少包括：
-
-- gimbal body；
-- upper/lower quick-release plate；
-- quick-open tripod；
-- RSA/NATO；
-- 1/4"-20；
-- cold shoe；
-- USB-C camera control / multifunction；
-- official payload；
-- Electronic Briefcase Handle；
-- Enhanced Intelligent Tracking Module；
-- Focus Pro / motor / transmission 等官方 support relations；
-- DJI Camera & Lens Compatibility 的 model-level assertions。
-
-Camera/Lens compatibility 以 DJI 官方 Compatibility Search 为 override，不只靠 payload 推断。
-
-官方 seed source：
-- https://www.dji.com/rs-5/specs
-- https://www.dji.com/support/compatibility
-
-### 15.6 DJI Focus Pro
-
-建立独立组件：
-
-- Focus Pro LiDAR；
-- Focus Pro Grip；
-- Focus Pro Hand Unit；
-- Focus Pro Motor；
-- 官方 Combo / AMF system bundle；
-- cables / mounts / accessory relations；
-- Camera/Lens support assertions。
-
-官方 seed source：
-- https://www.dji.com/focus-pro
-- https://www.dji.com/focus-pro/downloads
-
-### 15.7 DJI Transmission
-
-建立：
-
-- DJI Video Transmitter；
-- DJI Video Receiver；
-- DJI High-Bright Remote Monitor；
-- Standard Combo；
-- High-Bright Monitor Combo；
-- WB37 / cable hub / official accessory support。
-
-Combo 是 bundle，不是能力 owner。
-
-官方 seed source：
-- https://www.dji.com/transmission
-- https://www.dji.com/transmission/downloads
-
-### 15.8 DJI SDR Transmission
-
-建立：
-
-- SDR Transmitter；
-- SDR Receiver；
-- Combo；
-- SDI / HDMI / USB-C / audio / power interfaces；
-- Camera compatibility / Ronin support / adapter support。
-
-官方 seed source：
-- https://www.dji.com/sdr-transmission/specs
-- https://www.dji.com/downloads/products/sdr-transmission
-
-### 15.9 Nanlite
-
-首批具体 EquipmentModel：
-
-- Forza 200（旧款）；
-- Forza 300B（旧款）；
-- FC-120B；
-- FC-300B；
-- PavoTube II 15C。
-
-同时录入这些型号官方配套：
-
-- native modifier mount；
-- Bowens adapter（如官方提供）；
-- reflector / Fresnel / softbox / projection attachment；
-- battery/power accessory；
-- DMX/RDM / NANLINK 等控制 interface；
-- stands/clamps/cases 只在官方明确兼容时建立 support relation。
-
-FC-120B 以官方资料建立：原生 FM Mount，Bowens adapter 为明确中间件；不能把 Bowens 当成 FC-120B 原生 mount。
-
-官方 seed source：
-- https://www.nanlite.com/product-forza-200
-- Nanlite/Nanlite US Forza 500/300/200 legacy collection / archived official product material
-- https://nanliteus.com/products/fc-120b-bi-color-led-spotlight-testing-1
-- https://nanliteus.com/brands/FC-Series.html
-- https://nanliteus.com/collections/pavotube-ii-c
-
-### 15.10 Aputure
-
-首批：
-
-- STORM 1200x；
-- ProLock Bowens / Bowens modifier interface；
-- reflector / Fresnel / projection / softbox 等官方兼容附件；
-- power/control interfaces；
-- DMX / CRMX / Art-Net / sACN 等官方控制能力；
-- official support/accessory relations。
-
-官方 seed source：
-- https://aputure.com/en-US/products/storm-1200x
-
-### 15.11 Tiffen
-
-首批 Product Family：
-
-- Black Pro-Mist 4×5.65"；
-- Pro-Mist 4×5.65"。
-
-保存官方全部 Density Variant，不只常用档。Form Factor 和 Density 分开建模。
-
-官方 seed source：
-- https://tiffen.com/products/4-x-5-65-black-pro-mist-filter
-- Tiffen 官方 4×5.65 Pro-Mist product catalog / product page。
-
-### 15.12 通用 Camera / Lighting Support 常识
-
-首批只建通用 Category / Topic / Interface，不虚构具体品牌 Model：
-
-- Tripod；
-- Fluid Head；
-- Quick Release Plate；
-- Camera Plate；
-- NATO；
-- RSA；
-- 1/4"-20；
-- 3/8"-16；
-- Light Stand；
-- C-Stand；
-- Boom / 三节摇；
-- Baby Pin / Junior Receiver 等在正式官方/标准来源确认后逐项进入接口库。
-
-Tilta/铁头三脚架未指定具体型号前不建立具体 EquipmentModel。
-
-## 16. 首批 Software Seed
-
-### Blender
-
-记录具体官方 Capability Scope；不能因其主要是 3D DCC 就自动标记 Editing 不支持。至少覆盖 Modeling、Sculpting、Animation、Simulation、Rendering、Compositing、Video Editing 等官方能力范围。
-
-### Unreal Engine 5
-
-至少覆盖 Realtime Production、Virtual Production、Realtime Rendering、3D scene / animation / simulation 等官方能力范围。
-
-### Adobe After Effects
-
-至少覆盖 Compositing、Motion Graphics、2D Animation、Tracking/Keying 等官方能力范围；不把它声明为完整 NLE。
-
-不建立软件教程或“某版本新增按钮”知识。
+软件真实产品、版本范围、官方能力与证据在数据样例维护。本篇第12节只定义能力分类；能力的产生、消费、导入、导出与转换方向分别核实。设备格式、软件能力和格式定义各自归属，不能相互授予支持。
 
 ## 17. Seed 数据质量规则
 
@@ -844,10 +541,14 @@ Tilta/铁头三脚架未指定具体型号前不建立具体 EquipmentModel。
 3. 没有官方数据的字段保持 UNKNOWN；
 4. 不录团队实测规格；
 5. 人工 Note 不限内容，但永远不覆盖 SpecificationValue，也不参与官方兼容推导；
-6. Interface inference 为主，官方 model compatibility 为 override；
+6. 专用配件先检查明确宿主名单；通用接口只能产生候选，具体型号限制、否定规则和必要条件全部校验后才确认兼容；
 7. 自动兼容路径最多两个 intermediate components；
 8. 任何转接推荐必须引用现实存在且已建模的 AdapterModel；
 9. 固定镜头/内置模块不能被独立 Lens Picker 替换；
-10. Derived 值明确标 OFFICIAL / CALCULATED；
+10. 官方原值、计算结果、系统分类、人工备注分开；值来源、核验状态、资料完整程度、链接访问状态独立保存；
 11. 软件 capability 按具体产品/版本范围，不按软件类别猜；
 12. Seed 完成的验收不是“名字录进去了”，而是该产品适用的官方规格、接口、附件、兼容和格式能力都被结构化覆盖。
+
+## 18. 岗位专业知识关联
+
+按[岗位目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)的稳定岗位编号和A–H专业知识域，连接专业组件、所属大类与知识主题。跨专业关联说明输入、输出、交接、支撑、协同或对照原因，不把相关知识合并成父子类。规则与字段见[知识目录第13节](KNOWLEDGE_CATALOG_STRUCTURE_2026-10-05.md)。所有入口引用同一正文修订，不授予权限，也不自动创建任务。
