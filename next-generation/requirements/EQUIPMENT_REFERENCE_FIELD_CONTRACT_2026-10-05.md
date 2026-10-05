@@ -1,6 +1,6 @@
-# 器材参考资料：字段归属、配件适配与来源合同
+# 器材参考字段合同
 
-版本：1.0，2026-10-05。状态：下一代需求整理；以下字段名和记录结构是设计提案，业务边界采用用户已确认要求。尚未实施数据库、接口或导入器。
+版本：1.1，2026-10-05。状态：下一代需求整理；以下字段名和记录结构是设计提案，业务边界采用用户已确认要求。尚未实施数据库、接口或导入器。
 
 本文件是器材参考字段的唯一维护入口。[制作常识规划](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)定义建设范围，[知识基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)定义维护和修订，[种子资料](REFERENCE_SEED_DATA_2026-10-05.md)填写具体值。三篇均引用本合同，不再另列一套不一致的型号字段。
 
@@ -27,8 +27,11 @@
 | 内置成像模组（EmbeddedImagingModule） | `module_id`、所属设备、模组名称、传感器/光学资料引用 | 真正从属设备；不可拆换模组不进入可更换镜头选择器 |
 | 传感器定义（SensorDefinition） | 传感器身份与官方尺寸、像素、快门类型 | 由设备或模组明确引用；不能仅凭“1英寸”推断实际毫米尺寸 |
 | 传感器录制模式（SensorRecordingMode） | `mode_id`、设备/模组、模式名称、输出分辨率、有效区域、帧率及格式能力 | 真正从属其设备/模组；裁切模式的有效区域不能写成整机固定尺寸 |
-| 镜头资料 / 卡口变体（LensModel / LensVariant） | 型号或变体引用、光学规格、卡口引用 | 专业结构化资料；不重复创建厂商或产品身份 |
-| 配件 / 转接件 / 支撑资料（AccessoryModel / AdapterModel / SupportComponent） | 对应型号或变体引用、用途、连接端点、适配范围 | 保留各自专业资料和校验边界；独立销售的配件通过关系连接宿主，不因适用就成为宿主所有的子对象 |
+| 镜头资料（LensModel） | 型号引用、光学规格 | 专业结构化资料，不重复产品身份 |
+| 镜头变体资料（LensVariant） | 官方变体引用、卡口及变体规格 | 从属具体镜头型号，不能覆盖型号的共同参数 |
+| 配件资料（AccessoryModel） | 型号或变体引用、用途、宿主范围 | 独立销售的配件不因适用而归宿主所有 |
+| 转接件资料（AdapterModel） | 型号或变体引用、输入输出端点、功能转换 | 独立适配资料；各端保留所属专业 |
+| 支撑资料（SupportComponent） | 型号或变体引用、承托功能、安装条件 | 归支撑对象；不收纳稳定器或滤镜承载资料 |
 | 官方套装（EquipmentBundle） | `bundle_id`、官方套装名称/货号、成员型号/变体、数量、来源修订 | 套装成员可独立存在；购买组合不拥有成员能力、不自动证明成员互相兼容 |
 
 产品新世代按厂商独立产品身份建立型号；各独立焦段按实际产品身份建立，卡口差异按官方变体记录。不同数据功能版本逐一核实，不能自动继承。包装、地区组合和开箱销售不凭商店页面变成新光学型号。
@@ -37,119 +40,569 @@
 
 | 字段 | 中文含义 | 规则 |
 | --- | --- | --- |
-| `specification_definition_id`、`definition_revision` | 规格定义及版本 | 固定类型、单位维度、适用对象和条件字段；参与查询的参数不能只藏在备注 |
-| `subject_type`、`subject_id`、`subject_revision` | 值的归属对象及修订 | 型号、变体、模组、模式或配件之一；不得同时向几处复制同一值 |
-| `value_type`、`value`、`unit_id` | 类型、值、单位 | 数值、范围、受控枚举、布尔、向量或结构化表；不得把“UNKNOWN”写进数值字段 |
+| `specification_definition_id` | 规格定义引用 | 指向字段定义，确定数据类型、单位维度和适用对象。 |
+| `definition_revision` | 定义修订 | 固定采用的字段定义修订，不能在定义变化后静默改变旧值含义。 |
+| `subject_type` | 归属对象类型 | 明确值归型号、变体、模组、模式或配件中的哪类对象。 |
+| `subject_id` | 归属对象身份 | 只引用一个归属对象；相关对象通过关系读取，不复制该值。 |
+| `subject_revision` | 归属对象修订 | 固定核验时所用对象修订，用于追溯条件和冲突。 |
+| `value_type` | 值类型 | 声明数值、范围、枚举、布尔、向量或结构化表的类型。 |
+| `value` | 参数值 | 按声明类型保存；未知状态不写进数值，0和false是有效值。 |
+| `unit_id` | 单位引用 | 引用单位定义并校验维度；没有量纲的枚举不虚构单位。 |
 | `value_state` | 有值 / 未知 / 不适用 | `KNOWN` / `UNKNOWN` / `NOT_APPLICABLE`；未知不等于0、false或不支持 |
 | `conditions` | 成立条件 | 结构化记录固件、录制模式、温度、距离、附件组合、测量方向等，不用一段备注承担全部条件 |
-| `source_reference_ids`、`source_locator` | 来源及具体位置 | 官方页面栏目、表格行或手册页码；只给官网首页不足以核实字段 |
-| `raw_label`、`raw_value`、`raw_unit` | 原始名称、值和单位 | 保留必要的短摘录，便于与规范值对照；不复制整页或手册、不保存网页证据快照 |
+| `source_reference_ids` | 来源引用 | 引用具体官方资料记录；一个值可以有多份证据，冲突不覆盖。 |
+| `source_locator` | 来源具体位置 | 定位栏目、表格行或手册页码；官网首页不足以定位参数。 |
+| `raw_label` | 原始字段名 | 保留核验所需的原始字段短名称。 |
+| `raw_value` | 原始值 | 保留核验所需的原始值短摘录；不保存整页或手册快照。 |
+| `raw_unit` | 原始单位 | 保留原始单位，和规范单位并列对照，不覆盖原文。 |
 | `origin` | 数据由何而来 | `OFFICIAL`官方原值、`CALCULATED`计算结果、`CLASSIFICATION`系统分类、`MANUAL_NOTE`人工备注；四者分开 |
 | `verification_state` | 核验结果 | 待核验、已核验、冲突、否定；“已核验”必须有逐字段证据，不能整页批量盖章 |
-| `revision`、`verified_at` | 值修订和核验时间 | 来源或条件变化需要新修订；无内容变化不制造修订 |
+| `revision` | 值修订 | 值、来源或适用条件变化产生修订；无内容变化不制造修订。 |
+| `verified_at` | 核验时间 | 记录实际核验时间；不是网页发布日期或访问时间。 |
 
 来源记录另存URL、发布者、标题、资料/固件版本、地区、访问时间及可访问状态。产品覆盖程度另存“仅身份 / 部分参数 / 适用字段完整”。链接失效、规格未知和官方资料冲突是三件不同的事。
 
 旧种子表中的 `OFFICIAL_VERIFIED` 等组合标签只能作为阅读摘要；实际导入前拆成上述独立状态，并核验具体位置。旧版本手册与新产品页混用必须解释适用版本，不把访问日期当成资料发布日期。
 
-## 4. 分类规格字典：适用字段必须有明确归属
+## 4. 分类规格字典
 
-所有条目采用“中文名称（英文术语）”；字段键可以英文。下表是首批正式字典范围，要求有定义、有单位、有来源或明确缺值，不要求为不适用器材填写全部参数。已列来源没有公开该参数时保留未知，不据此删掉字段。
+每个对象有独立字段表，字段一项一行。以下英文键属于设计提案；每个字段的适用对象、类型、单位和来源要求通过规格定义管理，不据此宣称厂商已公开数值。通用实体参数复用同一技术定义，各器材只引用适用字段。
 
-### 4.1 整机、机身与内置模组
+<a id="equipment-fields-1"></a>
 
-| 字段组 | 首批字段键 | 中文含义与归属 |
+### 4.1 通用实体参数
+
+归属和条件：归具体实体；重量注明是否含电池、快拆或控制箱。尺寸向量展开长、宽、高和单位。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `weight_g` | 重量 |
+| `dimensions_mm` | 外形尺寸 |
+| `length_mm` | 长度 |
+| `operating_temperature_c` | 工作温度 |
+| `ingress_protection` | 防护等级 |
+
+<a id="equipment-fields-2"></a>
+
+### 4.2 摄影机
+
+归属和条件：归型号或变体；模组和录制模式分别引用，不复制整机能力。接口、存储、显示、供电各为独立字段。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `lens_mount_interface_id` | 原生镜头卡口 |
+| `port_links` | 端口引用 |
+| `built_in_storage_gb` | 内置存储容量 |
+| `supported_media` | 支持记录介质 |
+| `display_specifications` | 内置显示规格 |
+| `power_inputs` | 电源输入 |
+| `battery_capacity_mah` | 电池容量 |
+| `battery_energy_wh` | 电池能量 |
+| `runtime_test` | 续航测试 |
+| `accessory_support_links` | 配件支持 |
+| `included_bundle_links` | 随附套装 |
+
+<a id="equipment-fields-3"></a>
+
+### 4.3 内置成像模组
+
+归属和条件：模组是真正从属设备的对象；不可拆换模组不进入可更换镜头选择器。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `module_id` | 模组身份 |
+| `sensor_definition_id` | 传感器引用 |
+| `recording_mode_ids` | 录制模式引用 |
+| `fixed_optical_specification_id` | 内置光学规格引用 |
+
+<a id="equipment-fields-4"></a>
+
+### 4.4 传感器
+
+归属和条件：实际毫米尺寸不可由营销画幅名称猜测；动态范围和感光能力附官方测量或模式条件。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `sensor_type` | 传感器类型 |
+| `shutter_type` | 快门方式 |
+| `sensor_width_mm` | 传感器宽度 |
+| `sensor_height_mm` | 传感器高度 |
+| `sensor_diagonal_mm` | 传感器对角尺寸 |
+| `effective_pixels` | 有效像素 |
+| `dynamic_range_stops` | 动态范围 |
+| `sensitivity_mapping` | 感光映射 |
+| `shutter_time_range_s` | 曝光时间范围 |
+| `shutter_angle_range_deg` | 快门角度范围 |
+
+<a id="equipment-fields-5"></a>
+
+### 4.5 录制模式
+
+归属和条件：真正从属设备或模组；输出尺寸不等于传感器有效区域；精确分数帧率独立保存。每项能力须标固件和模式条件。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `mode_id` | 模式身份 |
+| `output_width_px` | 输出宽度 |
+| `output_height_px` | 输出高度 |
+| `recording_aspect_ratio` | 输出画面比例 |
+| `active_width_mm` | 有效区域宽度 |
+| `active_height_mm` | 有效区域高度 |
+| `readout_window` | 读取窗口 |
+| `capture_fps_range` | 拍摄帧率范围 |
+| `project_timebase_options` | 项目基准帧率 |
+| `playback_fps_options` | 回放帧率 |
+| `format_support_links` | 格式支持关系 |
+| `codec_profile` | 编码配置 |
+| `max_data_rate_bytes_s` | 最高数据率 |
+| `color_primaries` | 色域 |
+| `transfer_function` | 传递函数 |
+| `log_profile` | 对数编码 |
+| `bit_depth` | 位深 |
+| `chroma_sampling` | 色度采样 |
+| `digital_crop_mode` | 电子裁切模式 |
+| `stabilization_crop` | 防抖裁切 |
+| `desqueeze_setting` | 去挤压设置 |
+
+<a id="equipment-fields-6"></a>
+
+### 4.6 镜头
+
+归属和条件：归型号、官方变体或条件化规格。物理焦距不被等效焦距覆盖，F值和T值不自动换算；前口径不等同滤镜螺纹；最近对焦测量基准不默认镜头前端。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `physical_focal_length_mm` | 物理焦距 |
+| `focal_length_min_mm` | 最短焦距 |
+| `focal_length_max_mm` | 最长焦距 |
+| `equivalent_focal_length_mm` | 等效焦距 |
+| `equivalence_reference` | 等效比较基准 |
+| `f_number_min` | 最小F值 |
+| `f_number_max` | 最大F值 |
+| `t_stop_min` | 最小T值 |
+| `t_stop_max` | 最大T值 |
+| `aperture_by_focal_length` | 光圈随焦距变化表 |
+| `transmission_mapping` | 透光映射 |
+| `iris_type` | 光圈机构 |
+| `iris_blade_count` | 光圈叶片数 |
+| `image_circle_mm` | 像场直径 |
+| `supported_imaging_formats` | 官方覆盖画幅 |
+| `projection_model` | 投影模型 |
+| `official_aov` | 官方视角表 |
+| `minimum_focus_distance_m` | 最近对焦距离 |
+| `focus_range_m` | 对焦范围 |
+| `focus_reference` | 距离测量基准 |
+| `max_magnification` | 最大放大倍率 |
+| `filter_thread_mm` | 滤镜螺纹口径 |
+| `front_diameter_mm` | 前口径 |
+| `lens_mount_interface_id` | 镜头卡口 |
+| `autofocus_support` | 自动对焦支持 |
+| `stabilization_support` | 防抖支持 |
+| `metadata_support` | 镜头数据支持 |
+| `focus_control_support` | 焦点控制支持 |
+| `squeeze_ratio` | 挤压倍率 |
+| `squeeze_axis` | 挤压方向 |
+| `desqueeze_model` | 去挤压模型 |
+
+<a id="equipment-fields-7"></a>
+
+### 4.7 光学附件
+
+归属和条件：附加光学规格只属于已核实宿主组合；专用名单不向同品牌、同系列、同大类扩散。空名单表示未核实，不能匹配全部产品。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `attachment_effect` | 附加光学作用 |
+| `combined_optical_specification` | 指定组合光学规格 |
+| `host_selector_type` | 宿主匹配方式 |
+| `host_model_ids` | 允许宿主型号 |
+| `host_variant_ids` | 允许宿主变体 |
+| `host_module_ids` | 允许宿主模组 |
+| `required_mode_ids` | 必要录制模式 |
+| `excluded_hosts` | 明确排除宿主 |
+| `attachment_site` | 安装部位 |
+| `required_intermediates` | 必要中间件 |
+
+<a id="equipment-fields-8"></a>
+
+### 4.8 滤镜
+
+归属和条件：矩形片不是螺纹滤镜；柔光密度不是减光档数。每种形态的尺寸和安装条件分别记录，不适用字段标不适用。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `form_factor` | 物理形态 |
+| `filter_width_mm` | 片宽 |
+| `filter_height_mm` | 片高 |
+| `filter_thickness_mm` | 片厚 |
+| `filter_thread_mm` | 圆形滤镜螺纹 |
+| `effect_type` | 作用类型 |
+| `density_variant` | 密度变体 |
+| `stacking_conditions` | 叠片条件 |
+
+<a id="equipment-fields-9"></a>
+
+### 4.9 遮光斗
+
+归属和条件：描述遮光和安装能力；滤镜架、托盘、连接环是独立参考对象，不因相关就成为遮光斗拥有的产品。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `mounting_method` | 安装方式 |
+| `front_mount_range_mm` | 前端安装范围 |
+| `rod_support_links` | 导管支撑条件 |
+| `filter_slot_count` | 滤镜槽位数 |
+| `flag_support` | 遮光叶支持 |
+| `holder_support_links` | 滤镜架支持 |
+| `tray_support_links` | 托盘支持 |
+| `vignetting_conditions` | 遮挡条件 |
+
+<a id="equipment-fields-10"></a>
+
+### 4.10 滤镜架
+
+归属和条件：片幅、厚度和锁紧条件分别核实，不由标称片幅推导全部适配。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `supported_filter_sizes` | 支持片幅 |
+| `max_filter_thickness_mm` | 最大片厚 |
+| `slot_width_mm` | 槽宽 |
+| `filter_slot_count` | 槽位数 |
+| `connection_endpoints` | 连接端点 |
+| `rotation_conditions` | 旋转条件 |
+| `locking_method` | 锁紧方式 |
+| `tray_support_links` | 支持托盘 |
+
+<a id="equipment-fields-11"></a>
+
+### 4.11 滤镜托盘
+
+归属和条件：托盘与片、架、遮光斗分别有明确适配关系；托盘不是通用标准外形的同义词。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `tray_outer_dimensions_mm` | 托盘外形 |
+| `inner_filter_size_mm` | 内片幅 |
+| `filter_thickness_range_mm` | 片厚范围 |
+| `mounting_orientation` | 横竖安装方向 |
+| `retention_method` | 防脱方式 |
+| `locking_method` | 锁紧方式 |
+| `holder_support_links` | 支持滤镜架 |
+| `matte_box_support_links` | 支持遮光斗 |
+
+<a id="equipment-fields-12"></a>
+
+### 4.12 镜头连接环
+
+归属和条件：转换镜头前端安装条件，不改变摄影机的镜头卡口。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `lens_end_diameter_mm` | 镜头端直径 |
+| `lens_end_thread` | 镜头端螺纹 |
+| `carrier_end_interface` | 承载端接口 |
+| `clamp_range_mm` | 夹持范围 |
+| `host_support_links` | 明确宿主支持 |
+
+<a id="equipment-fields-13"></a>
+
+### 4.13 摄影支撑
+
+归属和条件：三脚架、云台、底座、导管、镜头支撑分别有对应项；承重够不等于空间和安装条件满足。导管系统不能只按直径合并。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `support_type` | 支撑类型 |
+| `tested_payload_kg` | 测试载荷 |
+| `mount_interfaces` | 安装接口 |
+| `rod_diameter_mm` | 导管直径 |
+| `rod_spacing_mm` | 导管间距 |
+| `rod_height_standard` | 导管高度制式 |
+| `clearance_conditions` | 间隙条件 |
+| `center_of_gravity_conditions` | 重心条件 |
+| `base_support_links` | 底座支持 |
+
+<a id="equipment-fields-14"></a>
+
+### 4.14 快拆组件
+
+归属和条件：快拆板和夹座分别登记；名称和外形相似不构成适配证据。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `plate_width_mm` | 板宽 |
+| `plate_length_mm` | 板长 |
+| `groove_profile` | 槽形 |
+| `mounting_orientation` | 安装方向 |
+| `retention_method` | 防脱方式 |
+| `locking_method` | 锁紧方式 |
+| `screw_thread` | 螺纹 |
+| `system_support_links` | 支持系统 |
+
+<a id="equipment-fields-15"></a>
+
+### 4.15 稳定器
+
+归属和条件：机械平衡、空间、控制和供电分别判断；运动轨迹由运镜知识维护。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `tested_payload_kg` | 测试载荷 |
+| `balance_conditions` | 平衡条件 |
+| `camera_clearance` | 机身空间条件 |
+| `lens_clearance` | 镜头空间条件 |
+| `quick_release_support` | 快拆支持 |
+| `host_support_links` | 机身镜头支持 |
+| `control_support_links` | 控制功能支持 |
+| `power_inputs` | 电源输入 |
+
+<a id="equipment-fields-16"></a>
+
+### 4.16 跟焦组件
+
+归属和条件：测距器、电机、手轮、手柄逐项登记；套装不替代成员型号和独立能力。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `component_function` | 组件功能 |
+| `motor_torque` | 电机扭矩 |
+| `gear_specification` | 齿轮规格 |
+| `measurement_conditions` | 测距条件 |
+| `control_ports` | 控制端口 |
+| `power_inputs` | 电源输入 |
+| `function_support` | 功能支持 |
+| `member_support_links` | 成员支持关系 |
+
+<a id="equipment-fields-17"></a>
+
+### 4.17 灯具
+
+归属和条件：标称输出和耗电独立；照度附距离、色温、设置、附件；控制端口不混电源端口。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `emitter_type` | 发光系统 |
+| `rated_output_w` | 标称输出 |
+| `max_power_consumption_w` | 最大耗电 |
+| `cct_range_k` | 色温范围 |
+| `green_magenta_range` | 绿洋红调整 |
+| `cri` | 显色指数 |
+| `tlci` | 电视照明一致性指数 |
+| `ssi` | 光谱相似性指数 |
+| `tm30_rf` | 色彩保真指标 |
+| `tm30_rg` | 色域指标 |
+| `photometric_measurements` | 照度测量表 |
+| `beam_angle_deg` | 光束角 |
+| `dimming_range` | 调光范围 |
+| `modifier_mount_interface_id` | 原生控光接口 |
+| `support_interfaces` | 支撑接口 |
+| `control_protocols` | 控制协议 |
+| `control_ports` | 控制端口 |
+| `wireless_control_support` | 无线控制支持 |
+| `input_voltage_range_v` | 输入电压范围 |
+| `input_current_a` | 输入电流 |
+| `battery_support_links` | 电池支持 |
+| `runtime_test` | 续航测试 |
+| `accessory_support_links` | 配件支持 |
+| `included_bundle_links` | 随附套装 |
+
+<a id="equipment-fields-18"></a>
+
+### 4.18 控光附件
+
+归属和条件：反光罩、菲涅耳、柔光箱、蜂巢、投影附件分别登记；同接口名字不证明全功能兼容。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `modifier_type` | 附件类型 |
+| `modifier_mount_interface_id` | 原生安装接口 |
+| `dimensions_mm` | 尺寸 |
+| `beam_angle_deg` | 光束角 |
+| `optical_effect` | 光学作用 |
+| `host_support_links` | 灯具支持 |
+| `required_intermediates` | 必要转接件 |
+
+<a id="equipment-fields-19"></a>
+
+### 4.19 灯光支撑
+
+归属和条件：灯架、魔术腿、悬臂分别登记；不收纳电池和供电线缆。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `support_type` | 支撑类型 |
+| `tested_payload_kg` | 测试载荷 |
+| `pin_specification` | 销规格 |
+| `receiver_specification` | 接收孔规格 |
+| `working_height_range_mm` | 工作高度范围 |
+| `footprint_dimensions_mm` | 占地尺寸 |
+| `clearance_conditions` | 安装间隙 |
+
+<a id="equipment-fields-20"></a>
+
+### 4.20 供电设备
+
+归属和条件：容量和能量不直接换单位；供电接口支持不能证明能够驱动设备全部输出。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `input_voltage_range_v` | 输入电压范围 |
+| `output_voltage_range_v` | 输出电压范围 |
+| `max_output_current_a` | 最大输出电流 |
+| `max_power_consumption_w` | 最大耗电 |
+| `battery_capacity_mah` | 电池容量 |
+| `battery_energy_wh` | 电池能量 |
+| `power_inputs` | 电源输入 |
+| `power_outputs` | 电源输出 |
+| `runtime_test` | 续航测试 |
+
+<a id="equipment-fields-21"></a>
+
+### 4.21 线缆
+
+归属和条件：同外形不同接线和协议分别核实；机械可插不代表视频、数据、控制或供电均可用。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `connection_endpoints` | 两端接口 |
+| `signal_direction` | 信号方向 |
+| `length_mm` | 长度 |
+| `voltage_range_v` | 电压范围 |
+| `current_limit_a` | 电流限制 |
+| `bandwidth` | 带宽 |
+| `protocols` | 协议 |
+| `active_passive_type` | 主动或被动 |
+| `function_passthrough` | 功能透传 |
+
+<a id="equipment-fields-22"></a>
+
+### 4.22 转接件
+
+归属和条件：每端归所属专业范围；机械转接和电气协议转换分别判断，不虚构通用万能转接件。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `connection_endpoints` | 输入输出端点 |
+| `signal_direction` | 工作方向 |
+| `active_passive_type` | 主动或被动 |
+| `function_passthrough` | 功能透传 |
+| `host_support_links` | 明确宿主支持 |
+| `required_intermediates` | 必要中间件 |
+| `conditions` | 适用条件 |
+
+<a id="equipment-fields-23"></a>
+
+### 4.23 监看设备
+
+归属和条件：显示、输入输出、控制和供电分别有条件；不能由端口外形推出能力。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `signal_input` | 视频输入 |
+| `signal_output` | 视频输出 |
+| `resolution_support` | 分辨率支持 |
+| `frame_rate_support` | 帧率支持 |
+| `codec_support` | 编解码支持 |
+| `color_pipeline_support` | 色彩解释支持 |
+| `control_ports` | 控制端口 |
+| `power_inputs` | 电源输入 |
+| `mount_interfaces` | 安装接口 |
+
+<a id="equipment-fields-24"></a>
+
+### 4.24 视频传输设备
+
+归属和条件：发射器、接收器独立登记；延时附测试条件和方向。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `transmission_role` | 发送或接收角色 |
+| `signal_input` | 信号输入 |
+| `signal_output` | 信号输出 |
+| `resolution_support` | 分辨率支持 |
+| `frame_rate_support` | 帧率支持 |
+| `codec_support` | 编解码支持 |
+| `frequency_bands` | 工作频段 |
+| `latency_test` | 延时测试 |
+| `control_support_links` | 控制支持 |
+| `power_inputs` | 电源输入 |
+| `member_support_links` | 成员支持 |
+
+<a id="equipment-fields-25"></a>
+
+### 4.25 音频设备
+
+归属和条件：话筒、录音机、音频接口、无线发射接收分别登记；时间码和同步支持不能互换。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `audio_device_type` | 设备类型 |
+| `microphone_type` | 话筒类型 |
+| `pickup_pattern` | 指向性 |
+| `audio_inputs` | 音频输入 |
+| `audio_outputs` | 音频输出 |
+| `signal_level` | 信号电平 |
+| `sample_rate_support` | 采样率支持 |
+| `audio_bit_depth_support` | 音频位深支持 |
+| `timecode_support` | 时间码支持 |
+| `sync_support` | 同步支持 |
+| `wireless_support` | 无线支持 |
+| `power_inputs` | 电源输入 |
+
+<a id="equipment-fields-26"></a>
+
+### 4.26 记录介质
+
+归属和条件：瞬时速率不等于持续写入；容量和速率标明单位，合格名单与接口匹配分别维护。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `media_type` | 介质类型 |
+| `capacity_bytes` | 容量 |
+| `read_speed_bytes_s` | 读取速率 |
+| `write_speed_bytes_s` | 写入速率 |
+| `sustained_write_bytes_s` | 持续写入速率 |
+| `format_conditions` | 格式条件 |
+| `qualified_host_links` | 官方合格设备 |
+
+<a id="equipment-fields-27"></a>
+
+### 4.27 官方套装
+
+归属和条件：套装只记录成员；不继承成员能力，也不证明所有成员两两兼容。
+
+| 字段键 | 中文含义 |
+| --- | --- |
+| `bundle_id` | 套装身份 |
+| `bundle_code` | 官方套装货号 |
+| `member_links` | 成员引用 |
+| `member_quantities` | 成员数量 |
+| `source_reference_ids` | 官方来源 |
+
+### 4.28 结构化参数的内部字段
+
+结构化参数仍是一种明确参数，不是允许把其他专业对象堆进去的万能JSON。
+
+| 参数 | 子字段 | 校验 |
 | --- | --- | --- |
-| 通用实体参数 | `weight_g`、`dimensions_mm`、`length_mm`、`operating_temperature_c`、`ingress_protection` | 重量、尺寸、长度、工作温度、防护等级；归具体实体，重量须注明是否含快拆板、电池或控制箱 |
-| 传感器 | `sensor_type`、`shutter_type`、`sensor_width_mm`、`sensor_height_mm`、`sensor_diagonal_mm`、`effective_pixels` | 传感器类型、快门方式、实际尺寸、有效像素；归传感器定义，不把营销画幅名当计算尺寸 |
-| 成像能力 | `dynamic_range_stops`、`sensitivity_mapping`、`shutter_time_range_s`、`shutter_angle_range_deg` | 动态范围、感光模式映射和快门范围；归模组/模式及官方测试条件 |
-| 接口 | `lens_mount_interface_id`、`port_links` | 原生镜头卡口与端口关系；归型号/变体，不写成型号间兼容断言 |
-| 存储与显示 | `built_in_storage_gb`、`supported_media`、`display_specifications` | 内置容量、合格介质和显示规格；归整机资料，不从同系列另一型号复制 |
-| 电池和供电 | `battery_capacity_mah`、`battery_energy_wh`、`power_inputs`、`runtime_test` | 电池容量、能量、输入和续航测试；容量单位不能互换，续航附模式、温度和附件条件 |
+| 尺寸向量 | 长、宽、高、单位、测量对象 | 不使用中文备注作为唯一数值 |
+| 数值范围 | 下界、上界、单位、是否含边界 | 未知边界和0区分 |
+| 官方视角表 | 方向、视角、画幅定义、焦距、对焦条件、录制模式、来源位置 | 不从对角视角冒充水平视角 |
+| 照度表 | 距离、色温、输出设置、附件、照度、单位、来源位置 | 裸灯和附件组合分别记录 |
+| 功能支持关系 | 功能、方向、对端引用、版本条件、支持等级、来源位置 | 机械连接不代替功能支持 |
+| 续航测试 | 设备、模式、附件、电池、温度、时长、官方条件、来源位置 | 不把一组条件扩散到所有配置 |
+| 兼容端点 | 所属大类、对象身份、型号或变体、接口、方向、来源位置 | 只在真实数据中填写型号和直接组合 |
 
-### 4.2 录制模式与格式能力
+### 4.29 安装校验
 
-| 字段键 | 中文含义 | 约束 |
-| --- | --- | --- |
-| `output_width_px`、`output_height_px`、`recording_aspect_ratio` | 输出分辨率与画面比例 | 输出大小不等于传感器有效区域 |
-| `active_width_mm`、`active_height_mm`、`readout_window` | 实际有效成像区域与读取窗口 | 没有官方尺寸时未知；不可凭整机尺寸或等效焦距反推 |
-| `capture_fps_range`、`project_timebase_options`、`playback_fps_options` | 拍摄、项目基准和回放帧率 | 精确分数帧率独立保存；最大慢动作帧率不代表所有编码模式支持 |
-| `format_support_links`、`codec_profile`、`max_data_rate_bytes_s` | 格式能力、编码配置和最高数据率 | 绑定产生/消费/导入/导出/转码方向、位深、色度采样、分辨率、帧率与固件条件 |
-| `color_primaries`、`transfer_function`、`log_profile`、`bit_depth`、`chroma_sampling` | 色域、传递函数、对数编码、位深和色度采样 | 多个模组不能共享未经官方确认的色彩能力；与D/F/G/H各阶段数据流关联 |
-| `digital_crop_mode`、`stabilization_crop`、`desqueeze_setting` | 电子裁切、防抖裁切和去挤压设置 | 模式变化影响输入；不是新的可更换光学镜头 |
+滤镜、托盘、滤镜架、遮光斗、连接环和支撑各自建资料。产品是否需要这些部件取决于真实设计，不强制套用固定装配链。安装校验逐项检查尺寸、片厚、锁紧、槽位、旋转空间、镜头间隙、遮挡和完整配置重量。
 
-### 4.3 镜头与光学附件
-
-| 字段键 | 中文名称 | 约束 |
-| --- | --- | --- |
-| `physical_focal_length_mm`、`focal_length_min_mm`、`focal_length_max_mm` | 物理焦距、最短/最长焦距 | 定焦范围两端相同；画幅等效焦距用独立字段，不覆盖物理值 |
-| `equivalent_focal_length_mm`、`equivalence_reference` | 等效焦距及比较基准 | 必须注明厂商采用的等效基准；不能当成实际焦距进行公式计算 |
-| `f_number_min`、`f_number_max`、`t_stop_min`、`t_stop_max`、`aperture_by_focal_length` | 几何光圈范围、透光光圈范围、随焦距变化的最大光圈 | F值和T值分开；没有官方对应关系不换算 |
-| `transmission_mapping`、`iris_type`、`iris_blade_count` | 透光映射、光圈机构和叶片数量 | 光圈机构不是曝光数值；无官方值不猜 |
-| `image_circle_mm`、`supported_imaging_formats`、`projection_model` | 像场直径、官方覆盖画幅和投影模型 | 普通、鱼眼、变形镜头分别处理；不与镜头覆盖策略混淆 |
-| `official_aov` | 官方视角表 | 每行注明水平/垂直/对角方向、画幅定义、焦距及官方给出的对焦/模式条件 |
-| `minimum_focus_distance_m`、`focus_range_m`、`focus_reference`、`max_magnification` | 最近对焦距离、对焦范围、距离基准和最大放大倍率 | 厂商未明确测量基准时记录未知，不默认从镜头前端量 |
-| `filter_thread_mm`、`front_diameter_mm`、`lens_mount_interface_id` | 滤镜螺纹、前口径和镜头卡口 | 三者不同；95mm前口径不能当成95mm滤镜螺纹 |
-| `autofocus_support`、`stabilization_support`、`metadata_support`、`focus_control_support` | 自动对焦、防抖、镜头数据和焦点控制 | 分功能、按宿主及固件/连接条件判断 |
-| `squeeze_ratio`、`squeeze_axis`、`desqueeze_model` | 挤压倍率、方向和去挤压模型 | 不制造一个虚假等效焦距覆盖原始焦距 |
-| `attachment_effect`、`combined_optical_specification` | 附加光学作用和组合后光学规格 | 增广镜、增距镜、减焦镜各自定义；官方108°视角属于指定宿主组合，不是附件独立成像视角 |
-
-### 4.4 灯具、控光附件与供电
-
-| 字段组 | 字段键 | 中文含义与条件 |
-| --- | --- | --- |
-| 光源 | `emitter_type`、`rated_output_w`、`max_power_consumption_w` | 发光系统、标称输出、最大耗电；1200W输出与1550W耗电不能混用一个功率字段 |
-| 色彩 | `cct_range_k`、`green_magenta_range`、`cri`、`tlci`、`ssi`、`tm30_rf`、`tm30_rg` | 色温、绿洋红调整和显色指标；附色温/参考光源/官方测试条件，不只保存脱离条件的数值 |
-| 光度 | `photometric_measurements`、`beam_angle_deg`、`dimming_range` | 照度表、光束角、调光范围；照度每行保存距离、色温、功率设置、附件、单位；裸灯和反光罩数据分开 |
-| 原生接口 | `modifier_mount_interface_id`、`support_interfaces` | 控光卡口和灯架连接；FM转Bowens必须出现真实转接件 |
-| 控制 | `control_protocols`、`control_ports`、`wireless_control_support` | 控制协议、端口及无线支持；DMX输入/输出、电源端口和数据端口分别记录 |
-| 电源 | `input_voltage_range_v`、`input_current_a`、`battery_support_links`、`runtime_test` | 电压、电流、支持电池及续航；支持某电池接口不证明任意电池能驱动该灯全部输出 |
-| 配套 | `accessory_support_links`、`included_bundle_links` | 指定菲涅耳、投影、柔光、反光罩、控制箱和线缆等；随附不等于所有组合都支持 |
-
-### 4.5 稳定器、支撑、跟焦、监看与传输
-
-| 对象 | 首批规格与关系 | 不能偷换的含义 |
-| --- | --- | --- |
-| 稳定器 / 三脚架 / 云台 | `tested_payload_kg`、重心/尺寸条件、安装接口、快拆板规格、机身镜头支持表 | 承重够不等于平衡、物理空间、控制功能均兼容 |
-| 快拆板 / 夹座 | 板长宽、槽形、安装方向、防脱/锁紧、螺纹、明确支持系统 | “快拆”“NATO”或相似外形不能自动推导跨型号全部兼容 |
-| 跟焦组件 | 测距/电机/手轮/手柄各自功能、扭矩、齿轮规格、接口、供电和支持组合 | 跟焦套装不能代替四个成员型号及独立能力 |
-| 发射器 / 接收器 / 监看屏 | `signal_input`、`signal_output`、分辨率/帧率、编解码、频段、延时测试条件、控制/供电 | TX/RX方向分开；USB-C外形不证明电源、视频、控制都透传 |
-| 滤镜 | `form_factor`、尺寸/厚度、`effect_type`、`density_variant`、安装系统与叠片条件 | 柔光滤镜密度不是ND减光档数；4×5.65长方片不假定能直接装到镜头前螺纹 |
-| 线缆 / 转接件 | 每端接口、方向、长度、电压/电流/带宽/协议、主动或被动、功能透传 | 同外壳不同接线/协议分别核实；备注“能接”不足以形成适配关系 |
-
-音频设备的接口和采样、位深、拾音类型仍在录音专业范围维护，不因使用USB接口并入摄影或灯光接口目录。
-
-### 4.6 遮光斗、滤镜架与实际安装链
-
-用户本轮明确补入遮光斗、滤镜架等安装系统。标准尺寸描述不等于全部产品可以互装；首批具体型号仍需官方资料，不能虚构一个适配所有镜头的“标准遮光斗型号”。
-
-| 参考对象 | 必须记录的参数与关系 | 真实使用中解决的问题 |
-| --- | --- | --- |
-| 遮光斗（Matte Box） | 安装方式、支持前口径/转接环、导管规格、槽位、遮光叶、支持滤镜架/托盘 | 连接哪支镜头或哪套支撑，能放几片，有无遮挡 |
-| 滤镜架（Filter Holder） | 支持片幅、最大厚度、槽宽/槽数、连接端点、旋转/锁紧、明确支持托盘 | 方形/长方形滤镜由什么承载；不是遮光斗的必然组成 |
-| 滤镜托盘（Filter Tray） | 外形尺寸、内片幅/厚度范围、横竖方向、防脱和锁紧、所属架/遮光斗兼容表 | 4×5.65片是否真能装进去；不能仅凭标称片幅推定 |
-| 镜头连接环（Lens Adapter / Clamp Ring） | 镜头端直径或螺纹、遮光斗/架端接口、夹持范围、型号支持 | 镜头前口径与安装系统之间的转换；不改变摄影机镜头卡口 |
-| 支撑件（Rod Support / Lens Support） | 导管直径、间距、高度制式、安装方向、承重/间隙、支持底座 | 支撑遮光斗或镜头；15mm轻型支撑、15mm摄影棚支撑、19mm系统不能只按管径合并 |
-
-必须保存并查询以下安装结构，按产品实际设计选其中一条，不强制每种产品都需要全部部件：
-
-```text
-滤镜片 → 对应滤镜托盘 → 滤镜架或遮光斗
-       → 指定夹持环 / 螺纹连接环 → 指定镜头前端
-或
-滤镜片 → 对应托盘 → 导管支撑式遮光斗 → 对应导管/底座
-       + 镜头前端间隙或适配环条件
-```
-
-矩形柔光滤镜是独立滤镜片，不是镜头内置功能或可直接拧入螺纹的圆形滤镜。前口径不能当成滤镜螺纹。承载部件的尺寸、厚度与连接条件分别核实；具体品牌、型号与组合只列在真实数据样例。
-
-叠片需分别检查片厚、托盘槽位、旋转空间、滤镜与镜头间距、广角视场遮挡、设备/云台空间和重量。未公开完整组合数据时标“遮挡/空间条件待核实”，不凭95mm或4×5.65两个数字宣称全组合兼容。光学附件、遮光斗和云台同时存在时，最终检查对象是完整配置，不只是两两连接。
-
-安装链中的真实组件都计入路径，不把托盘、架或连接环藏进备注以规避两层限制。超过两个中间组件的真实安装组合，按用户已确认的特殊真实案例路径登记；保留完整结构和证据，不纳入默认多跳推荐。完整产品配置校验与默认自动推荐分开，不能因超两层把现实组合写成不存在。
+完整安装结构和指定产品配对只放在[真实资料](REFERENCE_SEED_DATA_2026-10-05.md)。默认自动推荐最多两个真实中间组件；不得把托盘或连接环藏进备注。复杂实际结构使用已确认的特殊案例路径，保留完整成员和证据，不纳入默认多跳推荐。
 
 ## 5. 配件适配：必须先有适用范围，再谈连接
 
-### 5.1 专用配件与通用接口配件
+### 5.1 适用范围策略
 
 | 适配策略 | 条件 | 自动检索规则 |
 | --- | --- | --- |
@@ -178,21 +631,11 @@
 
 知识连接可以记录官方证明或用户已确认的特殊真实拍摄案例，但不能借特例让默认组合器突破两层限制，也不能用团队实测取代官方器材规格。
 
-## 6. 各大类内的配套资料覆盖要求
+## 6. 配套资料覆盖
 
-具体字段、子项与支持内容按[类别目录](KNOWLEDGE_CATALOG_STRUCTURE_2026-10-05.md)从各大类展开。本合同允许复用技术字段，不建立混杂品牌、接口、产品的业务总库。真实型号补齐清单归数据样例。
+各大类按第4节独立展开字段；具体对应项见[类别目录](KNOWLEDGE_CATALOG_STRUCTURE_2026-10-05.md)。摄影机、镜头、光学附件、滤镜、遮光斗、滤镜架、托盘、连接环、支撑、稳定器、跟焦、灯具、控光附件、灯光支撑、供电、线缆、转接件、监看、视频传输、音频设备、记录介质及套装分别检查，不再用复合大类代替它们。
 
-| 所属大类 | 该类下必须检查的对应项 | 补齐结果 |
-| --- | --- | --- |
-| 摄影机 | 原生卡口、转接、供电、介质、控制、监看及安装 | 型号、变体、模组和模式分别核实 |
-| 镜头 | 卡口、换卡口系统、前端安装、焦点控制、镜头数据 | 不同焦段与功能变体条件保留 |
-| 固定镜头成像设备 | 内置模组、专用光学附件、滤镜、供电、安装、音频 | 不从相邻型号继承专用名单 |
-| 摄影支撑、稳定器、跟焦 | 快拆、支撑、手柄、控制、供电、线缆及套装成员 | 成员独立；承重不代替空间和控制支持 |
-| 监看与传输 | 各端口、成员、安装、供电、控制与线缆 | 输入输出方向及各功能独立 |
-| 灯具及控光附件 | 原生接口、必要转接、反光、菲涅耳、柔光、投影、支撑与供电 | 不从接口名字推导全系列兼容 |
-| 滤镜、遮光斗及滤镜架 | 变体、片幅、厚度、托盘、连接环、支撑和遮挡条件 | 完整枚举才标完整；空名单不是无配件 |
-
-每组结果为“已核实列表 / 尚缺官方资料 / 官方未提供该类配件”；最后一项也须有依据。技术字典的共同字段不是跨类别实际安装组合。
+每项配套资料记录“已核实列表 / 尚缺官方资料 / 官方未提供该类配件”，后者也须证据。共同字段不构成实际组合。真实型号和配对仅在真实资料填值。
 
 ## 7. 跨篇核对和导入门槛
 
@@ -210,4 +653,4 @@
 
 ## 8. 类别、岗位专业和数据样例分工
 
-类别文档仅定义大类、对应项、字段、子项及支持内容，不含实际产品值或直接配对。岗位专业关联使用知识目录第13节的专业域、组件及关联原因；真实数据样例承载具体品牌、型号、配件和安装证据，连接端点逐项标所属大类。专业知识相关性不改变器材适配结论。
+类别文档仅定义大类、对应项、字段、子项及支持内容，不含实际产品值或直接配对。岗位专业关联使用知识目录的岗位专业关联节的专业域、组件及关联原因；真实数据样例承载具体品牌、型号、配件和安装证据，连接端点逐项标所属大类。专业知识相关性不改变器材适配结论。

@@ -1,8 +1,8 @@
 > **下一代业务定义，尚未实施。** 本文件把“制作常识库”从条目清单展开为首批可实施 Topic Catalog。Topic 是稳定语义身份；正文进入 KnowledgeRevision。器材、软件和格式只能引用这些 Topic/Domain，不反向定义常识。
 
-# FrameForge 制作常识 Topic Catalog
+# FrameForge 制作常识主题目录
 
-版本：1.2，2026-10-05。状态：首批常识正文合同，尚未建立运行知识条目。本版作为243个唯一共享Topic与13个FormulaDefinition的内容基线。
+版本：1.3，2026-10-05。状态：首批常识正文合同，尚未建立运行知识条目。本版整理251个有效共享主题；原混合编号只保留拆分转向，13个公式定义保持。
 
 配套：[制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)、[知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)、[知识体系](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)。
 
@@ -44,539 +44,2262 @@
 - `REQUIRES`：成立/执行必需条件；
 - `REFERENCES`：知识引用，不代表业务拥有。
 
-## 3. 制作单元、叙事用途与执行阶段
 
-下列五组分别维护，不再合称“镜头语言与覆盖”。旧PC-NAR编号仅保持引用稳定，不作为分类依据。拍摄准备（Setup）是准备活动，不是轴线规则或镜头覆盖配置。
+## 3. 独立知识分类
 
-### 3.1 场景与镜头身份
+分类名称采用中文；英文是检索术语。构图、运镜、摄影角度、视场角、透视及执行活动各有独立入口。一个类型族可以包含真正的下级类型；仅因相互影响或在同一现场使用，不允许合为一类。
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+### 3.1 构图
+
+<a id="pc-cam-023"></a>
+<a id="pc-cam-008"></a>
+<a id="pc-cam-014"></a>
+<a id="pc-cam-015"></a>
+<a id="pc-cam-021"></a>
+<a id="pc-cam-022"></a>
+<a id="pc-cam-017"></a>
+<a id="pc-cam-018"></a>
+<a id="pc-cam-019"></a>
+<a id="pc-cam-020"></a>
+
+范围：画面内的组织方式；机位、运镜、视场角、透视分别引用。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-NAR-001 | 场景（Scene） | 叙事或制作语境中的场景单元；在 FrameForge 中不是 Shot 的父对象，Scene↔Shot 可多对多 | REFERENCES Shot；CONSTRAINS requirement/context |
-| PC-NAR-002 | 镜头（Shot） | 一个可独立描述、制作、排期、审阅的镜头身份；不等同一次 Take | REFERENCES Scene；PART_OF coverage |
+| PC-CAM-023 | 构图（Composition） | 在画面边界内组织主体、空间层次和视觉重心的概念；不等同机位、运镜或视场角。 | 引用景别、透视、视场角；不合并它们的定义 |
+| PC-CAM-008 | 倾斜构图（Dutch Angle） | 摄影机 Roll 使画面水平线倾斜 | 依赖 `DEPENDS_ON` Roll |
+| PC-CAM-014 | 画面空间层次（Spatial Layers） | 按相机空间深度划分的前/中/后景关系 | 组成 `PART_OF` spatial composition |
+| PC-CAM-015 | 头顶留白（Headroom） | 人物头部与画面上边缘之间的构图空间 | 组成 `PART_OF` composition |
+| PC-CAM-021 | 运动方向留白（Lead Room） | 在主体运动方向前方保留的画面空间。 | 属于构图；引用运动方向 |
+| PC-CAM-022 | 视线方向留白（Look Room） | 在主体视线方向前方保留的画面空间。 | 属于构图；引用视线方向 |
+| PC-CAM-017 | 三分构图（Rule of Thirds） | 用三等分参考线组织视觉重心的方法 | 属于 `IS_A` composition principle |
+| PC-CAM-018 | 对称构图（Symmetry） | 围绕画面轴线组织视觉元素的构图方式 | 属于 `IS_A` composition principle |
+| PC-CAM-019 | 负空间（Negative Space） | 主体以外、参与画面平衡与信息表达的空间 | 属于 `IS_A` composition concept |
+| PC-CAM-020 | 纵深构图（Depth Composition） | 利用不同深度层次组织画面的构图方法 | 依赖 `DEPENDS_ON` spatial relation/Perspective |
 
-### 3.2 镜头用途与覆盖策略
+### 3.2 运镜
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-mov-018"></a>
+<a id="pc-mov-001"></a>
+<a id="pc-mov-002"></a>
+<a id="pc-mov-003"></a>
+<a id="pc-mov-004"></a>
+<a id="pc-mov-005"></a>
+<a id="pc-mov-006"></a>
+<a id="pc-mov-007"></a>
+<a id="pc-mov-013"></a>
+
+范围：按摄影机旋转或位移组织下级类型；承托设备和焦距变化不混入轨迹类型。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-NAR-003 | 建立镜头（Establishing Shot） | 用于建立空间、人物关系或环境信息的镜头用途 | IS_A Shot purpose；AFFECTS spatial comprehension |
-| PC-NAR-004 | 主镜头（Master Shot） | 覆盖一个表演/场景主要动作范围的连续镜头用途 | IS_A coverage strategy |
-| PC-NAR-005 | 镜头覆盖策略（Coverage） | 通过多个镜头为同一动作/场景提供剪辑选择的拍摄策略 | PART_OF shooting strategy；CONSUMES Shot |
-| PC-NAR-006 | 插入镜头（Insert） | 强调物体、动作细节或信息的补充镜头 | IS_A coverage shot |
-| PC-NAR-007 | 反应镜头（Reaction Shot） | 以人物对事件/对白的反应为主要信息的镜头 | IS_A coverage shot |
-| PC-NAR-008 | 过肩镜头（OTS） | 以前景人物肩部/头部作为空间关系参照的构图用途 | AFFECTS screen relation |
-| PC-NAR-009 | 主观镜头（POV） | 画面视点被定义为某角色/主体观察位置 | DEPENDS_ON narrative viewpoint |
+| PC-MOV-018 | 运镜（Camera Movement） | 拍摄期间摄影机位置或朝向随时间变化的镜头设计；运动轨迹独立于承托设备。 | 包含旋转、平移、复合轨迹；引用机位调度 |
+| PC-MOV-001 | 水平摇摄（Pan） | 摄影机位置基本不变，绕垂直轴旋转 | 改变 `CHANGES` orientation；保持 `PRESERVES` position |
+| PC-MOV-002 | 俯仰摇摄（Tilt） | 摄影机位置基本不变，绕水平轴上下旋转 | 改变 `CHANGES` orientation |
+| PC-MOV-003 | 滚转（Roll） | 绕光轴旋转 | 改变 `CHANGES` horizon/Dutch angle |
+| PC-MOV-004 | 升降移动（Pedestal） | 摄影机整体上下平移 | 改变 `CHANGES` Camera Position；保持 `PRESERVES` focal length if lens unchanged |
+| PC-MOV-005 | 横向移机（Truck / Track） | 摄影机整体横向/沿轨迹平移 | 改变 `CHANGES` Camera Position/Perspective |
+| PC-MOV-006 | 纵向移机（Dolly In / Out） | 摄影机向主体靠近/远离 | 改变 `CHANGES` position, framing and perspective |
+| PC-MOV-007 | 环绕移机（Arc / Orbit） | 摄影机绕主体弧形移动 | 改变 `CHANGES` position/orientation/perspective |
+| PC-MOV-013 | 固定焦距的空间推进（Spatial Push） | 焦距保持，摄影机靠近主体造成主体画面占比增大 | 改变 `CHANGES` position/perspective；保持 `PRESERVES` focal length |
 
-### 3.3 人物与机位调度
+### 3.3 景别
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-cam-024"></a>
+
+范围：按画面内主体呈现范围分类，不以焦距替代。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-NAR-010 | 人物与机位调度（Blocking） | 人物、摄影机、动作在空间中的安排 | AFFECTS Camera Position、Perspective、Coverage |
+| PC-CAM-024 | 景别（Shot Size） | 主体在画面中的呈现范围；景别不等同物理焦距。 | 关联构图、主体距离和取景范围 |
 
-### 3.4 现场拍摄准备与执行阶段
+### 3.4 机位
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-cam-001"></a>
+<a id="pc-cam-002"></a>
+
+范围：位置和高度是同一空间位置的量，不包含画面构图。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-NAR-011 | 排练（Rehearsal） | 正式记录前验证表演、调度、技术协同的活动 | PRECEDES Shoot；AFFECTS estimate |
-| PC-NAR-012 | 拍摄准备（Setup） | 为某拍摄配置机位、灯光、收声、支撑等准备活动 | PRECEDES Shoot；MEASURED_AS duration |
-| PC-NAR-013 | 拍摄执行（Shoot） | 实际记录画面/声音的执行阶段 | PRODUCES media/Actual |
-| PC-NAR-014 | 复位（Reset） | 为下一次执行恢复表演、道具、设备或场景状态 | FOLLOWS Shoot；PRECEDES next Shoot |
-| PC-NAR-015 | 撤场（Strike） | 某配置或工作段结束后拆除/收整设备与布置 | FOLLOWS Shoot；MEASURED_AS duration |
+| PC-CAM-001 | 机位位置（Camera Position） | 摄影机光学中心在空间中的位置 | 决定 `DETERMINES` perspective with subject geometry；影响 `AFFECTS` framing |
+| PC-CAM-002 | 机位高度（Camera Height） | 相对主体/地面的摄影机高度 | 组成 `PART_OF` Camera Position；影响 `AFFECTS` Camera Angle |
 
-### 3.5 空间连续性与剪辑衔接
+### 3.5 摄影角度
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-cam-003"></a>
+<a id="pc-cam-004"></a>
+<a id="pc-cam-005"></a>
+<a id="pc-cam-006"></a>
+<a id="pc-cam-007"></a>
+
+范围：按观察朝向分类；画面滚转造成的倾斜构图另列。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-NAR-016 | 动作轴线与180度规则（180° Axis） | 用于维护屏幕方向与空间连续性的参考轴概念 | AFFECTS Screen Direction |
-| PC-NAR-017 | 屏幕方向（Screen Direction） | 主体在画面内的左右方向关系 | DEPENDS_ON camera position/axis |
-| PC-NAR-018 | 视线匹配（Eyeline Match） | 剪辑中保持人物视线方向与被看对象空间关系的连续性 | AFFECTS continuity |
-| PC-NAR-019 | 30度规则（30° Rule） | 同一主体连续镜头中避免过小机位角度变化造成跳切感的传统剪辑/覆盖经验 | AFFECTS coverage choice；不是硬性物理定律 |
-| PC-NAR-020 | 动作匹配（Match on Action） | 跨镜头保持动作时间和运动连续性的剪辑原则 | REQUIRES coverage continuity |
+| PC-CAM-003 | 摄影角度（Camera Angle） | 摄影机朝向相对主体/水平面的观察角度，如平视、俯视、仰视 | 依赖 `DEPENDS_ON` position/orientation；区别于 `CONTRASTS_WITH` FOV |
+| PC-CAM-004 | 平视（Eye Level） | 光轴与主体常规视线高度接近的摄影角度 | 属于 `IS_A` Camera Angle |
+| PC-CAM-005 | 俯拍（High Angle） | 摄影机从较高位置向下观察主体 | 属于 `IS_A` Camera Angle |
+| PC-CAM-006 | 仰拍（Low Angle） | 摄影机从较低位置向上观察主体 | 属于 `IS_A` Camera Angle |
+| PC-CAM-007 | 顶拍（Top Shot） | 接近垂直向下的摄影角度 | 属于 `IS_A` Camera Angle |
 
-## 4. 机位、摄影角度、视場与构图
+### 3.6 视场角
 
-### 4.1 机位位置与观察角度
+<a id="pc-cam-009"></a>
+<a id="pc-cam-010"></a>
+<a id="pc-cam-011"></a>
+<a id="pc-cam-012"></a>
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+范围：水平、垂直、对角是同一测量概念的方向，不与摄影角度合并。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-CAM-001 | 机位位置（Camera Position） | 摄影机光学中心在空间中的位置 | DETERMINES perspective with subject geometry；AFFECTS framing |
-| PC-CAM-002 | 机位高度（Camera Height） | 相对主体/地面的摄影机高度 | PART_OF Camera Position；AFFECTS Camera Angle |
-| PC-CAM-003 | 摄影角度（Camera Angle） | 摄影机朝向相对主体/水平面的观察角度，如平视、俯视、仰视 | DEPENDS_ON position/orientation；CONTRASTS_WITH FOV |
-| PC-CAM-004 | 平视（Eye Level） | 光轴与主体常规视线高度接近的摄影角度 | IS_A Camera Angle |
-| PC-CAM-005 | 俯拍（High Angle） | 摄影机从较高位置向下观察主体 | IS_A Camera Angle |
-| PC-CAM-006 | 仰拍（Low Angle） | 摄影机从较低位置向上观察主体 | IS_A Camera Angle |
-| PC-CAM-007 | 顶拍（Top Shot） | 接近垂直向下的摄影角度 | IS_A Camera Angle |
-| PC-CAM-008 | 倾斜构图（Dutch Angle） | 摄影机 Roll 使画面水平线倾斜 | DEPENDS_ON Roll |
+| PC-CAM-009 | 视场角（Field of View） | 成像系统在给定有效成像区域内覆盖的角度范围 | 依赖 `DEPENDS_ON` lens projection、official AoV、active area；区别于 `CONTRASTS_WITH` Camera Angle/Perspective |
+| PC-CAM-010 | 水平视场角（Horizontal FOV） | 水平方向覆盖角 | 属于 `IS_A` Field of View |
+| PC-CAM-011 | 垂直视场角（Vertical FOV） | 垂直方向覆盖角 | 属于 `IS_A` Field of View |
+| PC-CAM-012 | 对角视场角（Diagonal FOV） | 对角线方向覆盖角 | 属于 `IS_A` Field of View |
 
-### 4.2 视场角
+### 3.7 透视
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-cam-013"></a>
+
+范围：描述场景空间的成像关系，不以焦距数值代替。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-CAM-009 | 视场角（Field of View） | 成像系统在给定有效成像区域内覆盖的角度范围 | DEPENDS_ON lens projection、official AoV、active area；CONTRASTS_WITH Camera Angle/Perspective |
-| PC-CAM-010 | 水平视场角（Horizontal FOV） | 水平方向覆盖角 | IS_A Field of View |
-| PC-CAM-011 | 垂直视场角（Vertical FOV） | 垂直方向覆盖角 | IS_A Field of View |
-| PC-CAM-012 | 对角视场角（Diagonal FOV） | 对角线方向覆盖角 | IS_A Field of View |
+| PC-CAM-013 | 透视（Perspective） | 空间中不同距离物体在成像中的相对大小与汇聚关系 | 由此决定 `DETERMINED_BY` Camera Position relative to scene；Focal Length only affects framing/FOV at fixed position |
 
-### 4.3 空间透视
+### 3.8 人物调度
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-nar-021"></a>
+
+范围：只维护人物站位、行动和表演时机。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-CAM-013 | 透视（Perspective） | 空间中不同距离物体在成像中的相对大小与汇聚关系 | DETERMINED_BY Camera Position relative to scene；Focal Length only affects framing/FOV at fixed position |
+| PC-NAR-021 | 人物调度（Actor Blocking） | 人物站位、行动路径和表演时机的安排；不包含摄影机支撑或光学参数。 | 影响镜头覆盖；关联机位调度，但不拥有机位调度 |
 
-### 4.4 构图组织
+### 3.9 机位调度
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-nar-022"></a>
+
+范围：只维护摄影机站位、朝向和运动时机。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-CAM-014 | 前景、中景与后景层次（Foreground / Midground / Background） | 按相机空间深度划分的前/中/后景关系 | PART_OF spatial composition |
-| PC-CAM-015 | 头顶留白（Headroom） | 人物头部与画面上边缘之间的构图空间 | PART_OF composition |
-| PC-CAM-016 | 运动与视线方向留白（Lead Room / Look Room） | 主体运动/视线方向前方预留的构图空间 | PART_OF composition |
-| PC-CAM-017 | 三分构图（Rule of Thirds） | 用三等分参考线组织视觉重心的方法 | IS_A composition principle |
-| PC-CAM-018 | 对称构图（Symmetry） | 围绕画面轴线组织视觉元素的构图方式 | IS_A composition principle |
-| PC-CAM-019 | 负空间（Negative Space） | 主体以外、参与画面平衡与信息表达的空间 | IS_A composition concept |
-| PC-CAM-020 | 纵深构图（Depth Composition） | 利用不同深度层次组织画面的构图方法 | DEPENDS_ON spatial relation/Perspective |
+| PC-NAR-022 | 机位调度（Camera Blocking） | 摄影机站位、朝向和运动时机的安排；以人物行动和拍摄目标为输入。 | 关联人物调度；引用机位、摄影角度、运镜 |
 
-## 5. 镜头光学与成像
+### 3.10 动作轴线
 
-### 5.1 焦距与镜头种类
+<a id="pc-nar-023"></a>
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+范围：只维护参考线定义。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-OPT-001 | 物理焦距（Physical Focal Length） | 镜头光学系统的标称/实际焦距参数；不等于画幅等效焦距 | AFFECTS FOV；MEASURED_AS mm |
-| PC-OPT-005 | 定焦镜头（Prime Lens） | 拍摄时焦距固定的镜头 | CONTRASTS_WITH Zoom Lens |
-| PC-OPT-006 | 变焦镜头（Zoom Lens） | 允许连续/离散改变物理焦距的镜头 | CHANGES Focal Length |
+| PC-NAR-023 | 动作轴线（Axis of Action） | 描述人物相互关系或行动方向的空间参考线；轴线是参考对象，不是运镜类型。 | 供180度规则引用；关联屏幕方向 |
 
-### 5.2 成像区域与像场覆盖
+### 3.11 180度规则
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-nar-024"></a>
+
+范围：只维护围绕动作轴线的连续性约定。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-OPT-002 | 有效成像区域（Effective Imaging Area） | 当前 SensorRecordingMode 实际参与成像的宽高区域 | AFFECTS FOV/crop；PART_OF SensorRecordingMode |
-| PC-OPT-003 | 像场（Image Circle） | 镜头可覆盖的成像圆范围 | CONSTRAINS sensor coverage |
-| PC-OPT-004 | 镜头像场覆盖（Lens Coverage） | 镜头像场对特定有效成像区域的覆盖关系 | DEPENDS_ON Image Circle + active area |
+| PC-NAR-024 | 180度规则（180-degree Rule） | 围绕动作轴线维持画面方向关系的连续性约定；不把轴线本身当成规则。 | 引用动作轴线；影响屏幕方向；不强制自动纠正创作选择 |
 
-### 5.3 光圈机构与透光
+### 3.12 屏幕方向
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-nar-017"></a>
+
+范围：主体在画面内的左右方向关系
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-OPT-007 | 几何光圈F值（F-number） | 焦距与有效入瞳直径之比的几何光圈量 | AFFECTS exposure/DOF；CONTRASTS_WITH T-stop |
-| PC-OPT-008 | 透光光圈T值（T-stop） | 将镜头实际透光损失计入后的曝光标度 | AFFECTS exposure；conversion requires official transmission relation |
-| PC-OPT-009 | 光圈机构（Iris） | 改变有效孔径的镜头机构 | CHANGES F-number/T-stop where supported |
+| PC-NAR-017 | 屏幕方向（Screen Direction） | 主体在画面内的左右方向关系 | 依赖 `DEPENDS_ON` camera position/axis |
+
+### 3.13 视线匹配
+
+<a id="pc-nar-018"></a>
+
+范围：剪辑中保持人物视线方向与被看对象空间关系的连续性
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-NAR-018 | 视线匹配（Eyeline Match） | 剪辑中保持人物视线方向与被看对象空间关系的连续性 | 影响 `AFFECTS` continuity |
+
+### 3.14 30度规则
+
+<a id="pc-nar-019"></a>
+
+范围：同一主体连续镜头中避免过小机位角度变化造成跳切感的传统剪辑/覆盖经验
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-NAR-019 | 30度规则（30° Rule） | 同一主体连续镜头中避免过小机位角度变化造成跳切感的传统剪辑/覆盖经验 | 影响 `AFFECTS` coverage choice；不是硬性物理定律 |
+
+### 3.15 动作匹配
+
+<a id="pc-nar-020"></a>
+
+范围：跨镜头保持动作时间和运动连续性的剪辑原则
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-NAR-020 | 动作匹配（Match on Action） | 跨镜头保持动作时间和运动连续性的剪辑原则 | 需要 `REQUIRES` coverage continuity |
+
+### 3.16 场景
+
+<a id="pc-nar-001"></a>
+
+范围：叙事或制作语境中的场景单元；在 FrameForge 中不是 Shot 的父对象，Scene↔Shot 可多对多
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-NAR-001 | 场景（Scene） | 叙事或制作语境中的场景单元；在 FrameForge 中不是 Shot 的父对象，Scene↔Shot 可多对多 | 引用 `REFERENCES` Shot；约束 `CONSTRAINS` requirement/context |
+
+### 3.17 镜头
+
+<a id="pc-nar-002"></a>
+
+范围：一个可独立描述、制作、排期、审阅的镜头身份；不等同一次 Take
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-NAR-002 | 镜头（Shot） | 一个可独立描述、制作、排期、审阅的镜头身份；不等同一次 Take | 引用 `REFERENCES` Scene；组成 `PART_OF` coverage |
+
+### 3.18 镜头用途
+
+<a id="pc-nar-003"></a>
+<a id="pc-nar-004"></a>
+<a id="pc-nar-006"></a>
+<a id="pc-nar-007"></a>
+<a id="pc-nar-008"></a>
+<a id="pc-nar-009"></a>
+
+范围：各项按用途单独定义；一个镜头可关联多种用途，分类不强制互斥。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-NAR-003 | 建立镜头（Establishing Shot） | 用于建立空间、人物关系或环境信息的镜头用途 | 属于 `IS_A` Shot purpose；影响 `AFFECTS` spatial comprehension |
+| PC-NAR-004 | 主镜头（Master Shot） | 覆盖一个表演/场景主要动作范围的连续镜头用途 | 属于 `IS_A` coverage strategy |
+| PC-NAR-006 | 插入镜头（Insert） | 强调物体、动作细节或信息的补充镜头 | 属于 `IS_A` coverage shot |
+| PC-NAR-007 | 反应镜头（Reaction Shot） | 以人物对事件/对白的反应为主要信息的镜头 | 属于 `IS_A` coverage shot |
+| PC-NAR-008 | 过肩镜头（OTS） | 以前景人物肩部/头部作为空间关系参照的构图用途 | 影响 `AFFECTS` screen relation |
+| PC-NAR-009 | 主观镜头（POV） | 画面视点被定义为某角色/主体观察位置 | 依赖 `DEPENDS_ON` narrative viewpoint |
+
+### 3.19 镜头覆盖策略
+
+<a id="pc-nar-005"></a>
+
+范围：为剪辑提供镜头选择的拍摄策略，不是镜头像场覆盖。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-NAR-005 | 镜头覆盖策略（Coverage） | 通过多个镜头为同一动作/场景提供剪辑选择的拍摄策略 | 组成 `PART_OF` shooting strategy；消费 `CONSUMES` Shot |
+
+### 3.20 排练
+
+<a id="pc-nar-011"></a>
+
+范围：现场活动单独维护；活动时长通过对应时间主题关联，不与活动身份合并。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-NAR-011 | 排练（Rehearsal） | 正式记录前验证表演、调度、技术协同的活动 | 先于 `PRECEDES` Shoot；影响 `AFFECTS` estimate |
+
+### 3.21 拍摄准备
+
+<a id="pc-nar-012"></a>
+
+范围：现场活动单独维护；活动时长通过对应时间主题关联，不与活动身份合并。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-NAR-012 | 拍摄准备（Setup） | 为某拍摄配置机位、灯光、收声、支撑等准备活动 | 先于 `PRECEDES` Shoot；测量为 `MEASURED_AS` duration |
+
+### 3.22 拍摄执行
+
+<a id="pc-nar-013"></a>
+
+范围：现场活动单独维护；活动时长通过对应时间主题关联，不与活动身份合并。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-NAR-013 | 拍摄执行（Shoot） | 实际记录画面/声音的执行阶段 | 产生 `PRODUCES` media/Actual |
+
+### 3.23 复位
+
+<a id="pc-nar-014"></a>
+
+范围：现场活动单独维护；活动时长通过对应时间主题关联，不与活动身份合并。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-NAR-014 | 复位（Reset） | 为下一次执行恢复表演、道具、设备或场景状态 | 后于 `FOLLOWS` Shoot；先于 `PRECEDES` next Shoot |
+
+### 3.24 撤场
+
+<a id="pc-nar-015"></a>
+
+范围：现场活动单独维护；活动时长通过对应时间主题关联，不与活动身份合并。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-NAR-015 | 撤场（Strike） | 某配置或工作段结束后拆除/收整设备与布置 | 后于 `FOLLOWS` Shoot；测量为 `MEASURED_AS` duration |
+
+### 3.25 物理焦距
+
+<a id="pc-opt-001"></a>
+
+范围：只维护焦距定义；型号的实际数值归器材规格。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-OPT-001 | 物理焦距（Physical Focal Length） | 镜头光学系统的标称/实际焦距参数；不等于画幅等效焦距 | 影响 `AFFECTS` FOV；测量为 `MEASURED_AS` mm |
+
+### 3.26 焦距机制
+
+<a id="pc-opt-005"></a>
+<a id="pc-opt-006"></a>
+
+范围：定焦、变焦是同一焦距机制维度的类型，不包含投影模型。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-OPT-005 | 定焦镜头（Prime Lens） | 拍摄时焦距固定的镜头 | 区别于 `CONTRASTS_WITH` Zoom Lens |
+| PC-OPT-006 | 变焦镜头（Zoom Lens） | 允许连续/离散改变物理焦距的镜头 | 改变 `CHANGES` Focal Length |
+
+### 3.27 成像类型
+
+<a id="pc-opt-021"></a>
+<a id="pc-opt-022"></a>
+
+范围：非变形、变形分别定义，不与焦距机制合成互斥枚举。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-OPT-021 | 非变形成像镜头（Spherical Lens） | 水平/垂直不采用 anamorphic squeeze 的常规成像体系 | 区别于 `CONTRASTS_WITH` Anamorphic |
+| PC-OPT-022 | 变形成像镜头（Anamorphic Lens） | 在至少一个方向进行光学压缩的成像体系 | 需要 `REQUIRES` squeeze/desqueeze |
+
+### 3.28 有效成像区域
+
+<a id="pc-opt-002"></a>
+
+范围：当前 SensorRecordingMode 实际参与成像的宽高区域
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-OPT-002 | 有效成像区域（Effective Imaging Area） | 当前 SensorRecordingMode 实际参与成像的宽高区域 | 影响 `AFFECTS` FOV/crop；组成 `PART_OF` SensorRecordingMode |
+
+### 3.29 像场
+
+<a id="pc-opt-003"></a>
+
+范围：镜头可覆盖的成像圆范围
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-OPT-003 | 像场（Image Circle） | 镜头可覆盖的成像圆范围 | 约束 `CONSTRAINS` sensor coverage |
+
+### 3.30 镜头像场覆盖
+
+<a id="pc-opt-004"></a>
+
+范围：镜头像场对特定有效成像区域的覆盖关系
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-OPT-004 | 镜头像场覆盖（Lens Coverage） | 镜头像场对特定有效成像区域的覆盖关系 | 依赖 `DEPENDS_ON` Image Circle + active area |
+
+### 3.31 几何光圈F值
+
+<a id="pc-opt-007"></a>
+
+范围：焦距与有效入瞳直径之比的几何光圈量
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-OPT-007 | 几何光圈F值（F-number） | 焦距与有效入瞳直径之比的几何光圈量 | 影响 `AFFECTS` exposure/DOF；区别于 `CONTRASTS_WITH` T-stop |
+
+### 3.32 透光光圈T值
+
+<a id="pc-opt-008"></a>
+
+范围：将镜头实际透光损失计入后的曝光标度
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-OPT-008 | 透光光圈T值（T-stop） | 将镜头实际透光损失计入后的曝光标度 | 影响 `AFFECTS` exposure；conversion requires official transmission relation |
+
+### 3.33 光圈机构
+
+<a id="pc-opt-009"></a>
+
+范围：改变有效孔径的镜头机构
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-OPT-009 | 光圈机构（Iris） | 改变有效孔径的镜头机构 | 改变 `CHANGES` F-number/T-stop where supported |
+
+### 3.34 透光率
+
+<a id="pc-opt-010"></a>
+
+范围：光学系统实际传输光量的比例/损失关系
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-OPT-010 | 透光率（Transmission） | 光学系统实际传输光量的比例/损失关系 | LINKS F-number to T-stop when known |
 
-### 5.4 对焦与景深
+### 3.35 对焦距离
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-opt-011"></a>
+
+范围：对焦平面对应的主体距离
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-OPT-011 | 对焦距离（Focus Distance） | 对焦平面对应的主体距离 | AFFECTS DOF |
-| PC-OPT-012 | 最近对焦距离（Minimum Focus Distance） | 镜头可正常合焦的最近距离 | CONSTRAINS Focus Distance |
-| PC-OPT-013 | 焦点转移（Rack Focus） | 拍摄过程中从一个对焦目标改变到另一个目标 | CHANGES Focus Distance；不等于 camera movement |
-| PC-OPT-014 | 呼吸效应（Focus Breathing） | 对焦变化伴随的视场/放大率变化 | AFFECTS framing/FOV；镜头特性 |
-| PC-OPT-015 | 景深（Depth of Field） | 在给定观察/成像条件下可接受清晰范围 | DEPENDS_ON aperture、focus distance、focal length、CoC/model |
-| PC-OPT-016 | 超焦距（Hyperfocal Distance） | 在指定 CoC/焦距/光圈模型下，使远端延伸至无穷远的对焦距离 | DERIVED_BY FORM-DOF-002 |
+| PC-OPT-011 | 对焦距离（Focus Distance） | 对焦平面对应的主体距离 | 影响 `AFFECTS` DOF |
+
+### 3.36 最近对焦距离
+
+<a id="pc-opt-012"></a>
+
+范围：镜头可正常合焦的最近距离
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-OPT-012 | 最近对焦距离（Minimum Focus Distance） | 镜头可正常合焦的最近距离 | 约束 `CONSTRAINS` Focus Distance |
+
+### 3.37 焦点转移
+
+<a id="pc-opt-013"></a>
+
+范围：拍摄过程中从一个对焦目标改变到另一个目标
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-OPT-013 | 焦点转移（Rack Focus） | 拍摄过程中从一个对焦目标改变到另一个目标 | 改变 `CHANGES` Focus Distance；不等于 camera movement |
+
+### 3.38 呼吸效应
+
+<a id="pc-opt-014"></a>
+
+范围：对焦变化伴随的视场/放大率变化
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-OPT-014 | 呼吸效应（Focus Breathing） | 对焦变化伴随的视场/放大率变化 | 影响 `AFFECTS` framing/FOV；镜头特性 |
+
+### 3.39 景深
+
+<a id="pc-opt-015"></a>
+
+范围：在给定观察/成像条件下可接受清晰范围
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-OPT-015 | 景深（Depth of Field） | 在给定观察/成像条件下可接受清晰范围 | 依赖 `DEPENDS_ON` aperture、focus distance、focal length、CoC/model |
+
+### 3.40 超焦距
+
+<a id="pc-opt-016"></a>
+
+范围：在指定 CoC/焦距/光圈模型下，使远端延伸至无穷远的对焦距离
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-OPT-016 | 超焦距（Hyperfocal Distance） | 在指定 CoC/焦距/光圈模型下，使远端延伸至无穷远的对焦距离 | 由公式派生 `DERIVED_BY` FORM-DOF-002 |
+
+### 3.41 弥散圆
+
+<a id="pc-opt-017"></a>
+
+范围：景深模型中的允许弥散圆参数
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-OPT-017 | 弥散圆（Circle of Confusion） | 景深模型中的允许弥散圆参数 | INPUT_TO DOF model；不是固定普适值 |
 
-### 5.5 衍射与投影模型
+### 3.42 衍射
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-opt-018"></a>
+
+范围：小孔径下波动光学导致细节扩散的现象
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-OPT-018 | 衍射（Diffraction） | 小孔径下波动光学导致细节扩散的现象 | AFFECTS resolution/sharpness |
+| PC-OPT-018 | 衍射（Diffraction） | 小孔径下波动光学导致细节扩散的现象 | 影响 `AFFECTS` resolution/sharpness |
+
+### 3.43 投影模型
+
+<a id="pc-opt-019"></a>
+<a id="pc-opt-020"></a>
+
+范围：直线投影和鱼眼投影分别定义；只在模型成立时使用相应公式。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-OPT-019 | 直线投影（Rectilinear Projection） | 尽量保持直线为直线的常见镜头投影模型 | ENABLES standard rectilinear FOV formula |
-| PC-OPT-020 | 鱼眼投影（Fisheye Projection） | 非直线投影的超广角镜头模型集合 | REQUIRES manufacturer/projection model；禁止套普通FOV公式 |
+| PC-OPT-020 | 鱼眼投影（Fisheye Projection） | 非直线投影的超广角镜头模型集合 | 需要 `REQUIRES` manufacturer/projection model；禁止套普通FOV公式 |
 
-### 5.6 变形成像与视场比较
+### 3.44 挤压倍率
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-opt-023"></a>
+
+范围：Anamorphic 水平等方向的光学压缩倍率
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-OPT-021 | 非变形成像镜头（Spherical Lens） | 水平/垂直不采用 anamorphic squeeze 的常规成像体系 | CONTRASTS_WITH Anamorphic |
-| PC-OPT-022 | 变形成像镜头（Anamorphic Lens） | 在至少一个方向进行光学压缩的成像体系 | REQUIRES squeeze/desqueeze |
-| PC-OPT-023 | 挤压倍率（Squeeze Ratio） | Anamorphic 水平等方向的光学压缩倍率 | AFFECTS desqueezed FOV/aspect |
-| PC-OPT-024 | 去挤压（Desqueeze） | 将 anamorphic 压缩画面恢复显示比例的变换 | DEPENDS_ON Squeeze Ratio |
-| PC-OPT-025 | 裁切与等效视场比较（Crop / Equivalent FOV） | 用不同有效成像区域比较取景范围的表达 | DERIVED_BY active area + focal length；不覆盖 physical focal length |
+| PC-OPT-023 | 挤压倍率（Squeeze Ratio） | Anamorphic 水平等方向的光学压缩倍率 | 影响 `AFFECTS` desqueezed FOV/aspect |
 
-## 6. 摄影机运动、承托方式与取景变化
+### 3.45 去挤压
 
-### 6.1 摄影机旋转
+<a id="pc-opt-024"></a>
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+范围：将 anamorphic 压缩画面恢复显示比例的变换
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-MOV-001 | 水平摇摄（Pan） | 摄影机位置基本不变，绕垂直轴旋转 | CHANGES orientation；PRESERVES position |
-| PC-MOV-002 | 俯仰摇摄（Tilt） | 摄影机位置基本不变，绕水平轴上下旋转 | CHANGES orientation |
-| PC-MOV-003 | 滚转（Roll） | 绕光轴旋转 | CHANGES horizon/Dutch angle |
+| PC-OPT-024 | 去挤压（Desqueeze） | 将 anamorphic 压缩画面恢复显示比例的变换 | 依赖 `DEPENDS_ON` Squeeze Ratio |
 
-### 6.2 摄影机空间位移
+### 3.46 等效视场比较
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-opt-025"></a>
+
+范围：用不同有效成像区域比较取景范围的表达
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-MOV-004 | 升降移动（Pedestal） | 摄影机整体上下平移 | CHANGES Camera Position；PRESERVES focal length if lens unchanged |
-| PC-MOV-005 | 横移与跟移（Truck / Track） | 摄影机整体横向/沿轨迹平移 | CHANGES Camera Position/Perspective |
-| PC-MOV-006 | 前推与后拉（Dolly In / Out） | 摄影机向主体靠近/远离 | CHANGES position, framing and perspective |
-| PC-MOV-007 | 弧线与环绕移动（Arc / Orbit） | 摄影机绕主体弧形移动 | CHANGES position/orientation/perspective |
-| PC-MOV-008 | 摇臂与吊臂移动（Crane / Jib） | 借助摇臂/吊臂产生复合空间位移 | CHANGES Camera Position |
+| PC-OPT-025 | 等效视场比较（Equivalent Field-of-view Comparison） | 用不同有效成像区域比较取景范围的表达 | 由公式派生 `DERIVED_BY` active area + focal length；不覆盖 physical focal length |
 
-### 6.3 承托与移动平台
+### 3.47 固定机位的光学变焦
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-mov-014"></a>
+
+范围：机位保持，改变镜头焦距造成取景范围改变
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-MOV-009 | 手持摄影（Handheld） | 由操作者直接承托产生的机位/姿态变化方式 | IS_A support/movement mode |
-| PC-MOV-010 | 电控稳定器移动摄影（Gimbal Movement） | 由电控稳定器辅助的移动摄影 | REQUIRES compatible support |
-| PC-MOV-011 | 机械稳定系统移动摄影（Steadicam Movement） | 由机械稳定系统辅助的移动摄影 | REQUIRES compatible support |
-| PC-MOV-012 | 无人机移动摄影（Drone Movement） | 由飞行平台实现三维空间移动摄影 | REQUIRES aerial imaging device |
+| PC-MOV-014 | 固定机位的光学变焦（Optical Zoom） | 机位保持，改变镜头焦距造成取景范围改变 | 改变 `CHANGES` focal length/FOV；保持 `PRESERVES` position |
 
-### 6.4 空间推进、光学变焦与混合变化
+### 3.48 推拉变焦
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-mov-015"></a>
+
+范围：同时改变摄影机位置和光学焦距的复合镜头方法；分别保存位置变化和焦距变化，不把两者写成单个物理参数。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-MOV-013 | 固定焦距的空间推进（Spatial Push） | 焦距保持，摄影机靠近主体造成主体画面占比增大 | CHANGES position/perspective；PRESERVES focal length |
-| PC-MOV-014 | 固定机位的光学变焦（Optical Zoom） | 机位保持，改变镜头焦距造成取景范围改变 | CHANGES focal length/FOV；PRESERVES position |
-| PC-MOV-015 | 机位与焦距混合变化（Mixed Push / Dolly Zoom） | 机位与焦距同时改变 | CHANGES position+focal length；可用于保持特定主体画面比例 |
+| PC-MOV-015 | 推拉变焦（Dolly Zoom） | 同时改变摄影机位置和光学焦距的复合镜头方法；分别保存位置变化和焦距变化，不把两者写成单个物理参数。 | 改变 `CHANGES` position+focal length；可用于保持特定主体画面比例 |
 
-### 6.5 拍摄阶段电子裁切
+### 3.49 机内电子裁切
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-mov-016"></a>
+
+范围：录制阶段对传感器读取区域或记录画面进行电子裁切；不是光学变焦。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-MOV-016 | 机内电子裁切与数字变焦（In-camera Digital Zoom/Crop） | 拍摄阶段通过传感器裁切/数字缩放改变取景 | CHANGES recorded framing；不改变光学 perspective |
+| PC-MOV-016 | 机内电子裁切（In-camera Crop） | 录制阶段对传感器读取区域或记录画面进行电子裁切；不是光学变焦。 | 改变 `CHANGES` recorded framing；不改变光学 perspective |
 
-### 6.6 后期重构图
+### 3.50 后期重构图
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-mov-017"></a>
+
+范围：对已记录画面进行裁切、缩放或位置调整以重新组织画面；不改写原拍摄机位和光学事实。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-MOV-017 | 后期重构图与数字放大（Post Reframe / Digital Zoom） | 后期对已有图像裁切/缩放 | FOLLOWS capture；不改变拍摄时 perspective/FOV |
+| PC-MOV-017 | 后期重构图（Post Reframe） | 对已记录画面进行裁切、缩放或位置调整以重新组织画面；不改写原拍摄机位和光学事实。 | 后于 `FOLLOWS` capture；不改变拍摄时 perspective/FOV |
 
-## 7. 曝光和帧率
+### 3.51 摇臂摄影
 
-### 7.1 曝光量、感光与增益
+<a id="pc-mov-008"></a>
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+范围：使用摇臂承托摄影机完成拍摄的方式；具体升降、平移或弧线轨迹另引用运镜主题。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-EXP-001 | 曝光（Exposure） | 传感器/胶片接收到的有效光量及记录结果 | DEPENDS_ON aperture、exposure time、scene luminance、sensitivity model |
+| PC-MOV-008 | 摇臂摄影（Crane / Jib Photography） | 使用摇臂承托摄影机完成拍摄的方式；具体升降、平移或弧线轨迹另引用运镜主题。 | 改变 `CHANGES` Camera Position |
+
+### 3.52 手持摄影
+
+<a id="pc-mov-009"></a>
+
+范围：由操作者直接承托产生的机位/姿态变化方式
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-MOV-009 | 手持摄影（Handheld） | 由操作者直接承托产生的机位/姿态变化方式 | 属于 `IS_A` support/movement mode |
+
+### 3.53 电控稳定器移动摄影
+
+<a id="pc-mov-010"></a>
+
+范围：由电控稳定器辅助的移动摄影
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-MOV-010 | 电控稳定器移动摄影（Gimbal Movement） | 由电控稳定器辅助的移动摄影 | 需要 `REQUIRES` compatible support |
+
+### 3.54 机械稳定系统移动摄影
+
+<a id="pc-mov-011"></a>
+
+范围：由机械稳定系统辅助的移动摄影
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-MOV-011 | 机械稳定系统移动摄影（Steadicam Movement） | 由机械稳定系统辅助的移动摄影 | 需要 `REQUIRES` compatible support |
+
+### 3.55 无人机移动摄影
+
+<a id="pc-mov-012"></a>
+
+范围：由飞行平台实现三维空间移动摄影
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-MOV-012 | 无人机移动摄影（Drone Movement） | 由飞行平台实现三维空间移动摄影 | 需要 `REQUIRES` aerial imaging device |
+
+### 3.56 曝光
+
+<a id="pc-exp-001"></a>
+
+范围：传感器/胶片接收到的有效光量及记录结果
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-EXP-001 | 曝光（Exposure） | 传感器/胶片接收到的有效光量及记录结果 | 依赖 `DEPENDS_ON` aperture、exposure time、scene luminance、sensitivity model |
+
+### 3.57 感光度ISO
+
+<a id="pc-exp-002"></a>
+
+范围：设备/标准定义的感光标度；具体意义依相机实现
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-EXP-002 | 感光度ISO（ISO） | 设备/标准定义的感光标度；具体意义依相机实现 | 不与EI/Gain全局互换 |
+
+### 3.58 曝光指数EI
+
+<a id="pc-exp-003"></a>
+
+范围：作为曝光/处理参考的指数，可能不等于传感器物理增益
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-EXP-003 | 曝光指数EI（Exposure Index / EI） | 作为曝光/处理参考的指数，可能不等于传感器物理增益 | model-specific |
+
+### 3.59 信号增益
+
+<a id="pc-exp-004"></a>
+
+范围：电子/数字信号增益表达
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-EXP-004 | 信号增益（Gain） | 电子/数字信号增益表达 | model-specific；可用dB等 |
 
-### 7.2 曝光时间与快门角度
+### 3.60 曝光时间
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-exp-005"></a>
+
+范围：每帧的曝光持续时间；以秒保存。快门速度是常用表达别名，倒数表达须换算，不与快门角度共用数值。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-EXP-005 | 快门速度与曝光时间（Shutter Speed / Exposure Time） | 单帧实际曝光时长 | DERIVED_WITH Shutter Angle + FPS where applicable |
+| PC-EXP-005 | 曝光时间（Exposure Time） | 每帧的曝光持续时间；以秒保存。快门速度是常用表达别名，倒数表达须换算，不与快门角度共用数值。 | DERIVED_WITH Shutter Angle + FPS where applicable |
+
+### 3.61 快门角度
+
+<a id="pc-exp-006"></a>
+
+范围：用一圈周期角度表达曝光占比的电影摄影参数
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-EXP-006 | 快门角度（Shutter Angle） | 用一圈周期角度表达曝光占比的电影摄影参数 | DERIVED_WITH exposure time + FPS |
+
+### 3.62 中性密度减光
+
+<a id="pc-exp-007"></a>
+
+范围：降低进入系统光量的滤镜/机制
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-EXP-007 | 中性密度减光（Neutral Density / ND） | 降低进入系统光量的滤镜/机制 | 测量为 `MEASURED_AS` optical density/stops |
+
+### 3.63 曝光档级
+
+<a id="pc-exp-008"></a>
+
+范围：以2倍/1/2光量为一级的曝光变化单位
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-EXP-008 | 曝光档级（Stop） | 以2倍/1/2光量为一级的曝光变化单位 | 组成 `PART_OF` exposure relationships |
+
+### 3.64 曝光值EV
+
+<a id="pc-exp-009"></a>
+
+范围：在指定定义下组合光圈与曝光时间的曝光参数
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-EXP-009 | 曝光值EV（Exposure Value / EV） | 在指定定义下组合光圈与曝光时间的曝光参数 | 由公式派生 `DERIVED_BY` FORM-EXP-001 |
+
+### 3.65 帧率
+
+<a id="pc-exp-010"></a>
+
+范围：单位时间记录/播放的帧数
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-EXP-010 | 帧率（Frame Rate） | 单位时间记录/播放的帧数 | 影响 `AFFECTS` motion/time calculations |
+
+### 3.66 项目基准帧率
+
+<a id="pc-exp-011"></a>
+
+范围：项目/时间线基准帧率
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-EXP-011 | 项目基准帧率（Project FPS） | 项目/时间线基准帧率 | 约束 `CONSTRAINS` timecode/playback |
+
+### 3.67 拍摄帧率
+
+<a id="pc-exp-012"></a>
+
+范围：实际拍摄记录帧率
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-EXP-012 | 拍摄帧率（Capture FPS） | 实际拍摄记录帧率 | 影响 `AFFECTS` slow/fast motion |
+
+### 3.68 回放帧率
+
+<a id="pc-exp-013"></a>
+
+范围：回放帧率
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-EXP-013 | 回放帧率（Playback FPS） | 回放帧率 | with Capture FPS 决定 `DETERMINES` speed ratio |
+
+### 3.69 运动模糊
+
+<a id="pc-exp-014"></a>
+
+范围：曝光期间运动在图像中的时间积分模糊
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-EXP-014 | 运动模糊（Motion Blur） | 曝光期间运动在图像中的时间积分模糊 | AFFECTED_BY exposure time + motion |
 
-### 7.3 减光与曝光计算
+### 3.70 升格拍摄
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-exp-015"></a>
+
+范围：Capture FPS 高于目标 Playback FPS 形成慢动作
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-EXP-007 | 中性密度减光（Neutral Density / ND） | 降低进入系统光量的滤镜/机制 | MEASURED_AS optical density/stops |
-| PC-EXP-008 | 曝光档级（Stop） | 以2倍/1/2光量为一级的曝光变化单位 | PART_OF exposure relationships |
-| PC-EXP-009 | 曝光值EV（Exposure Value / EV） | 在指定定义下组合光圈与曝光时间的曝光参数 | DERIVED_BY FORM-EXP-001 |
+| PC-EXP-015 | 升格拍摄（Overcrank） | Capture FPS 高于目标 Playback FPS 形成慢动作 | 依赖 `DEPENDS_ON` capture/playback ratio |
 
-### 7.4 拍摄、项目和回放帧率
+### 3.71 降格拍摄
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-exp-016"></a>
+
+范围：Capture FPS 低于目标 Playback FPS 形成快动作
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-EXP-010 | 帧率（Frame Rate） | 单位时间记录/播放的帧数 | AFFECTS motion/time calculations |
-| PC-EXP-011 | 项目基准帧率（Project FPS） | 项目/时间线基准帧率 | CONSTRAINS timecode/playback |
-| PC-EXP-012 | 拍摄帧率（Capture FPS） | 实际拍摄记录帧率 | AFFECTS slow/fast motion |
-| PC-EXP-013 | 回放帧率（Playback FPS） | 回放帧率 | with Capture FPS DETERMINES speed ratio |
-| PC-EXP-015 | 升格拍摄（Overcrank） | Capture FPS 高于目标 Playback FPS 形成慢动作 | DEPENDS_ON capture/playback ratio |
-| PC-EXP-016 | 降格拍摄（Undercrank） | Capture FPS 低于目标 Playback FPS 形成快动作 | DEPENDS_ON capture/playback ratio |
+| PC-EXP-016 | 降格拍摄（Undercrank） | Capture FPS 低于目标 Playback FPS 形成快动作 | 依赖 `DEPENDS_ON` capture/playback ratio |
 
-## 8. 灯光角色、光质、光度与附件
+### 3.72 主光
 
-### 8.1 光源在画面中的作用
+<a id="pc-lgt-001"></a>
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+范围：画面中承担主要塑形/方向作用的光源角色
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-LGT-001 | 主光（Key Light） | 画面中承担主要塑形/方向作用的光源角色 | IS_A lighting role |
-| PC-LGT-002 | 补光（Fill Light） | 调节阴影亮度/反差的光源角色 | AFFECTS contrast ratio |
-| PC-LGT-003 | 背光与轮廓光（Back / Rim Light） | 从主体后方/侧后方塑造轮廓或分离的光源角色 | AFFECTS separation |
+| PC-LGT-001 | 主光（Key Light） | 画面中承担主要塑形/方向作用的光源角色 | 属于 `IS_A` lighting role |
 
-### 8.2 光质与入射几何
+### 3.73 补光
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-lgt-002"></a>
+
+范围：调节阴影亮度/反差的光源角色
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-LGT-002 | 补光（Fill Light） | 调节阴影亮度/反差的光源角色 | 影响 `AFFECTS` contrast ratio |
+
+### 3.74 硬光
+
+<a id="pc-lgt-004"></a>
+
+范围：相对明显锐利阴影边缘的光质
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
 | PC-LGT-004 | 硬光（Hard Light） | 相对明显锐利阴影边缘的光质 | AFFECTED_BY apparent source size/distance |
+
+### 3.75 软光
+
+<a id="pc-lgt-005"></a>
+
+范围：相对柔和阴影过渡的光质
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-LGT-005 | 软光（Soft Light） | 相对柔和阴影过渡的光质 | AFFECTED_BY apparent source size/distance |
-| PC-LGT-006 | 光源表观尺寸（Apparent Source Size） | 从主体视角看到的光源角尺寸 | AFFECTS shadow softness |
-| PC-LGT-007 | 入射光方向（Light Direction） | 光相对主体的入射方向 | AFFECTS shape/texture |
-| PC-LGT-008 | 光源距离（Light Distance） | 光源与受光面的距离 | AFFECTS illuminance and apparent size |
-| PC-LGT-009 | 反差比（Contrast Ratio） | 画面指定区域亮度/曝光关系的比较 | DEPENDS_ON measurement definition |
 
-### 8.3 光度规律
+### 3.76 光源表观尺寸
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-lgt-006"></a>
+
+范围：从主体视角看到的光源角尺寸
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-LGT-010 | 照度平方反比规律（Inverse Square Law） | 理想点光源下照度随距离平方反比变化 | DERIVED_BY FORM-LGT-001；实际大面积光源近场需注明限制 |
+| PC-LGT-006 | 光源表观尺寸（Apparent Source Size） | 从主体视角看到的光源角尺寸 | 影响 `AFFECTS` shadow softness |
 
-### 8.4 白光色度调整
+### 3.77 入射光方向
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-lgt-007"></a>
+
+范围：光相对主体的入射方向
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-LGT-011 | 相关色温（CCT） | 用相关色温描述近似白光色度的量 | MEASURED_AS kelvin |
-| PC-LGT-012 | 绿洋红偏移（Tint / Green-Magenta） | 与色温轴不同的绿-洋红偏移描述 | CONTRASTS_WITH CCT |
+| PC-LGT-007 | 入射光方向（Light Direction） | 光相对主体的入射方向 | 影响 `AFFECTS` shape/texture |
 
-### 8.5 控光附件种类
+### 3.78 光源距离
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-lgt-008"></a>
+
+范围：光源与受光面的距离
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-LGT-013 | 控光附件（Modifier） | 改变光束形状、扩散、聚光或质感的附件类别 | REQUIRES compatible interface |
-| PC-LGT-014 | 菲涅耳透镜（Fresnel） | 利用菲涅耳光学改变光束的灯光附件/光学结构 | IS_A Modifier |
-| PC-LGT-015 | 柔光箱（Softbox） | 扩大/扩散发光面的柔光附件 | IS_A Modifier |
-| PC-LGT-016 | 蜂巢与格栅（Grid） | 限制扩散角/控制溢光的附件 | IS_A Modifier |
-| PC-LGT-017 | 投影附件（Projection Attachment） | 投射图案/切光/聚焦的光学附件 | IS_A Modifier；REQUIRES lens/mount compatibility |
+| PC-LGT-008 | 光源距离（Light Distance） | 光源与受光面的距离 | 影响 `AFFECTS` illuminance and apparent size |
 
-## 9. 色彩表示、变换与制作阶段数据流
+### 3.79 反差比
 
-### 9.1 色彩表示与编码
+<a id="pc-lgt-009"></a>
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+范围：画面指定区域亮度/曝光关系的比较
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-COL-001 | 白平衡（White Balance） | 对场景中性点/照明色偏进行拍摄或处理基准设定 | AFFECTS image transform |
-| PC-COL-002 | 色彩空间（Color Space） | 定义色度坐标、白点等颜色表示范围/体系 | PART_OF color pipeline |
-| PC-COL-003 | 传递函数（Transfer Function） | 线性场景/显示信号与编码值之间的映射 | CONTRASTS_WITH Color Space |
-| PC-COL-004 | 伽马（Gamma） | 一类幂函数/近似编码或显示关系的统称，需指明具体定义 | IS_A/RELATED transfer function |
-| PC-COL-005 | 对数编码（Log Encoding） | 为扩大编码动态范围而使用的对数/类对数编码 | IS_A transfer/encoding family |
-| PC-COL-006 | 线性光（Linear Light） | 与场景/光能近似线性比例的图像数值域 | CONTRASTS_WITH display/log encodings |
-| PC-COL-008 | 位深（Bit Depth） | 每通道可表示的离散数值精度 | AFFECTS quantization headroom |
-| PC-COL-009 | 色度采样（Chroma Sampling） | 色度相对亮度的采样结构，如4:4:4/4:2:2等 | AFFECTS chroma detail |
+| PC-LGT-009 | 反差比（Contrast Ratio） | 画面指定区域亮度/曝光关系的比较 | 依赖 `DEPENDS_ON` measurement definition |
 
-### 9.2 色彩变换
+### 3.80 照度平方反比规律
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-lgt-010"></a>
+
+范围：理想点光源下照度随距离平方反比变化
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-COL-007 | 颜色查找表（LUT） | 固定输入到输出颜色/数值映射表 | PART_OF transform pipeline；不是完整色彩管理本身 |
-| PC-COL-019 | 学院色彩编码体系ACES（ACES） | 影视色彩管理与交换体系 | PART_OF color pipeline |
-| PC-COL-020 | RED图像处理与对数编码（RED IPP2 / Log3G10） | RED影像处理/编码体系中的相关工作流概念 | REFERENCES RED camera pipeline |
+| PC-LGT-010 | 照度平方反比规律（Inverse Square Law） | 理想点光源下照度随距离平方反比变化 | 由公式派生 `DERIVED_BY` FORM-LGT-001；实际大面积光源近场需注明限制 |
 
-### 9.3 显示与交付色彩体系
+### 3.81 相关色温
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-lgt-011"></a>
+
+范围：用相关色温描述近似白光色度的量
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-COL-010 | 标准动态范围（SDR） | 标准动态范围显示/交付类别 | CONTRASTS_WITH HDR |
-| PC-COL-011 | 高动态范围（HDR） | 高动态范围显示/交付类别 | REQUIRES transfer/display metadata context |
-| PC-COL-012 | 高清色彩体系Rec.709（Rec.709） | 常见HD视频颜色/信号推荐体系；使用时需区分色域/传递函数具体上下文 | REFERENCES delivery/display |
-| PC-COL-013 | 超高清色彩体系Rec.2020（Rec.2020） | UHD广色域推荐体系 | REFERENCES HDR/UHD workflows |
-| PC-COL-014 | 网络图像色彩空间sRGB（sRGB） | 常见计算机/网络图像颜色空间/传递关系 | REFERENCES graphics/stills |
-| PC-COL-015 | 显示色彩空间Display P3（Display P3） | 常见广色域显示颜色空间 | REFERENCES display pipeline |
-| PC-COL-016 | 显示伽马2.4（Gamma 2.4） | 常见监看/显示目标之一 | IS_A transfer/display setting |
-| PC-COL-017 | 感知量化传递函数PQ（ST2084 / PQ） | HDR绝对亮度型电光传递函数 | IS_A transfer function |
-| PC-COL-018 | 混合对数伽马HLG（HLG） | HDR广播兼容型传递体系 | IS_A transfer function |
+| PC-LGT-011 | 相关色温（CCT） | 用相关色温描述近似白光色度的量 | 测量为 `MEASURED_AS` kelvin |
 
-### 9.4 摄影、合成、渲染、后期的独立数据流
+### 3.82 绿洋红偏移
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-lgt-012"></a>
+
+范围：与色温轴不同的绿-洋红偏移描述
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-COL-021 | 摄影机记录色彩数据流（Camera Recording Pipeline） | 相机从传感器到记录格式/色彩编码的数据流 | PRODUCES camera media |
-| PC-COL-022 | 合成色彩数据流（Composite Color Pipeline） | 合成阶段输入、工作空间、输出的颜色数据流 | CONSUMES/PRODUCES image formats |
-| PC-COL-023 | 渲染色彩数据流（Render Color Pipeline） | 渲染阶段场景线性/显示变换与输出的颜色数据流 | PRODUCES render formats |
-| PC-COL-024 | 后期与交付色彩数据流（Post / Delivery Color Pipeline） | 调色、在线、母版和交付颜色变换链 | CONSUMES camera/render/composite media |
+| PC-LGT-012 | 绿洋红偏移（Tint / Green-Magenta） | 与色温轴不同的绿-洋红偏移描述 | 区别于 `CONTRASTS_WITH` CCT |
 
-## 10. 声音基础与同步
+### 3.83 控光附件
 
-### 10.1 话筒类型与放置形式
+<a id="pc-lgt-013"></a>
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+范围：改变光束形状、扩散、聚光或质感的附件类别
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-AUD-001 | 话筒类型（Microphone Type） | 按换能/用途等分类的话筒概念 | CONSTRAINS capture method |
-| PC-AUD-002 | 拾音指向性（Pickup Pattern） | 话筒对不同方向声音敏感度的空间特性 | PART_OF microphone spec |
-| PC-AUD-003 | 挑杆收音（Boom） | 通过杆件将话筒定位在画面外靠近声源的现场收声方式 | IS_A production sound method |
-| PC-AUD-004 | 领夹话筒（Lavalier / Lav） | 佩戴/隐藏于人物附近的小型话筒使用方式 | IS_A production sound method |
+| PC-LGT-013 | 控光附件（Modifier） | 改变光束形状、扩散、聚光或质感的附件类别 | 需要 `REQUIRES` compatible interface |
 
-### 10.2 信号与音频记录参数
+### 3.84 菲涅耳透镜
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-lgt-014"></a>
+
+范围：利用菲涅耳光学改变光束的灯光附件/光学结构
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-AUD-005 | 话筒电平（Mic Level） | 常见低电平麦克风信号级别类别 | CONTRASTS_WITH Line Level |
-| PC-AUD-006 | 线路电平（Line Level） | 设备间传输的较高标准信号级别类别 | CONTRASTS_WITH Mic Level |
-| PC-AUD-007 | 音频采样率（Sample Rate） | 每秒数字音频采样次数 | MEASURED_AS Hz |
-| PC-AUD-008 | 音频位深（Audio Bit Depth） | 单个音频样本的量化位深 | AFFECTS quantization/dynamic representation |
+| PC-LGT-014 | 菲涅耳透镜（Fresnel） | 利用菲涅耳光学改变光束的灯光附件/光学结构 | 属于 `IS_A` Modifier |
 
-### 10.3 时间码与同步
+### 3.85 柔光箱
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-lgt-015"></a>
+
+范围：扩大/扩散发光面的柔光附件
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-LGT-015 | 柔光箱（Softbox） | 扩大/扩散发光面的柔光附件 | 属于 `IS_A` Modifier |
+
+### 3.86 控光格栅
+
+<a id="pc-lgt-016"></a>
+
+范围：限制扩散角/控制溢光的附件
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-LGT-016 | 控光格栅（Grid） | 限制扩散角/控制溢光的附件 | 属于 `IS_A` Modifier |
+
+### 3.87 投影附件
+
+<a id="pc-lgt-017"></a>
+
+范围：投射图案/切光/聚焦的光学附件
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-LGT-017 | 投影附件（Projection Attachment） | 投射图案/切光/聚焦的光学附件 | 属于 `IS_A` Modifier；需要 `REQUIRES` lens/mount compatibility |
+
+### 3.88 背光
+
+<a id="pc-lgt-018"></a>
+
+范围：从主体背面方向照射的布光作用；不自动等同可见轮廓效果。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-LGT-018 | 背光（Back Light） | 从主体背面方向照射的布光作用；不自动等同可见轮廓效果。 | 属于布光作用；引用入射方向 |
+
+### 3.89 轮廓光
+
+<a id="pc-lgt-019"></a>
+
+范围：以勾勒主体边缘为主要画面作用的光；作用按画面结果记录。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-LGT-019 | 轮廓光（Rim Light） | 以勾勒主体边缘为主要画面作用的光；作用按画面结果记录。 | 属于布光作用；关联背光，不定义为背光的别名 |
+
+### 3.90 白平衡
+
+<a id="pc-col-001"></a>
+
+范围：对场景中性点/照明色偏进行拍摄或处理基准设定
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-001 | 白平衡（White Balance） | 对场景中性点/照明色偏进行拍摄或处理基准设定 | 影响 `AFFECTS` image transform |
+
+### 3.91 色彩空间
+
+<a id="pc-col-002"></a>
+
+范围：定义色度坐标、白点等颜色表示范围/体系
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-002 | 色彩空间（Color Space） | 定义色度坐标、白点等颜色表示范围/体系 | 组成 `PART_OF` color pipeline |
+
+### 3.92 传递函数
+
+<a id="pc-col-003"></a>
+
+范围：线性场景/显示信号与编码值之间的映射
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-003 | 传递函数（Transfer Function） | 线性场景/显示信号与编码值之间的映射 | 区别于 `CONTRASTS_WITH` Color Space |
+
+### 3.93 伽马
+
+<a id="pc-col-004"></a>
+
+范围：一类幂函数/近似编码或显示关系的统称，需指明具体定义
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-004 | 伽马（Gamma） | 一类幂函数/近似编码或显示关系的统称，需指明具体定义 | 属于 `IS_A`/RELATED transfer function |
+
+### 3.94 对数编码
+
+<a id="pc-col-005"></a>
+
+范围：为扩大编码动态范围而使用的对数/类对数编码
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-005 | 对数编码（Log Encoding） | 为扩大编码动态范围而使用的对数/类对数编码 | 属于 `IS_A` transfer/encoding family |
+
+### 3.95 线性光
+
+<a id="pc-col-006"></a>
+
+范围：与场景/光能近似线性比例的图像数值域
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-006 | 线性光（Linear Light） | 与场景/光能近似线性比例的图像数值域 | 区别于 `CONTRASTS_WITH` display/log encodings |
+
+### 3.96 颜色查找表
+
+<a id="pc-col-007"></a>
+
+范围：固定输入到输出颜色/数值映射表
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-007 | 颜色查找表（LUT） | 固定输入到输出颜色/数值映射表 | 组成 `PART_OF` transform pipeline；不是完整色彩管理本身 |
+
+### 3.97 位深
+
+<a id="pc-col-008"></a>
+
+范围：每通道可表示的离散数值精度
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-008 | 位深（Bit Depth） | 每通道可表示的离散数值精度 | 影响 `AFFECTS` quantization headroom |
+
+### 3.98 色度采样
+
+<a id="pc-col-009"></a>
+
+范围：色度相对亮度的采样结构，如4:4:4/4:2:2等
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-009 | 色度采样（Chroma Sampling） | 色度相对亮度的采样结构，如4:4:4/4:2:2等 | 影响 `AFFECTS` chroma detail |
+
+### 3.99 标准动态范围
+
+<a id="pc-col-010"></a>
+
+范围：标准动态范围显示/交付类别
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-010 | 标准动态范围（SDR） | 标准动态范围显示/交付类别 | 区别于 `CONTRASTS_WITH` HDR |
+
+### 3.100 高动态范围
+
+<a id="pc-col-011"></a>
+
+范围：高动态范围显示/交付类别
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-011 | 高动态范围（HDR） | 高动态范围显示/交付类别 | 需要 `REQUIRES` transfer/display metadata context |
+
+### 3.101 高清色彩体系Rec.709
+
+<a id="pc-col-012"></a>
+
+范围：常见HD视频颜色/信号推荐体系；使用时需区分色域/传递函数具体上下文
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-012 | 高清色彩体系Rec.709（Rec.709） | 常见HD视频颜色/信号推荐体系；使用时需区分色域/传递函数具体上下文 | 引用 `REFERENCES` delivery/display |
+
+### 3.102 超高清色彩体系Rec.2020
+
+<a id="pc-col-013"></a>
+
+范围：UHD广色域推荐体系
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-013 | 超高清色彩体系Rec.2020（Rec.2020） | UHD广色域推荐体系 | 引用 `REFERENCES` HDR/UHD workflows |
+
+### 3.103 网络图像色彩空间sRGB
+
+<a id="pc-col-014"></a>
+
+范围：常见计算机/网络图像颜色空间/传递关系
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-014 | 网络图像色彩空间sRGB（sRGB） | 常见计算机/网络图像颜色空间/传递关系 | 引用 `REFERENCES` graphics/stills |
+
+### 3.104 显示色彩空间Display P3
+
+<a id="pc-col-015"></a>
+
+范围：常见广色域显示颜色空间
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-015 | 显示色彩空间Display P3（Display P3） | 常见广色域显示颜色空间 | 引用 `REFERENCES` display pipeline |
+
+### 3.105 显示伽马2.4
+
+<a id="pc-col-016"></a>
+
+范围：常见监看/显示目标之一
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-016 | 显示伽马2.4（Gamma 2.4） | 常见监看/显示目标之一 | 属于 `IS_A` transfer/display setting |
+
+### 3.106 感知量化传递函数PQ
+
+<a id="pc-col-017"></a>
+
+范围：HDR绝对亮度型电光传递函数
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-017 | 感知量化传递函数PQ（ST2084 / PQ） | HDR绝对亮度型电光传递函数 | 属于 `IS_A` transfer function |
+
+### 3.107 混合对数伽马HLG
+
+<a id="pc-col-018"></a>
+
+范围：HDR广播兼容型传递体系
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-018 | 混合对数伽马HLG（HLG） | HDR广播兼容型传递体系 | 属于 `IS_A` transfer function |
+
+### 3.108 学院色彩编码体系ACES
+
+<a id="pc-col-019"></a>
+
+范围：影视色彩管理与交换体系
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-019 | 学院色彩编码体系ACES（ACES） | 影视色彩管理与交换体系 | 组成 `PART_OF` color pipeline |
+
+### 3.109 摄影机记录色彩数据流
+
+<a id="pc-col-021"></a>
+
+范围：相机从传感器到记录格式/色彩编码的数据流
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-021 | 摄影机记录色彩数据流（Camera Recording Pipeline） | 相机从传感器到记录格式/色彩编码的数据流 | 产生 `PRODUCES` camera media |
+
+### 3.110 合成色彩数据流
+
+<a id="pc-col-022"></a>
+
+范围：合成阶段输入、工作空间、输出的颜色数据流
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-022 | 合成色彩数据流（Composite Color Pipeline） | 合成阶段输入、工作空间、输出的颜色数据流 | 消费 `CONSUMES`/产生 `PRODUCES` image formats |
+
+### 3.111 渲染色彩数据流
+
+<a id="pc-col-023"></a>
+
+范围：渲染阶段场景线性/显示变换与输出的颜色数据流
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-023 | 渲染色彩数据流（Render Color Pipeline） | 渲染阶段场景线性/显示变换与输出的颜色数据流 | 产生 `PRODUCES` render formats |
+
+### 3.112 后期色彩数据流
+
+<a id="pc-col-024"></a>
+
+范围：调色、在线、母版和交付颜色变换链
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-COL-024 | 后期色彩数据流（Post Color Pipeline） | 调色、在线、母版和交付颜色变换链 | 消费 `CONSUMES` camera/render/composite media |
+
+### 3.113 话筒类型
+
+<a id="pc-aud-001"></a>
+
+范围：按换能/用途等分类的话筒概念
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-AUD-001 | 话筒类型（Microphone Type） | 按换能/用途等分类的话筒概念 | 约束 `CONSTRAINS` capture method |
+
+### 3.114 拾音指向性
+
+<a id="pc-aud-002"></a>
+
+范围：话筒对不同方向声音敏感度的空间特性
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-AUD-002 | 拾音指向性（Pickup Pattern） | 话筒对不同方向声音敏感度的空间特性 | 组成 `PART_OF` microphone spec |
+
+### 3.115 挑杆收音
+
+<a id="pc-aud-003"></a>
+
+范围：通过杆件将话筒定位在画面外靠近声源的现场收声方式
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-AUD-003 | 挑杆收音（Boom） | 通过杆件将话筒定位在画面外靠近声源的现场收声方式 | 属于 `IS_A` production sound method |
+
+### 3.116 领夹话筒
+
+<a id="pc-aud-004"></a>
+
+范围：佩戴/隐藏于人物附近的小型话筒使用方式
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-AUD-004 | 领夹话筒（Lavalier / Lav） | 佩戴/隐藏于人物附近的小型话筒使用方式 | 属于 `IS_A` production sound method |
+
+### 3.117 话筒电平
+
+<a id="pc-aud-005"></a>
+
+范围：常见低电平麦克风信号级别类别
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-AUD-005 | 话筒电平（Mic Level） | 常见低电平麦克风信号级别类别 | 区别于 `CONTRASTS_WITH` Line Level |
+
+### 3.118 线路电平
+
+<a id="pc-aud-006"></a>
+
+范围：设备间传输的较高标准信号级别类别
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-AUD-006 | 线路电平（Line Level） | 设备间传输的较高标准信号级别类别 | 区别于 `CONTRASTS_WITH` Mic Level |
+
+### 3.119 音频采样率
+
+<a id="pc-aud-007"></a>
+
+范围：每秒数字音频采样次数
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-AUD-007 | 音频采样率（Sample Rate） | 每秒数字音频采样次数 | 测量为 `MEASURED_AS` Hz |
+
+### 3.120 音频位深
+
+<a id="pc-aud-008"></a>
+
+范围：单个音频样本的量化位深
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-AUD-008 | 音频位深（Audio Bit Depth） | 单个音频样本的量化位深 | 影响 `AFFECTS` quantization/dynamic representation |
+
+### 3.121 时间码
+
+<a id="pc-aud-009"></a>
+
+范围：为媒体建立时间位置标识的计时码体系
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
 | PC-AUD-009 | 时间码（Timecode） | 为媒体建立时间位置标识的计时码体系 | SUPPORTS sync |
-| PC-AUD-010 | 同步（Sync） | 使画面与声音或多设备时间关系一致 | DEPENDS_ON timecode/clock/reference/workflow |
 
-### 10.4 现场与后期声音内容
+### 3.122 同步
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-aud-010"></a>
+
+范围：使画面与声音或多设备时间关系一致
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-AUD-011 | 现场录音（Production Sound） | 拍摄现场记录的声音 | PRODUCES media |
-| PC-AUD-012 | 对白（Dialogue） | 对白内容类别 | PART_OF sound edit/mix |
-| PC-AUD-013 | 音效（SFX） | 音效内容类别 | PART_OF sound design |
-| PC-AUD-014 | 音乐（Music） | 音乐内容类别 | PART_OF soundtrack |
-| PC-AUD-015 | 混音（Mix） | 将多个声音元素按目标输出整合的过程 | CONSUMES dialogue/music/SFX |
+| PC-AUD-010 | 同步（Sync） | 使画面与声音或多设备时间关系一致 | 依赖 `DEPENDS_ON` timecode/clock/reference/workflow |
 
-## 11. 媒体表示、产物身份与交接
+### 3.123 现场录音
 
-### 11.1 媒体格式与工程交换
+<a id="pc-aud-011"></a>
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+范围：拍摄现场记录的声音
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-AUD-011 | 现场录音（Production Sound） | 拍摄现场记录的声音 | 产生 `PRODUCES` media |
+
+### 3.124 对白
+
+<a id="pc-aud-012"></a>
+
+范围：对白内容类别
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-AUD-012 | 对白（Dialogue） | 对白内容类别 | 组成 `PART_OF` sound edit/mix |
+
+### 3.125 音效
+
+<a id="pc-aud-013"></a>
+
+范围：音效内容类别
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-AUD-013 | 音效（SFX） | 音效内容类别 | 组成 `PART_OF` sound design |
+
+### 3.126 音乐
+
+<a id="pc-aud-014"></a>
+
+范围：音乐内容类别
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-AUD-014 | 音乐（Music） | 音乐内容类别 | 组成 `PART_OF` soundtrack |
+
+### 3.127 混音
+
+<a id="pc-aud-015"></a>
+
+范围：将多个声音元素按目标输出整合的过程
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-AUD-015 | 混音（Mix） | 将多个声音元素按目标输出整合的过程 | 消费 `CONSUMES` dialogue/music/SFX |
+
+### 3.128 媒体容器
+
+<a id="pc-med-001"></a>
+
+范围：封装多种媒体流和metadata的文件结构
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
 | PC-MED-001 | 媒体容器（Container） | 封装多种媒体流和metadata的文件结构 | CONTAINS codec streams |
+
+### 3.129 编解码器
+
+<a id="pc-med-002"></a>
+
+范围：媒体编码/解码方式
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-MED-002 | 编解码器（Codec） | 媒体编码/解码方式 | USED_IN container/stream |
-| PC-MED-003 | 图像序列（Image Sequence） | 以连续单帧文件组成运动影像的方式 | CONTRASTS_WITH video container |
-| PC-MED-004 | 工程交换（Project Interchange） | 在不同剪辑/后期系统间传递时间线/编辑信息的交换格式类别 | REFERENCES OTIO/EDL/XML |
 
-### 11.2 原始、代理、预览和母版身份
+### 3.130 图像序列
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-med-003"></a>
+
+范围：以连续单帧文件组成运动影像的方式
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-MED-005 | 原始媒体与摄影机原始素材（Original / Camera Original） | 由拍摄设备产生、作为原始源的媒体 | PRECEDES proxy/conform |
-| PC-MED-006 | 代理素材（Proxy） | 为性能/协作生成的低负载替代媒体 | REFERENCES original；不得冒充 master |
+| PC-MED-003 | 图像序列（Image Sequence） | 以连续单帧文件组成运动影像的方式 | 区别于 `CONTRASTS_WITH` video container |
+
+### 3.131 工程交换
+
+<a id="pc-med-004"></a>
+
+范围：在不同剪辑/后期系统间传递时间线/编辑信息的交换格式类别
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-MED-004 | 工程交换（Project Interchange） | 在不同剪辑/后期系统间传递时间线/编辑信息的交换格式类别 | 引用 `REFERENCES` OTIO/EDL/XML |
+
+### 3.132 原始素材
+
+<a id="pc-med-005"></a>
+
+范围：由拍摄设备产生、作为原始源的媒体
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-MED-005 | 原始素材（Camera Original） | 由拍摄设备产生、作为原始源的媒体 | 先于 `PRECEDES` proxy/conform |
+
+### 3.133 代理素材
+
+<a id="pc-med-006"></a>
+
+范围：为性能/协作生成的低负载替代媒体
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-MED-006 | 代理素材（Proxy） | 为性能/协作生成的低负载替代媒体 | 引用 `REFERENCES` original；不得冒充 master |
+
+### 3.134 预览产物
+
+<a id="pc-med-007"></a>
+
+范围：用于预览/草稿流程的媒体
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-MED-007 | 预览产物（Preview） | 用于预览/草稿流程的媒体 | 不等于Formal Handoff/Master |
-| PC-MED-008 | 母版（Master） | 经过指定制作/验收后的主交付媒体版本 | PRECEDES variants/delivery |
-| PC-MED-009 | 元数据（Metadata） | 描述媒体、拍摄、编码或业务信息的数据 | PART_OF media/asset |
-| PC-MED-016 | 交付变体（Delivery Variant） | 同一作品针对不同交付目标生成的版本变体 | PART_OF deliverable |
 
-### 11.3 素材复制、校验与正式交接
+### 3.135 母版
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-med-008"></a>
+
+范围：经过指定制作/验收后的主交付媒体版本
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-MED-010 | 素材卸载复制（Offload） | 从采集介质复制素材到目标存储的过程 | PRECEDES integrity/backup |
+| PC-MED-008 | 母版（Master） | 经过指定制作/验收后的主交付媒体版本 | 先于 `PRECEDES` variants/delivery |
+
+### 3.136 元数据
+
+<a id="pc-med-009"></a>
+
+范围：描述媒体、拍摄、编码或业务信息的数据
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-MED-009 | 元数据（Metadata） | 描述媒体、拍摄、编码或业务信息的数据 | 组成 `PART_OF` media/asset |
+
+### 3.137 素材卸载复制
+
+<a id="pc-med-010"></a>
+
+范围：从采集介质复制素材到目标存储的过程
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-MED-010 | 素材卸载复制（Offload） | 从采集介质复制素材到目标存储的过程 | 先于 `PRECEDES` integrity/backup |
+
+### 3.138 完整性校验
+
+<a id="pc-med-011"></a>
+
+范围：验证文件内容完整性的检查事实
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-MED-011 | 完整性校验（Integrity Check） | 验证文件内容完整性的检查事实 | REQUIRED_BY Formal Handoff |
-| PC-MED-012 | 备份验证（Backup Verification） | 验证项目要求的备份事实 | REQUIRED_BY Formal Handoff when configured |
-| PC-MED-013 | 正式素材交接（Formal Handoff） | 将固定 AssetVersion 正式交给下游的业务事实 | REQUIRES integrity + configured backup |
 
-### 11.4 套底与质量检查
+### 3.139 备份验证
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-med-012"></a>
+
+范围：验证项目要求的备份事实
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-MED-014 | 套底与回批（Conform） | 将离线编辑决策重新连接至高质量/原始媒体的过程 | CONSUMES edit decisions + originals |
-| PC-MED-015 | 质量检查（QC） | 对目标版本按项目要求进行检查的事实/流程 | PRECEDES delivery where required |
+| PC-MED-012 | 备份验证（Backup Verification） | 验证项目要求的备份事实 | REQUIRED_BY Formal Handoff when configured |
 
-## 12. 二维图像处理与动画
+### 3.140 正式素材交接
 
-### 12.1 透明与遮罩数据
+<a id="pc-med-013"></a>
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+范围：将固定 AssetVersion 正式交给下游的业务事实
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-MED-013 | 正式素材交接（Formal Handoff） | 将固定 AssetVersion 正式交给下游的业务事实 | 需要 `REQUIRES` integrity + configured backup |
+
+### 3.141 套底
+
+<a id="pc-med-014"></a>
+
+范围：将离线编辑决策重新连接至高质量/原始媒体的过程
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-MED-014 | 套底（Conform） | 将离线编辑决策重新连接至高质量/原始媒体的过程 | 消费 `CONSUMES` edit decisions + originals |
+
+### 3.142 质量检查
+
+<a id="pc-med-015"></a>
+
+范围：对目标版本按项目要求进行检查的事实/流程
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-MED-015 | 质量检查（QC） | 对目标版本按项目要求进行检查的事实/流程 | 先于 `PRECEDES` delivery where required |
+
+### 3.143 交付变体
+
+<a id="pc-med-016"></a>
+
+范围：同一作品针对不同交付目标生成的版本变体
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-MED-016 | 交付变体（Delivery Variant） | 同一作品针对不同交付目标生成的版本变体 | 组成 `PART_OF` deliverable |
+
+### 3.144 透明通道
+
+<a id="pc-2d-001"></a>
+
+范围：表示像素覆盖/透明关系的通道或概念
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
 | PC-2D-001 | 透明通道（Alpha） | 表示像素覆盖/透明关系的通道或概念 | USED_BY compositing |
+
+### 3.145 遮罩
+
+<a id="pc-2d-002"></a>
+
+范围：用于限定图像区域的遮罩信息
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-2D-002 | 遮罩（Matte） | 用于限定图像区域的遮罩信息 | USED_BY compositing |
 
-### 12.2 抠像、描绘、跟踪与修复
+### 3.146 抠像
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-2d-003"></a>
+
+范围：基于颜色/亮度等特征分离前景背景的过程
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-2D-003 | 抠像（Keying） | 基于颜色/亮度等特征分离前景背景的过程 | PRODUCES matte/alpha |
-| PC-2D-004 | 逐帧描绘遮罩（Rotoscope） | 通过逐帧/跟踪方式建立精细遮罩的过程 | PRODUCES matte |
-| PC-2D-005 | 跟踪（Tracking） | 估计图像中特征/物体/相机运动的过程 | PRODUCES motion data |
-| PC-2D-006 | 擦除与修复（Cleanup） | 移除或修复画面中指定元素的处理类别 | CONSUMES plate/reference |
+| PC-2D-003 | 抠像（Keying） | 基于颜色/亮度等特征分离前景背景的过程 | 产生 `PRODUCES` matte/alpha |
 
-### 12.3 数字合成
+### 3.147 逐帧描绘遮罩
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-2d-004"></a>
+
+范围：通过逐帧/跟踪方式建立精细遮罩的过程
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-2D-007 | 数字合成（Compositing） | 将多层图像/渲染元素整合为目标画面的过程 | CONSUMES layers/mattes/color pipeline |
+| PC-2D-004 | 逐帧描绘遮罩（Rotoscope） | 通过逐帧/跟踪方式建立精细遮罩的过程 | 产生 `PRODUCES` matte |
 
-### 12.4 图形、文字和二维动画
+### 3.148 跟踪
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-2d-005"></a>
+
+范围：估计图像中特征/物体/相机运动的过程
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-2D-008 | 动态图形（Motion Graphics） | 以图形、文字和运动设计为核心的动态图像类别 | REFERENCES typography/animation/composite |
-| PC-2D-009 | 文字动画（Typography Animation） | 以文字形态、排版和运动为核心的动画类别 | IS_A Motion Graphics |
-| PC-2D-010 | 二维动画（2D Animation） | 二维空间为主要表达体系的动画制作类别 | CONTRASTS_WITH 3D animation |
+| PC-2D-005 | 跟踪（Tracking） | 估计图像中特征/物体/相机运动的过程 | 产生 `PRODUCES` motion data |
 
-## 13. 三维资产、制作环节与实时方式
+### 3.149 数字合成
 
-### 13.1 几何、材质与绑定
+<a id="pc-2d-007"></a>
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+范围：将多层图像/渲染元素整合为目标画面的过程
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-3D-001 | 网格（Mesh） | 三维表面几何表示 | PART_OF 3D asset |
-| PC-3D-002 | 拓扑（Topology） | Mesh 顶点/边/面的连接结构 | AFFECTS deformation/model quality |
+| PC-2D-007 | 数字合成（Compositing） | 将多层图像/渲染元素整合为目标画面的过程 | 消费 `CONSUMES` layers/mattes/color pipeline |
+
+### 3.150 动态图形
+
+<a id="pc-2d-008"></a>
+
+范围：以图形、文字和运动设计为核心的动态图像类别
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-2D-008 | 动态图形（Motion Graphics） | 以图形、文字和运动设计为核心的动态图像类别 | 引用 `REFERENCES` typography/animation/composite |
+
+### 3.151 文字动画
+
+<a id="pc-2d-009"></a>
+
+范围：以文字形态、排版和运动为核心的动画类别
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-2D-009 | 文字动画（Typography Animation） | 以文字形态、排版和运动为核心的动画类别 | 属于 `IS_A` Motion Graphics |
+
+### 3.152 二维动画
+
+<a id="pc-2d-010"></a>
+
+范围：二维空间为主要表达体系的动画制作类别
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-2D-010 | 二维动画（2D Animation） | 二维空间为主要表达体系的动画制作类别 | 区别于 `CONTRASTS_WITH` 3D animation |
+
+### 3.153 画面擦除
+
+<a id="pc-2d-011"></a>
+
+范围：去除指定画面元素的制作概念；输入需明确擦除目标。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-2D-011 | 画面擦除（Object Removal） | 去除指定画面元素的制作概念；输入需明确擦除目标。 | 输出清理结果；可关联画面修补和跟踪 |
+
+### 3.154 画面修补
+
+<a id="pc-2d-012"></a>
+
+范围：恢复缺失或受损画面区域的制作概念；输入需明确参考区域。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-2D-012 | 画面修补（Image Repair） | 恢复缺失或受损画面区域的制作概念；输入需明确参考区域。 | 可消费擦除留下的区域；不强制先经过擦除 |
+
+### 3.155 网格
+
+<a id="pc-3d-001"></a>
+
+范围：三维表面几何表示
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-3D-001 | 网格（Mesh） | 三维表面几何表示 | 组成 `PART_OF` 3D asset |
+
+### 3.156 拓扑
+
+<a id="pc-3d-002"></a>
+
+范围：Mesh 顶点/边/面的连接结构
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-3D-002 | 拓扑（Topology） | Mesh 顶点/边/面的连接结构 | 影响 `AFFECTS` deformation/model quality |
+
+### 3.157 纹理坐标UV
+
+<a id="pc-3d-003"></a>
+
+范围：将三维表面映射到二维纹理坐标的结构
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-3D-003 | 纹理坐标UV（UV） | 将三维表面映射到二维纹理坐标的结构 | SUPPORTS texturing |
-| PC-3D-004 | 材质（Material） | 定义表面着色属性的资产/描述 | REFERENCES shader/textures |
-| PC-3D-005 | 着色器（Shader） | 计算表面/体积外观的着色程序/模型 | PART_OF material/rendering |
-| PC-3D-006 | 绑定控制系统（Rig） | 为模型提供控制、骨骼和变形结构的系统 | PRECEDES character/object animation |
 
-### 13.2 布局、虚拟摄影与动画
+### 3.158 材质
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-3d-004"></a>
+
+范围：定义表面着色属性的资产/描述
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-3D-007 | 三维镜头布局（Layout） | 在镜头中组织相机、角色和场景元素的阶段/结果 | PRECEDES final animation/render |
-| PC-3D-008 | 虚拟摄影机（Virtual Camera） | 在数字场景中定义摄影机及其运动/光学参数 | REFERENCES camera commons |
-| PC-3D-009 | 三维动画（3D Animation） | 对三维对象/角色/相机随时间变化进行制作 | CONSUMES rig/layout |
+| PC-3D-004 | 材质（Material） | 定义表面着色属性的资产/描述 | 引用 `REFERENCES` shader/textures |
 
-### 13.3 模拟与缓存
+### 3.159 着色器
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-3d-005"></a>
+
+范围：计算表面/体积外观的着色程序/模型
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-3D-010 | 模拟（Simulation） | 依据规则/物理模型计算随时间变化的效果 | PRODUCES cache |
-| PC-3D-011 | 缓存（Cache） | 固化模拟/动画计算结果供下游读取的数据 | PRODUCES/CONSUMES pipeline artifact |
+| PC-3D-005 | 着色器（Shader） | 计算表面/体积外观的着色程序/模型 | 组成 `PART_OF` material/rendering |
 
-### 13.4 灯光、渲染与分层输出
+### 3.160 绑定控制系统
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-3d-006"></a>
+
+范围：为模型提供控制、骨骼和变形结构的系统
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-3D-012 | 三维灯光（3D Lighting） | 在三维场景中定义数字光源和照明关系 | REFERENCES lighting/color commons |
-| PC-3D-013 | 渲染（Rendering） | 将数字场景计算为图像/序列的过程 | PRODUCES image sequence/AOV |
-| PC-3D-014 | 渲染分层输出（AOV） | 渲染输出中按属性/贡献拆分的辅助图像通道 | PRODUCES compositing inputs |
+| PC-3D-006 | 绑定控制系统（Rig） | 为模型提供控制、骨骼和变形结构的系统 | 先于 `PRECEDES` character/object animation |
 
-### 13.5 实时渲染与虚拟制作
+### 3.161 三维镜头布局
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-3d-007"></a>
+
+范围：在镜头中组织相机、角色和场景元素的阶段/结果
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-3D-015 | 实时渲染（Realtime Rendering） | 以交互速度更新画面的渲染方式 | PART_OF realtime production |
-| PC-3D-016 | 虚拟制作（Virtual Production） | 将实时数字环境、摄影、跟踪等用于制作现场/预演/拍摄的工作方式集合 | REFERENCES realtime/camera/tracking |
+| PC-3D-007 | 三维镜头布局（Layout） | 在镜头中组织相机、角色和场景元素的阶段/结果 | 先于 `PRECEDES` final animation/render |
 
-### 13.6 动捕与摄影测量
+### 3.162 虚拟摄影机
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-3d-008"></a>
+
+范围：在数字场景中定义摄影机及其运动/光学参数
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-3D-017 | 动作捕捉（Mocap） | 采集现实运动并转换为数字动作数据的过程 | PRODUCES motion data |
-| PC-3D-018 | 摄影测量（Photogrammetry） | 从多张照片/影像估计三维几何与纹理的重建方法 | PRODUCES 3D asset/reference |
+| PC-3D-008 | 虚拟摄影机（Virtual Camera） | 在数字场景中定义摄影机及其运动/光学参数 | 引用 `REFERENCES` camera commons |
 
-## 14. 制作业务概念
+### 3.163 三维动画
 
-### 14.1 任务、依赖、交接与可开始条件
+<a id="pc-3d-009"></a>
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+范围：对三维对象/角色/相机随时间变化进行制作
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-WF-001 | 任务（Task） | 可分派、执行、交接的工作单元 | DEPENDS_ON inputs/dependencies |
-| PC-WF-002 | 依赖关系（Dependency） | 一个工作单元对另一个工作/输入的先后/准备关系 | CONSTRAINS readiness |
-| PC-WF-003 | 工作交接（Handoff） | 固定输出版本交给下游的业务动作 | PRODUCES downstream input |
-| PC-WF-013 | 可开始条件（Readiness） | 由 Task/Input/Checklist/Authorization 等事实派生的可开始状态 | DERIVED_BY authoritative facts |
-| PC-WF-014 | 检查清单（Checklist） | 检查是否满足条件的结构化检查，不是SOP | AFFECTS Readiness if required |
-| PC-WF-015 | 制作授权要求（Authorization Requirement） | 项目要求的制作授权条件 | AFFECTS Readiness/QC when hard |
+| PC-3D-009 | 三维动画（3D Animation） | 对三维对象/角色/相机随时间变化进行制作 | 消费 `CONSUMES` rig/layout |
 
-### 14.2 计划、预测与实际
+### 3.164 模拟
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-3d-010"></a>
+
+范围：依据规则/物理模型计算随时间变化的效果
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-WF-004 | 计划事实（Planned） | 已确认/候选计划中的预期事实 | CONTRASTS_WITH Forecast/Actual |
-| PC-WF-005 | 预测事实（Forecast） | 基于当前信息推算的未来事实 | DERIVED_BY current facts |
+| PC-3D-010 | 模拟（Simulation） | 依据规则/物理模型计算随时间变化的效果 | 产生 `PRODUCES` cache |
+
+### 3.165 缓存
+
+<a id="pc-3d-011"></a>
+
+范围：固化模拟/动画计算结果供下游读取的数据
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-3D-011 | 缓存（Cache） | 固化模拟/动画计算结果供下游读取的数据 | 产生 `PRODUCES`/消费 `CONSUMES` pipeline artifact |
+
+### 3.166 三维灯光
+
+<a id="pc-3d-012"></a>
+
+范围：在三维场景中定义数字光源和照明关系
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-3D-012 | 三维灯光（3D Lighting） | 在三维场景中定义数字光源和照明关系 | 引用 `REFERENCES` lighting/color commons |
+
+### 3.167 渲染
+
+<a id="pc-3d-013"></a>
+
+范围：将数字场景计算为图像/序列的过程
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-3D-013 | 渲染（Rendering） | 将数字场景计算为图像/序列的过程 | 产生 `PRODUCES` image sequence/AOV |
+
+### 3.168 渲染分层输出
+
+<a id="pc-3d-014"></a>
+
+范围：渲染输出中按属性/贡献拆分的辅助图像通道
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-3D-014 | 渲染分层输出（AOV） | 渲染输出中按属性/贡献拆分的辅助图像通道 | 产生 `PRODUCES` compositing inputs |
+
+### 3.169 实时渲染
+
+<a id="pc-3d-015"></a>
+
+范围：以交互速度更新画面的渲染方式
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-3D-015 | 实时渲染（Realtime Rendering） | 以交互速度更新画面的渲染方式 | 组成 `PART_OF` realtime production |
+
+### 3.170 虚拟制作
+
+<a id="pc-3d-016"></a>
+
+范围：将实时数字环境、摄影、跟踪等用于制作现场/预演/拍摄的工作方式集合
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-3D-016 | 虚拟制作（Virtual Production） | 将实时数字环境、摄影、跟踪等用于制作现场/预演/拍摄的工作方式集合 | 引用 `REFERENCES` realtime/camera/tracking |
+
+### 3.171 动作捕捉
+
+<a id="pc-3d-017"></a>
+
+范围：采集现实运动并转换为数字动作数据的过程
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-3D-017 | 动作捕捉（Mocap） | 采集现实运动并转换为数字动作数据的过程 | 产生 `PRODUCES` motion data |
+
+### 3.172 摄影测量
+
+<a id="pc-3d-018"></a>
+
+范围：从多张照片/影像估计三维几何与纹理的重建方法
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-3D-018 | 摄影测量（Photogrammetry） | 从多张照片/影像估计三维几何与纹理的重建方法 | 产生 `PRODUCES` 3D asset/reference |
+
+### 3.173 任务
+
+<a id="pc-wf-001"></a>
+
+范围：可分派、执行、交接的工作单元
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-WF-001 | 任务（Task） | 可分派、执行、交接的工作单元 | 依赖 `DEPENDS_ON` inputs/dependencies |
+
+### 3.174 依赖关系
+
+<a id="pc-wf-002"></a>
+
+范围：一个工作单元对另一个工作/输入的先后/准备关系
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-WF-002 | 依赖关系（Dependency） | 一个工作单元对另一个工作/输入的先后/准备关系 | 约束 `CONSTRAINS` readiness |
+
+### 3.175 工作交接
+
+<a id="pc-wf-003"></a>
+
+范围：固定输出版本交给下游的业务动作
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-WF-003 | 工作交接（Handoff） | 固定输出版本交给下游的业务动作 | 产生 `PRODUCES` downstream input |
+
+### 3.176 计划事实
+
+<a id="pc-wf-004"></a>
+
+范围：已确认/候选计划中的预期事实
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-WF-004 | 计划事实（Planned） | 已确认/候选计划中的预期事实 | 区别于 `CONTRASTS_WITH` Forecast/Actual |
+
+### 3.177 预测事实
+
+<a id="pc-wf-005"></a>
+
+范围：基于当前信息推算的未来事实
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-WF-005 | 预测事实（Forecast） | 基于当前信息推算的未来事实 | 由公式派生 `DERIVED_BY` current facts |
+
+### 3.178 实际事实
+
+<a id="pc-wf-006"></a>
+
+范围：已发生并记录的实际事实
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-WF-006 | 实际事实（Actual） | 已发生并记录的实际事实 | 不被Forecast覆盖 |
 
-### 14.3 拍摄排期与转场
+### 3.179 排期方案
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-wf-007"></a>
+
+范围：一套可比较的排期方案
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
 | PC-WF-007 | 排期方案（SchedulePlan） | 一套可比较的排期方案 | CONTAINS ShootDay/ScheduleItem |
-| PC-WF-008 | 拍摄工作日（ShootDay） | 某拍摄工作日范围 | CONTAINS schedule items |
-| PC-WF-009 | 排期条目（ScheduleItem） | 在时间轴上安排或记录实际执行的工作条目 | REFERENCES Scene/Shot/Task/Person/Location |
-| PC-WF-010 | 剧组转场（Company Move） | 转场/移动工作，属于 ScheduleItem 类型 | CHANGES location/time availability |
 
-### 14.4 通告草稿与发布修订
+### 3.180 拍摄工作日
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-wf-008"></a>
+
+范围：某拍摄工作日范围
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-WF-011 | 通告草稿（Call Sheet Draft） | 从当前排期与项目事实投影出的通告草稿 | DERIVED_BY current schedule |
+| PC-WF-008 | 拍摄工作日（ShootDay） | 某拍摄工作日范围 | CONTAINS schedule items |
+
+### 3.181 排期条目
+
+<a id="pc-wf-009"></a>
+
+范围：在时间轴上安排或记录实际执行的工作条目
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-WF-009 | 排期条目（ScheduleItem） | 在时间轴上安排或记录实际执行的工作条目 | 引用 `REFERENCES` Scene/Shot/Task/Person/Location |
+
+### 3.182 剧组转场
+
+<a id="pc-wf-010"></a>
+
+范围：转场/移动工作，属于 ScheduleItem 类型
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-WF-010 | 剧组转场（Company Move） | 转场/移动工作，属于 ScheduleItem 类型 | 改变 `CHANGES` location/time availability |
+
+### 3.183 通告草稿
+
+<a id="pc-wf-011"></a>
+
+范围：从当前排期与项目事实投影出的通告草稿
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-WF-011 | 通告草稿（Call Sheet Draft） | 从当前排期与项目事实投影出的通告草稿 | 由公式派生 `DERIVED_BY` current schedule |
+
+### 3.184 已发布通告修订
+
+<a id="pc-wf-012"></a>
+
+范围：发布后固定的通告修订
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
 | PC-WF-012 | 已发布通告修订（CallSheetRevision） | 发布后固定的通告修订 | 不随排期自动漂移 |
 
-### 14.5 审阅、返工、交付物与交付事实
+### 3.185 可开始条件
 
-| ID | 中文名称（英文术语） | 定义与边界 | 关键关系 |
+<a id="pc-wf-013"></a>
+
+范围：由 Task/Input/Checklist/Authorization 等事实派生的可开始状态
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
 | --- | --- | --- | --- |
-| PC-WF-016 | 审阅（Review） | 对固定版本/修订进行审阅的业务过程 | REFERENCES immutable target |
-| PC-WF-017 | 返工与补拍请求（ReworkRequest） | 从Review/Delivery问题形成的返工或补拍需求 | PRODUCES Task/Schedule demand |
-| PC-WF-018 | 交付物（Deliverable） | 对外交付对象/要求 | CONSUMES approved version/QC |
-| PC-WF-019 | 交付事实（Delivery） | 提交/送达/确认/验收等独立事实集合 | FOLLOWS QC/authorization where required |
+| PC-WF-013 | 可开始条件（Readiness） | 由 Task/Input/Checklist/Authorization 等事实派生的可开始状态 | 由公式派生 `DERIVED_BY` authoritative facts |
 
-## 15. 公式、单位与派生计算
+### 3.186 检查清单
+
+<a id="pc-wf-014"></a>
+
+范围：检查是否满足条件的结构化检查，不是SOP
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-WF-014 | 检查清单（Checklist） | 检查是否满足条件的结构化检查，不是SOP | 影响 `AFFECTS` Readiness if required |
+
+### 3.187 制作授权要求
+
+<a id="pc-wf-015"></a>
+
+范围：项目要求的制作授权条件
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-WF-015 | 制作授权要求（Authorization Requirement） | 项目要求的制作授权条件 | 影响 `AFFECTS` Readiness/QC when hard |
+
+### 3.188 审阅
+
+<a id="pc-wf-016"></a>
+
+范围：对固定版本/修订进行审阅的业务过程
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-WF-016 | 审阅（Review） | 对固定版本/修订进行审阅的业务过程 | 引用 `REFERENCES` immutable target |
+
+### 3.189 交付物
+
+<a id="pc-wf-018"></a>
+
+范围：对外交付对象/要求
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-WF-018 | 交付物（Deliverable） | 对外交付对象/要求 | 消费 `CONSUMES` approved version/QC |
+
+### 3.190 交付事实
+
+<a id="pc-wf-019"></a>
+
+范围：提交/送达/确认/验收等独立事实集合
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-WF-019 | 交付事实（Delivery） | 提交/送达/确认/验收等独立事实集合 | 后于 `FOLLOWS` QC/authorization where required |
+
+### 3.191 返工请求
+
+<a id="pc-wf-020"></a>
+
+范围：要求修改现有制作产物的业务请求；知识主题不自动生成项目任务。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-WF-020 | 返工请求（Rework Request） | 要求修改现有制作产物的业务请求；知识主题不自动生成项目任务。 | 引用审阅反馈、固定产物版本；回流相应制作任务 |
+
+### 3.192 补拍请求
+
+<a id="pc-wf-021"></a>
+
+范围：要求重新进入拍摄安排以获取素材的业务请求；不是所有返工的必经步骤。
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-WF-021 | 补拍请求（Reshoot Request） | 要求重新进入拍摄安排以获取素材的业务请求；不是所有返工的必经步骤。 | 引用镜头和拍摄事实；回流拍摄排期 |
+
+### 3.193 连接接口
+
+<a id="pc-if-001"></a>
+
+范围：设备间机械、电气、数据、控制或光学连接能力的稳定定义
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-IF-001 | 连接接口（Interface） | 设备间机械、电气、数据、控制或光学连接能力的稳定定义 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.194 机械安装接口
+
+<a id="pc-if-002"></a>
+
+范围：机械安装接口，如 lens mount、modifier mount、support mount
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-IF-002 | 机械安装接口（Mechanical Mount） | 机械安装接口，如 lens mount、modifier mount、support mount | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.195 供电接口
+
+<a id="pc-if-003"></a>
+
+范围：供电输入/输出接口
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-IF-003 | 供电接口（Power Interface） | 供电输入/输出接口 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.196 视频接口
+
+<a id="pc-if-004"></a>
+
+范围：视频输入/输出接口
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-IF-004 | 视频接口（Video Interface） | 视频输入/输出接口 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.197 数据接口
+
+<a id="pc-if-005"></a>
+
+范围：数据传输接口
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-IF-005 | 数据接口（Data Interface） | 数据传输接口 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.198 控制接口
+
+<a id="pc-if-006"></a>
+
+范围：遥控/协议/电子控制接口
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-IF-006 | 控制接口（Control Interface） | 遥控/协议/电子控制接口 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.199 快拆接口
+
+<a id="pc-if-007"></a>
+
+范围：快拆板、云台、稳定器等支撑系统接口
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-IF-007 | 快拆接口（Quick Release Interface） | 快拆板、云台、稳定器等支撑系统接口 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.200 直接兼容
+
+<a id="pc-if-008"></a>
+
+范围：无中间件即可按目标用途连接/工作
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-IF-008 | 直接兼容（Direct Compatibility） | 无中间件即可按目标用途连接/工作 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.201 需要转接
+
+<a id="pc-if-009"></a>
+
+范围：需要现实存在的 AdapterModel/Accessory 才能连接
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-IF-009 | 需要转接（Adapter Required） | 需要现实存在的 AdapterModel/Accessory 才能连接 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.202 有条件兼容
+
+<a id="pc-if-010"></a>
+
+范围：只有特定模式/固件/功能条件下兼容
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-IF-010 | 有条件兼容（Conditional Compatibility） | 只有特定模式/固件/功能条件下兼容 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.203 明确不兼容
+
+<a id="pc-if-011"></a>
+
+范围：按明确用途/接口无法兼容
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-IF-011 | 明确不兼容（Incompatible） | 按明确用途/接口无法兼容 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.204 兼容路径
+
+<a id="pc-if-012"></a>
+
+范围：由接口和中间件组成的兼容路径；自动推荐最多两个中间节点
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-IF-012 | 兼容路径（Compatibility Path） | 由接口和中间件组成的兼容路径；自动推荐最多两个中间节点 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.205 计划时长
+
+<a id="pc-time-001"></a>
+
+范围：排期/制作表中的预估工作时长
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-TIME-001 | 计划时长（Planned Duration） | 排期/制作表中的预估工作时长 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.206 实际时长
+
+<a id="pc-time-002"></a>
+
+范围：已发生工作的实际时长
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-TIME-002 | 实际时长（Actual Duration） | 已发生工作的实际时长 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.207 时长范围
+
+<a id="pc-time-003"></a>
+
+范围：只能粗略确认时使用的时长范围
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-TIME-003 | 时长范围（Duration Range） | 只能粗略确认时使用的时长范围 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.208 镜头总工时汇总
+
+<a id="pc-time-004"></a>
+
+范围：Shot总时长聚合目标，不与组成阶段重复计样本
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-TIME-004 | 镜头总工时汇总（Shot Aggregate） | Shot总时长聚合目标，不与组成阶段重复计样本 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.209 场景总工时汇总
+
+<a id="pc-time-005"></a>
+
+范围：Scene总时长聚合目标
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-TIME-005 | 场景总工时汇总（Scene Aggregate） | Scene总时长聚合目标 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.210 拍摄日总工时汇总
+
+<a id="pc-time-006"></a>
+
+范围：ShootDay总时长聚合目标
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-TIME-006 | 拍摄日总工时汇总（ShootDay Aggregate） | ShootDay总时长聚合目标 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.211 拍摄准备时长
+
+<a id="pc-time-007"></a>
+
+范围：拍摄准备活动的工作时长
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-TIME-007 | 拍摄准备时长（Setup Duration） | 拍摄准备活动的工作时长 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.212 排练时长
+
+<a id="pc-time-008"></a>
+
+范围：排练活动的工作时长
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-TIME-008 | 排练时长（Rehearsal Duration） | 排练活动的工作时长 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.213 拍摄执行时长
+
+<a id="pc-time-009"></a>
+
+范围：拍摄执行活动的工作时长
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-TIME-009 | 拍摄执行时长（Shoot Duration） | 拍摄执行活动的工作时长 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.214 复位时长
+
+<a id="pc-time-010"></a>
+
+范围：复位活动的工作时长
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-TIME-010 | 复位时长（Reset Duration） | 复位活动的工作时长 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.215 撤场时长
+
+<a id="pc-time-011"></a>
+
+范围：撤场活动的工作时长
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-TIME-011 | 撤场时长（Strike Duration） | 撤场活动的工作时长 | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.216 转场时长
+
+<a id="pc-time-012"></a>
+
+范围：转场 component metric
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-TIME-012 | 转场时长（Company Move Duration） | 转场 component metric | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.217 任务时长
+
+<a id="pc-time-013"></a>
+
+范围：一般Task component metric
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-TIME-013 | 任务时长（Task Duration） | 一般Task component metric | 关联原因、方向和条件需按知识关系单独记录 |
+
+### 3.218 后期工作时长
+
+<a id="pc-time-014"></a>
+
+范围：后期工作 component metric
+
+| 主题编号 | 中文名称（英文术语） | 定义和边界 | 明确关联 |
+| --- | --- | --- | --- |
+| PC-TIME-014 | 后期工作时长（Post Work Duration） | 后期工作 component metric | 关联原因、方向和条件需按知识关系单独记录 |
+
+## 4. 公式定义
 
 首批 FormulaDefinition：
 
-| ID | Formula | 输入 | 输出/规则 |
+| ID | 中文名称（英文术语） | 输入 | 输出/规则 |
 | --- | --- | --- | --- |
 | FORM-OPT-001 | 直线投影视场角（Rectilinear FOV） | focal length + effective dimension | `2 * atan(dimension / (2*f))`；仅适用 rectilinear 且无更高优先级官方AoV |
 | FORM-OPT-002 | 变形成像去挤压视场角（Anamorphic desqueezed FOV） | official/projection data + squeeze + active area | 按厂商模型；禁止仅用通用倍乘替代特殊官方数据 |
@@ -584,90 +2307,35 @@
 | FORM-DOF-002 | 超焦距（Hyperfocal） | focal length、F-number、CoC | 常见薄透镜近似；结果标CALCULATED |
 | FORM-TIME-001 | 快门角度换曝光时间（Shutter Angle → Exposure Time） | shutter angle + FPS | `t = angle / (360 * fps)` |
 | FORM-TIME-002 | 曝光时间换快门角度（Exposure Time → Shutter Angle） | exposure time + FPS | `angle = t * fps * 360` |
-| FORM-TIME-003 | 帧数与片长换算（Frame Count ↔ Duration） | frames + rational FPS | duration = frames / fps；需遵守项目timecode规则 |
+| FORM-TIME-003 | 帧数换片长（Frame Count ↔ Duration） | frames + rational FPS | duration = frames / fps；需遵守项目timecode规则 |
 | FORM-DATA-001 | 数据量估算（Bitrate × Duration） | bitrate + duration | 估算数据量；明确bit/byte换算 |
 | FORM-LGT-001 | 照度平方反比（Inverse Square） | distance ratio | 理想点光源近似：E ∝ 1/r² |
 | FORM-EXP-001 | 曝光值（EV） | F-number + exposure time | 常用ISO100基准形式 `EV = log2(N²/t)`；其他上下文需显式 |
 | FORM-EXP-002 | 减光档数（ND Stops） | transmission/optical density | 按定义转换；不能把厂商命名直接当精确测量 |
 | FORM-LGT-002 | 照度单位换算（Lux ↔ foot-candle） | illuminance | 1 fc ≈ 10.7639 lux |
-| FORM-OPT-003 | 裁切与等效视场比较（Crop / Equivalent FOV） | active dimensions + reference dimensions | 只用于视场比较，不覆盖physical focal length |
+| FORM-OPT-003 | 等效视场比较（Crop / Equivalent FOV） | active dimensions + reference dimensions | 只用于视场比较，不覆盖physical focal length |
 
 F-number ↔ T-stop 与 ISO/EI/Gain **不提供全局 FormulaDefinition**；必须由具体镜头/机身官方映射支持。
 
-## 16. 设备连接接口与兼容常识
+## 5. 编号拆分转向
 
-| ID | Topic | 定义 |
+旧混合编号不分配给任一新主题，也不再作为有效知识条目；保留此表供已有文档引用解析。转向结果可能有多个，使用方必须选择具体主题，禁止自动挑第一个。此表不是运行数据迁移，不保留旧实现或用户资料。
+
+| 原混合编号 | 现有独立主题 | 处理 |
 | --- | --- | --- |
-| PC-IF-001 | 连接接口（Interface） | 设备间机械、电气、数据、控制或光学连接能力的稳定定义 |
-| PC-IF-002 | 机械安装接口（Mechanical Mount） | 机械安装接口，如 lens mount、modifier mount、support mount |
-| PC-IF-003 | 供电接口（Power Interface） | 供电输入/输出接口 |
-| PC-IF-004 | 视频接口（Video Interface） | 视频输入/输出接口 |
-| PC-IF-005 | 数据接口（Data Interface） | 数据传输接口 |
-| PC-IF-006 | 控制接口（Control Interface） | 遥控/协议/电子控制接口 |
-| PC-IF-007 | 快拆接口（Quick Release Interface） | 快拆板、云台、稳定器等支撑系统接口 |
-| PC-IF-008 | 直接兼容（Direct Compatibility） | 无中间件即可按目标用途连接/工作 |
-| PC-IF-009 | 需要转接（Adapter Required） | 需要现实存在的 AdapterModel/Accessory 才能连接 |
-| PC-IF-010 | 有条件兼容（Conditional Compatibility） | 只有特定模式/固件/功能条件下兼容 |
-| PC-IF-011 | 明确不兼容（Incompatible） | 按明确用途/接口无法兼容 |
-| PC-IF-012 | 兼容路径（Compatibility Path） | 由接口和中间件组成的兼容路径；自动推荐最多两个中间节点 |
+| `PC-NAR-010` | `PC-NAR-021` 人物调度；`PC-NAR-022` 机位调度 | 只作转向，禁止作为有效主题导入 |
+| `PC-NAR-016` | `PC-NAR-023` 动作轴线；`PC-NAR-024` 180度规则 | 只作转向，禁止作为有效主题导入 |
+| `PC-CAM-016` | `PC-CAM-021` 运动方向留白；`PC-CAM-022` 视线方向留白 | 只作转向，禁止作为有效主题导入 |
+| `PC-LGT-003` | `PC-LGT-018` 背光；`PC-LGT-019` 轮廓光 | 只作转向，禁止作为有效主题导入 |
+| `PC-2D-006` | `PC-2D-011` 画面擦除；`PC-2D-012` 画面修补 | 只作转向，禁止作为有效主题导入 |
+| `PC-WF-017` | `PC-WF-020` 返工请求；`PC-WF-021` 补拍请求 | 只作转向，禁止作为有效主题导入 |
+| `PC-COL-020` | `PC-COL-021` 摄影机记录色彩数据流；`PC-COL-005` 对数编码 | 只作转向，禁止作为有效主题导入 |
 
-Compatibility 必须分别保存 mechanical/electronic/AF/aperture/metadata/stabilization/focus-control/power/video/data/control 等能力，不以“能装上”代表全部支持。
+## 6. 验收标准
 
-## 17. 时间校准常识
-
-| ID | Topic | 定义 |
-| --- | --- | --- |
-| PC-TIME-001 | 计划时长（Planned Duration） | 排期/制作表中的预估工作时长 |
-| PC-TIME-002 | 实际时长（Actual Duration） | 已发生工作的实际时长 |
-| PC-TIME-003 | 时长范围（Duration Range） | 只能粗略确认时使用的时长范围 |
-| PC-TIME-004 | 镜头总工时汇总（Shot Aggregate） | Shot总时长聚合目标，不与组成阶段重复计样本 |
-| PC-TIME-005 | 场景总工时汇总（Scene Aggregate） | Scene总时长聚合目标 |
-| PC-TIME-006 | 拍摄日总工时汇总（ShootDay Aggregate） | ShootDay总时长聚合目标 |
-| PC-TIME-007 | 拍摄准备时长（Setup Duration） | Setup component metric |
-| PC-TIME-008 | 排练时长（Rehearsal Duration） | Rehearsal component metric |
-| PC-TIME-009 | 拍摄执行时长（Shoot Duration） | Shoot component metric |
-| PC-TIME-010 | 复位时长（Reset Duration） | Reset component metric |
-| PC-TIME-011 | 撤场时长（Strike Duration） | Strike component metric |
-| PC-TIME-012 | 转场时长（Company Move Duration） | 转场 component metric |
-| PC-TIME-013 | 任务时长（Task Duration） | 一般Task component metric |
-| PC-TIME-014 | 后期工作时长（Post Work Duration） | 后期工作 component metric |
-
-时间统计绝不按 Person 汇总效率；同一执行事实的 aggregate 与 components 不可同时作为独立样本累计。
-
-## 18. 首批 Domain ↔ Topic 绑定原则
-
-知识分类只做归组，不限制 Topic 被多域引用。例如：
-
-- 视场角以独立分类维护，同时被构图、光学和公式引用；
-- CCT 同时属于 Lighting 和 Color Science；
-- Timecode 同时属于 Production Sound/Sync、Media/Metadata、Production Workflow；
-- Virtual Camera 同时属于 3D/VFX/Realtime 和 Camera commons；
-- Formal Handoff 同时属于 Media/Format 与 Production Workflow。
-
-同一 Topic 只维护一份 canonical revision。
-
-## 19. 后续 A–H 小库的引用规则
-
-后续建立 A–H 内部组件时：
-
-1. 优先引用本 Catalog Topic；
-2. 只有该专业确实存在新的稳定概念时才新增 Topic；
-3. 不允许把同一概念换名后在不同小库复制正文；
-4. 专业小库可新增 INPUT_OUTPUT、ROLE_BOUNDARY、METHOD_PRINCIPLE，但应链接共享常识；
-5. 分类树不得超过 Library→Domain→Component→可选Subcomponent；超过后使用 Topic、Relation、Facet 或 SpecificationDefinition，不增加第五/第六级目录。
-
-## 20. 首批内容完成标准
-
-本 Catalog 作为首批常识内容基线，至少应满足：
-
-- Topic stable ID 唯一；
-- Camera Angle / FOV / Perspective 三者独立；
-- Optical Zoom / Spatial Push / Mixed / In-camera Digital / Post Reframe 五类不混；
-- F-number / T-stop 独立；
-- SensorRecordingMode / Effective Imaging Area 进入FOV关系；
-- Rectilinear / Fisheye / Anamorphic 不混用公式；
-- Lighting、Color、Audio、Media、2D、3D、Workflow、Compatibility、Time Calibration 均有首批基础 Topic；
-- FormulaDefinition 标明适用/禁止条件；
-- A–H 后续只引用，不复制 canonical Topic。
-- 运镜、覆盖策略、轴线连续性、人物调度、拍摄准备分组独立；所有主题标题有中文名称；
-- 遮光斗、滤镜架、托盘和连接环进入支撑/光学附件知识，不以滤镜效果条目代替安装系统。
+- 一个有效编号只有一个中文名称、一份定义和明确边界。
+- 岗位大类保持，常识分类和专业组件独立拆分；不创建重复的权威正文。
+- 每个有效主题在本目录只有一个直接分类入口；跨类使用通过显式引用。
+- 相关性说明原因、方向和条件；不等于权限、任务或器材适配。
+- 旧混合编号有完整转向，没有悬空引用；公式和来源政策不因改目录失效。
+- 本次只校验规划文档，真实规格和运行验收仍需独立完成。

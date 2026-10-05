@@ -2,7 +2,7 @@
 
 # FrameForge 知识体系需求与实施合同
 
-版本：2.9，2026-10-05。状态：需求已审计；知识模块仍待实施和实际验收。本版重分知识类别、统一型号字段、分离真实数据样例并补齐岗位专业关联；来源和缺值独立维护。Pocket首批型号按用户指定采用4P，旧混用参数按官方资料纠正，未逐字段核验的数据仍待补。
+版本：2.10，2026-10-05。状态：需求已审计；知识模块仍待实施和实际验收。本版重分知识类别、统一型号字段、分离真实数据样例并补齐岗位专业关联；来源和缺值独立维护。Pocket首批型号按用户指定采用4P，旧混用参数按官方资料纠正，未逐字段核验的数据仍待补。
 
 配套：[总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)、[岗位方案](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md)、[工种目录](JOB_CATALOG_DEFINITIONS_2026-10-05.md)、[岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)、[知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)、[制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)、[制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)、[A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)、[首批 Reference Seed Data](REFERENCE_SEED_DATA_2026-10-05.md)、[时间段资源需求](RESOURCE_TIME_REQUIREMENTS_2026-10-04.md)、[执行标准](TECHNICAL_ACCEPTANCE.md)、[实施计划](ACCEPTANCE_SCENARIOS.md)。
 
@@ -222,3 +222,9 @@ E1-POLICY负责后台用户组及团队归类，K1-EXPERIENCE只保存贡献引�
 
 
 真实 PostgreSQL、接口、并发、来源、统计回放、删除恢复和新页证据均需绑定实际提交。文档校验只能证明合同与清单结构一致，本轮没有把新知识模块登记为已接受。
+
+## 独立知识分类（2026-10-05本轮确认）
+
+A–H岗位大类保持，知识类别、主题、专业组件独立拆分。构图是构图，运镜是运镜；人物调度和机位调度也独立。各类内部可有真正的类型或单参数子维度，不能以“相关”合成复合正文。
+
+类别和字段规则见[知识目录](KNOWLEDGE_CATALOG_STRUCTURE_2026-10-05.md)、[字段合同](EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md)。现行有效编号和旧编号转向见[共享主题目录](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)及[专业组件目录](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)。拆分不新增业务Entity、岗位身份、权限或任务，不复制运行数据。
