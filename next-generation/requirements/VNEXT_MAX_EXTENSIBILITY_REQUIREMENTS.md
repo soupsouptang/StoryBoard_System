@@ -652,6 +652,8 @@ FX-01 至 FX-32 的场景保存在[验收场景](ACCEPTANCE_SCENARIOS.md)，实�
 
 本节解决“同一业务概念被不同部门用不同文字、单位或状态重复表达”的问题。所有页面、导入、导出、统计、自动化、知识层和后续 AI 都必须优先消费这里定义的 canonical semantic，而不是重新发明一套同义字段。标准化的目标是统一含义、单位、身份和状态，不是限制影视创作。能用连续数值表达的物理量不得为了方便 UI 被数据库硬编码成少数枚举；UI 可以提供高频 preset，但底层保存规范值并允许受控 Custom。
 
+本节选择内容继续遵守[类型及自定义维护合同](KNOWLEDGE_TYPE_OPTIONS_AND_CUSTOM_2026-10-05.md)。本轮按用户已确认结构纠正摄影角度、镜头运动和镜头分类的混合选项；仅改字段定义的阅读与保存要求，不转换已有资料、参数或项目记录。
+
 ### 20.1 字段类型、Null / Unknown 与通用保存规则
 
 每个进入正式实现的标准字段至少登记以下元数据：`canonical_key`、中文名、英文名、domain、适用 entity、data_type、unit、preset/allowed values、custom_allowed、null semantics、unknown semantics、source of truth、planned/actual 属性、继承与 override 规则、import aliases、export representation、knowledge dimension、deprecated aliases。新增字段不得仅有显示名称而没有稳定 key。
@@ -710,8 +712,8 @@ FX-01 至 FX-32 的场景保存在[验收场景](ACCEPTANCE_SCENARIOS.md)，实�
 | shot.description | 画面描述 / Visual Description | Shot | text | 创作正文 |
 | shot.production_method | 制作方式 / Production Method | Shot | controlled multi-ref | 如 LIVE_ACTION / AE / VFX / UE_3D / ANIMATION / ARCHIVE / MIXED；用于 Task applicability，不直接代表已执行 |
 | shot.size | 景别 / Shot Size | Shot | ECU / CU / MCU / MS / MLS / FS / LS / VLS / ELS / CUSTOM | 允许项目字典扩展；统计用 canonical code |
-| shot.angle | 机位角度 / Camera Angle | Shot | EYE / LOW / HIGH / DUTCH / OVERHEAD / GROUND / POV / OTS / CUSTOM | 与 camera height 分开 |
-| shot.camera_movement | 镜头运动 / Camera Movement | Shot | STATIC / PAN / TILT / DOLLY_IN / DOLLY_OUT / TRUCK / PEDESTAL / ARC / CRANE / HANDHELD / STEADICAM / GIMBAL / DRONE / VEHICLE / CUSTOM | 多运动组合用 ordered list，不拼自由字符串 |
+| shot.angle | 摄影角度 / Camera Angle | Shot | 分维度字典引用 | 观察方向初始为平视、仰视、俯视、顶视；画面滚转角独立，机位高度另存。越肩/主观引用覆盖用途，不与观察角度同层；见[D类角度](knowledge/D_KNOWLEDGE_HIERARCHY_2026-10-05.md#klc-d24) |
+| shot.camera_movement | 镜头运动 / Camera Movement | Shot | 具体轨迹类型身份 + ordered list | 按[已确认运镜结构](KNOWLEDGE_CAMERA_MOVEMENT_REVIEW_CASE_2026-10-05.md)区分转动、位移及有序组合；静止是无运动。手持、稳定器、无人机、车载和摇臂引用承托/执行方式，光学变焦另列；不混作轨迹枚举 |
 | shot.duration_frames | 成片时长帧数 / Editorial Duration | Shot | integer frames | 项目帧率下权威成片时长；不作为拍摄耗时 |
 | shot.dialogue_text | 对白 / Dialogue | Shot | text + Character ref | 没有多说话人真实入口前不预建空段落 |
 | shot.notes | 备注 / Notes | Shot | text | 不参与严格计算 |
@@ -730,8 +732,8 @@ FX-01 至 FX-32 的场景保存在[验收场景](ACCEPTANCE_SCENARIOS.md)，实�
 | camera.recording_codec | 记录编码 / Capture Codec | DICTIONARY_REF | ARRIRAW / ProRes / X-OCN / R3D / BRAW / H.264 / H.265 / CUSTOM | 与交付 codec 分开 |
 | camera.frame_rate_capture | 拍摄帧率 / Capture FPS | rational fps | 23.976/24/25/29.97/30/48/50/59.94/60/100/120/240 + Custom | 与项目时间线 fps 分开；高帧率可与 playback fps 构成变速 |
 | camera.playback_frame_rate | 回放帧率 / Playback FPS | rational fps | 项目帧率为常见默认 | 明确变速关系 |
-| lens.model_ref | 镜头型号 / Lens Model | DICTIONARY_REF | Prime/Zoom/Anamorphic/Macro/Probe 等型号 | 型号不等于实际焦段 |
-| lens.type | 镜头类型 / Lens Type | enum | PRIME / ZOOM / ANAMORPHIC / MACRO / PROBE / TILT_SHIFT / SPECIALTY / CUSTOM | 可从字典型号带默认值，但历史固定 |
+| lens.model_ref | 镜头型号 / Lens Model | DICTIONARY_REF | 本类实际型号身份 | 型号不等于实际焦段；定焦、变形、近摄等是不同分类维度，不是型号名单 |
+| lens.type | 镜头分类 / Lens Classification | 分维度字典引用 | 焦距结构、成像投影、挤压结构、特殊能力、控制方式分别维护 | 见[D类镜头类型](knowledge/D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-6)；同一型号可以同时满足多维分类，不强迫定焦/变形/近摄三选一 |
 | cinematography.focal_length_mm | 焦段 / Focal Length | decimal mm | 8/10/12/14/16/18/21/24/25/27/28/32/35/40/50/55/65/75/85/100/135/180/200 + Custom | **底层必须保存数值 mm，不做硬枚举**；例如 37.5 合法 |
 | cinematography.anamorphic_squeeze | 变形宽银幕倍率 / Anamorphic Squeeze | decimal ratio | 1.33/1.5/1.6/1.8/2.0 + Custom | 非变形镜头为 N/A，不填 1 伪装 |
 | cinematography.t_stop | T 光圈 / T-Stop | decimal | T1.0/1.3/1.4/1.5/2/2.8/4/5.6/8/11/16/22 + Custom | 保存数值；显示 T 前缀 |

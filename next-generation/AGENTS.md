@@ -12,6 +12,8 @@
 
 配件、附件和接口必须细化到器材本体、安装点、端口、两端规格、功能、必要组件、条件和证据。机上监视器保持监看设备身份，机身内置显示另列；支架和魔术手臂（怪手）分别展开两端、调节、锁紧、空间及承载。机械、视频、供电和控制连接各自检查，不用“支持附件”一项替代。新细分字段属于设计提案，未实施。
 
+各小类的类型字段必须继续展开实际选项或权威资料入口，不能只写“附件类型”。[类型及自定义合同](requirements/KNOWLEDGE_TYPE_OPTIONS_AND_CUSTOM_2026-10-05.md)区分可扩展词表、连续数值、来源引用和固定业务口径；初始选项及专属字段属于提案。D控光附件包含标准罩、深抛反光罩、菲涅耳附件等，并与深抛柔光箱分开。全目录检查同类缺口，保持既有型号值、岗位身份和核验结果不变。
+
 案例：[摄影机](requirements/KNOWLEDGE_CAMERA_CLASS_REVIEW_CASE_2026-10-05.md)、[镜头运动](requirements/KNOWLEDGE_CAMERA_MOVEMENT_REVIEW_CASE_2026-10-05.md)、[字段—岗位表](requirements/KNOWLEDGE_FIELD_ROLE_ASSOCIATIONS_REVIEW_2026-10-05.md)。现有工种身份和实际业务数据不由分类案例改写。入口：[知识总目录](requirements/KNOWLEDGE_CATALOG_STRUCTURE_2026-10-05.md)、[安装及支持细则](requirements/EQUIPMENT_SUPPORT_DETAILS_2026-10-05.md)。
 
 ## 1. 当前授权范围

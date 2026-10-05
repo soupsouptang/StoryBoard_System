@@ -14,6 +14,8 @@
 
 ### 通用实体参数
 
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-1)。
+
 这些是各器材共同引用的规格定义，不是独立器材小类，不存在“通用参数品牌”。路径：D → 具体器材小类 → 本类品牌 → 型号 → 物理规格等适用分项 → 字段。下方岗位是共同消费者，实际关联按所用器材和工作条件细化。
 
 | 中文字段 | 既有技术键 | 相关岗位 | 展开要求 |
@@ -27,6 +29,8 @@
 <a id="equipment-fields-2"></a>
 
 ### 摄影机
+
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-2)。
 
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
@@ -57,6 +61,8 @@
 
 ### 内置成像模组
 
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-3)。
+
 路径：D → 摄影机 → 本类品牌 → 型号 → 真实内置成像模组 → 字段。本分项保持真实从属或引用范围，不另建“内置成像模组品牌”入口。
 
 | 中文字段 | 既有技术键 | 相关岗位 | 展开要求 |
@@ -69,6 +75,8 @@
 <a id="equipment-fields-4"></a>
 
 ### 传感器
+
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-4)。
 
 路径：D → 摄影机 → 本类品牌 → 型号 → 所属机身或内置成像模组 → 传感器资料 → 字段。本分项保持真实从属或引用范围，不另建“传感器品牌”入口。
 
@@ -88,6 +96,8 @@
 <a id="equipment-fields-5"></a>
 
 ### 录制模式
+
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-5)。
 
 路径：D → 摄影机 → 本类品牌 → 型号 → 所属机身或内置成像模组 → 指定录制模式 → 字段。本分项保持真实从属或引用范围，不另建“录制模式品牌”入口。
 
@@ -118,6 +128,8 @@
 <a id="equipment-fields-6"></a>
 
 ### 镜头
+
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-6)。
 
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
@@ -164,6 +176,8 @@
 
 ### 光学附件
 
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-7)。
+
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
 | 附加作用 | 增广、增距、减焦等作用各自定义 | [字段合同4.7](../EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md#equipment-fields-7) |
@@ -188,6 +202,8 @@
 
 ### 滤镜
 
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-8)。
+
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
 | 滤镜片 | 作用、形态、密度、尺寸和厚度各自记录 | [字段合同4.8](../EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md#equipment-fields-8) |
@@ -208,6 +224,8 @@
 <a id="equipment-fields-9"></a>
 
 ### 遮光斗
+
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-9)。
 
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
@@ -231,6 +249,8 @@
 
 ### 滤镜架
 
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-10)。
+
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
 | 承载结构 | 片幅、厚度、槽位和锁紧 | [字段合同4.10](../EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md#equipment-fields-10) |
@@ -251,6 +271,8 @@
 <a id="equipment-fields-11"></a>
 
 ### 滤镜托盘
+
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-11)。
 
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
@@ -273,6 +295,8 @@
 
 ### 镜头连接环
 
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-12)。
+
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
 | 连接环 | 镜头端条件、承载端条件、夹持范围 | [字段合同4.12](../EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md#equipment-fields-12) |
@@ -290,6 +314,8 @@
 <a id="equipment-fields-13"></a>
 
 ### 摄影支撑
+
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-13)。
 
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
@@ -319,6 +345,8 @@
 
 ### 快拆组件
 
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-14)。
+
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
 | 快拆板 | 尺寸、槽形、方向和防脱 | [字段合同4.14](../EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md#equipment-fields-14) |
@@ -342,6 +370,8 @@
 <a id="equipment-fields-15"></a>
 
 ### 稳定器
+
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-15)。
 
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
@@ -367,6 +397,8 @@
 
 ### 跟焦组件
 
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-16)。
+
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
 | 测距器 | 测量条件 | [字段合同4.16](../EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md#equipment-fields-16) |
@@ -390,6 +422,8 @@
 <a id="equipment-fields-17"></a>
 
 ### 灯具
+
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-17)。
 
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
@@ -433,6 +467,8 @@
 
 ### 控光附件
 
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-18)。
+
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
 | 反光罩 | 光束作用和安装条件 | [字段合同4.18](../EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md#equipment-fields-18) |
@@ -459,6 +495,8 @@
 
 ### 灯光支撑
 
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-19)。
+
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
 | 灯架 | 承托条件 | [字段合同4.19](../EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md#equipment-fields-19) |
@@ -482,6 +520,8 @@
 <a id="equipment-fields-20"></a>
 
 ### 供电设备
+
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-20)。
 
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
@@ -509,6 +549,8 @@
 
 ### 线缆
 
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-21)。
+
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
 | 线缆 | 端点、方向、长度、协议和透传能力 | [字段合同4.21](../EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md#equipment-fields-21) |
@@ -533,6 +575,8 @@
 
 ### 转接件
 
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-22)。
+
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
 | 机械转接 | 安装条件 | [字段合同4.22](../EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md#equipment-fields-22) |
@@ -555,6 +599,8 @@
 <a id="equipment-fields-23"></a>
 
 ### 监看设备
+
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-23)。
 
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
@@ -580,6 +626,8 @@
 <a id="equipment-fields-24"></a>
 
 ### 视频传输设备
+
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-24)。
 
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
@@ -607,6 +655,8 @@
 <a id="equipment-fields-25"></a>
 
 ### 音频设备
+
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-25)。
 
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
@@ -638,6 +688,8 @@
 
 ### 记录介质
 
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-26)。
+
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |
 | 介质 | 容量、持续写入和官方合格名单 | [字段合同4.26](../EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md#equipment-fields-26) |
@@ -657,6 +709,8 @@
 <a id="equipment-fields-27"></a>
 
 ### 官方套装
+
+对应项和独立类型：[本小类初始预设及自定义入口](D_EQUIPMENT_TYPES_2026-10-05.md#equipment-types-27)。
 
 | 本小类资料分项或类型 | 支持内容 | 独立字段表 |
 | --- | --- | --- |

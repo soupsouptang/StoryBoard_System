@@ -11,6 +11,9 @@
 | [字段—岗位关联表](KNOWLEDGE_FIELD_ROLE_ASSOCIATIONS_REVIEW_2026-10-05.md) | 两个案例逐字段的岗位、用途和适用条件，不授予权限 |
 | [A–H 字段分册](KNOWLEDGE_CATALOG_STRUCTURE_2026-10-05.md#2-ah-逐层入口) | 全部181个专业组件的小类、类型、字段和岗位关联；型号参数不改 |
 | [安装及支持细则](EQUIPMENT_SUPPORT_DETAILS_2026-10-05.md) | 本体、安装点、端口、螺纹、支架、怪手、功能路径及证据；提案字段未实施 |
+| [类型及自定义维护](KNOWLEDGE_TYPE_OPTIONS_AND_CUSTOM_2026-10-05.md) | 实际预设、数值、资料引用及受控状态分别管理；自定义从登记到导入导出和删除 |
+| [D类器材类型](knowledge/D_EQUIPMENT_TYPES_2026-10-05.md) | 27个器材资料小类的预设及适用字段；控光附件含标准罩、深抛、菲涅耳等对应项 |
+| [类型完整性核对](KNOWLEDGE_TYPE_COMPLETENESS_AUDIT_2026-10-05.md) | 本地编写结果、具体缺口、原资料保存及67项文档检查；不宣称运行验收 |
 | [层级及安装字段核对记录](KNOWLEDGE_HIERARCHY_ACCEPTANCE_2026-10-05.md) | 稳定身份、原始参数、完整字段、岗位关联和实际文档检查；不宣称功能实现 |
 | [软件和格式字段](knowledge/SOFTWARE_FORMAT_FIELD_PATHS_2026-10-05.md) | 独立资料身份、版本、能力方向、参数和岗位用途 |
 | [总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md) | 项目到交付与经验的完整闭环、对象关系及字段标准 |
