@@ -134,7 +134,7 @@ Template/Production Method生成required和optional Checklist；Scene/Shot/Task/
 
 ## 其他模块的验收
 
-岗位场景 RW-01—RW-10 见[岗位需求](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md)；知识场景 KL-01—KL-38 见[知识需求](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)；KL-12—KL-16覆盖岗位驱动知识，KL-17—KL-23覆盖A–H分库/规格/兼容/软件/时间QA/权限边界，KL-24—KL-31覆盖制作常识/光学/固定镜头/格式/seed/时间校准，KL-32—KL-34覆盖Topic/公式/组件/专业域/跨组件链，KL-35—KL-36检验工种大类来源、可继续细分的总分结构、字段归属和岗位关联，KL-37—KL-38验收已填Reference Seed的字段来源状态、UNKNOWN不伪值及首批实际产品/软件/格式覆盖。语义、单位与统计验收见[总纲第20节](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)。
+岗位场景 RW-01—RW-10 见[岗位需求](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md)；知识场景 KL-01—KL-50 见[知识需求](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)；KL-12—KL-16覆盖岗位驱动知识，KL-17—KL-23覆盖A–H分库/规格/兼容/软件/时间QA/权限边界，KL-24—KL-31覆盖制作常识/光学/固定镜头/格式/seed/时间校准，KL-32—KL-34覆盖Topic/公式/组件/专业域/跨组件链，KL-35—KL-36检验工种大类来源、可继续细分的总分结构、字段归属和岗位关联，KL-47—KL-50检验安装点、监视器用途、螺纹、支架/怪手及独立功能路径，KL-37—KL-38验收已填Reference Seed的字段来源状态、UNKNOWN不伪值及首批实际产品/软件/格式覆盖。语义、单位与统计验收见[总纲第20节](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)。
 
 ## 组织与能力验收合同（待实施、未运行）
 

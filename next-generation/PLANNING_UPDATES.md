@@ -2,6 +2,16 @@
 
 本记录只跟踪 `next-generation/` 的文档储备，不是当前版本工作包或应用实施进度。设计参数未定稿，重构未启动。
 
+## 2026-10-05：结构确认后全目录展开，细化配件、附件和接口
+
+用户“就按这个写”确认摄影机、镜头运动和字段—岗位案例。按工种目录原 A–H 建立八份分册，由[知识总目录](requirements/KNOWLEDGE_CATALOG_STRUCTURE_2026-10-05.md)统一入口，展开181个专业组件、247个有效共享主题及逐字段专业消费者。取消留白仅保留停用标记；13个公式、139个岗位和83个专业域原绑定保持。
+
+用户继续要求考虑摄影机、机上监视器、支架和怪手的实际螺口及安装差异。新增[安装及支持细则](requirements/EQUIPMENT_SUPPORT_DETAILS_2026-10-05.md)：器材本体、安装点、端口和独立连接分开；每端保存螺纹、形态、方向、锁定、防转、空间和条件化载荷，供电、视频、控制等逐功能判断。摄影机可用附件清单只是关系入口，不收走独立器材；机上用途不复制监视器型号。技术键是文档设计，未填造型号值。
+
+补齐[器材字段展开](requirements/knowledge/D_EQUIPMENT_FIELDS_2026-10-05.md)及[软件、格式资料](requirements/knowledge/SOFTWARE_FORMAT_FIELD_PATHS_2026-10-05.md)，同步 AGENTS、确认状态和 KL-47—KL-50。型号数据、岗位原表和公式正文完整保留；相对引用、字段覆盖、编号、空表与写集检查通过。详见[实际核对记录](requirements/KNOWLEDGE_HIERARCHY_ACCEPTANCE_2026-10-05.md)。本轮仅下一代 Markdown，不改 UI、代码、数据库或参数核验状态。
+
+下方“案例待审核”等措辞属于此前阶段记录，已由本次确认替代，不继续阻止按已确认结构整理。
+
 ## 2026-10-05：工种大类下的结构案例，取消固定层数
 
 按用户最新要求，大类以工种目录的 A–H 为准，再细分小类、下级类型和字段。先编写[摄影机案例](requirements/KNOWLEDGE_CAMERA_CLASS_REVIEW_CASE_2026-10-05.md)和[镜头运动案例](requirements/KNOWLEDGE_CAMERA_MOVEMENT_REVIEW_CASE_2026-10-05.md)，新增[字段—岗位表](requirements/KNOWLEDGE_FIELD_ROLE_ASSOCIATIONS_REVIEW_2026-10-05.md)，共 29 项摄影机字段关联和 12 项运动字段/关联字段说明。两个案例和关联均待用户审核，未批量改写其他小类。

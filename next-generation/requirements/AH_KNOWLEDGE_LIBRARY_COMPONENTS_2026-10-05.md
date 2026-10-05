@@ -2,7 +2,7 @@
 
 # FrameForge A–H 专业知识组件
 
-版本：1.5，2026-10-05。状态：组件范围合同。本版保留181个专业组件和83个岗位专业域作为现有资料，取消固定分类层数；目录先按工种大类、知识小类和字段组织，通过案例审核后再重排。
+版本：1.6，2026-10-05。状态：组件范围合同。本版保留181个专业组件和83个岗位专业域作为现有资料，取消固定分类层数；目录先按工种大类、知识小类和字段组织，结构案例已确认，完整字段路径由 A–H 分册展开。
 
 配套：[制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)、[岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)、[工种目录](JOB_CATALOG_DEFINITIONS_2026-10-05.md)。
 
@@ -82,7 +82,7 @@
 | KLC-C16 | 字体设计（Typography Design） | 字体形态、文字层级和可读性方案。 | [文字动画](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-2d-009) |
 | KLC-C17 | 标题设计（Title Design） | 标题内容的画面组织和视觉身份，不复制字体定义。 | [文字动画](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-2d-009) |
 
-## 5. D｜摄影、灯光、录音与现场
+## 5. D｜实拍：摄影、灯光、录音与现场
 
 | 组件编号 | 中文名称（英文术语） | 本组件负责的内容 | 共享主题引用 |
 | --- | --- | --- | --- |
@@ -99,7 +99,7 @@
 | KLC-D17 | 现场影像技术（DIT） | 现场监看、录制解释和色彩处理的技术判断；素材完整性、备份、交接各有独立组件。 | [摄影机记录色彩数据流](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-col-021)、[色彩空间](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-col-002)、[传递函数](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-col-003)、[颜色查找表](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-col-007)、[元数据](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-med-009) |
 | KLC-D20 | 多机位协调（Multi-camera Coordination） | 多Body独立镜头/adapter路径、同步和素材身份 | [同步](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-aud-010)、CompatibilityPath |
 | KLC-D21 | 提词系统（Teleprompter） | 提词内容、位置、反射/机位和表演配合 | camera support commons |
-| KLC-D23 | 构图设计（Composition Design） | 画面主体、层次、留白和平衡；摄影角度另列。 | [构图](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-023)、[画面空间层次](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-014)、[头顶留白](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-015)、[运动方向留白](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-021)、[视线方向留白](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-022)、[三分构图](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-017)、[对称构图](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-018)、[纵深构图](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-020) |
+| KLC-D23 | 构图设计（Composition Design） | 画面主体、层次和平衡；摄影角度另列。 | [构图](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-023)、[画面空间层次](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-014)、[三分构图](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-017)、[对称构图](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-018)、[纵深构图](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-020) |
 | KLC-D24 | 摄影角度设计（Camera Angle Design） | 观察朝向和角度表达，不把视场角作为观察角度。 | [摄影角度](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-003)、[平视](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-004)、[俯拍](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-005)、[仰拍](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-006)、[顶拍](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-007) |
 | KLC-D25 | 机位设计（Camera Position Design） | 摄影机空间位置和高度；运动时机引用机位调度。 | [机位位置](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-001)、[机位高度](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-002) |
 | KLC-D26 | 视场判断（Field-of-view Assessment） | 基于有效区域、镜头投影和官方视角判断覆盖范围。 | [视场角](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-009)、[水平视场角](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-010)、[垂直视场角](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-011)、[对角视场角](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md#pc-cam-012) |
@@ -393,9 +393,9 @@
 
 字段先有明确所属小类和对象，再按工种目录的真实职责建立岗位关联，写清用途和适用条件。岗位关联不是字段授权、人员任职、项目任务或器材兼容证据。
 
-### 12.5 先审核案例
+### 12.5 已确认结构的全量展开
 
-[摄影机案例](KNOWLEDGE_CAMERA_CLASS_REVIEW_CASE_2026-10-05.md)、[镜头运动案例](KNOWLEDGE_CAMERA_MOVEMENT_REVIEW_CASE_2026-10-05.md)及[字段—岗位表](KNOWLEDGE_FIELD_ROLE_ASSOCIATIONS_REVIEW_2026-10-05.md)均为待确认提案。其他目录待案例核实后统一修改。取消的留白不作为后续有效内容。
+[摄影机案例](KNOWLEDGE_CAMERA_CLASS_REVIEW_CASE_2026-10-05.md)、[镜头运动案例](KNOWLEDGE_CAMERA_MOVEMENT_REVIEW_CASE_2026-10-05.md)及[字段—岗位表](KNOWLEDGE_FIELD_ROLE_ASSOCIATIONS_REVIEW_2026-10-05.md)已获用户确认。181 个现有组件保持身份和专业域索引，按[总目录](KNOWLEDGE_CATALOG_STRUCTURE_2026-10-05.md)分为 A–H 字段分册；同名概念在小类内展开下级类型及共享定义引用。取消的留白不作为有效内容。
 
 ## 13. 首批组件验收
 
@@ -457,3 +457,24 @@
 - 参数一项一行；范围、向量和结构化表作为一种参数时，必须展开其内部字段。
 - 固定安装结构、原生能力和项目选择分别维护。
 - 真实型号不放在分类表；不得从岗位关系推断器材适配。
+
+
+## 16. 阅读名和字段位置
+
+以下仅调整分册阅读名，不改组件稳定身份、原始专业域或岗位绑定：
+
+| 稳定编号 | 分册阅读名 |
+| --- | --- |
+| `KLC-D03` | [镜头](knowledge/D_KNOWLEDGE_HIERARCHY_2026-10-05.md#klc-d03) |
+| `KLC-D05` | [镜头运动](knowledge/D_KNOWLEDGE_HIERARCHY_2026-10-05.md#klc-d05) |
+| `KLC-D06` | [摄影支撑](knowledge/D_KNOWLEDGE_HIERARCHY_2026-10-05.md#klc-d06) |
+| `KLC-D23` | [构图](knowledge/D_KNOWLEDGE_HIERARCHY_2026-10-05.md#klc-d23) |
+| `KLC-D24` | [摄影角度](knowledge/D_KNOWLEDGE_HIERARCHY_2026-10-05.md#klc-d24) |
+| `KLC-D25` | [机位](knowledge/D_KNOWLEDGE_HIERARCHY_2026-10-05.md#klc-d25) |
+| `KLC-D26` | [视场角](knowledge/D_KNOWLEDGE_HIERARCHY_2026-10-05.md#klc-d26) |
+| `KLC-D27` | [透视](knowledge/D_KNOWLEDGE_HIERARCHY_2026-10-05.md#klc-d27) |
+| `KLC-D28` | [摄影机](knowledge/D_KNOWLEDGE_HIERARCHY_2026-10-05.md#klc-d28) |
+| `KLC-D52` | [监看设备](knowledge/D_KNOWLEDGE_HIERARCHY_2026-10-05.md#klc-d52) |
+| `KLC-D53` | [视频传输设备](knowledge/D_KNOWLEDGE_HIERARCHY_2026-10-05.md#klc-d53) |
+
+安装点、支架、怪手、监视器用途和各类支持见[安装及支持细则](EQUIPMENT_SUPPORT_DETAILS_2026-10-05.md)。软件和格式分别展开[共同资料字段](knowledge/SOFTWARE_FORMAT_FIELD_PATHS_2026-10-05.md)。

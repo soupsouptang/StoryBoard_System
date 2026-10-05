@@ -2,7 +2,7 @@
 
 # FrameForge 制作常识库、基础大类知识与首批 Seed Catalog
 
-版本：1.5，2026-10-05。状态：已确认规划合同，尚未实施。首批常识正文见 [制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)，A–H组件与跨组件关系见 [A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)，已填官方结构化数据见 [首批 Reference Seed Data](REFERENCE_SEED_DATA_2026-10-05.md)。
+版本：1.6，2026-10-05。状态：已确认规划合同，尚未实施。首批常识正文见 [制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)，A–H组件与跨组件关系见 [A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)，已填官方结构化数据见 [首批 Reference Seed Data](REFERENCE_SEED_DATA_2026-10-05.md)。
 
 配套：[知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)、[知识体系](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)、[岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)。
 
@@ -21,7 +21,7 @@
 → 工种大类 → 知识小类 → 必要下级类型 → 字段（按实际内容组织，不限固定层数）
 ```
 
-共享常识和 A–H 组件保留作现有资料；固定层数限制已取消。按工种目录的大类逐层细分小类和字段，独立概念与参考对象仍用明确关系连接。先审核摄影机和镜头运动案例，再统一整理其余目录。
+共享常识和 A–H 组件保留作现有资料；固定层数限制已取消。按工种目录的大类逐层细分小类和字段，独立概念与参考对象仍用明确关系连接。摄影机和镜头运动结构已确认，全部知识入口已按 A–H 总分结构整理，字段及岗位关联见知识目录分册。
 
 ## 2. 基础知识内容模板
 
@@ -61,9 +61,11 @@
 
 遮光斗、滤镜架、托盘、镜头连接环和导管支撑必须形成实际安装链。4×5.65黑柔不是可直接拧在镜头前端的圆形滤镜，不能只录滤镜而不交代由谁承载、如何连接及限制条件。
 
+配件、附件和接口再按[安装及支持细则](EQUIPMENT_SUPPORT_DETAILS_2026-10-05.md)展开。摄影机的附件入口引用各器材自身资料；外接监视器独立，内置显示真实从属机身。安装点、端口、支架和怪手的两端、螺纹、锁紧、姿态载荷、信号及供电不可用一个“支持”字段替代。
+
 ### 2.4 软件能力范围
 
-最少包含 Vendor、Product、VersionScope、CapabilityDefinition、SupportLevel（PRIMARY / SUPPORTED / LIMITED / NOT_SUPPORTED）和官方来源。软件大类不能自动推出能力事实。
+最少包含 Vendor、Product、VersionScope、CapabilityDefinition、SupportLevel（PRIMARY / SUPPORTED / LIMITED / NOT_SUPPORTED）和官方来源。软件大类不能自动推出能力事实。字段阅读路径见[软件资料分项](knowledge/SOFTWARE_FORMAT_FIELD_PATHS_2026-10-05.md#1-软件资料)。
 
 ### 2.5 格式参考
 
@@ -81,7 +83,7 @@
 
 分类结构由[知识目录](KNOWLEDGE_CATALOG_STRUCTURE_2026-10-05.md)唯一维护，定义由[共享主题目录](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)唯一维护。本篇不再保留另一套将两项合并的分类表。
 
-构图、运镜、机位、摄影角度、视场角、透视、人物调度、机位调度、动作轴线、180度规则及拍摄准备分别维护；相关知识通过明确关系相连。构图中的留白、运镜中的旋转方向可以在自己的类别下细分，不将独立类别作为另一类的字段包。
+构图、运镜、机位、摄影角度、视场角、透视、人物调度、机位调度、动作轴线、180度规则及拍摄准备分别维护；相关知识通过明确关系相连。留白条目已取消；镜头运动中的旋转方向可以在自己的类别下细分，不将独立类别作为另一类的字段包。
 
 独立主题的旧混合编号只作转向，所有使用方选择具体主题；不能把一条旧引用默认为第一个新主题。具体专业增量和组件拆分见[A–H组件目录](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)。A–H岗位大类和139个岗位身份保持。
 
