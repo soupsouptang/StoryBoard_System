@@ -2,7 +2,7 @@
 
 # FrameForge 知识体系需求与实施合同
 
-版本：2.10，2026-10-05。状态：需求已审计；知识模块仍待实施和实际验收。本版重分知识类别、统一型号字段、分离真实数据样例并补齐岗位专业关联；来源和缺值独立维护。Pocket首批型号按用户指定采用4P，旧混用参数按官方资料纠正，未逐字段核验的数据仍待补。
+版本：2.11，2026-10-05。状态：需求已审计；知识模块仍待实施和实际验收。本版重分知识类别、统一型号字段、分离真实数据样例并补齐岗位专业关联；来源和缺值独立维护。Pocket首批型号按用户指定采用4P，旧混用参数按官方资料纠正，未逐字段核验的数据仍待补。
 
 配套：[总纲](VNEXT_MAX_EXTENSIBILITY_REQUIREMENTS.md)、[岗位方案](ROLE_WORKFLOW_REQUIREMENTS_2026-10-03.md)、[工种目录](JOB_CATALOG_DEFINITIONS_2026-10-05.md)、[岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)、[知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)、[制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)、[制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)、[A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)、[首批 Reference Seed Data](REFERENCE_SEED_DATA_2026-10-05.md)、[时间段资源需求](RESOURCE_TIME_REQUIREMENTS_2026-10-04.md)、[执行标准](TECHNICAL_ACCEPTANCE.md)、[实施计划](ACCEPTANCE_SCENARIOS.md)。
 
@@ -207,8 +207,8 @@ E1-POLICY负责后台用户组及团队归类，K1-EXPERIENCE只保存贡献引�
 | KL-32 | 制作常识Topic Catalog中的stable ID唯一；全部登记主题和13个FormulaDefinition可分别检索，公式有适用/禁止条件；共享Topic只有一个canonical revision |
 | KL-33 | A–H组件ID唯一；83个KA–KH专业知识域全部显式映射到已定义Component，139个JOB_CATALOG岗位可沿Role→Domain→Component→Topic链检索，不靠名称猜归属 |
 | KL-34 | 内容→实拍、分镜/预演→3D/VFX、实拍→后期、CG→合成→后期、现场声音→声音后期、表演/造型→连续性等跨组件链有显式INPUT/OUTPUT/HANDOFF/SUPPORT关系；这些关系不自动创建Task或权限 |
-| KL-35 | 分类层级固定为Library→Domain→Component→可选Subcomponent，含Library最多四级；Focal Length/F-number/T-stop/FOV等独立Topic不得因导航树被误做父子数据 |
-| KL-36 | 主题及参考对象不占第五级知识实体；器材浏览按大类→该类内品牌→型号→字段/子项展开，不混建品牌总库；跨概念用明确关系，知识树不超过四级 |
+| KL-35 | 工种大类来源与 JOB_CATALOG 一致，小类、下级类型、字段和值清楚分层；分类层数不固定，超过旧层数的合理细分可表达；焦距、光圈、视场角等独立内容不被误做父子 |
+| KL-36 | 器材在工种大类所属小类内按品牌→型号→资料分项→字段展开，不混建品牌总库；每个字段有所属对象，岗位关联说明职责用途和条件，分类关系不冒充所有权或权限 |
 | KL-37 | 首批Reference Seed每个结构化字段都有OFFICIAL_VERIFIED/OFFICIAL_PARTIAL/OFFICIAL_CONFLICT/UNKNOWN/DERIVED等来源状态；OFFICIAL_VERIFIED能回溯SourceReference，UNKNOWN不显示为0/false/默认值且不得用第三方资料冒充官方事实 |
 | KL-38 | 已填Seed至少包含KOMODO原版及SensorRecordingMode、CP.3十焦段资料候选及逐字段核验位置、Pocket 4P双内置模组、Mavic 4 Pro三内置模组、RS5/Focus Pro/Transmission/SDR组件、Nanlite/Aputure/Tiffen首批灯光/滤镜、Blender/UE5/AE能力和首批FormatDefinition；部分旧款/未完整SKU明确保持PARTIAL/UNKNOWN而不猜值 |
 | KL-39 | 运镜、人物调度、镜头覆盖策略、轴线连续性、拍摄准备分别归类；所有主题、组件和参数定义有中文名称，不用英文缩写替代可读标题 |

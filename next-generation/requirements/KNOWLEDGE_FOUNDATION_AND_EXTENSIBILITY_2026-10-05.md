@@ -2,7 +2,7 @@
 
 # FrameForge 知识库基础内容、类型与扩展合同
 
-版本：1.6，2026-10-05。状态：需求合同，尚未创建运行数据库、知识条目、索引、维护页面或权限规则。本版在常识/组件/层级基线上纳入首批已填 Reference Seed Data，并强化官方来源状态、UNKNOWN语义与固定/多内置成像模组规则。
+版本：1.7，2026-10-05。状态：需求合同，尚未创建运行数据库、知识条目、索引、维护页面或权限规则。本版在常识/组件/层级基线上纳入首批已填 Reference Seed Data，并强化官方来源状态、UNKNOWN语义与固定/多内置成像模组规则。
 
 ## 1. 总原则
 
@@ -51,20 +51,15 @@
 
 A–H 是**知识空间**，不等同项目实际 Department。同一 KnowledgeTopic、EquipmentModel、SoftwareProduct 或 FormatDefinition 可以被多个知识小库/Domain 引用，但 canonical 内容只有一个 owner，避免复制正文和规格。
 
-## 2.3 分类深度与知识实体分离
+## 2.3 分类层级与知识身份
 
-分类树最大为：
+大类按《工种目录、制作分工与岗位添加定义》的 A–H 建立，再细分知识小类、必要的下级类型和字段。取消固定层数限制；不要求固定四级，也不禁止合理的进一步细分。层级依据清楚的总分关系形成，不按条目数量或预设层数硬拆。
 
-```text
-KnowledgeLibrary
-→ KnowledgeDomain
-→ KnowledgeComponent
-→ KnowledgeSubcomponent (optional)
-```
+每个概念、型号、字段和来源继续保持稳定身份。字段是某对象的属性，数值是字段值；它们不被混成同级知识类别。独立概念之间用明确关系连接，不能将焦距→光圈→视场角串成虚假的父子关系。
 
-含 Library 最多四级。KnowledgeTopic、EquipmentModel、SoftwareProduct、FormatDefinition、FormulaDefinition 都是独立实体，通过 relation / facet 连接分类节点，不能继续扩成第五层以上目录。
+分类用于组织和检索；实体的所有权、生命周期和业务连接按其各自合同判断，不从目录位置推导。共享知识正文只维护一份，跨岗位关联不复制正文。
 
-这条规则同时解决“镜头→焦段→光圈”等错误：焦段、F-number、T-stop、FOV、Focus、Coverage 是并列知识维度，通过 relation/公式互联，不存在父子数据关系。品牌、型号、卡口变体不增加知识实体深度；器材检索导航按所属大类→该类内品牌→型号→字段和子项逐层展开。
+摄影机和镜头运动先用待确认案例说明新的组织方法，用户审核后才批量重排其他小类。本轮不新增器材参数或重新核验现有数值。
 
 ## 2.4 已填 Reference Seed 与来源状态
 

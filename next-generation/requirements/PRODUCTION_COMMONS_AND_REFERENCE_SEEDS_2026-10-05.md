@@ -2,7 +2,7 @@
 
 # FrameForge 制作常识库、基础大类知识与首批 Seed Catalog
 
-版本：1.4，2026-10-05。状态：已确认规划合同，尚未实施。首批常识正文见 [制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)，A–H组件与跨组件关系见 [A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)，已填官方结构化数据见 [首批 Reference Seed Data](REFERENCE_SEED_DATA_2026-10-05.md)。
+版本：1.5，2026-10-05。状态：已确认规划合同，尚未实施。首批常识正文见 [制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)，A–H组件与跨组件关系见 [A–H知识小库组件](AH_KNOWLEDGE_LIBRARY_COMPONENTS_2026-10-05.md)，已填官方结构化数据见 [首批 Reference Seed Data](REFERENCE_SEED_DATA_2026-10-05.md)。
 
 配套：[知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)、[知识体系](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)、[岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)。
 
@@ -18,10 +18,10 @@
 → A–H 专业知识小库
 → 小库内部 Component
 → 跨组件 relation
-→ KnowledgeLibrary → Domain → Component → 可选Subcomponent（最大分类深度）
+→ 工种大类 → 知识小类 → 必要下级类型 → 字段（按实际内容组织，不限固定层数）
 ```
 
-共享常识、A–H组件和最大分类深度均已形成规划基线。后续只在满足独立维护/查询/岗位部分需求时增加 Subcomponent；Topic、器材、软件、格式继续通过 relation/facet 组织，不再向下增加第五级目录。
+共享常识和 A–H 组件保留作现有资料；固定层数限制已取消。按工种目录的大类逐层细分小类和字段，独立概念与参考对象仍用明确关系连接。先审核摄影机和镜头运动案例，再统一整理其余目录。
 
 ## 2. 基础知识内容模板
 
@@ -89,7 +89,7 @@
 
 以上是可独立查询的知识维度，具体主题按目录分组。A–H专业库引用同一主题正文，不把全部相关内容复制进“摄影语言”“镜头覆盖”这样的宽泛分类。
 
-分类最大仍为知识库→知识域→专业组件→可选子组件，最多四级；主题不是第五级。器材浏览单独按大类→该类内品牌→型号→资料分组展开；这是检索导航，不增加知识实体深度。变体、数值和单位按结构化字段检索。运镜、空间连续性、现场准备只有关系连接，没有相互的父子关系。
+取消固定分类层数。按工种大类→知识小类继续展开；器材资料在本小类内按品牌→型号→资料分组→字段浏览。分类导航不改变实体所有权。变体、数值和单位按结构化字段检索。运镜、空间连续性、现场准备只有关系连接，没有相互的父子关系。
 
 字段是实际数据参数，主题是知识概念，分类是导航组织，三者不得互换。中文名称用于阅读，稳定ID和英文键用于关联；编号前缀不决定主题当前归类。
 

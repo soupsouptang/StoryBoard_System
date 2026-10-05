@@ -2,7 +2,7 @@
 
 # FrameForge 制作常识主题目录
 
-版本：1.3，2026-10-05。状态：首批常识正文合同，尚未建立运行知识条目。本版整理251个有效共享主题；原混合编号只保留拆分转向，13个公式定义保持。
+版本：1.4，2026-10-05。状态：首批常识正文合同，尚未建立运行知识条目。本版整理251个有效共享主题；原混合编号只保留拆分转向，13个公式定义保持。
 
 配套：[制作常识与 Seed Catalog](PRODUCTION_COMMONS_AND_REFERENCE_SEEDS_2026-10-05.md)、[知识库基础合同](KNOWLEDGE_FOUNDATION_AND_EXTENSIBILITY_2026-10-05.md)、[知识体系](VNEXT_KNOWLEDGE_LAYER_REQUIREMENTS.md)。
 
@@ -22,7 +22,7 @@
 - base domains；
 - revision / source policy。
 
-本文件定义常识语义，不把 Topic 作为分类树层级。当前最大分类深度已固定为 Library→Domain→Component→可选Subcomponent；Topic 通过 typed relation / link 被任意分类节点引用。
+本文件维护常识语义和稳定主题身份。分类不设固定层数，先按工种大类细分知识小类，再按实际总分关系展开；主题正文可被多个分类入口引用，不因此复制。现有平铺条目待结构案例审核后重排，不把清单的行序当作分类层级。
 
 ## 2. 关系词汇
 

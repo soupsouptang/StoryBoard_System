@@ -2,6 +2,16 @@
 
 本记录只跟踪 `next-generation/` 的文档储备，不是当前版本工作包或应用实施进度。设计参数未定稿，重构未启动。
 
+## 2026-10-05：工种大类下的结构案例，取消固定层数
+
+按用户最新要求，大类以工种目录的 A–H 为准，再细分小类、下级类型和字段。先编写[摄影机案例](requirements/KNOWLEDGE_CAMERA_CLASS_REVIEW_CASE_2026-10-05.md)和[镜头运动案例](requirements/KNOWLEDGE_CAMERA_MOVEMENT_REVIEW_CASE_2026-10-05.md)，新增[字段—岗位表](requirements/KNOWLEDGE_FIELD_ROLE_ASSOCIATIONS_REVIEW_2026-10-05.md)，共 29 项摄影机字段关联和 12 项运动字段/关联字段说明。两个案例和关联均待用户审核，未批量改写其他小类。
+
+相机参数沿用已有数据，不再查证、不补录、不更新来源状态；原始型号、规格字段字典、岗位目录和岗位绑定不改写。明确取消固定四级限制，同步知识基础、组件层级说明、总纲知识验收、AGENTS 和目录入口。分类可以按实际总分关系继续展开，不因层数放开把不同概念做成父子。
+
+下方有关最大四级的旧记录只保留历史，不再是有效要求。本轮只修改下一代 Markdown，没有 UI、应用、数据库或实际参数修改。
+
+文档检查：型号数据、器材字段合同、工种目录和岗位知识目录与原提交内容一致（忽略换行形式）；关联表引用的 16 个岗位身份有效，29 项摄影机字段和 12 项运动字段/关联字段齐全。已检查相对链接目标及旧固定层数规则的残留。这些检查只证明本轮文档一致性，不代表案例已获用户确认或功能已实现。
+
 ## 2026-10-05：重分知识类别、统一器材字段及岗位专业关联
 
 按用户最新确认，类别与字段文档只保留大类、对应项、字段、子项和支持内容；真实器材、数值和明确连接迁入[数据样例](requirements/REFERENCE_SEED_DATA_2026-10-05.md)，逐项注明所属大类。新增[知识目录规则](requirements/KNOWLEDGE_CATALOG_STRUCTURE_2026-10-05.md)和[器材字段合同](requirements/EQUIPMENT_REFERENCE_FIELD_CONTRACT_2026-10-05.md)，不建立品牌和接口混杂总库。器材逐层浏览导航与四级知识实体分类分开。
@@ -24,7 +34,9 @@
 
 旧Forza 300B完整CCT/功率/mount/control等、Tiffen全部当前SKU、Focus Pro部分组件详细参数、DJI完整兼容矩阵、Pocket/Mavic完整录制矩阵等仍明确标OFFICIAL_PARTIAL/UNKNOWN，列入completeness backlog。知识需求升到2.8、基础合同升到1.4、Seed Catalog升到1.2，验收扩到KL-38。本轮仍为规划/结构化种子文档，不代表运行数据库已导入。
 
-## 2026-10-05：锁定知识分类最大四级
+## 2026-10-05：锁定知识分类最大四级（历史规则，已取消）
+
+**本节保留当时记录，固定层数现已取消，不能作为实施要求。**
 
 在243个共享Topic、13个Formula、135个A–H Component和83/83专业Domain已经实际展开后，分类深度不再保持未决。当前规则锁定为 `KnowledgeLibrary → KnowledgeDomain → KnowledgeComponent → 可选 KnowledgeSubcomponent`，含Library最多四级、不含Library最多三级。
 

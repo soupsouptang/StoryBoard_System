@@ -2,7 +2,7 @@
 
 # FrameForge A–H 专业知识组件
 
-版本：1.4，2026-10-05。状态：组件范围合同。本版基于181个有效独立组件和83个岗位专业域，锁定知识分类最大深度：Library → Domain → Component → 可选Subcomponent；Topic不作为继续嵌套的分类层。
+版本：1.5，2026-10-05。状态：组件范围合同。本版保留181个专业组件和83个岗位专业域作为现有资料，取消固定分类层数；目录先按工种大类、知识小类和字段组织，通过案例审核后再重排。
 
 配套：[制作常识 Topic Catalog](PRODUCTION_COMMONS_TOPIC_CATALOG_2026-10-05.md)、[岗位驱动知识目录](ROLE_KNOWLEDGE_CATALOG_2026-10-05.md)、[工种目录](JOB_CATALOG_DEFINITIONS_2026-10-05.md)。
 
@@ -371,91 +371,31 @@
 
 这类 relation 只说明知识/制作关系，不自动创建项目 Task 或权限。
 
-## 12. 知识分类最大层级
+## 12. 分类层级按实际总分关系展开
 
-经过251个有效共享主题、181个有效专业组件和83个岗位专业域展开后，分类深度已足够确定。
+### 12.1 大类的来源
 
-### 12.1 最大分类深度
+按[工种目录](JOB_CATALOG_DEFINITIONS_2026-10-05.md)的 A–H 建立大类，再展开知识小类、下级类型和字段。原岗位编号、名称和职责不变；制作分工继续独立记录，不与知识层级混为一条分类路径。
 
-```text
-KnowledgeLibrary
-→ KnowledgeDomain
-→ KnowledgeComponent
-→ KnowledgeSubcomponent (optional)
-```
+### 12.2 按需要细分
 
-**含 Library 最多四级；不含 Library 最多三级。**
+取消固定层数限制。不要求分类固定为 Library→Domain→Component→Subcomponent；需要清晰的小类或下级类型时可继续展开，不为凑层数建立空分类。已有组件及主题编号继续作为资料身份，不由这次目录示例自动改号。
 
-`KnowledgeTopic` 不是第五级分类树。Topic 是独立知识实体，可通过 DomainTopicLink / ComponentTopicLink / KnowledgeRelation 被 Library、Domain、Component 或 Subcomponent 引用。
+景别下面才放远景、中景等下级类型。摄影机可以按本类品牌、型号、资料分项和字段浏览。层级应有明确总分关系，不把类别、实例、字段和值平排。
 
-不允许：
+### 12.3 什么不能当作父子关系
 
-```text
-D 摄影
-→ 镜头
-→ 焦段
-→ 35mm
-→ 光圈
-```
+仅因同时使用、相互影响或同岗位会读取，不能建立父子分类。焦距、光圈、视场角分别维护；摄影机、镜头、滤镜、遮光斗和电池各在自己的小类中维护。实际适配用带条件和证据的连接表示。
 
-因为 Focal Length、F-number、T-stop、FOV、Focus Distance 是相互关联但不同维度的 Topic/Specification，不是彼此的父子分类。
+目录分组不决定业务所有权。KnowledgeTopic、EquipmentModel、SoftwareProduct、FormatDefinition 等仍保持各自身份；同一知识可以由多个岗位引用，不能因此复制成多份正文。
 
-分类示例只说明知识边界，不表示实体所有权：
+### 12.4 字段与岗位关联
 
-```text
-D 实拍专业库
-→ 摄影专业域
-→ 构图设计组件
-→ 留白判断细项（需要独立维护时才增加）
+字段先有明确所属小类和对象，再按工种目录的真实职责建立岗位关联，写清用途和适用条件。岗位关联不是字段授权、人员任职、项目任务或器材兼容证据。
 
-运镜、摄影角度、视场判断、透视判断是同级独立组件。
-它们通过具名关系连接，不成为构图的参数包。
-具体品牌、型号和实际安装组合另在参考资料中维护。
-```
+### 12.5 先审核案例
 
-### 12.2 何时允许 Subcomponent
-
-只有出现下列至少一项才拆第四级：
-
-- 一个 Component 内存在明显不同、稳定的维护边界；
-- 需要独立查询/过滤/导航；
-- 岗位只需要其中一部分知识；
-- 一组 Topic 有独立输入输出/格式/器材映射；
-- 内容量已经使 Component 无法清晰维护。
-
-### 12.3 何时禁止继续拆层
-
-- 只是某个数值/规格不同；
-- 只是品牌/型号不同；
-- 只是同一个 Topic 的别名；
-- 只是焦段、光圈、FOV等不同知识维度；
-- 只是不同格式/软件/器材引用同一 Topic；
-- 想用树层替代 typed relation。
-
-超过 Subcomponent 后仍需组织内容时，应使用 Topic、Tag、Relation、Facet、SpecificationDefinition 或查询过滤，而不是增加第五/第六级目录。
-
-### 12.4 器材/软件/格式不占知识分类深度
-
-EquipmentModel、SoftwareProduct、FormatDefinition 是独立参考对象，通过 relation 连接 Domain/Component/Topic，不作为：
-
-```text
-Library → Domain → Component → Brand → Model → Variant
-```
-
-这样的知识所有权树。器材浏览另按“所属大类 → 该类内的品牌 → 型号 → 字段和子项”展开，是检索导航，不是第五级知识实体；旧文对这类器材导航的禁止取消。具体结构见[知识目录规则](KNOWLEDGE_CATALOG_STRUCTURE_2026-10-05.md)。
-
-### 12.5 Shared Foundation 同样受限
-
-共享基础层可使用：
-
-```text
-Shared Foundation
-→ Base Domain
-→ Component (optional)
-→ Subcomponent (optional)
-```
-
-但共享Topic仍保持独立 stable identity。
+[摄影机案例](KNOWLEDGE_CAMERA_CLASS_REVIEW_CASE_2026-10-05.md)、[镜头运动案例](KNOWLEDGE_CAMERA_MOVEMENT_REVIEW_CASE_2026-10-05.md)及[字段—岗位表](KNOWLEDGE_FIELD_ROLE_ASSOCIATIONS_REVIEW_2026-10-05.md)均为待确认提案。其他目录待案例核实后统一修改。取消的留白不作为后续有效内容。
 
 ## 13. 首批组件验收
 
@@ -468,7 +408,7 @@ Shared Foundation
 - D Camera / Lighting / Audio / Support 接口不混树；
 - F/G/H 的 Format 与 Color pipeline 可通过跨组件关系连接；
 - A Library 只提供知识/协调语义，不复制 Schedule/Task/Delivery 的业务事实 owner；
-- 分类最大深度固定为 Library→Domain→Component→可选Subcomponent；Topic/器材/软件/格式通过relation和facet组织，不继续增加目录深度。
+- 分类层数不固定；工种大类、知识小类、下级类型、字段和值身份明确，合理细分可继续展开，独立内容使用关系连接。
 
 
 ## 14. 原混合组件的转向
